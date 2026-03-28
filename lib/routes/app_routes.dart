@@ -1,3 +1,19 @@
+import 'package:flutter/material.dart';
+import '../screens/home/home_screen.dart';
+import '../screens/vendas/vendas_screen.dart';
+import '../screens/vendas/cadastro_cliente_screen.dart';
+import '../screens/vendas/contrato_screen.dart';
+import '../screens/vendas/analise_financeira_screen.dart';
+import '../screens/financeiro/financeiro_screen.dart';
+import '../screens/cabines/cabines_screen.dart';
+import '../screens/painel_franqueado/franqueado_screen.dart';
+import '../screens/painel_cliente/cliente_screen.dart';
+import '../screens/leads/leads_screen.dart';
+import '../screens/boletos/boletos_screen.dart';
+import '../screens/excelencia/excelencia_screen.dart';
+import '../screens/recomendacoes/recomendacoes_screen.dart';
+import '../screens/manuais/manuais_screen.dart';
+
 /// Rotas nomeadas da aplicação
 class AppRoutes {
   static const home            = '/';
@@ -14,4 +30,21 @@ class AppRoutes {
   static const excelencia      = '/excelencia';
   static const recomendacoes   = '/recomendacoes';
   static const manuais         = '/manuais';
+
+  static Map<String, WidgetBuilder> get routes => {
+    home:            (_) => const HomeScreen(),
+    vendas:          (_) => const VendasScreen(),
+    cadastroCliente: (_) => const CadastroClienteScreen(),
+    contrato:        (_) => const ContratoScreen(),
+    analise:         (_) => const AnaliseFinanceiraScreen(),
+    financeiro:      (_) => const FinanceiroScreen(),
+    cabines:         (_) => const CabinesScreen(),
+    franqueado:      (_) => const FranqueadoScreen(),
+    cliente:         (_) => const ClienteScreen(),
+    leads:           (_) => const LeadsScreen(),
+    boletos:         (_) => const BoletosScreen(),
+    excelencia:      (_) => const ExcelenciaScreen(),
+    recomendacoes:   (_) => const RecomendacoesScreen(),
+    manuais:         (_) => const ManuaisScreen(),
+  };
 }
