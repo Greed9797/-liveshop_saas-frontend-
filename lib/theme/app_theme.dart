@@ -1,35 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Paleta de cores e ThemeData global do LiveShop SaaS
 class AppColors {
-  static const primary = Color(0xFF7F77DD);       // roxo
-  static const success = Color(0xFF1D9E75);        // verde
-  static const danger  = Color(0xFFE24B4A);        // vermelho
-  static const warning = Color(0xFFBA7517);        // âmbar
-  static const info    = Color(0xFF378ADD);        // azul
-  static const lilac   = Color(0xFFAFA9EC);        // lilás recomendação
-  static const bgLight = Color(0xFFF5F5F7);        // fundo cinza claro
-  static const cardBg  = Colors.white;
+  static const Color primary = Color(0xFF5B21B6); // Deep Indigo
+  static const Color success = Color(0xFF10B981);
+  static const Color danger = Color(0xFFEF4444);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color info = Color(0xFF3B82F6);
+  static const Color lilac = Color(0xFF8B5CF6);
+  static const Color background = Color(0xFFF8FAFC);
 }
 
-class AppTheme {
-  static ThemeData get theme => ThemeData(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      primary: AppColors.primary,
+final ThemeData appTheme = ThemeData(
+  useMaterial3: true,
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: AppColors.primary,
+    primary: AppColors.primary,
+    background: AppColors.background,
+  ),
+  scaffoldBackgroundColor: AppColors.background,
+  textTheme: GoogleFonts.interTextTheme(),
+  cardTheme: CardTheme(
+    elevation: 0,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
     ),
-    scaffoldBackgroundColor: AppColors.bgLight,
-    cardTheme: const CardThemeData(
-      color: AppColors.cardBg,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(10)),
-      ),
+    color: Colors.white,
+    shadowColor: Colors.black.withValues(alpha: 0.05),
+  ),
+  dialogTheme: DialogTheme(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
     ),
-    textTheme: const TextTheme(
-      bodyMedium: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w400),
-      labelMedium: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w500),
-    ),
-    useMaterial3: true,
-  );
-}
+  ),
+);
