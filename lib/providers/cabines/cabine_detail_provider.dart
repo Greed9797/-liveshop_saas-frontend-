@@ -82,25 +82,20 @@ class CabineDetailState {
 // --- Provider com Polling ---
 
 class CabineDetailNotifier
-    extends AutoDisposeAsyncNotifierFamily<CabineDetailState, String> {
+    extends FamilyAsyncNotifier<CabineDetailState, String> {
   Timer? _timer;
 
-  // Parâmetro arg é o cabine_id que o Family injeta
   @override
   Future<CabineDetailState> build(String arg) async {
-    // 1. Ao construir, cancela timer prévio (se existir na recriação)
     _timer?.cancel();
 
-    // 2. Busca o Histórico e a Live Atual (se houver)
     final historico = await _fetchHistorico(arg);
     final liveAtual = await _fetchLiveAtual(arg);
 
-    // 3. Se a cabine estiver ao vivo, inicia o polling a cada 15 segundos
     if (liveAtual != null) {
       _startPolling(arg);
     }
 
-    // Limpeza ao destruir o provider
     ref.onDispose(() {
       _timer?.cancel();
     });
@@ -119,7 +114,6 @@ class CabineDetailNotifier
       final response = await ApiService.get('/cabines/$cabineId/live-atual');
       return CabineLiveAtual.fromJson(response.data);
     } catch (e) {
-      // Retorna nulo se der erro ou se não estiver ao vivo (API retorna 400 ou 404 nesses casos)
       return null;
     }
   }
@@ -128,23 +122,19 @@ class CabineDetailNotifier
     _timer = Timer.periodic(const Duration(seconds: 15), (_) async {
       try {
         final liveAtual = await _fetchLiveAtual(cabineId);
-
-        // Se a live caiu ou encerrou, cancela o timer
         if (liveAtual == null) {
           _timer?.cancel();
         }
 
-        // Atualiza apenas a live_atual silenciosamente (sem loading de recarga)
         if (state.hasValue) {
           state = AsyncValue.data(state.value!.copyWith(liveAtual: liveAtual));
         }
       } catch (e) {
-        print('Erro no polling do detalhe da cabine $cabineId: $e');
+        // Log error
       }
     });
   }
 
-  // Usado para forçar um refresh manual
   Future<void> refresh() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => build(arg));
@@ -152,7 +142,7 @@ class CabineDetailNotifier
 }
 
 // Injeção do Provider
-final cabineDetailProvider = AsyncNotifierProvider.autoDispose
-    .family<CabineDetailNotifier, CabineDetailState, String>(
+final cabineDetailProvider = AsyncNotifierProviderFamily<CabineDetailNotifier,
+    CabineDetailState, String>(
   CabineDetailNotifier.new,
 );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'roleta_widget.dart';
+import '../theme/app_colors.dart';
 
-/// Card de faturamento — fundo roxo escuro, números animados
 class MoneyCard extends StatelessWidget {
   final double total;
   final double bruto;
@@ -22,27 +21,98 @@ class MoneyCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF2D2860),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary,
+              AppColors.primary.withValues(alpha: 0.8)
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            RoletaWidget(value: total,   label: 'FATURAMENTO TOTAL DO MÊS', fontSize: 28),
-            const Divider(color: Colors.white24, height: 24),
-            RoletaWidget(value: bruto,   label: 'FAT BRUTO',   fontSize: 20),
-            const SizedBox(height: 12),
-            RoletaWidget(value: liquido, label: 'FAT LÍQUIDO', fontSize: 20),
-            const SizedBox(height: 8),
             const Text(
-              '* Não inclui impostos, royalties e mkt',
-              style: TextStyle(fontSize: 10, color: Color(0x99AFA9EC)),
+              'FATURAMENTO DO MÊS',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _AnimatedMoneyText(
+              value: total,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildLabelValue('FAT BRUTO', bruto),
+                _buildLabelValue('FAT LÍQUIDO', liquido),
+              ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLabelValue(String label, double value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
+        ),
+        _AnimatedMoneyText(
+          value: value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AnimatedMoneyText extends StatelessWidget {
+  final double value;
+  final TextStyle style;
+
+  const _AnimatedMoneyText({required this.value, required this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: value),
+      duration: const Duration(seconds: 1),
+      curve: Curves.easeOutCubic,
+      builder: (context, val, child) {
+        return Text(
+          'R\$ ${val.toStringAsFixed(2).replaceAll('.', ',')}',
+          style: style,
+        );
+      },
     );
   }
 }

@@ -149,7 +149,7 @@ class _BoletoRow extends ConsumerWidget {
             Expanded(flex: 2, child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: _statusColor.withOpacity(0.1),
+                color: _statusColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(_statusLabel,

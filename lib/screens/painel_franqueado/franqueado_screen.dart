@@ -128,7 +128,7 @@ class _UnidadesContent extends StatelessWidget {
                               Chip(
                                 label: Text('${u.contratosPendentes} pendentes',
                                     style: const TextStyle(fontSize: 11)),
-                                backgroundColor: AppColors.warning.withOpacity(0.15),
+                                backgroundColor: AppColors.warning.withValues(alpha: 0.15),
                                 labelStyle: const TextStyle(color: AppColors.warning),
                               ),
                             const SizedBox(width: 8),

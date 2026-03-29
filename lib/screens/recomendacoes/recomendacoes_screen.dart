@@ -72,7 +72,7 @@ class RecomendacoesScreen extends ConsumerWidget {
                                     label: Text(r.status.toUpperCase(),
                                         style: const TextStyle(fontSize: 10)),
                                     backgroundColor: r.status == 'convertido'
-                                        ? AppColors.success.withOpacity(0.15)
+                                        ? AppColors.success.withValues(alpha: 0.15)
                                         : Colors.grey.shade200,
                                     labelStyle: TextStyle(
                                       color: r.status == 'convertido'

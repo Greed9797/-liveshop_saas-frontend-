@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
 import 'status_badge.dart';
 
-/// Card de cabine com indicador pulsante se AO VIVO
 class CabineCard extends StatefulWidget {
   final Map<String, dynamic> cabine;
   final VoidCallback? onTap;
@@ -12,18 +11,23 @@ class CabineCard extends StatefulWidget {
   State<CabineCard> createState() => _CabineCardState();
 }
 
-class _CabineCardState extends State<CabineCard> with SingleTickerProviderStateMixin {
+class _CabineCardState extends State<CabineCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _pulse;
 
   @override
   void initState() {
     super.initState();
-    _pulse = AnimationController(vsync: this, duration: const Duration(seconds: 1))
+    _pulse = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 800))
       ..repeat(reverse: true);
   }
 
   @override
-  void dispose() { _pulse.dispose(); super.dispose(); }
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
 
   bool get isLive => widget.cabine['status'] == 'ao_vivo';
 
@@ -34,13 +38,21 @@ class _CabineCardState extends State<CabineCard> with SingleTickerProviderStateM
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isLive ? AppColors.success : const Color(0xFFE0E0E0),
+            color: isLive
+                ? AppColors.success.withValues(alpha: 0.5)
+                : Colors.grey.shade200,
             width: isLive ? 2 : 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+            ),
+          ],
         ),
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -49,21 +61,45 @@ class _CabineCardState extends State<CabineCard> with SingleTickerProviderStateM
               children: [
                 Text(
                   'Cabine ${widget.cabine['numero']}',
-                  style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 if (isLive)
                   FadeTransition(
                     opacity: _pulse,
-                    child: const Icon(Icons.circle, color: AppColors.success, size: 10),
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: AppColors.success,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             StatusBadge(status: widget.cabine['status'] as String),
             if (isLive) ...[
-              const SizedBox(height: 6),
-              Text(widget.cabine['apresentador'] ?? '', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-              Text(widget.cabine['cliente'] ?? '',      style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+              const Spacer(),
+              Row(
+                children: [
+                  const Icon(Icons.visibility, size: 14, color: Colors.blue),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${widget.cabine['viewer_count'] ?? 0}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  ),
+                ],
+              ),
+              Text(
+                'R\$ ${(widget.cabine['gmv_atual'] ?? 0).toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.success,
+                ),
+              ),
             ],
           ],
         ),

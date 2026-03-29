@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
 
 /// Badge colorido por status
 class StatusBadge extends StatelessWidget {
@@ -17,23 +17,24 @@ class StatusBadge extends StatelessWidget {
       ),
       child: Text(
         config['label'] as String,
-        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500),
+        style: const TextStyle(
+            color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500),
       ),
     );
   }
 
-  static const _configs = <String, Map<String, Object>>{
-    'ativo':         {'color': AppColors.success,  'label': 'ATIVO'},
-    'ao_vivo':       {'color': AppColors.success,  'label': 'AO VIVO'},
-    'enviado':       {'color': AppColors.warning,  'label': 'ENVIADO'},
-    'negociacao':    {'color': AppColors.info,     'label': 'NEGOCIAÇÃO'},
-    'inadimplente':  {'color': AppColors.danger,   'label': 'INADIMPLENTE'},
-    'recomendacao':  {'color': AppColors.lilac,    'label': 'RECOMENDAÇÃO'},
-    'disponivel':    {'color': Color(0xFF9E9E9E),  'label': 'DISPONÍVEL'},
-    'pendente':      {'color': AppColors.warning,  'label': 'PENDENTE'},
-    'pago':          {'color': AppColors.success,  'label': 'PAGO'},
-    'vencido':       {'color': AppColors.danger,   'label': 'VENCIDO'},
-    'suspenso':      {'color': AppColors.danger,   'label': 'SUSPENSO'},
-    'default':       {'color': Color(0xFF9E9E9E),  'label': 'N/A'},
+  static final _configs = <String, Map<String, Object>>{
+    'ativo': {'color': AppColors.success, 'label': 'ATIVO'},
+    'ao_vivo': {'color': AppColors.success, 'label': 'AO VIVO'},
+    'enviado': {'color': AppColors.warning, 'label': 'ENVIADO'},
+    'negociacao': {'color': AppColors.info, 'label': 'NEGOCIAÇÃO'},
+    'inadimplente': {'color': AppColors.danger, 'label': 'INADIMPLENTE'},
+    'recomendacao': {'color': AppColors.lilac, 'label': 'RECOMENDAÇÃO'},
+    'disponivel': {'color': Color(0xFF9E9E9E), 'label': 'DISPONÍVEL'},
+    'pendente': {'color': AppColors.warning, 'label': 'PENDENTE'},
+    'pago': {'color': AppColors.success, 'label': 'PAGO'},
+    'vencido': {'color': AppColors.danger, 'label': 'VENCIDO'},
+    'suspenso': {'color': AppColors.danger, 'label': 'SUSPENSO'},
+    'default': {'color': Color(0xFF9E9E9E), 'label': 'N/A'},
   };
 }

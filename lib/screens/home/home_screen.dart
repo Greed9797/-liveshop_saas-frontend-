@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/money_card.dart';
 import '../../widgets/cabine_card.dart';
@@ -7,7 +8,7 @@ import '../../widgets/action_button.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../models/dashboard.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/app_colors.dart';
 
 /// Tela principal — dashboard do franqueado
 class HomeScreen extends ConsumerWidget {
@@ -20,111 +21,219 @@ class HomeScreen extends ConsumerWidget {
     return AppScaffold(
       currentRoute: AppRoutes.home,
       child: dashAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const _HomeShimmerLoader(),
         error: (e, _) => Center(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('Erro ao carregar dashboard: $e'),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () => ref.read(dashboardProvider.notifier).refresh(),
-              child: const Text('Tentar novamente'),
-            ),
-          ]),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Erro ao carregar dashboard: $e'),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () => ref.read(dashboardProvider.notifier).refresh(),
+                child: const Text('Tentar novamente'),
+              ),
+            ],
+          ),
         ),
-        data: (dashboard) => _HomeContent(dashboard: dashboard),
+        data: (dashboard) => _HomeSliverContent(dashboard: dashboard),
       ),
     );
   }
 }
 
-class _HomeContent extends ConsumerWidget {
+class _HomeSliverContent extends StatelessWidget {
   final DashboardData dashboard;
-  const _HomeContent({required this.dashboard});
+  const _HomeSliverContent({required this.dashboard});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 800;
+
+        return CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.all(20),
+              sliver: SliverToBoxAdapter(
+                child: isDesktop
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 4,
+                            child: AspectRatio(
+                              aspectRatio: 1.5,
+                              child: MoneyCard(
+                                total: dashboard.fatTotal,
+                                bruto: dashboard.fatBruto,
+                                liquido: dashboard.fatLiquido,
+                                onTap: () => Navigator.pushNamed(
+                                    context, AppRoutes.financeiro),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            flex: 6,
+                            child: _CabinesPanel(
+                                cabines: dashboard.cabines,
+                                isDesktop: isDesktop),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          AspectRatio(
+                            aspectRatio: 1.8,
+                            child: MoneyCard(
+                              total: dashboard.fatTotal,
+                              bruto: dashboard.fatBruto,
+                              liquido: dashboard.fatLiquido,
+                              onTap: () => Navigator.pushNamed(
+                                  context, AppRoutes.financeiro),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _CabinesPanel(
+                              cabines: dashboard.cabines, isDesktop: isDesktop),
+                        ],
+                      ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverToBoxAdapter(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      ActionButton(
+                        label: 'MEUS BOLETOS',
+                        icon: Icons.receipt_outlined,
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.boletos),
+                      ),
+                      const SizedBox(width: 12),
+                      ActionButton(
+                        label: 'VENDAS',
+                        icon: Icons.map_outlined,
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.vendas),
+                      ),
+                      const SizedBox(width: 12),
+                      ActionButton(
+                        label: 'FINANCEIRO',
+                        icon: Icons.bar_chart_rounded,
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.financeiro),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverToBoxAdapter(
+                child: isDesktop
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: _ResumoSection(dashboard: dashboard),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            flex: 5,
+                            child: _RankingPanel(ranking: dashboard.rankingDia),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          _ResumoSection(dashboard: dashboard),
+                          const SizedBox(height: 16),
+                          _RankingPanel(ranking: dashboard.rankingDia),
+                        ],
+                      ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ResumoSection extends StatelessWidget {
+  final DashboardData dashboard;
+  const _ResumoSection({required this.dashboard});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _ResumoClientesCard(dashboard: dashboard),
+        const SizedBox(height: 8),
+        _ResumoLivesCard(dashboard: dashboard),
+        const SizedBox(height: 8),
+        _AlertasCard(dashboard: dashboard),
+      ],
+    );
+  }
+}
+
+class _HomeShimmerLoader extends StatelessWidget {
+  const _HomeShimmerLoader();
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Expanded(
-            flex: 5,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 4,
-                  child: MoneyCard(
-                    total: dashboard.fatTotal,
-                    bruto: dashboard.fatBruto,
-                    liquido: dashboard.fatLiquido,
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.financeiro),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 6,
-                  child: _CabinesPanel(cabines: dashboard.cabines),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              ActionButton(
-                label: 'MEUS BOLETOS',
-                icon: Icons.receipt_outlined,
-                onPressed: () =>
-                    Navigator.pushNamed(context, AppRoutes.boletos),
-              ),
-              const SizedBox(width: 12),
-              ActionButton(
-                label: 'VENDAS',
-                icon: Icons.map_outlined,
-                onPressed: () => Navigator.pushNamed(context, AppRoutes.vendas),
-              ),
-              const SizedBox(width: 12),
-              ActionButton(
-                label: 'FINANCEIRO',
-                icon: Icons.bar_chart_rounded,
-                onPressed: () =>
-                    Navigator.pushNamed(context, AppRoutes.financeiro),
-              ),
-              const SizedBox(width: 12),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () => ref.read(dashboardProvider.notifier).refresh(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-              flex: 4,
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Column(
+          children: [
+            Expanded(
+              flex: 5,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
-                    flex: 5,
-                    child: Column(
-                      children: [
-                        Expanded(
-                            child: _ResumoClientesCard(dashboard: dashboard)),
-                        const SizedBox(height: 8),
-                        Expanded(child: _ResumoLivesCard(dashboard: dashboard)),
-                        const SizedBox(height: 8),
-                        Expanded(child: _AlertasCard(dashboard: dashboard)),
-                      ],
-                    ),
-                  ),
+                      flex: 4,
+                      child: Container(
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12)))),
                   const SizedBox(width: 16),
                   Expanded(
-                      flex: 5,
-                      child: _RankingPanel(ranking: dashboard.rankingDia)),
+                      flex: 6,
+                      child: Container(
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12)))),
                 ],
-              )),
-        ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+                height: 60,
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12))),
+            const SizedBox(height: 16),
+            Expanded(
+                flex: 4,
+                child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12)))),
+          ],
+        ),
       ),
     );
   }
@@ -138,60 +247,34 @@ class _ResumoClientesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('CLIENTES ATIVOS',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey)),
-                Text('${dashboard.clientesAtivos}',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('NOVOS (MÊS)',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey)),
-                Text('+${dashboard.novosClientes}',
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green)),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('CHURN (MÊS)',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey)),
-                Text('${dashboard.churnMes}',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color:
-                            dashboard.churnMes > 0 ? Colors.red : Colors.grey)),
-              ],
-            ),
+            _buildMetric(
+                'CLIENTES ATIVOS', '${dashboard.clientesAtivos}', null),
+            _buildMetric(
+                'NOVOS (MÊS)', '+${dashboard.novosClientes}', Colors.green),
+            _buildMetric('CHURN (MÊS)', '${dashboard.churnMes}',
+                dashboard.churnMes > 0 ? Colors.red : Colors.grey),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMetric(String label, String value, Color? valueColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: valueColor)),
+      ],
     );
   }
 }
@@ -204,59 +287,35 @@ class _ResumoLivesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('LIVES (MÊS)',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey)),
-                Text('${dashboard.livesMes}',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('GMV DAS LIVES',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey)),
-                Text('R\$ ${dashboard.gmvLivesMes.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green)),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('MÉDIA VIEWERS',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey)),
-                Text('${dashboard.mediaViewers}',
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue)),
-              ],
-            ),
+            _buildMetric('LIVES (MÊS)', '${dashboard.livesMes}', null),
+            _buildMetric(
+                'GMV DAS LIVES',
+                'R\$ ${dashboard.gmvLivesMes.toStringAsFixed(0)}',
+                Colors.green),
+            _buildMetric(
+                'MÉDIA VIEWERS', '${dashboard.mediaViewers}', Colors.blue),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMetric(String label, String value, Color? valueColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: valueColor)),
+      ],
     );
   }
 }
@@ -274,7 +333,7 @@ class _AlertasCard extends StatelessWidget {
         side: BorderSide(color: Colors.orange.withValues(alpha: 0.3)),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -319,7 +378,8 @@ class _AlertasCard extends StatelessWidget {
 
 class _CabinesPanel extends StatelessWidget {
   final List<CabineStatus> cabines;
-  const _CabinesPanel({required this.cabines});
+  final bool isDesktop;
+  const _CabinesPanel({required this.cabines, required this.isDesktop});
 
   @override
   Widget build(BuildContext context) {
@@ -344,19 +404,22 @@ class _CabinesPanel extends StatelessWidget {
                 ),
               ],
             ),
-            Expanded(
-              child: GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 5,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 1.2,
-                ),
-                itemCount: cabines.length,
-                itemBuilder: (_, i) => CabineCard(
-                  cabine: cabines[i].toMockMap(),
-                  onTap: () {},
+            const SizedBox(height: 8),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isDesktop ? 5 : 3,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 1.1,
+              ),
+              itemCount: cabines.length.clamp(0, isDesktop ? 10 : 6),
+              itemBuilder: (_, i) => CabineCard(
+                cabine: cabines[i].toMockMap(),
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.cabines, // Should ideally be detail
                 ),
               ),
             ),

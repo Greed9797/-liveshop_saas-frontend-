@@ -1,142 +1,164 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 import '../routes/app_routes.dart';
+import '../theme/app_colors.dart';
 
-/// Layout base: drawer fixo à esquerda + área de conteúdo à direita
-/// Otimizado para iPad landscape (1024x768+)
 class AppScaffold extends StatelessWidget {
   final Widget child;
   final String currentRoute;
 
-  const AppScaffold({
-    super.key,
-    required this.child,
-    required this.currentRoute,
-  });
+  const AppScaffold(
+      {super.key, required this.child, required this.currentRoute});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          _SideMenu(currentRoute: currentRoute),
-          const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE0E0E0)),
-          Expanded(child: child),
-        ],
-      ),
-    );
-  }
-}
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 800;
 
-class _SideMenu extends StatelessWidget {
-  final String currentRoute;
-  const _SideMenu({required this.currentRoute});
-
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      const _MenuItem(icon: Icons.home_rounded,           label: 'HOME',                route: AppRoutes.home),
-      const _MenuItem(icon: Icons.description_outlined,   label: 'Vendas em Andamento', route: AppRoutes.vendas),
-      const _MenuItem(icon: Icons.map_outlined,           label: 'Carteira de Clientes',route: AppRoutes.vendas),
-      _MenuItem(icon: Icons.emoji_events_outlined,        label: 'Reconhecimentos',     route: null, onTap: () => _showEmBreve(context)),
-      const _MenuItem(icon: Icons.receipt_outlined,       label: 'Meus Boletos',        route: AppRoutes.boletos),
-      const _MenuItem(icon: Icons.person_search_outlined, label: 'Leads',               route: AppRoutes.leads),
-      const _MenuItem(icon: Icons.menu_book_outlined,     label: 'Manuais',             route: AppRoutes.manuais),
-      const _MenuItem(icon: Icons.star_outline_rounded,   label: 'Recomendações',       route: AppRoutes.recomendacoes),
-    ];
-
-    return Container(
-      width: 200,
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 64,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            color: AppColors.primary,
-            alignment: Alignment.centerLeft,
-            child: const Text(
-              'LiveShop',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 1.2,
-              ),
+        if (isDesktop) {
+          return Scaffold(
+            body: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _getSelectedIndex(currentRoute, isDesktop),
+                  onDestinationSelected: (idx) =>
+                      _navigateToIndex(context, idx, isDesktop),
+                  labelType: NavigationRailLabelType.all,
+                  selectedIconTheme:
+                      const IconThemeData(color: AppColors.primary),
+                  selectedLabelTextStyle: const TextStyle(
+                      color: AppColors.primary, fontWeight: FontWeight.bold),
+                  destinations: const [
+                    NavigationRailDestination(
+                        icon: Icon(Icons.dashboard_outlined),
+                        selectedIcon: Icon(Icons.dashboard),
+                        label: Text('Home')),
+                    NavigationRailDestination(
+                        icon: Icon(Icons.videocam_outlined),
+                        selectedIcon: Icon(Icons.videocam),
+                        label: Text('Cabines')),
+                    NavigationRailDestination(
+                        icon: Icon(Icons.description_outlined),
+                        label: Text('Vendas')),
+                    NavigationRailDestination(
+                        icon: Icon(Icons.person_search_outlined),
+                        label: Text('Leads')),
+                    NavigationRailDestination(
+                        icon: Icon(Icons.receipt_outlined),
+                        label: Text('Boletos')),
+                    NavigationRailDestination(
+                        icon: Icon(Icons.map_outlined),
+                        label: Text('Carteira')),
+                    NavigationRailDestination(
+                        icon: Icon(Icons.menu_book_outlined),
+                        label: Text('Manuais')),
+                    NavigationRailDestination(
+                        icon: Icon(Icons.star_outline_rounded),
+                        label: Text('Recomendações')),
+                  ],
+                ),
+                const VerticalDivider(thickness: 1, width: 1),
+                Expanded(child: child),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: items.map((item) => _MenuTile(
-                item: item,
-                isSelected: item.route == currentRoute,
-              )).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showEmBreve(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Em Breve'),
-        content: const Text('Novidades chegando! Fique atento às atualizações.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MenuItem {
-  final IconData icon;
-  final String label;
-  final String? route;
-  final VoidCallback? onTap;
-  const _MenuItem({required this.icon, required this.label, this.route, this.onTap});
-}
-
-class _MenuTile extends StatelessWidget {
-  final _MenuItem item;
-  final bool isSelected;
-  const _MenuTile({required this.item, required this.isSelected});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      leading: Icon(
-        item.icon,
-        color: isSelected ? AppColors.primary : Colors.grey[600],
-        size: 20,
-      ),
-      title: Text(
-        item.label,
-        style: TextStyle(
-          fontSize: 13,
-          color: isSelected ? AppColors.primary : Colors.grey[800],
-          fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-        ),
-      ),
-      tileColor: isSelected ? AppColors.primary.withValues(alpha: 0.08) : null,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-      onTap: item.onTap ?? () {
-        if (item.route != null) {
-          Navigator.pushReplacementNamed(context, item.route!);
+          );
         }
+
+        // Mobile
+        return Scaffold(
+          body: child,
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _getSelectedIndex(currentRoute, isDesktop),
+            onTap: (idx) => _navigateToIndex(context, idx, isDesktop),
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: Colors.grey,
+            type: BottomNavigationBarType.fixed,
+            items: const [
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.dashboard_outlined), label: 'Home'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.videocam_outlined), label: 'Cabines'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.description_outlined), label: 'Vendas'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.person_search_outlined), label: 'Leads'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.receipt_outlined), label: 'Boletos'),
+            ],
+          ),
+        );
       },
     );
+  }
+
+  int _getSelectedIndex(String route, bool isDesktop) {
+    if (route == AppRoutes.home) return 0;
+    if (route.startsWith(AppRoutes.cabines)) return 1;
+    if (route.startsWith(AppRoutes.vendas)) return 2;
+    if (route == AppRoutes.leads) return 3;
+    if (route == AppRoutes.boletos) return 4;
+
+    if (isDesktop) {
+      if (route == AppRoutes.carteiraClientes) return 5;
+      if (route == AppRoutes.manuais) return 6;
+      if (route == AppRoutes.recomendacoes) return 7;
+    }
+
+    return 0;
+  }
+
+  void _navigateToIndex(BuildContext context, int index, bool isDesktop) {
+    String route = AppRoutes.home;
+
+    if (isDesktop) {
+      switch (index) {
+        case 0:
+          route = AppRoutes.home;
+          break;
+        case 1:
+          route = AppRoutes.cabines;
+          break;
+        case 2:
+          route = AppRoutes.vendas;
+          break;
+        case 3:
+          route = AppRoutes.leads;
+          break;
+        case 4:
+          route = AppRoutes.boletos;
+          break;
+        case 5:
+          route = AppRoutes.carteiraClientes;
+          break;
+        case 6:
+          route = AppRoutes.manuais;
+          break;
+        case 7:
+          route = AppRoutes.recomendacoes;
+          break;
+      }
+    } else {
+      switch (index) {
+        case 0:
+          route = AppRoutes.home;
+          break;
+        case 1:
+          route = AppRoutes.cabines;
+          break;
+        case 2:
+          route = AppRoutes.vendas;
+          break;
+        case 3:
+          route = AppRoutes.leads;
+          break;
+        case 4:
+          route = AppRoutes.boletos;
+          break;
+      }
+    }
+
+    if (currentRoute != route) {
+      Navigator.pushReplacementNamed(context, route);
+    }
   }
 }

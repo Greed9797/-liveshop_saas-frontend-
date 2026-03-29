@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/cabines/cabine_detail_provider.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/app_colors.dart';
 
 class CabineDetailScreen extends ConsumerWidget {
   final String cabineId;
@@ -328,7 +328,9 @@ class CabineDetailScreen extends ConsumerWidget {
                     style: TextStyle(color: Colors.grey)),
               ),
             ...horarios.take(4).map((h) {
-              final pct = maxGmv > 0 ? (h['gmv_medio'] / maxGmv) : 0.0;
+              final gmvMedio = (h['gmv_medio'] as num).toDouble();
+              final pct = maxGmv > 0 ? (gmvMedio / maxGmv) : 0.0;
+              final int flexValue = (pct * 100).toInt().clamp(1, 100);
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Row(
@@ -342,14 +344,14 @@ class CabineDetailScreen extends ConsumerWidget {
                       child: Row(
                         children: [
                           Expanded(
-                            flex: (pct * 100).toInt(),
+                            flex: flexValue,
                             child: Container(
                                 height: 12,
                                 color: AppColors
                                     .primary), // Cor roxa definida no AppTheme
                           ),
                           Expanded(
-                            flex: 100 - (pct * 100).toInt(),
+                            flex: 100 - flexValue,
                             child:
                                 Container(height: 12, color: Colors.grey[200]),
                           ),
@@ -359,7 +361,7 @@ class CabineDetailScreen extends ConsumerWidget {
                     const SizedBox(width: 16),
                     SizedBox(
                       width: 100,
-                      child: Text('R\$ ${h['gmv_medio'].toStringAsFixed(0)}',
+                      child: Text('R\$ ${gmvMedio.toStringAsFixed(0)}',
                           textAlign: TextAlign.right),
                     )
                   ],

@@ -18,7 +18,7 @@ class LiveShopApp extends ConsumerWidget {
     return MaterialApp(
       title: 'LiveShop SaaS',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.theme,
+      theme: appTheme,
       initialRoute: AppRoutes.login,
       routes: AppRoutes.routes,
     );

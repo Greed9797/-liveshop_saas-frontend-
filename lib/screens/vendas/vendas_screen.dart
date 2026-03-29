@@ -6,9 +6,8 @@ import '../../widgets/app_scaffold.dart';
 import '../../widgets/client_pin.dart';
 import '../../providers/clientes_provider.dart';
 import '../../providers/recomendacoes_provider.dart';
-import '../../models/cliente.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/app_colors.dart';
 
 /// Tela de vendas com mapa do Brasil e pins de clientes
 class VendasScreen extends ConsumerStatefulWidget {
@@ -55,56 +54,66 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
                 markers: [
                   // Pins de clientes
                   ...clientesAsync.valueOrNull
-                      ?.where((c) =>
-                          c.lat != null &&
-                          c.lng != null &&
-                          (_filtroStatus == null || c.status == _filtroStatus))
-                      .map((c) => Marker(
-                            width: 120,
-                            height: 60,
-                            point: LatLng(c.lat!, c.lng!),
-                            child: ClientPin(
-                              status: c.status,
-                              nome: c.nome,
-                            ),
-                          ))
-                      .toList() ?? [],
+                          ?.where((c) =>
+                              c.lat != null &&
+                              c.lng != null &&
+                              (_filtroStatus == null ||
+                                  c.status == _filtroStatus))
+                          .map((c) => Marker(
+                                width: 120,
+                                height: 60,
+                                point: LatLng(c.lat!, c.lng!),
+                                child: ClientPin(
+                                  status: c.status,
+                                  nome: c.nome,
+                                ),
+                              ))
+                          .toList() ??
+                      [],
                   // Pins de recomendações (se filtro null ou 'recomendacao')
                   if (_filtroStatus == null)
                     ...recsAsync.valueOrNull
-                        ?.where((r) => r.lat != null && r.lng != null && r.status == 'pendente')
-                        .map((r) => Marker(
-                              width: 120,
-                              height: 60,
-                              point: LatLng(r.lat!, r.lng!),
-                              child: ClientPin(
-                                status: 'recomendacao',
-                                nome: r.nomeIndicado,
-                              ),
-                            ))
-                        .toList() ?? [],
+                            ?.where((r) =>
+                                r.lat != null &&
+                                r.lng != null &&
+                                r.status == 'pendente')
+                            .map((r) => Marker(
+                                  width: 120,
+                                  height: 60,
+                                  point: LatLng(r.lat!, r.lng!),
+                                  child: ClientPin(
+                                    status: 'recomendacao',
+                                    nome: r.nomeIndicado,
+                                  ),
+                                ))
+                            .toList() ??
+                        [],
                 ],
               ),
             ],
           ),
           // Filtros de status
           Positioned(
-            top: 16, left: 16,
+            top: 16,
+            left: 16,
             child: _StatusFilter(
               selected: _filtroStatus,
               options: _statusOptions,
               onChanged: (s) => setState(() => _filtroStatus = s),
             ),
           ),
-          Positioned(
-            top: 16, right: 16,
-            child: const _MapLegend(),
+          const Positioned(
+            top: 16,
+            right: 16,
+            child: _MapLegend(),
           ),
           Positioned(
-            bottom: 24, right: 24,
+            bottom: 24,
+            right: 24,
             child: FloatingActionButton(
               backgroundColor: AppColors.primary,
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.cadastroCliente),
+              onPressed: () =>
+                  Navigator.pushNamed(context, AppRoutes.cadastroCliente),
               child: const Icon(Icons.add, color: Colors.white),
             ),
           ),
@@ -118,7 +127,8 @@ class _StatusFilter extends StatelessWidget {
   final String? selected;
   final List<(String?, String)> options;
   final ValueChanged<String?> onChanged;
-  const _StatusFilter({required this.selected, required this.options, required this.onChanged});
+  const _StatusFilter(
+      {required this.selected, required this.options, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -147,29 +157,31 @@ class _MapLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const items = [
-      ('Negociação',       AppColors.info),
+    final items = [
+      ('Negociação', AppColors.info),
       ('Contrato Enviado', AppColors.warning),
-      ('Ativo',            AppColors.success),
-      ('Inadimplente',     AppColors.danger),
-      ('Recomendação',     AppColors.lilac),
+      ('Ativo', AppColors.success),
+      ('Inadimplente', AppColors.danger),
+      ('Recomendação', AppColors.lilac),
     ];
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: items.map((item) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.circle, color: item.$2, size: 12),
-                const SizedBox(width: 6),
-                Text(item.$1, style: const TextStyle(fontSize: 12)),
-              ],
-            ),
-          )).toList(),
+          children: items
+              .map((item) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.circle, color: item.$2, size: 12),
+                        const SizedBox(width: 6),
+                        Text(item.$1, style: const TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ))
+              .toList(),
         ),
       ),
     );
