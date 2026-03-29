@@ -4,7 +4,7 @@ import '../../widgets/app_scaffold.dart';
 import '../../widgets/action_button.dart';
 import '../../providers/contratos_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/app_colors.dart';
 
 /// Tela de análise financeira — chama API real e exibe resultado
 class AnaliseFinanceiraScreen extends ConsumerStatefulWidget {

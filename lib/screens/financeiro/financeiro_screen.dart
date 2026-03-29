@@ -5,7 +5,7 @@ import '../../widgets/roleta_widget.dart';
 import '../../widgets/metric_card.dart';
 import '../../providers/financeiro_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/app_colors.dart';
 
 /// Controle financeiro com 3 abas
 class FinanceiroScreen extends ConsumerWidget {
@@ -150,7 +150,7 @@ class _OperacionalTab extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: tipo,
+                initialValue: tipo,
                 decoration: const InputDecoration(labelText: 'Tipo'),
                 items: const [
                   DropdownMenuItem(value: 'fixo', child: Text('Fixo')),

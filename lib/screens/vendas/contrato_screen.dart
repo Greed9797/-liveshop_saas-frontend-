@@ -6,7 +6,7 @@ import '../../models/cliente.dart';
 import '../../providers/contratos_provider.dart';
 import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/app_colors.dart';
 
 /// Tela de contrato digital com assinatura inline
 class ContratoScreen extends ConsumerStatefulWidget {

@@ -5,7 +5,7 @@ import '../../widgets/metric_card.dart';
 import '../../providers/excelencia_provider.dart';
 import '../../models/excelencia.dart' show ExcelenciaData;
 import '../../routes/app_routes.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/app_colors.dart';
 
 /// Programa de excelência com métricas e cálculo de ROI
 class ExcelenciaScreen extends ConsumerWidget {

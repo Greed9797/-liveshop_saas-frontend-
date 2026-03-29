@@ -1,118 +1,117 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 
-class MoneyCard extends StatelessWidget {
+class MoneyCard extends StatefulWidget {
   final double total;
   final double bruto;
-  final double liquido;
-  final VoidCallback? onTap;
+  final double futuro;
 
   const MoneyCard({
     super.key,
     required this.total,
     required this.bruto,
-    required this.liquido,
-    this.onTap,
+    required this.futuro,
   });
 
   @override
+  State<MoneyCard> createState() => _MoneyCardState();
+}
+
+class _MoneyCardState extends State<MoneyCard> {
+  bool _isVisible = false;
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: [
-              AppColors.primary,
-              AppColors.primary.withValues(alpha: 0.8)
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'FATURAMENTO DO MÊS',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _AnimatedMoneyText(
-              value: total,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Card(
+      color: const Color(0xFFBDBDBD), // Cinza da referência
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               children: [
-                _buildLabelValue('FAT BRUTO', bruto),
-                _buildLabelValue('FAT LÍQUIDO', liquido),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('TOTAL:',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black54)),
+                    const Spacer(),
+                    IconButton(
+                      icon: Icon(
+                          _isVisible ? Icons.visibility : Icons.visibility_off,
+                          size: 20),
+                      onPressed: () => setState(() => _isVisible = !_isVisible),
+                    ),
+                  ],
+                ),
+                Text(
+                  _isVisible
+                      ? 'R\$ ${widget.total.toStringAsFixed(2).replaceAll('.', ',')}'
+                      : 'R\$ *****',
+                  style: const TextStyle(
+                      fontSize: 28, fontWeight: FontWeight.w900),
+                ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLabelValue(String label, double value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 10),
-        ),
-        _AnimatedMoneyText(
-          value: value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
           ),
-        ),
-      ],
+          const Divider(height: 1, color: Colors.black12),
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _SubValue(
+                    label: 'FATURAMENTO BRUTO',
+                    value: widget.bruto,
+                    isVisible: _isVisible,
+                  ),
+                ),
+                const VerticalDivider(width: 1, color: Colors.black12),
+                Expanded(
+                  child: _SubValue(
+                    label: 'RECEITAS FUTURAS',
+                    value: widget.futuro,
+                    isVisible: _isVisible,
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
     );
   }
 }
 
-class _AnimatedMoneyText extends StatelessWidget {
+class _SubValue extends StatelessWidget {
+  final String label;
   final double value;
-  final TextStyle style;
+  final bool isVisible;
 
-  const _AnimatedMoneyText({required this.value, required this.style});
+  const _SubValue(
+      {required this.label, required this.value, required this.isVisible});
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: value),
-      duration: const Duration(seconds: 1),
-      curve: Curves.easeOutCubic,
-      builder: (context, val, child) {
-        return Text(
-          'R\$ ${val.toStringAsFixed(2).replaceAll('.', ',')}',
-          style: style,
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      child: Column(
+        children: [
+          Text(
+              isVisible
+                  ? 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}'
+                  : 'R\$ *****',
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 4),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 9,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 }

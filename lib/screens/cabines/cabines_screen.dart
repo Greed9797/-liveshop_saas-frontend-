@@ -8,7 +8,7 @@ import '../../providers/clientes_provider.dart';
 import '../../models/cabine.dart';
 import '../../models/cliente.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/app_colors.dart';
 
 /// Tela expandida de gerenciamento de cabines
 class CabinesScreen extends ConsumerWidget {
@@ -100,7 +100,7 @@ class _CabineExpandedCard extends ConsumerWidget {
                 onPressed: () => _showIniciarDialog(context, ref),
               )
             else
-              ActionButton(
+              const ActionButton(
                 label: 'MANUTENÇÃO',
                 outlined: true,
                 color: Colors.grey,
@@ -168,7 +168,7 @@ class _CabineExpandedCard extends ConsumerWidget {
           content: clientes.isEmpty
               ? const Text('Nenhum cliente ativo disponível.')
               : DropdownButtonFormField<Cliente>(
-                  value: clienteSelecionado,
+                  initialValue: clienteSelecionado,
                   hint: const Text('Selecionar cliente'),
                   items: clientes
                       .where((c) => c.status == 'ativo')

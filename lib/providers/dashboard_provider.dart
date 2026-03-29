@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/dashboard.dart';
@@ -34,7 +35,7 @@ class DashboardNotifier extends AsyncNotifier<DashboardData> {
           state = AsyncValue.data(newData);
         }
       } catch (e) {
-        print('Erro no polling do dashboard: $e');
+        debugPrint('Erro no polling do dashboard: $e');
       }
     });
   }

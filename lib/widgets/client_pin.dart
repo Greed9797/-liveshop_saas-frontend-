@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
 
 /// Pin do mapa por status do cliente
 class ClientPin extends StatelessWidget {

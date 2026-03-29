@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
 
 /// Animação de "roleta" ao trocar valores de faturamento
 class RoletaWidget extends StatefulWidget {

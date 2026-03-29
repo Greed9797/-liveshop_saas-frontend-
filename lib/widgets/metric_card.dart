@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
 
 /// Card de métrica com ícone, label e valor
 class MetricCard extends StatelessWidget {

@@ -4,7 +4,7 @@ import '../../widgets/app_scaffold.dart';
 import '../../widgets/action_button.dart';
 import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/app_colors.dart';
 
 /// Formulário de cadastro de novo cliente
 class CadastroClienteScreen extends ConsumerStatefulWidget {

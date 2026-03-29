@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
 
 /// Botão de ação padrão do sistema
 class ActionButton extends StatelessWidget {

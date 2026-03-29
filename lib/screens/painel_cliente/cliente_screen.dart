@@ -4,7 +4,7 @@ import '../../widgets/app_scaffold.dart';
 import '../../widgets/metric_card.dart';
 import '../../providers/cliente_dashboard_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/app_colors.dart';
 
 /// Painel do cliente parceiro com métricas e live em andamento
 class ClienteScreen extends ConsumerWidget {
@@ -53,21 +53,21 @@ class _ClienteContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 28,
               backgroundColor: AppColors.primary,
               child: Icon(Icons.store, color: Colors.white, size: 28),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Minha Loja',
+                Text('Minha Loja',
                     style:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-                const Text('Visão Geral do Parceiro',
+                Text('Visão Geral do Parceiro',
                     style: TextStyle(color: Colors.grey, fontSize: 13)),
               ],
             ),

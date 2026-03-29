@@ -5,7 +5,7 @@ import '../../widgets/status_badge.dart';
 import '../../widgets/metric_card.dart';
 import '../../providers/franqueado_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/app_colors.dart';
 
 /// Painel master do franqueador — visão de todas as unidades
 class FranqueadoScreen extends ConsumerWidget {

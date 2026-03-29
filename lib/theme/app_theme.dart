@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-export 'app_colors.dart';
 import 'app_colors.dart';
 
 final ThemeData appTheme = ThemeData(
@@ -8,21 +7,39 @@ final ThemeData appTheme = ThemeData(
   colorScheme: ColorScheme.fromSeed(
     seedColor: AppColors.primary,
     primary: AppColors.primary,
-    surface: AppColors.background,
+    surface: AppColors.surface,
+    onSurface: AppColors.textPrimary,
   ),
   scaffoldBackgroundColor: AppColors.background,
-  textTheme: GoogleFonts.interTextTheme(),
-  cardTheme: CardThemeData(
+  textTheme: GoogleFonts.interTextTheme().copyWith(
+    headlineMedium: const TextStyle(
+      color: AppColors.textPrimary,
+      fontWeight: FontWeight.bold,
+    ),
+    titleLarge: const TextStyle(
+      color: AppColors.textPrimary,
+      fontWeight: FontWeight.w600,
+    ),
+  ),
+  appBarTheme: const AppBarTheme(
+    backgroundColor: AppColors.headerBlack,
+    foregroundColor: Colors.white,
     elevation: 0,
+    centerTitle: true,
+  ),
+  cardTheme: CardThemeData(
+    elevation: 2,
+    margin: EdgeInsets.zero,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
     ),
     color: Colors.white,
-    shadowColor: Colors.black.withValues(alpha: 0.05),
   ),
-  dialogTheme: DialogThemeData(
+  drawerTheme: const DrawerThemeData(
+    backgroundColor: Colors.white,
+    elevation: 0,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.zero,
     ),
   ),
 );

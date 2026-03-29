@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
@@ -119,7 +120,7 @@ class ClienteDashboardNotifier extends AsyncNotifier<ClienteDashboard> {
           state = AsyncValue.data(newData); // Atualiza silenciosamente
         }
       } catch (e) {
-        print('Erro no polling do cliente: $e');
+        debugPrint('Erro no polling do cliente: $e');
       }
     });
 

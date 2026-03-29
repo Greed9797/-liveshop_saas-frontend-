@@ -30,11 +30,11 @@ class StatusBadge extends StatelessWidget {
     'negociacao': {'color': AppColors.info, 'label': 'NEGOCIAÇÃO'},
     'inadimplente': {'color': AppColors.danger, 'label': 'INADIMPLENTE'},
     'recomendacao': {'color': AppColors.lilac, 'label': 'RECOMENDAÇÃO'},
-    'disponivel': {'color': Color(0xFF9E9E9E), 'label': 'DISPONÍVEL'},
+    'disponivel': {'color': const Color(0xFF9E9E9E), 'label': 'DISPONÍVEL'},
     'pendente': {'color': AppColors.warning, 'label': 'PENDENTE'},
     'pago': {'color': AppColors.success, 'label': 'PAGO'},
     'vencido': {'color': AppColors.danger, 'label': 'VENCIDO'},
     'suspenso': {'color': AppColors.danger, 'label': 'SUSPENSO'},
-    'default': {'color': Color(0xFF9E9E9E), 'label': 'N/A'},
+    'default': {'color': const Color(0xFF9E9E9E), 'label': 'N/A'},
   };
 }

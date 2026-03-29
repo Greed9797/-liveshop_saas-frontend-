@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
 import 'action_button.dart';
 
 /// Card de lead com botão "PEGAR LEAD"

@@ -5,160 +5,210 @@ import '../theme/app_colors.dart';
 class AppScaffold extends StatelessWidget {
   final Widget child;
   final String currentRoute;
+  final String? userName;
 
-  const AppScaffold(
-      {super.key, required this.child, required this.currentRoute});
+  const AppScaffold({
+    super.key,
+    required this.child,
+    required this.currentRoute,
+    this.userName = 'FVC PROMOCOES DE VENDAS LTDA',
+  });
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 800;
-
-        if (isDesktop) {
-          return Scaffold(
-            body: Row(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'LIVESHOP', // Logo placeholder
+          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded,
+                color: AppColors.primary),
+            onPressed: () {},
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      drawer: _buildDrawer(context),
+      body: Column(
+        children: [
+          // Faixa Amarela de Saudação (Estilo Referência)
+          Container(
+            width: double.infinity,
+            color: AppColors.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
               children: [
-                NavigationRail(
-                  selectedIndex: _getSelectedIndex(currentRoute, isDesktop),
-                  onDestinationSelected: (idx) =>
-                      _navigateToIndex(context, idx, isDesktop),
-                  labelType: NavigationRailLabelType.all,
-                  selectedIconTheme:
-                      const IconThemeData(color: AppColors.primary),
-                  selectedLabelTextStyle: const TextStyle(
-                      color: AppColors.primary, fontWeight: FontWeight.bold),
-                  destinations: const [
-                    NavigationRailDestination(
-                        icon: Icon(Icons.dashboard_outlined),
-                        selectedIcon: Icon(Icons.dashboard),
-                        label: Text('Home')),
-                    NavigationRailDestination(
-                        icon: Icon(Icons.videocam_outlined),
-                        selectedIcon: Icon(Icons.videocam),
-                        label: Text('Cabines')),
-                    NavigationRailDestination(
-                        icon: Icon(Icons.description_outlined),
-                        label: Text('Vendas')),
-                    NavigationRailDestination(
-                        icon: Icon(Icons.person_search_outlined),
-                        label: Text('Leads')),
-                    NavigationRailDestination(
-                        icon: Icon(Icons.receipt_outlined),
-                        label: Text('Boletos')),
-                    NavigationRailDestination(
-                        icon: Icon(Icons.map_outlined),
-                        label: Text('Carteira')),
-                    NavigationRailDestination(
-                        icon: Icon(Icons.menu_book_outlined),
-                        label: Text('Manuais')),
-                    NavigationRailDestination(
-                        icon: Icon(Icons.star_outline_rounded),
-                        label: Text('Recomendações')),
+                const CircleAvatar(
+                  backgroundColor: Colors.white24,
+                  child: Icon(Icons.person, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Oi, $userName',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const Text(
+                      'Franqueado LiveShop',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
                   ],
                 ),
-                const VerticalDivider(thickness: 1, width: 1),
+              ],
+            ),
+          ),
+          // Área de Conteúdo
+          Expanded(
+            child: Row(
+              children: [
+                // No iPad Landscape da referência, o menu é persistente ou um Drawer largo
+                // Vou manter o LayoutBuilder para suportar Desktop/Tablet com menu fixo
+                LayoutBuilder(builder: (context, constraints) {
+                  if (MediaQuery.of(context).size.width >= 1000) {
+                    return _buildPermanentMenu(context);
+                  }
+                  return const SizedBox.shrink();
+                }),
                 Expanded(child: child),
               ],
             ),
-          );
-        }
-
-        // Mobile
-        return Scaffold(
-          body: child,
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _getSelectedIndex(currentRoute, isDesktop),
-            onTap: (idx) => _navigateToIndex(context, idx, isDesktop),
-            selectedItemColor: AppColors.primary,
-            unselectedItemColor: Colors.grey,
-            type: BottomNavigationBarType.fixed,
-            items: const [
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.dashboard_outlined), label: 'Home'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.videocam_outlined), label: 'Cabines'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.description_outlined), label: 'Vendas'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.person_search_outlined), label: 'Leads'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.receipt_outlined), label: 'Boletos'),
-            ],
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
-  int _getSelectedIndex(String route, bool isDesktop) {
-    if (route == AppRoutes.home) return 0;
-    if (route.startsWith(AppRoutes.cabines)) return 1;
-    if (route.startsWith(AppRoutes.vendas)) return 2;
-    if (route == AppRoutes.leads) return 3;
-    if (route == AppRoutes.boletos) return 4;
-
-    if (isDesktop) {
-      if (route == AppRoutes.carteiraClientes) return 5;
-      if (route == AppRoutes.manuais) return 6;
-      if (route == AppRoutes.recomendacoes) return 7;
-    }
-
-    return 0;
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      child: _MenuContent(currentRoute: currentRoute),
+    );
   }
 
-  void _navigateToIndex(BuildContext context, int index, bool isDesktop) {
-    String route = AppRoutes.home;
+  Widget _buildPermanentMenu(BuildContext context) {
+    return Container(
+      width: 250,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(right: BorderSide(color: Colors.black12)),
+      ),
+      child: _MenuContent(currentRoute: currentRoute),
+    );
+  }
+}
 
-    if (isDesktop) {
-      switch (index) {
-        case 0:
-          route = AppRoutes.home;
-          break;
-        case 1:
-          route = AppRoutes.cabines;
-          break;
-        case 2:
-          route = AppRoutes.vendas;
-          break;
-        case 3:
-          route = AppRoutes.leads;
-          break;
-        case 4:
-          route = AppRoutes.boletos;
-          break;
-        case 5:
-          route = AppRoutes.carteiraClientes;
-          break;
-        case 6:
-          route = AppRoutes.manuais;
-          break;
-        case 7:
-          route = AppRoutes.recomendacoes;
-          break;
-      }
-    } else {
-      switch (index) {
-        case 0:
-          route = AppRoutes.home;
-          break;
-        case 1:
-          route = AppRoutes.cabines;
-          break;
-        case 2:
-          route = AppRoutes.vendas;
-          break;
-        case 3:
-          route = AppRoutes.leads;
-          break;
-        case 4:
-          route = AppRoutes.boletos;
-          break;
-      }
-    }
+class _MenuContent extends StatelessWidget {
+  final String currentRoute;
+  const _MenuContent({required this.currentRoute});
 
-    if (currentRoute != route) {
-      Navigator.pushReplacementNamed(context, route);
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 10),
+        _MenuItem(
+            icon: Icons.home_rounded,
+            label: 'HOME',
+            route: AppRoutes.home,
+            isSelected: currentRoute == AppRoutes.home),
+        _MenuItem(
+            icon: Icons.description_outlined,
+            label: 'VENDAS EM ANDAMENTO',
+            route: AppRoutes.vendas,
+            isSelected: currentRoute == AppRoutes.vendas),
+        _MenuItem(
+            icon: Icons.analytics_outlined,
+            label: 'ANÁLISE DE VENDAS',
+            route: AppRoutes.analise,
+            isSelected: currentRoute == AppRoutes.analise),
+        const _MenuItem(
+            icon: Icons.emoji_events_outlined,
+            label: 'RECONHECIMENTOS',
+            route: null,
+            isSelected: false),
+        _MenuItem(
+            icon: Icons.receipt_outlined,
+            label: 'MEUS BOLETOS',
+            route: AppRoutes.boletos,
+            isSelected: currentRoute == AppRoutes.boletos,
+            badge: '1'),
+        _MenuItem(
+            icon: Icons.person_search_outlined,
+            label: 'LEADS',
+            route: AppRoutes.leads,
+            isSelected: currentRoute == AppRoutes.leads),
+        _MenuItem(
+            icon: Icons.menu_book_outlined,
+            label: 'MANUAIS',
+            route: AppRoutes.manuais,
+            isSelected: currentRoute == AppRoutes.manuais),
+        _MenuItem(
+            icon: Icons.group_outlined,
+            label: 'RECOMENDAÇÕES',
+            route: AppRoutes.recomendacoes,
+            isSelected: currentRoute == AppRoutes.recomendacoes),
+        const Spacer(),
+        const _MenuItem(
+            icon: Icons.logout,
+            label: 'Sair',
+            route: AppRoutes.login,
+            isSelected: false),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+}
+
+class _MenuItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? route;
+  final bool isSelected;
+  final String? badge;
+
+  const _MenuItem({
+    required this.icon,
+    required this.label,
+    this.route,
+    required this.isSelected,
+    this.badge,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: isSelected ? Colors.black : Colors.black54),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+          color: isSelected ? Colors.black : Colors.black54,
+        ),
+      ),
+      trailing: badge != null
+          ? Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                  color: AppColors.danger, shape: BoxShape.circle),
+              child: Text(badge!,
+                  style: const TextStyle(color: Colors.white, fontSize: 10)),
+            )
+          : null,
+      onTap: () {
+        if (route != null) Navigator.pushReplacementNamed(context, route!);
+      },
+    );
   }
 }
