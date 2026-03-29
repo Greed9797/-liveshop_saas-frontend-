@@ -13,9 +13,11 @@ import '../screens/boletos/boletos_screen.dart';
 import '../screens/excelencia/excelencia_screen.dart';
 import '../screens/recomendacoes/recomendacoes_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
+import '../screens/auth/login_screen.dart';
 
 /// Rotas nomeadas da aplicação
 class AppRoutes {
+  static const login           = '/login';
   static const home            = '/';
   static const vendas          = '/vendas';
   static const cadastroCliente = '/vendas/cadastro';
@@ -32,6 +34,7 @@ class AppRoutes {
   static const manuais         = '/manuais';
 
   static Map<String, WidgetBuilder> get routes => {
+    login:           (_) => const LoginScreen(),
     home:            (_) => const HomeScreen(),
     vendas:          (_) => const VendasScreen(),
     cadastroCliente: (_) => const CadastroClienteScreen(),

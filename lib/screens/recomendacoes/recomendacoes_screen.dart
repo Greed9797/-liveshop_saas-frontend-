@@ -1,30 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/action_button.dart';
-import '../../mock/mock_data.dart';
+import '../../providers/recomendacoes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_theme.dart';
 
 /// Painel de recomendações com símbolo lilás
-class RecomendacoesScreen extends StatefulWidget {
+class RecomendacoesScreen extends ConsumerWidget {
   const RecomendacoesScreen({super.key});
-  @override
-  State<RecomendacoesScreen> createState() => _RecomendacoesScreenState();
-}
-
-class _RecomendacoesScreenState extends State<RecomendacoesScreen> {
-  late List<Map<String, dynamic>> _recomendacoes;
 
   @override
-  void initState() {
-    super.initState();
-    _recomendacoes = List<Map<String, dynamic>>.from(
-      mockRecomendacoes.map((r) => Map<String, dynamic>.from(r as Map)),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recsAsync = ref.watch(recomendacoesProvider);
+
+    return AppScaffold(
+      currentRoute: AppRoutes.recomendacoes,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Recomendações',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+                ActionButton(
+                  label: 'ADICIONAR',
+                  icon: Icons.add,
+                  color: AppColors.lilac,
+                  onPressed: () => _showAddDialog(context, ref),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: recsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text('Erro: $e'),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => ref.read(recomendacoesProvider.notifier).refresh(),
+                      child: const Text('Tentar novamente'),
+                    ),
+                  ]),
+                ),
+                data: (recs) => recs.isEmpty
+                    ? const Center(
+                        child: Text('Nenhuma recomendação ainda.',
+                            style: TextStyle(color: Colors.grey)))
+                    : ListView.separated(
+                        itemCount: recs.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (_, i) {
+                          final r = recs[i];
+                          return ListTile(
+                            leading: const Icon(Icons.diamond_outlined, color: AppColors.lilac),
+                            title: Text(r.nomeIndicado,
+                                style: const TextStyle(fontWeight: FontWeight.w500)),
+                            subtitle: Text('Indicado por: ${r.recomendante}'),
+                            trailing: r.status == 'pendente'
+                                ? TextButton(
+                                    onPressed: () => _converter(context, ref, r.id),
+                                    child: const Text('INICIAR NEGOCIAÇÃO',
+                                        style: TextStyle(fontSize: 11)),
+                                  )
+                                : Chip(
+                                    label: Text(r.status.toUpperCase(),
+                                        style: const TextStyle(fontSize: 10)),
+                                    backgroundColor: r.status == 'convertido'
+                                        ? AppColors.success.withOpacity(0.15)
+                                        : Colors.grey.shade200,
+                                    labelStyle: TextStyle(
+                                      color: r.status == 'convertido'
+                                          ? AppColors.success
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  void _showAddDialog() {
-    final indicadoCtrl    = TextEditingController();
+  void _showAddDialog(BuildContext context, WidgetRef ref) {
+    final indicadoCtrl = TextEditingController();
     final recomendanteCtrl = TextEditingController();
     showDialog(
       context: context,
@@ -52,14 +120,21 @@ class _RecomendacoesScreenState extends State<RecomendacoesScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () {
-              if (indicadoCtrl.text.isNotEmpty) {
-                setState(() => _recomendacoes.add({
-                  'indicado':     indicadoCtrl.text,
-                  'recomendante': recomendanteCtrl.text,
-                }));
-              }
+            onPressed: () async {
+              if (indicadoCtrl.text.isEmpty) return;
               Navigator.pop(context);
+              try {
+                await ref.read(recomendacoesProvider.notifier).criar({
+                  'nome_indicado': indicadoCtrl.text,
+                  'recomendante': recomendanteCtrl.text,
+                });
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao salvar: $e')),
+                  );
+                }
+              }
             },
             child: const Text('SALVAR', style: TextStyle(color: Colors.white)),
           ),
@@ -68,48 +143,19 @@ class _RecomendacoesScreenState extends State<RecomendacoesScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return AppScaffold(
-      currentRoute: AppRoutes.recomendacoes,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Recomendações',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
-                ActionButton(
-                  label: 'ADICIONAR',
-                  icon: Icons.add,
-                  color: AppColors.lilac,
-                  onPressed: _showAddDialog,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.separated(
-                itemCount: _recomendacoes.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (_, i) {
-                  final r = _recomendacoes[i];
-                  return ListTile(
-                    leading: const Icon(Icons.diamond_outlined, color: AppColors.lilac),
-                    title: Text(r['indicado'] as String,
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
-                    subtitle: Text('Indicado por: ${r['recomendante']}'),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _converter(BuildContext context, WidgetRef ref, String id) async {
+    try {
+      final clienteId = await ref.read(recomendacoesProvider.notifier).converter(id);
+      if (context.mounted) {
+        Navigator.pushNamed(context, AppRoutes.cadastroCliente,
+            arguments: {'clienteId': clienteId});
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao converter: $e')),
+        );
+      }
+    }
   }
 }
