@@ -1,17 +1,57 @@
-# liveshop_saas
+# LiveShop SaaS — Frontend Flutter
 
-A new Flutter project.
+SaaS multi-tenant para gestão de franquias de estúdios de Live Shop (TikTok Live).
+Permite que franqueados e parceiros acompanhem faturamento, cabines ao vivo, NPS, chamados e rankings em tempo real.
 
-## Getting Started
+## Stack
 
-This project is a starting point for a Flutter application.
+- Flutter (Dart) + Material 3
+- Riverpod (estado e async)
+- shimmer (loading states)
+- flutter_map (mapa de carteira de clientes)
 
-A few resources to get you started if this is your first Flutter project:
+## Como rodar
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter pub get
+flutter run -d chrome --web-browser-flag "--window-size=1200,800"
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Usuário de teste: `franqueado@liveshop.com`
+
+## Branch ativa
+
+```bash
+git checkout feat-ui-ux-architecture-v2
+```
+
+## O que foi feito
+
+- UI/UX estilo EMIVE: Amarelo (#FFC107) / Preto / Cinza
+- AppScaffold responsivo: menu lateral (desktop) / BottomNavigationBar (mobile)
+- HomeScreen com CustomScrollView + Slivers (rolagem 120fps)
+- MoneyCard com botão de visibilidade (ocultar valores)
+- NpsGauge, ChamadosCard, ExcelenciaCard, RankingDestaque
+- Loading com shimmer sobre AsyncNotifier
+- Rota separada `/carteira-clientes` com flutter_map (lazy)
+
+## Próximos passos
+
+1. **Conectar widgets ao backend** — NpsGauge, ChamadosCard, ExcelenciaCard consumindo `GET /v1/home/dashboard`
+2. **Corrigir layout mobile** — painel de cabines espremido no mobile, resolver com expansão em Slivers
+3. **Tela de Cabines ao Vivo** — listar cabines ativas com status em tempo real
+4. **Autenticação real** — trocar mock por JWT vindo do backend
+5. **Tela do Parceiro** — dashboard consumindo `GET /v1/cliente/dashboard`
+
+## Estrutura
+
+```
+lib/
+  models/        # DashboardData e demais modelos
+  providers/     # Riverpod providers (dashboardProvider, etc.)
+  screens/       # Telas organizadas por módulo
+  widgets/       # Componentes reutilizáveis globais
+  theme/         # AppColors, AppTheme
+  routes/        # AppRoutes
+  mock/          # mock_data.dart (dados temporários até integração)
+```
