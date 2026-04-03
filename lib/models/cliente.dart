@@ -9,6 +9,11 @@ class Cliente {
   final double fatAnual;
   final String? nicho;
   final int score;
+  // Novos campos (Módulo 1 + 2)
+  final String? cep;
+  final String? cidade;
+  final String? estado;
+  final String? siga;
 
   const Cliente({
     required this.id,
@@ -21,6 +26,10 @@ class Cliente {
     required this.fatAnual,
     this.nicho,
     required this.score,
+    this.cep,
+    this.cidade,
+    this.estado,
+    this.siga,
   });
 
   factory Cliente.fromJson(Map<String, dynamic> j) => Cliente(
@@ -34,5 +43,9 @@ class Cliente {
     fatAnual: (j['fat_anual'] as num? ?? 0).toDouble(),
     nicho:    j['nicho'] as String?,
     score:    (j['score'] as num? ?? 0).toInt(),
+    cep:      j['cep'] as String?,
+    cidade:   j['cidade'] as String?,
+    estado:   j['estado'] as String?,
+    siga:     j['siga'] as String?,
   );
 }
