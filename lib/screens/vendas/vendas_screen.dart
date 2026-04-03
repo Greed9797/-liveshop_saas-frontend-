@@ -9,7 +9,6 @@ import '../../providers/recomendacoes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_colors.dart';
 
-/// Tela de vendas com mapa do Brasil e pins de clientes
 class VendasScreen extends ConsumerStatefulWidget {
   const VendasScreen({super.key});
 
@@ -18,21 +17,83 @@ class VendasScreen extends ConsumerStatefulWidget {
 }
 
 class _VendasScreenState extends ConsumerState<VendasScreen> {
-  String? _filtroStatus; // null = todos
+  final Set<String> _activeFilters = {};
 
   static const _statusOptions = [
-    (null, 'Todos'),
-    ('negociacao', 'Negociação'),
-    ('enviado', 'Enviado'),
-    ('em_analise', 'Em Análise'),
-    ('ativo', 'Ativo'),
-    ('inadimplente', 'Inadimplente'),
+    ('negociacao',   'Negociação',      AppColors.info),
+    ('enviado',      'Enviado',         AppColors.warning),
+    ('em_analise',   'Em Análise',      AppColors.warning),
+    ('ativo',        'Ativo',           AppColors.success),
+    ('inadimplente', 'Inadimplente',    AppColors.danger),
+    ('recomendacao', 'Recomendação',    AppColors.lilac),
   ];
+
+  bool _clientePassaFiltro(String status) {
+    if (_activeFilters.isEmpty) return true;
+    return _activeFilters.contains(status);
+  }
+
+  void _abrirFiltros() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text('Filtrar por Status', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {
+                      setModalState(() {});
+                      setState(() => _activeFilters.clear());
+                    },
+                    child: const Text('Limpar tudo'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ..._statusOptions.map((opt) {
+                final (value, label, color) = opt;
+                return CheckboxListTile(
+                  value: _activeFilters.contains(value),
+                  title: Row(
+                    children: [
+                      Icon(Icons.circle, color: color, size: 12),
+                      const SizedBox(width: 8),
+                      Text(label, style: const TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                  onChanged: (checked) {
+                    setModalState(() {
+                      checked == true ? _activeFilters.add(value) : _activeFilters.remove(value);
+                    });
+                    setState(() {});
+                  },
+                  controlAffinity: ListTileControlAffinity.leading,
+                  dense: true,
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final clientesAsync = ref.watch(clientesProvider);
-    final recsAsync = ref.watch(recomendacoesProvider);
+    final clientesAsync  = ref.watch(clientesProvider);
+    final recsAsync      = ref.watch(recomendacoesProvider);
+    final hasFilter      = _activeFilters.isNotEmpty;
 
     return AppScaffold(
       currentRoute: AppRoutes.vendas,
@@ -52,58 +113,66 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
               ),
               MarkerLayer(
                 markers: [
-                  // Pins de clientes
                   ...clientesAsync.valueOrNull
                           ?.where((c) =>
                               c.lat != null &&
                               c.lng != null &&
-                              (_filtroStatus == null ||
-                                  c.status == _filtroStatus))
+                              _clientePassaFiltro(c.status))
                           .map((c) => Marker(
                                 width: 120,
                                 height: 60,
                                 point: LatLng(c.lat!, c.lng!),
-                                child: ClientPin(
-                                  status: c.status,
-                                  nome: c.nome,
-                                ),
+                                child: ClientPin(status: c.status, nome: c.nome),
                               ))
-                          .toList() ??
-                      [],
-                  // Pins de recomendações (se filtro null ou 'recomendacao')
-                  if (_filtroStatus == null)
+                          .toList() ?? [],
+                  if (_activeFilters.isEmpty || _activeFilters.contains('recomendacao'))
                     ...recsAsync.valueOrNull
-                            ?.where((r) =>
-                                r.lat != null &&
-                                r.lng != null &&
-                                r.status == 'pendente')
+                            ?.where((r) => r.lat != null && r.lng != null && r.status == 'pendente')
                             .map((r) => Marker(
                                   width: 120,
                                   height: 60,
                                   point: LatLng(r.lat!, r.lng!),
-                                  child: ClientPin(
-                                    status: 'recomendacao',
-                                    nome: r.nomeIndicado,
-                                  ),
+                                  child: ClientPin(status: 'recomendacao', nome: r.nomeIndicado),
                                 ))
-                            .toList() ??
-                        [],
+                            .toList() ?? [],
                 ],
               ),
             ],
           ),
-          // Filtros de status
+          // Botão flutuante de filtros
           Positioned(
             top: 16,
             left: 16,
-            child: _StatusFilter(
-              selected: _filtroStatus,
-              options: _statusOptions,
-              onChanged: (s) => setState(() => _filtroStatus = s),
+            child: Material(
+              elevation: 3,
+              borderRadius: BorderRadius.circular(8),
+              color: hasFilter ? AppColors.primary : Colors.white,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: _abrirFiltros,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.tune, size: 16, color: hasFilter ? Colors.white : AppColors.textPrimary),
+                      const SizedBox(width: 6),
+                      Text(
+                        hasFilter ? 'Filtros (${_activeFilters.length})' : '⚙️ Filtros',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: hasFilter ? Colors.white : AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
           const Positioned(
-            top: 16,
+            bottom: 80,
             right: 16,
             child: _MapLegend(),
           ),
@@ -112,41 +181,11 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
             right: 24,
             child: FloatingActionButton(
               backgroundColor: AppColors.primary,
-              onPressed: () =>
-                  Navigator.pushNamed(context, AppRoutes.cadastroCliente),
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.cadastroCliente),
               child: const Icon(Icons.add, color: Colors.white),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StatusFilter extends StatelessWidget {
-  final String? selected;
-  final List<(String?, String)> options;
-  final ValueChanged<String?> onChanged;
-  const _StatusFilter(
-      {required this.selected, required this.options, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: DropdownButton<String?>(
-          value: selected,
-          underline: const SizedBox.shrink(),
-          isDense: true,
-          items: options
-              .map((o) => DropdownMenuItem<String?>(
-                    value: o.$1,
-                    child: Text(o.$2, style: const TextStyle(fontSize: 13)),
-                  ))
-              .toList(),
-          onChanged: onChanged,
-        ),
       ),
     );
   }
@@ -157,12 +196,12 @@ class _MapLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      ('Negociação', AppColors.info),
+    const items = [
+      ('Negociação',       AppColors.info),
       ('Contrato Enviado', AppColors.warning),
-      ('Ativo', AppColors.success),
-      ('Inadimplente', AppColors.danger),
-      ('Recomendação', AppColors.lilac),
+      ('Ativo',            AppColors.success),
+      ('Inadimplente',     AppColors.danger),
+      ('Recomendação',     AppColors.lilac),
     ];
     return Card(
       child: Padding(
