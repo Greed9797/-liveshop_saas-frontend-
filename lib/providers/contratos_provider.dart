@@ -56,7 +56,10 @@ class ContratosNotifier extends Notifier<void> {
   }
 
   Future<void> arquivar(String id, {String? motivo}) async {
-    await ApiService.patch('/contratos/$id/arquivar', data: {'motivo': motivo});
+    await ApiService.patch(
+      '/contratos/$id/arquivar',
+      data: motivo != null ? {'motivo': motivo} : null,
+    );
   }
 
   Future<void> sinalizarRisco(String id) async {
@@ -70,7 +73,7 @@ final contratosProvider =
 // Provider para a tela de Análise de Crédito
 final analiseCreditoProvider = FutureProvider<List<Contrato>>((ref) async {
   final resp = await ApiService.get('/analise-credito');
-  return (resp.data as List)
+  return (resp.data as List? ?? [])
       .map((e) => Contrato.fromJson(e as Map<String, dynamic>))
       .toList();
 });

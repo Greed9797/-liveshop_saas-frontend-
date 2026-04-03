@@ -40,10 +40,10 @@ class Contrato {
 
   factory Contrato.fromJson(Map<String, dynamic> j) => Contrato(
     id:                  j['id'] as String,
-    clienteId:           j['cliente_id'] as String? ?? '',
+    clienteId:           j['cliente_id'] as String,
     status:              j['status'] as String,
-    valorFixo:           (j['valor_fixo'] as num? ?? 0).toDouble(),
-    comissaoPct:         (j['comissao_pct'] as num? ?? 0).toDouble(),
+    valorFixo:           (j['valor_fixo'] as num).toDouble(),
+    comissaoPct:         (j['comissao_pct'] as num).toDouble(),
     deRisco:             j['de_risco'] as bool? ?? false,
     isRiscoFranqueado:   j['is_risco_franqueado'] as bool? ?? false,
     assinadoEm:          j['assinado_em'] != null ? DateTime.parse(j['assinado_em'] as String) : null,
