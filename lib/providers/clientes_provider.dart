@@ -24,6 +24,11 @@ class ClientesNotifier extends AsyncNotifier<List<Cliente>> {
     state = AsyncData([cliente, ...state.valueOrNull ?? []]);
     return cliente;
   }
+
+  Future<Map<String, dynamic>> buscarCep(String cep) async {
+    final resp = await ApiService.get('/cep/$cep');
+    return resp.data as Map<String, dynamic>;
+  }
 }
 
 final clientesProvider =
