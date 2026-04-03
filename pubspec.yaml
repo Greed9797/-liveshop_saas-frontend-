@@ -13,6 +13,7 @@ dependencies:
   flutter_map: ^6.1.0
   latlong2: ^0.9.0
   flutter_riverpod: ^2.5.1
+  signature: ^5.4.0
   dio: ^5.4.3
   flutter_secure_storage: ^9.2.2
   url_launcher: ^6.3.0
