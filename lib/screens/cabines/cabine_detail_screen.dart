@@ -1,9 +1,15 @@
+import 'dart:async';
+
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
 import '../../providers/cabines/cabine_detail_provider.dart';
+import '../../providers/live_stream_provider.dart';
 import '../../theme/app_colors.dart';
 
-class CabineDetailScreen extends ConsumerWidget {
+class CabineDetailScreen extends ConsumerStatefulWidget {
   final String cabineId;
   final int cabineNumero;
 
@@ -14,440 +20,777 @@ class CabineDetailScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Escutamos o provider injetando a String do cabineId (Family)
-    final detailState = ref.watch(cabineDetailProvider(cabineId));
+  ConsumerState<CabineDetailScreen> createState() => _CabineDetailScreenState();
+}
+
+class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
+    with SingleTickerProviderStateMixin {
+  static final NumberFormat _currency =
+      NumberFormat.simpleCurrency(locale: 'pt_BR');
+
+  late final TabController _tabController;
+  Timer? _livePollingTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this)
+      ..addListener(_syncLivePolling);
+  }
+
+  @override
+  void dispose() {
+    _livePollingTimer?.cancel();
+    _tabController
+      ..removeListener(_syncLivePolling)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _syncLivePolling() {
+    final detail = ref.read(cabineDetailProvider(widget.cabineId)).valueOrNull;
+    final shouldPoll = _tabController.index == 0 &&
+        detail?.liveAtual != null &&
+        !_tabController.indexIsChanging;
+
+    if (shouldPoll) {
+      _livePollingTimer ??= Timer.periodic(const Duration(seconds: 30), (_) {
+        ref
+            .read(cabineDetailProvider(widget.cabineId).notifier)
+            .refreshLiveOnly();
+      });
+      return;
+    }
+
+    _livePollingTimer?.cancel();
+    _livePollingTimer = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<AsyncValue<CabineDetailState>>(
+        cabineDetailProvider(widget.cabineId), (_, next) {
+      final shouldPoll =
+          _tabController.index == 0 && next.valueOrNull?.liveAtual != null;
+      if (shouldPoll) {
+        _syncLivePolling();
+      } else {
+        _livePollingTimer?.cancel();
+        _livePollingTimer = null;
+      }
+    });
+
+    final detailState = ref.watch(cabineDetailProvider(widget.cabineId));
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text('Cabine $cabineNumero',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          'Cabine ${widget.cabineNumero.toString().padLeft(2, '0')}',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 1,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () =>
-                ref.read(cabineDetailProvider(cabineId).notifier).refresh(),
+            onPressed: () => ref
+                .read(cabineDetailProvider(widget.cabineId).notifier)
+                .refresh(),
           ),
           IconButton(
             icon: const Icon(Icons.close),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Live', icon: Icon(Icons.live_tv_outlined)),
+            Tab(text: 'Insights', icon: Icon(Icons.insights_outlined)),
+            Tab(text: 'Histórico', icon: Icon(Icons.history_outlined)),
+          ],
+        ),
       ),
       body: detailState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(
+        error: (error, _) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.error_outline, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Erro ao carregar dados da cabine: $err',
+              Text('Erro ao carregar dados da cabine: $error',
                   textAlign: TextAlign.center),
+              const SizedBox(height: 8),
               TextButton(
-                onPressed: () =>
-                    ref.read(cabineDetailProvider(cabineId).notifier).refresh(),
+                onPressed: () => ref
+                    .read(cabineDetailProvider(widget.cabineId).notifier)
+                    .refresh(),
                 child: const Text('Tentar novamente'),
-              )
+              ),
             ],
           ),
         ),
-        data: (data) {
-          final isAoVivo = data.liveAtual != null;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // --- SEÇÃO 1: LIVE ATUAL (Visível apenas se ao vivo) ---
-                if (isAoVivo) _buildLiveAtualSection(context, data.liveAtual!),
-
-                if (isAoVivo) const SizedBox(height: 32),
-
-                // --- SEÇÃO 2: HISTÓRICO DA CABINE (Sempre visível) ---
-                _buildHistoricoSection(context, data.historico!),
-              ],
-            ),
-          );
-        },
+        data: (detail) => TabBarView(
+          controller: _tabController,
+          children: [
+            _LiveTab(
+                liveAtual: detail.liveAtual, cabineNumero: widget.cabineNumero),
+            _InsightsTab(historico: detail.historico),
+            _HistoricoTab(historico: detail.historico),
+          ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildLiveAtualSection(BuildContext context, dynamic liveAtual) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(
-            color: Colors.green, width: 2), // Borda verde indicando "AO VIVO"
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header: Cabine 3 * AO VIVO * 1h 23min
-            Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
+class _LiveTab extends ConsumerWidget {
+  final CabineLiveAtual? liveAtual;
+  final int cabineNumero;
+
+  const _LiveTab({required this.liveAtual, required this.cabineNumero});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // SSE snapshot: dados em tempo real (null quando live não ativa ou stream sem dados ainda)
+    final snapshot = liveAtual != null
+        ? ref.watch(liveStreamProvider(liveAtual!.liveId)).valueOrNull
+        : null;
+
+    // Valores efetivos: SSE tem prioridade, polling é fallback
+    final viewerCount   = snapshot?.viewerCount  ?? liveAtual?.viewerCount  ?? 0;
+    final gmvAtual      = snapshot?.gmv          ?? liveAtual?.gmvAtual     ?? 0.0;
+    final totalOrders   = snapshot?.totalOrders   ?? liveAtual?.totalOrders  ?? 0;
+    final likesCount    = snapshot?.likesCount    ?? 0;
+    final commentsCount = snapshot?.commentsCount ?? 0;
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      child: liveAtual == null
+          ? _EmptyTabState(
+              key: const ValueKey('empty'),
+              icon: Icons.videocam_off_outlined,
+              title: 'Nenhuma live ativa nesta cabine',
+              description:
+                  'Quando a cabine entrar em operação ao vivo, as métricas em tempo real aparecerão aqui com atualização a cada 30 segundos.',
+            )
+          : SingleChildScrollView(
+              key: ValueKey(liveAtual!.liveId),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: AppColors.successGreen, width: 2),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      const Icon(Icons.circle, color: Colors.green, size: 12),
-                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.successGreen.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.circle,
+                                color: AppColors.successGreen, size: 12),
+                            SizedBox(width: 8),
+                            Text(
+                              'AO VIVO AGORA',
+                              style: TextStyle(
+                                color: AppColors.successGreen,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.timer_outlined, color: Colors.grey),
+                      const SizedBox(width: 4),
                       Text(
-                        'AO VIVO AGORA',
-                        style: TextStyle(
-                            color: Colors.green[800],
-                            fontWeight: FontWeight.bold),
+                        '${liveAtual!.duracaoMinutos} min',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ],
                   ),
-                ),
-                const Spacer(),
-                const Icon(Icons.timer_outlined, color: Colors.grey),
-                const SizedBox(width: 4),
-                Text(
-                  '${liveAtual.duracaoMinutos} min',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ],
-            ),
-            const Divider(height: 32),
-
-            // Grid 2x2 com dados principais
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMetricItem(
-                    icon: Icons.visibility,
-                    iconColor: Colors.blue,
-                    value: liveAtual.viewerCount.toString(),
-                    label: 'Espectadores',
+                  const Divider(height: 32),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    children: [
+                      _MetricCard(
+                        icon: Icons.visibility,
+                        iconColor: AppColors.infoBlue,
+                        value: '$viewerCount',
+                        label: 'Espectadores',
+                      ),
+                      _MetricCard(
+                        icon: Icons.attach_money,
+                        iconColor: AppColors.successGreen,
+                        value: _CabineDetailScreenState._currency.format(gmvAtual),
+                        label: 'GMV da live',
+                      ),
+                      _MetricCard(
+                        icon: Icons.shopping_cart,
+                        iconColor: AppColors.primaryOrange,
+                        value: '$totalOrders',
+                        label: 'Pedidos',
+                      ),
+                      _MetricCard(
+                        icon: Icons.inventory_2_outlined,
+                        iconColor: AppColors.lilac,
+                        value: liveAtual!.topProduto != null
+                            ? '${liveAtual!.topProduto!['quantidade']} un'
+                            : 'Nenhum',
+                        label: liveAtual!.topProduto != null
+                            ? liveAtual!.topProduto!['nome'] as String
+                            : 'Produto mais vendido',
+                      ),
+                      _MetricCard(
+                        icon: Icons.favorite_rounded,
+                        iconColor: AppColors.dangerRed,
+                        value: '$likesCount',
+                        label: 'Curtidas',
+                      ),
+                      _MetricCard(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        iconColor: AppColors.infoPurple,
+                        value: '$commentsCount',
+                        label: 'Comentários',
+                      ),
+                    ],
                   ),
-                ),
-                Expanded(
-                  child: _buildMetricItem(
-                    icon: Icons.attach_money,
-                    iconColor: Colors.green,
-                    value: 'R\$ ${liveAtual.gmvAtual.toStringAsFixed(2)}',
-                    label: 'GMV da live',
+                  const Divider(height: 32),
+                  Wrap(
+                    spacing: 24,
+                    runSpacing: 12,
+                    children: [
+                      Text(
+                        'Cliente: ${liveAtual!.clienteNome}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        'Closer: ${liveAtual!.apresentadorNome}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMetricItem(
-                    icon: Icons.shopping_cart,
-                    iconColor: Colors.orange,
-                    value: liveAtual.totalOrders.toString(),
-                    label: 'Pedidos na live',
-                  ),
-                ),
-                Expanded(
-                  child: _buildMetricItem(
-                    icon: Icons.inventory_2,
-                    iconColor: Colors.purple,
-                    value: liveAtual.topProduto != null
-                        ? '${liveAtual.topProduto['quantidade']} un'
-                        : 'Nenhum',
-                    label: liveAtual.topProduto != null
-                        ? liveAtual.topProduto['nome']
-                        : 'Produto mais vendido',
-                  ),
-                ),
-              ],
-            ),
-
-            const Divider(height: 32),
-
-            // Rodapé: Cliente e Apresentador
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Cliente: ${liveAtual.clienteNome}',
-                    style: const TextStyle(fontWeight: FontWeight.w500)),
-                Text('Apresentador: ${liveAtual.apresentadorNome}',
-                    style: const TextStyle(fontWeight: FontWeight.w500)),
-              ],
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetricItem(
-      {required IconData icon,
-      required Color iconColor,
-      required String value,
-      required String label}) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: iconColor, size: 28),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value,
-                style:
-                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            Text(label,
-                style: const TextStyle(color: Colors.grey, fontSize: 14)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHistoricoSection(BuildContext context, dynamic historico) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'HISTÓRICO DA CABINE (Últimos 90 dias)',
-          style: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Esquerda: Top Clientes e Melhores Horários
-            Expanded(
-              flex: 2,
-              child: Column(
-                children: [
-                  _buildTopClientesCard(historico.topClientes),
-                  const SizedBox(height: 16),
-                  _buildHorariosCard(historico.melhoresHorarios),
                 ],
               ),
             ),
-            const SizedBox(width: 16),
-            // Direita: Desempenho Mensal
-            Expanded(
-              flex: 1,
-              child: _buildDesempenhoMensalCard(
-                  historico.desempenhoMensal, historico.totais),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade200),
             ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Pulso operacional',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Cabine ${cabineNumero.toString().padLeft(2, '0')} em monitoramento real-time. Mantenha esta aba aberta para acompanhar audiência, GMV e top produto sem sair do contexto da unidade.',
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+            ),  // end SingleChildScrollView
+    );  // end AnimatedSwitcher
+  }
+}
+
+class _InsightsTab extends StatelessWidget {
+  final CabineHistorico? historico;
+
+  const _InsightsTab({required this.historico});
+
+  @override
+  Widget build(BuildContext context) {
+    if (historico == null) {
+      return const _EmptyTabState(
+        icon: Icons.analytics_outlined,
+        title: 'Sem insights para esta cabine',
+        description:
+            'Assim que a cabine acumular histórico operacional, esta aba mostrará horários fortes, top clientes e evolução de GMV.',
+      );
+    }
+
+    final topClientes = historico!.topClientes.take(5).toList();
+    final melhoresHorarios = historico!.melhoresHorarios.take(5).toList();
+    final hasHorarioData = melhoresHorarios.isNotEmpty;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SectionCard(
+            title: 'Melhores Horários',
+            subtitle:
+                'Prime time da cabine baseado no GMV médio das lives encerradas.',
+            child: hasHorarioData
+                ? RepaintBoundary(
+                    child: SizedBox(
+                      height: 260,
+                      child: BarChart(
+                        BarChartData(
+                          alignment: BarChartAlignment.spaceAround,
+                          gridData: const FlGridData(show: false),
+                          borderData: FlBorderData(show: false),
+                          titlesData: FlTitlesData(
+                            topTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false)),
+                            rightTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false)),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 58,
+                                getTitlesWidget: (value, _) => Text(
+                                  NumberFormat.compactSimpleCurrency(
+                                          locale: 'pt_BR')
+                                      .format(value),
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                              ),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (value, _) {
+                                  final index = value.toInt();
+                                  if (index < 0 ||
+                                      index >= melhoresHorarios.length) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Text(
+                                      melhoresHorarios[index]['hora'] as String,
+                                      style: const TextStyle(fontSize: 11),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          barGroups: [
+                            for (var i = 0; i < melhoresHorarios.length; i++)
+                              BarChartGroupData(
+                                x: i,
+                                barRods: [
+                                  BarChartRodData(
+                                    toY: (melhoresHorarios[i]['gmv_medio']
+                                            as num)
+                                        .toDouble(),
+                                    width: 18,
+                                    borderRadius: BorderRadius.circular(6),
+                                    color: AppColors.primaryOrange,
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : const Text(
+                    'Ainda não há janelas suficientes para sugerir horários vencedores.'),
+          ),
+          const SizedBox(height: 16),
+          _SectionCard(
+            title: 'Top Clientes da Cabine',
+            subtitle: 'Ranking dos parceiros que mais monetizam nesta unidade.',
+            child: topClientes.isEmpty
+                ? const Text(
+                    'Nenhum cliente com histórico de GMV nesta cabine ainda.')
+                : Column(
+                    children: topClientes.map((cliente) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _RankListTile(
+                          title: cliente['nome'] as String,
+                          subtitle:
+                              '${cliente['total_lives']} lives encerradas',
+                          trailing: _CabineDetailScreenState._currency
+                              .format((cliente['fat_total'] as num).toDouble()),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+          ),
+          const SizedBox(height: 16),
+          _SectionCard(
+            title: 'Leitura de Eficiência',
+            subtitle:
+                'Resumo executivo para o franqueado agir sem ruído operacional.',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _InsightBullet(
+                  text: melhoresHorarios.isEmpty
+                      ? 'Sem dados suficientes para definir um prime time desta cabine.'
+                      : 'A melhor janela atual é ${melhoresHorarios.first['hora']} com GMV médio de ${_CabineDetailScreenState._currency.format((melhoresHorarios.first['gmv_medio'] as num).toDouble())}.',
+                ),
+                _InsightBullet(
+                  text: topClientes.isEmpty
+                      ? 'Nenhum parceiro ainda concentrou volume relevante nesta cabine.'
+                      : '${topClientes.first['nome']} lidera o volume desta unidade com ${_CabineDetailScreenState._currency.format((topClientes.first['fat_total'] as num).toDouble())}.',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoricoTab extends StatelessWidget {
+  final CabineHistorico? historico;
+
+  const _HistoricoTab({required this.historico});
+
+  @override
+  Widget build(BuildContext context) {
+    if (historico == null) {
+      return const _EmptyTabState(
+        icon: Icons.history_outlined,
+        title: 'Sem histórico consolidado',
+        description:
+            'Conforme as lives forem encerradas, esta aba mostrará evolução mensal, crescimento e totais acumulados da cabine.',
+      );
+    }
+
+    final meses =
+        historico!.desempenhoMensal['meses'] as List<dynamic>? ?? const [];
+    final crescimento =
+        (historico!.desempenhoMensal['crescimento_pct'] as num? ?? 0)
+            .toDouble();
+    final totais = historico!.totais;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (meses.length >= 2)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: crescimento >= 0
+                    ? AppColors.successGreen.withValues(alpha: 0.10)
+                    : AppColors.dangerRed.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    crescimento >= 0 ? Icons.trending_up : Icons.trending_down,
+                    color: crescimento >= 0
+                        ? AppColors.successGreen
+                        : AppColors.dangerRed,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '${crescimento >= 0 ? '+' : ''}${crescimento.toStringAsFixed(1)}% vs último mês',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (meses.length >= 2) const SizedBox(height: 16),
+          _SectionCard(
+            title: 'Evolução Mensal',
+            subtitle: 'Histórico de faturamento e cadência de lives da cabine.',
+            child: meses.isEmpty
+                ? const Text(
+                    'Sem meses suficientes para montar a linha histórica desta cabine.')
+                : Column(
+                    children: meses.take(6).map((mes) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _RankListTile(
+                          title: mes['mes'] as String,
+                          subtitle: '${mes['total_lives']} lives',
+                          trailing: _CabineDetailScreenState._currency
+                              .format((mes['fat_total'] as num).toDouble()),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+          ),
+          const SizedBox(height: 16),
+          _SectionCard(
+            title: 'Totais Acumulados',
+            subtitle: 'Visão consolidada da cabine desde o início da operação.',
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                _HistoryMetricCard(
+                  label: 'Total de lives',
+                  value: '${totais['total_lives'] ?? 0}',
+                  color: AppColors.infoBlue,
+                ),
+                _HistoryMetricCard(
+                  label: 'Faturamento acumulado',
+                  value: _CabineDetailScreenState._currency
+                      .format((totais['gmv_total'] as num? ?? 0).toDouble()),
+                  color: AppColors.successGreen,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  const _SectionCard({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            const SizedBox(height: 4),
+            Text(subtitle,
+                style: const TextStyle(color: AppColors.textSecondary)),
+            const Divider(height: 24),
+            child,
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+  final String label;
+
+  const _MetricCard({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 240,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: iconColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RankListTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String trailing;
+
+  const _RankListTile({
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 2),
+              Text(subtitle,
+                  style: const TextStyle(
+                      fontSize: 12, color: AppColors.textSecondary)),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(trailing, style: const TextStyle(fontWeight: FontWeight.w700)),
       ],
     );
   }
+}
 
-  Widget _buildTopClientesCard(List<dynamic> clientes) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Top Clientes',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const Divider(),
-            if (clientes.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('Nenhum dado disponível ainda.',
-                    style: TextStyle(color: Colors.grey)),
-              ),
-            ...clientes.map((c) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(c['nome'],
-                          style: const TextStyle(fontWeight: FontWeight.w500)),
-                      Row(
-                        children: [
-                          Text('R\$ ${c['fat_total'].toStringAsFixed(2)}',
-                              style: const TextStyle(color: Colors.green)),
-                          const SizedBox(width: 16),
-                          Text('${c['total_lives']} lives',
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 12)),
-                        ],
-                      )
-                    ],
-                  ),
-                )),
-          ],
-        ),
+class _InsightBullet extends StatelessWidget {
+  final String text;
+
+  const _InsightBullet({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Icon(Icons.circle, size: 8, color: AppColors.primaryOrange),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text)),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildHorariosCard(List<dynamic> horarios) {
-    // Calculando o max GMV para fazer as barras horizontais proporcionais
-    double maxGmv = 0;
-    for (var h in horarios) {
-      if (h['gmv_medio'] > maxGmv) maxGmv = h['gmv_medio'];
-    }
+class _HistoryMetricCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Melhores Horários (GMV Médio)',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const Divider(),
-            if (horarios.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('Nenhum dado disponível ainda.',
-                    style: TextStyle(color: Colors.grey)),
-              ),
-            ...horarios.take(4).map((h) {
-              final gmvMedio = (h['gmv_medio'] as num).toDouble();
-              final pct = maxGmv > 0 ? (gmvMedio / maxGmv) : 0.0;
-              final int flexValue = (pct * 100).toInt().clamp(1, 100);
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Row(
-                  children: [
-                    SizedBox(
-                        width: 80,
-                        child: Text(h['hora'],
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold))),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: flexValue,
-                            child: Container(
-                                height: 12,
-                                color: AppColors
-                                    .primary), // Cor roxa definida no AppTheme
-                          ),
-                          Expanded(
-                            flex: 100 - flexValue,
-                            child:
-                                Container(height: 12, color: Colors.grey[200]),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      width: 100,
-                      child: Text('R\$ ${gmvMedio.toStringAsFixed(0)}',
-                          textAlign: TextAlign.right),
-                    )
-                  ],
-                ),
-              );
-            }),
-          ],
-        ),
+  const _HistoryMetricCard({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 220,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+                fontSize: 20, fontWeight: FontWeight.w700, color: color),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildDesempenhoMensalCard(
-      Map<String, dynamic> desempenho, Map<String, dynamic> totais) {
-    final meses = desempenho['meses'] as List<dynamic>? ?? [];
-    final crescimento = desempenho['crescimento_pct'] ?? 0.0;
+class _EmptyTabState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+  const _EmptyTabState({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 420),
+        padding: const EdgeInsets.all(24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Desempenho Mensal',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const Divider(),
-
-            // Crescimento Badge
-            if (meses.length >= 2)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: crescimento >= 0
-                      ? Colors.green.withValues(alpha: 0.1)
-                      : Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      crescimento >= 0
-                          ? Icons.trending_up
-                          : Icons.trending_down,
-                      color: crescimento >= 0 ? Colors.green : Colors.red,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${crescimento >= 0 ? '+' : ''}${crescimento.toStringAsFixed(1)}% vs último mês',
-                      style: TextStyle(
-                        color: crescimento >= 0
-                            ? Colors.green[700]
-                            : Colors.red[700],
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  ],
-                ),
-              ),
-
-            // Mês a Mês
-            ...meses.take(3).map((m) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(m['mes']),
-                      Text(
-                          'R\$ ${m['fat_total'].toStringAsFixed(0)} (${m['total_lives']} lives)'),
-                    ],
-                  ),
-                )),
-
-            const Divider(height: 32),
-            const Text('Total Histórico',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            Icon(icon, size: 44, color: AppColors.textSecondary),
+            const SizedBox(height: 12),
+            Text(title,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            Text('Lives: ${totais['total_lives'] ?? 0}'),
-            Text(
-                'Faturamento: R\$ ${(totais['gmv_total'] ?? 0.0).toStringAsFixed(2)}',
-                style: const TextStyle(
-                    color: Colors.green, fontWeight: FontWeight.bold)),
+            Text(description,
+                style: const TextStyle(color: AppColors.textSecondary),
+                textAlign: TextAlign.center),
           ],
         ),
       ),
