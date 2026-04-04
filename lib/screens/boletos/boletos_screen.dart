@@ -1,175 +1,207 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/app_scaffold.dart';
+import '../../widgets/boleto_item.dart';
 import '../../providers/boletos_provider.dart';
 import '../../models/boleto.dart';
 import '../../routes/app_routes.dart';
+import '../../theme/app_colors.dart';
 
-/// Painel exclusivo de boletos do franqueado
-class BoletosScreen extends ConsumerWidget {
+class BoletosScreen extends ConsumerStatefulWidget {
   const BoletosScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BoletosScreen> createState() => _BoletosScreenState();
+}
+
+class _BoletosScreenState extends ConsumerState<BoletosScreen> {
+  String _filtroTipo = 'Todos';
+  String _filtroStatus = 'Todos';
+
+  static const _tipoFiltros = [
+    'Todos',
+    'Impostos',
+    'Royalties',
+    'Marketing',
+    'Outros',
+  ];
+
+  static const _statusFiltros = ['Todos', 'Pendente', 'Vencido', 'Pago'];
+
+  static const _tipoMap = {
+    'Impostos': 'imposto',
+    'Royalties': 'royalties',
+    'Marketing': 'marketing',
+    'Outros': 'outros',
+  };
+
+  static const _statusMap = {
+    'Pendente': 'pendente',
+    'Vencido': 'vencido',
+    'Pago': 'pago',
+  };
+
+  List<Boleto> _filtrar(List<Boleto> boletos) {
+    return boletos.where((b) {
+      final tipoOk = _filtroTipo == 'Todos' ||
+          b.tipo == _tipoMap[_filtroTipo];
+      final statusOk = _filtroStatus == 'Todos' ||
+          b.status == _statusMap[_filtroStatus];
+      return tipoOk && statusOk;
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final boletosAsync = ref.watch(boletosProvider);
 
     return AppScaffold(
       currentRoute: AppRoutes.boletos,
       child: RefreshIndicator(
         onRefresh: () => ref.read(boletosProvider.notifier).refresh(),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ──────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Meus Boletos',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+                      style: TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.w600)),
                   boletosAsync.when(
                     loading: () => const SizedBox.shrink(),
                     error: (_, __) => const SizedBox.shrink(),
-                    data: (boletos) => Text(
-                      '${boletos.length} boleto${boletos.length == 1 ? '' : 's'}',
-                      style: const TextStyle(color: Colors.grey, fontSize: 14),
-                    ),
+                    data: (boletos) {
+                      final filtrados = _filtrar(boletos);
+                      return Text(
+                        '${filtrados.length} boleto${filtrados.length == 1 ? '' : 's'}',
+                        style: const TextStyle(
+                            color: Colors.grey, fontSize: 14),
+                      );
+                    },
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              const Row(
-                children: [
-                  Expanded(flex: 3, child: Text('TIPO',
-                    style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500))),
-                  Expanded(flex: 2, child: Text('VALOR',
-                    style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500))),
-                  Expanded(flex: 2, child: Text('VENCIMENTO',
-                    style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500))),
-                  Expanded(flex: 2, child: Text('STATUS',
-                    style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500))),
-                  Expanded(flex: 2, child: SizedBox()),
-                ],
+            ),
+            const SizedBox(height: 16),
+
+            // ── Filtro por categoria (chips) ─────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _tipoFiltros
+                      .map((t) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: FilterChip(
+                              label: Text(t,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: _filtroTipo == t
+                                          ? Colors.white
+                                          : AppColors.textPrimary)),
+                              selected: _filtroTipo == t,
+                              selectedColor: AppColors.primaryOrange,
+                              checkmarkColor: Colors.white,
+                              onSelected: (_) =>
+                                  setState(() => _filtroTipo = t),
+                            ),
+                          ))
+                      .toList(),
+                ),
               ),
-              const Divider(),
-              Expanded(
-                child: boletosAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+            ),
+            const SizedBox(height: 8),
+
+            // ── Filtro por status ────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _statusFiltros
+                      .map((s) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              label: Text(s,
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: _filtroStatus == s
+                                          ? Colors.white
+                                          : Colors.grey)),
+                              selected: _filtroStatus == s,
+                              selectedColor: _statusColor(s),
+                              onSelected: (_) =>
+                                  setState(() => _filtroStatus = s),
+                            ),
+                          ))
+                      .toList(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // ── Lista ────────────────────────────────────────────────────
+            Expanded(
+              child: boletosAsync.when(
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text('Erro: $e'),
                       const SizedBox(height: 12),
                       ElevatedButton(
-                        onPressed: () => ref.read(boletosProvider.notifier).refresh(),
+                        onPressed: () =>
+                            ref.read(boletosProvider.notifier).refresh(),
                         child: const Text('Tentar novamente'),
                       ),
-                    ]),
+                    ],
                   ),
-                  data: (boletos) => boletos.isEmpty
-                      ? const Center(
-                          child: Text('Nenhum boleto encontrado.',
-                              style: TextStyle(color: Colors.grey)))
-                      : ListView.builder(
-                          itemCount: boletos.length,
-                          itemBuilder: (_, i) => _BoletoRow(boleto: boletos[i]),
-                        ),
                 ),
+                data: (boletos) {
+                  final filtrados = _filtrar(boletos);
+                  if (filtrados.isEmpty) {
+                    return const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.receipt_long_outlined,
+                              size: 40, color: Colors.black26),
+                          SizedBox(height: 8),
+                          Text('Nenhum boleto encontrado.',
+                              style: TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                    );
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    itemCount: filtrados.length,
+                    itemBuilder: (_, i) => BoletoItem(boleto: filtrados[i]),
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
-}
 
-class _BoletoRow extends ConsumerWidget {
-  final Boleto boleto;
-  const _BoletoRow({required this.boleto});
-
-  Color get _statusColor {
-    switch (boleto.status) {
-      case 'vencido':
-        return Colors.red;
-      case 'pago':
-        return Colors.green;
+  Color _statusColor(String s) {
+    switch (s) {
+      case 'Vencido':
+        return AppColors.dangerRed;
+      case 'Pago':
+        return AppColors.successGreen;
       default:
-        return Colors.orange;
+        return AppColors.warningYellow;
     }
-  }
-
-  String get _statusLabel {
-    switch (boleto.status) {
-      case 'vencido':
-        return 'VENCIDO';
-      case 'pago':
-        return 'PAGO';
-      default:
-        return 'PENDENTE';
-    }
-  }
-
-  String get _tipoLabel {
-    switch (boleto.tipo) {
-      case 'mensalidade':
-        return 'Mensalidade';
-      case 'taxa_franquia':
-        return 'Taxa Franquia';
-      case 'equipamento':
-        return 'Equipamento';
-      default:
-        return boleto.tipo;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final venc = boleto.vencimento;
-    final vencStr = '${venc.day.toString().padLeft(2, '0')}/${venc.month.toString().padLeft(2, '0')}/${venc.year}';
-    final valorStr = 'R\$ ${boleto.valor.toStringAsFixed(2).replaceAll('.', ',')}';
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(flex: 3, child: Text(_tipoLabel,
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: boleto.status == 'vencido' ? Colors.red : null,
-                ))),
-            Expanded(flex: 2, child: Text(valorStr,
-                style: TextStyle(
-                  color: boleto.status == 'vencido' ? Colors.red : null,
-                ))),
-            Expanded(flex: 2, child: Text(vencStr,
-                style: TextStyle(
-                  color: boleto.status == 'vencido' ? Colors.red : null,
-                ))),
-            Expanded(flex: 2, child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: _statusColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(_statusLabel,
-                  style: TextStyle(color: _statusColor, fontSize: 11, fontWeight: FontWeight.w600)),
-            )),
-            Expanded(flex: 2, child: boleto.referenciaExterna != null
-                ? TextButton(
-                    onPressed: () async {
-                      final uri = Uri.tryParse(boleto.referenciaExterna!);
-                      if (uri != null && await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      }
-                    },
-                    child: const Text('VER', style: TextStyle(fontSize: 12)),
-                  )
-                : const SizedBox.shrink()),
-          ],
-        ),
-        const Divider(height: 1),
-      ],
-    );
   }
 }
