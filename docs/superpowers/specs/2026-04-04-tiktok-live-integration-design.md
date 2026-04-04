@@ -75,8 +75,11 @@ Stores the presenter's TikTok handle (e.g., `livestream_nike`) without the `@`.
 
 ### `live_snapshots`
 ```sql
-ALTER TABLE live_snapshots ADD COLUMN IF NOT EXISTS likes_count BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE live_snapshots ADD COLUMN IF NOT EXISTS likes_count    BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE live_snapshots ADD COLUMN IF NOT EXISTS comments_count BIGINT NOT NULL DEFAULT 0;
 ```
+
+`comments_count` captures comment volume — the strongest "heat" indicator of a live. High comments + low orders signals the presenter attracted audience but didn't convert (valuable BI insight).
 
 ---
 
@@ -96,7 +99,8 @@ Singleton module. Exported as a Fastify plugin so `app.tiktokManager` is availab
     total_viewers: 0,    // peak accumulated
     total_orders: 0,     // incremental counter
     gmv: 0.0,            // incremental sum
-    likes_count: 0,      // incremental counter
+    likes_count: 0,      // incremental counter (gift + social events)
+    comments_count: 0,   // incremental counter (chat events)
     dirty: false,        // true when state changed since last flush
     lastFlush: Date      // timestamp of last DB write
   },
@@ -110,9 +114,20 @@ Singleton module. Exported as a Fastify plugin so `app.tiktokManager` is availab
 |---|---|---|
 | `roomUser` | viewer_count, total_viewers | overwrite (latest value) |
 | `gift`, `social` | likes_count | increment |
-| `order` | total_orders, gmv | increment with item value |
+| `chat` | comments_count | increment |
+| `order` | total_orders, gmv (snapshot) + live_products (detail) | see below |
 | `disconnect` | — | log.warn, set `reconnecting: true`, do NOT remove from Map |
 | `error` | — | log.warn, do NOT throw |
+
+### `order` event — dual write strategy
+
+The `order` event feeds two destinations with different purposes:
+
+**`live_snapshots` (fast, totals):** Increments `total_orders` and `gmv`. Batched in the 30s flush. Feeds the real-time line chart on the dashboard.
+
+**`live_products` (slow, detail):** When the order payload contains a keyword match against known product names for the live (queried once at `startConnector()` and cached in-memory), the connector does an immediate `UPDATE live_products SET quantidade = quantidade + 1, valor_total = valor_total + $valor WHERE live_id = $liveId AND produto_nome ILIKE $keyword`. This feeds the per-product benchmark visible at live close.
+
+If no keyword match is found, the order still increments the snapshot totals — no data is lost.
 
 ### Methods
 
@@ -125,6 +140,7 @@ This diff covers server restart recovery: on first cron tick after restart, all 
 
 **`startConnector(liveId, tenantId, username, db)`**:
 - Guard: if `Map.size >= TIKTOK_MAX_CONNECTORS` (default 20) → `log.warn`, return
+- Queries `live_products WHERE live_id = $liveId` → caches `[{ id, produto_nome }]` in Map entry for keyword matching
 - Creates `TikTokWebcastPushConnection(username)`
 - Binds event handlers
 - Inserts entry into Map
@@ -139,7 +155,7 @@ This diff covers server restart recovery: on first cron tick after restart, all 
 
 **`flushToDb(liveId)`**:
 - If `!state.dirty` → skip (no changes since last flush)
-- `INSERT INTO live_snapshots (live_id, tenant_id, viewer_count, total_viewers, total_orders, gmv, likes_count, captured_at) VALUES (...)`
+- `INSERT INTO live_snapshots (live_id, tenant_id, viewer_count, total_viewers, total_orders, gmv, likes_count, comments_count, captured_at) VALUES (...)`
 - Emits `snapshot:${liveId}` on internal EventEmitter (triggers SSE push)
 - Sets `dirty = false`, updates `lastFlush`
 - On Postgres error → `log.error`, preserves in-memory state for next attempt
@@ -202,6 +218,7 @@ class LiveSnapshot {
   final int totalOrders;
   final double gmv;
   final int likesCount;
+  final int commentsCount;
   final DateTime capturedAt;
 }
 ```
@@ -215,8 +232,17 @@ final liveStreamProvider = StreamProvider.family<LiveSnapshot, String>(
 
 `ApiService.streamLiveSnapshot(liveId)` opens an HTTP stream, parses `data: {...}\n\n` SSE frames, deserializes into `LiveSnapshot`.
 
-### Dashboard widget
-`ref.watch(liveStreamProvider(liveId))` — rebuilds only counter widgets on each event, not the full screen.
+### Consumption: `CabineDetailScreen`
+
+The stream is consumed in the existing `CabineDetailScreen` (not a new screen). The screen uses `AnimatedSwitcher` to transform based on live status:
+
+- **`disponivel` / `reservada`:** Static view — historical data, presenter info, schedule
+- **`ao_vivo`:** "Operation Monitor" mode — real-time counters (viewer_count, GMV, orders, likes, comments) driven by `liveStreamProvider`. Counters animate on each SSE event.
+- **`encerrada`:** Final snapshot frozen — shows end-of-live totals, no stream
+
+The status-driven switch uses `ref.watch(cabineProvider)` for status and `ref.watch(liveStreamProvider(liveId))` for metrics — two independent providers, no coupling.
+
+The "Efeito UAU": the franqueado watching a cabine detail sees the screen come alive with rising counters the moment the live goes `ao_vivo`, with no navigation required.
 
 ---
 
@@ -255,13 +281,13 @@ No TikTok API key required — `tiktok-live-connector` uses the public WebSocket
 | Modify | `src/routes/cabines.js` |
 | Create | `lib/models/live_snapshot.dart` |
 | Create | `lib/providers/live_stream_provider.dart` |
-| Modify | `lib/screens/` (dashboard widget consuming stream) |
+| Modify | `lib/screens/cabines/cabine_detail_screen.dart` (AnimatedSwitcher + stream) |
 
 ---
 
 ## Out of Scope
 
 - TikTok OAuth flow (already exists, not touched)
-- Chat/comment capture (future epic)
+- Chat content/sentiment analysis (comment count is captured; content is not)
 - Horizontal scaling / Redis pub-sub (not needed at current scale)
 - `tiktok_tokens` / token refresh (connector uses public WebSocket, no auth token needed)
