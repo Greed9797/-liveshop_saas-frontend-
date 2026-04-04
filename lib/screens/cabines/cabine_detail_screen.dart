@@ -69,15 +69,8 @@ class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
   @override
   Widget build(BuildContext context) {
     ref.listen<AsyncValue<CabineDetailState>>(
-        cabineDetailProvider(widget.cabineId), (_, next) {
-      final shouldPoll =
-          _tabController.index == 0 && next.valueOrNull?.liveAtual != null;
-      if (shouldPoll) {
-        _syncLivePolling();
-      } else {
-        _livePollingTimer?.cancel();
-        _livePollingTimer = null;
-      }
+        cabineDetailProvider(widget.cabineId), (_, __) {
+      _syncLivePolling();
     });
 
     final detailState = ref.watch(cabineDetailProvider(widget.cabineId));
@@ -155,21 +148,23 @@ class _LiveTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final live = liveAtual; // local copy so analyzer can narrow nullability
+
     // SSE snapshot: dados em tempo real (null quando live não ativa ou stream sem dados ainda)
-    final snapshot = liveAtual != null
-        ? ref.watch(liveStreamProvider(liveAtual!.liveId)).valueOrNull
+    final snapshot = live != null
+        ? ref.watch(liveStreamProvider(live.liveId)).valueOrNull
         : null;
 
     // Valores efetivos: SSE tem prioridade, polling é fallback
-    final viewerCount   = snapshot?.viewerCount  ?? liveAtual?.viewerCount  ?? 0;
-    final gmvAtual      = snapshot?.gmv          ?? liveAtual?.gmvAtual     ?? 0.0;
-    final totalOrders   = snapshot?.totalOrders   ?? liveAtual?.totalOrders  ?? 0;
+    final viewerCount   = snapshot?.viewerCount  ?? live?.viewerCount  ?? 0;
+    final gmvAtual      = snapshot?.gmv          ?? live?.gmvAtual     ?? 0.0;
+    final totalOrders   = snapshot?.totalOrders   ?? live?.totalOrders  ?? 0;
     final likesCount    = snapshot?.likesCount    ?? 0;
     final commentsCount = snapshot?.commentsCount ?? 0;
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 400),
-      child: liveAtual == null
+      child: live == null
           ? _EmptyTabState(
               key: const ValueKey('empty'),
               icon: Icons.videocam_off_outlined,
@@ -178,7 +173,7 @@ class _LiveTab extends ConsumerWidget {
                   'Quando a cabine entrar em operação ao vivo, as métricas em tempo real aparecerão aqui com atualização a cada 30 segundos.',
             )
           : SingleChildScrollView(
-              key: ValueKey(liveAtual!.liveId),
+              key: ValueKey(live.liveId),
               padding: const EdgeInsets.all(24),
               child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -222,7 +217,7 @@ class _LiveTab extends ConsumerWidget {
                       const Icon(Icons.timer_outlined, color: Colors.grey),
                       const SizedBox(width: 4),
                       Text(
-                        '${liveAtual!.duracaoMinutos} min',
+                        '${live.duracaoMinutos} min',
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16),
                       ),
@@ -254,11 +249,11 @@ class _LiveTab extends ConsumerWidget {
                       _MetricCard(
                         icon: Icons.inventory_2_outlined,
                         iconColor: AppColors.lilac,
-                        value: liveAtual!.topProduto != null
-                            ? '${liveAtual!.topProduto!['quantidade']} un'
+                        value: live.topProduto != null
+                            ? '${live.topProduto!['quantidade']} un'
                             : 'Nenhum',
-                        label: liveAtual!.topProduto != null
-                            ? liveAtual!.topProduto!['nome'] as String
+                        label: live.topProduto != null
+                            ? live.topProduto!['nome'] as String
                             : 'Produto mais vendido',
                       ),
                       _MetricCard(
@@ -281,11 +276,11 @@ class _LiveTab extends ConsumerWidget {
                     runSpacing: 12,
                     children: [
                       Text(
-                        'Cliente: ${liveAtual!.clienteNome}',
+                        'Cliente: ${live.clienteNome}',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       Text(
-                        'Closer: ${liveAtual!.apresentadorNome}',
+                        'Closer: ${live.apresentadorNome}',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ],
