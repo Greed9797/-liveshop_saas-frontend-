@@ -1,10 +1,10 @@
-import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/api_service.dart';
 
 // --- Models simplificados para a tela de detalhe ---
 
 class CabineLiveAtual {
+  final String liveId;
   final int viewerCount;
   final double gmvAtual;
   final int totalOrders;
@@ -15,6 +15,7 @@ class CabineLiveAtual {
   final Map<String, dynamic>? topProduto;
 
   CabineLiveAtual({
+    required this.liveId,
     required this.viewerCount,
     required this.gmvAtual,
     required this.totalOrders,
@@ -27,6 +28,7 @@ class CabineLiveAtual {
 
   factory CabineLiveAtual.fromJson(Map<String, dynamic> json) {
     return CabineLiveAtual(
+      liveId: json['live_id'] as String,
       viewerCount: json['viewer_count'] ?? 0,
       gmvAtual: (json['gmv_atual'] ?? 0).toDouble(),
       totalOrders: json['total_orders'] ?? 0,
@@ -79,26 +81,12 @@ class CabineDetailState {
   }
 }
 
-// --- Provider com Polling ---
-
 class CabineDetailNotifier
     extends FamilyAsyncNotifier<CabineDetailState, String> {
-  Timer? _timer;
-
   @override
   Future<CabineDetailState> build(String arg) async {
-    _timer?.cancel();
-
     final historico = await _fetchHistorico(arg);
     final liveAtual = await _fetchLiveAtual(arg);
-
-    if (liveAtual != null) {
-      _startPolling(arg);
-    }
-
-    ref.onDispose(() {
-      _timer?.cancel();
-    });
 
     return CabineDetailState(liveAtual: liveAtual, historico: historico);
   }
@@ -118,26 +106,20 @@ class CabineDetailNotifier
     }
   }
 
-  void _startPolling(String cabineId) {
-    _timer = Timer.periodic(const Duration(seconds: 15), (_) async {
-      try {
-        final liveAtual = await _fetchLiveAtual(cabineId);
-        if (liveAtual == null) {
-          _timer?.cancel();
-        }
-
-        if (state.hasValue) {
-          state = AsyncValue.data(state.value!.copyWith(liveAtual: liveAtual));
-        }
-      } catch (e) {
-        // Log error
-      }
-    });
-  }
-
   Future<void> refresh() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => build(arg));
+  }
+
+  Future<void> refreshLiveOnly() async {
+    if (!state.hasValue) return;
+
+    try {
+      final liveAtual = await _fetchLiveAtual(arg);
+      state = AsyncValue.data(state.value!.copyWith(liveAtual: liveAtual));
+    } catch (_) {
+      // Mantemos o último estado estável se o refresh parcial falhar.
+    }
   }
 }
 
