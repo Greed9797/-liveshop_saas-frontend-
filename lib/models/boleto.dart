@@ -7,6 +7,14 @@ class Boleto {
   final DateTime? pagoEm;
   final String? referenciaExterna;
 
+  // Campos Asaas (nullable — retrocompatíveis com boletos antigos)
+  final String? asaasId;
+  final String? asaasUrl;
+  final String? asaasPix;
+  final bool geradoAutomaticamente;
+  final String? asaasError;
+  final DateTime? criadoEm;
+
   const Boleto({
     required this.id,
     required this.tipo,
@@ -15,6 +23,12 @@ class Boleto {
     required this.status,
     this.pagoEm,
     this.referenciaExterna,
+    this.asaasId,
+    this.asaasUrl,
+    this.asaasPix,
+    this.geradoAutomaticamente = false,
+    this.asaasError,
+    this.criadoEm,
   });
 
   factory Boleto.fromJson(Map<String, dynamic> j) => Boleto(
@@ -25,5 +39,18 @@ class Boleto {
     status:              j['status'] as String,
     pagoEm:              j['pago_em'] != null ? DateTime.parse(j['pago_em'] as String) : null,
     referenciaExterna:   j['referencia_externa'] as String?,
+    asaasId:             j['asaas_id'] as String?,
+    asaasUrl:            j['asaas_url'] as String?,
+    asaasPix:            j['asaas_pix_copia_cola'] as String?,
+    geradoAutomaticamente: j['gerado_automaticamente'] as bool? ?? false,
+    asaasError:          j['asaas_error'] as String?,
+    criadoEm:            j['criado_em'] != null ? DateTime.parse(j['criado_em'] as String) : null,
   );
+
+  // Convenience getters
+  bool get temLinkPagamento => asaasUrl != null && asaasUrl!.isNotEmpty;
+  bool get temErroAsaas => asaasError != null && asaasError!.isNotEmpty;
+  bool get isPendente => status == 'pendente';
+  bool get isPago => status == 'pago';
+  bool get isVencido => status == 'vencido';
 }
