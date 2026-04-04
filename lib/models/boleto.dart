@@ -11,6 +11,7 @@ class Boleto {
   final String? asaasId;
   final String? asaasUrl;
   final String? asaasPix;
+  // Non-nullable with default false — boletos antigos não têm esta coluna; null vira false no fromJson.
   final bool geradoAutomaticamente;
   final String? asaasError;
   final DateTime? criadoEm;
@@ -48,8 +49,8 @@ class Boleto {
   );
 
   // Convenience getters
-  bool get temLinkPagamento => asaasUrl != null && asaasUrl!.isNotEmpty;
-  bool get temErroAsaas => asaasError != null && asaasError!.isNotEmpty;
+  bool get temLinkPagamento => asaasUrl?.isNotEmpty ?? false;
+  bool get temErroAsaas => asaasError?.isNotEmpty ?? false;
   bool get isPendente => status == 'pendente';
   bool get isPago => status == 'pago';
   bool get isVencido => status == 'vencido';
