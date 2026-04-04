@@ -168,17 +168,25 @@ class BoletoItem extends StatelessWidget {
 
   Future<void> _abrirLink(BuildContext context, String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
+    try {
+      final ok = await canLaunchUrl(uri);
+      if (!ok) throw Exception('cannot_launch');
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível abrir o link')),
-      );
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível abrir o link')),
+        );
+      }
     }
   }
 
-  void _copiarPix(BuildContext context, String pix) {
-    Clipboard.setData(ClipboardData(text: pix));
+  Future<void> _copiarPix(BuildContext context, String pix) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: pix));
+    } catch (_) {
+      // ignore: clipboard errors are non-critical
+    }
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -198,9 +206,14 @@ class BoletoItem extends StatelessWidget {
     'outros': 'Outros',
   }[tipo] ?? tipo;
 
-  String _formatCurrency(double v) =>
-      'R\$ ${v.toStringAsFixed(2).replaceAll('.', ',')}';
-
+  String _formatCurrency(double v) {
+    final parts = v.toStringAsFixed(2).split('.');
+    final intPart = parts[0].replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
+    return 'R\$ $intPart,${parts[1]}';
+  }
   String _formatDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 }

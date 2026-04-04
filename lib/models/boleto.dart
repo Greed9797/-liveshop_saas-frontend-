@@ -53,5 +53,7 @@ class Boleto {
   bool get temErroAsaas => asaasError?.isNotEmpty ?? false;
   bool get isPendente => status == 'pendente';
   bool get isPago => status == 'pago';
-  bool get isVencido => status == 'vencido';
+  bool get isVencido =>
+      status == 'vencido' ||
+      (status == 'pendente' && vencimento.isBefore(DateTime.now()));
 }
