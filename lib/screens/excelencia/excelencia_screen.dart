@@ -6,6 +6,11 @@ import '../../providers/excelencia_provider.dart';
 import '../../models/excelencia.dart' show ExcelenciaData;
 import '../../routes/app_routes.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
+import '../../theme/app_radius.dart';
+import '../../theme/app_shadows.dart';
+import '../../widgets/app_card.dart';
 
 /// Programa de excelência com métricas e cálculo de ROI
 class ExcelenciaScreen extends ConsumerWidget {
@@ -20,35 +25,39 @@ class ExcelenciaScreen extends ConsumerWidget {
     return AppScaffold(
       currentRoute: AppRoutes.excelencia,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Programa de Excelência',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+                Text('Programa de Excelência',
+                    style: AppTypography.bodyLarge
+                        .copyWith(fontWeight: FontWeight.w500)),
                 IconButton(
                   icon: const Icon(Icons.refresh),
-                  onPressed: () => ref.read(excelenciaProvider.notifier).refresh(),
+                  onPressed: () =>
+                      ref.read(excelenciaProvider.notifier).refresh(),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
             excelenciaAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Text('Erro: $e'),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   ElevatedButton(
-                    onPressed: () => ref.read(excelenciaProvider.notifier).refresh(),
+                    onPressed: () =>
+                        ref.read(excelenciaProvider.notifier).refresh(),
                     child: const Text('Tentar novamente'),
                   ),
                 ]),
               ),
-              data: (data) => _ExcelenciaContent(data: data, taxaFranquia: _taxaFranquia),
+              data: (data) => _ExcelenciaContent(
+                  data: data, taxaFranquia: _taxaFranquia),
             ),
           ],
         ),
@@ -64,35 +73,38 @@ class _ExcelenciaContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mesesROI = data.fatMesAtual > 0 ? taxaFranquia / data.fatMesAtual : 0.0;
+    final mesesROI =
+        data.fatMesAtual > 0 ? taxaFranquia / data.fatMesAtual : 0.0;
     final crescendo = data.crescimentoPct >= 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Score bar
-        Card(
+        AppCard(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.compactPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Score de Excelência',
-                        style: TextStyle(fontWeight: FontWeight.w500)),
+                    Text('Score de Excelência',
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w500)),
                     Text('${data.score}/100',
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+                        style: AppTypography.bodyLarge.copyWith(
+                            fontWeight: FontWeight.w700)),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
                   child: LinearProgressIndicator(
                     value: data.score / 100,
                     minHeight: 10,
-                    backgroundColor: Colors.grey.shade200,
+                    backgroundColor: AppColors.gray200,
                     valueColor: AlwaysStoppedAnimation(
                       data.score >= 80
                           ? AppColors.success
@@ -111,62 +123,76 @@ class _ExcelenciaContent extends StatelessWidget {
           spacing: 14,
           runSpacing: 14,
           children: [
-            SizedBox(width: 220, child: MetricCard(
-              label: 'RETENÇÃO DE CLIENTES',
-              value: '${data.taxaRetencao}%',
-              icon: Icons.favorite_border,
-              iconColor: AppColors.success,
-              subtitle: '${data.ativos} ativos / ${data.cancelados} cancelados',
-            )),
-            SizedBox(width: 220, child: MetricCard(
-              label: 'CRESCIMENTO',
-              value: '${crescendo ? '+' : ''}${data.crescimentoPct}%',
-              icon: crescendo ? Icons.trending_up : Icons.trending_down,
-              iconColor: crescendo ? AppColors.success : AppColors.danger,
-              subtitle: 'vs. mês anterior',
-            )),
-            SizedBox(width: 220, child: MetricCard(
-              label: 'PRODUTIVIDADE',
-              value: '${data.ativos} clientes',
-              icon: Icons.bolt_outlined,
-              iconColor: AppColors.primary,
-              subtitle: 'carteira ativa',
-            )),
-            SizedBox(width: 220, child: MetricCard(
-              label: 'CHURN',
-              value: '${100 - data.taxaRetencao}%',
-              icon: Icons.remove_circle_outline,
-              iconColor: AppColors.danger,
-              subtitle: '${data.cancelados} cancelamento${data.cancelados == 1 ? '' : 's'}',
-            )),
+            SizedBox(
+                width: 220,
+                child: MetricCard(
+                  label: 'RETENÇÃO DE CLIENTES',
+                  value: '${data.taxaRetencao}%',
+                  icon: Icons.favorite_border,
+                  iconColor: AppColors.success,
+                  subtitle:
+                      '${data.ativos} ativos / ${data.cancelados} cancelados',
+                )),
+            SizedBox(
+                width: 220,
+                child: MetricCard(
+                  label: 'CRESCIMENTO',
+                  value: '${crescendo ? '+' : ''}${data.crescimentoPct}%',
+                  icon: crescendo ? Icons.trending_up : Icons.trending_down,
+                  iconColor: crescendo ? AppColors.success : AppColors.danger,
+                  subtitle: 'vs. mês anterior',
+                )),
+            SizedBox(
+                width: 220,
+                child: MetricCard(
+                  label: 'PRODUTIVIDADE',
+                  value: '${data.ativos} clientes',
+                  icon: Icons.bolt_outlined,
+                  iconColor: AppColors.primary,
+                  subtitle: 'carteira ativa',
+                )),
+            SizedBox(
+                width: 220,
+                child: MetricCard(
+                  label: 'CHURN',
+                  value: '${100 - data.taxaRetencao}%',
+                  icon: Icons.remove_circle_outline,
+                  iconColor: AppColors.danger,
+                  subtitle:
+                      '${data.cancelados} cancelamento${data.cancelados == 1 ? '' : 's'}',
+                )),
           ],
         ),
-        const SizedBox(height: 28),
-        Card(
-          color: const Color(0xFF2D2860),
+        const SizedBox(height: AppSpacing.x3l),
+        AppCard(
+          backgroundColor: AppColors.infoPurple,
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.screenPadding),
             child: Row(
               children: [
-                const Icon(Icons.savings_outlined, color: AppColors.lilac, size: 40),
-                const SizedBox(width: 20),
+                const Icon(Icons.savings_outlined,
+                    color: AppColors.lilac, size: 40),
+                const SizedBox(width: AppSpacing.xl),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('RETORNO SOBRE INVESTIMENTO (ROI)',
-                          style: TextStyle(color: AppColors.lilac, fontSize: 12, letterSpacing: 0.8)),
-                      const SizedBox(height: 8),
+                      Text('RETORNO SOBRE INVESTIMENTO (ROI)',
+                          style: AppTypography.caption.copyWith(
+                              color: AppColors.lilac, letterSpacing: 0.8)),
+                      const SizedBox(height: AppSpacing.sm),
                       Text(
                         '${mesesROI.toStringAsFixed(1)} meses',
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 32, fontWeight: FontWeight.w500),
+                        style: AppTypography.h1.copyWith(
+                            fontSize: 32,
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w500),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         'Taxa de franquia R\$ ${taxaFranquia.toStringAsFixed(0)} ÷ Fat. líq. R\$ ${data.fatMesAtual.toStringAsFixed(0)}/mês',
-                        style: TextStyle(
-                            color: AppColors.lilac.withValues(alpha: 0.8), fontSize: 12),
+                        style: AppTypography.caption.copyWith(
+                            color: AppColors.lilac.withValues(alpha: 0.8)),
                       ),
                     ],
                   ),

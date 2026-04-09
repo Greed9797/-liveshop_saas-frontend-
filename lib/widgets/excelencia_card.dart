@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_spacing.dart';
 
 class ExcelenciaCard extends StatelessWidget {
   const ExcelenciaCard({super.key});
@@ -8,13 +11,13 @@ class ExcelenciaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'PROGRAMA DE EXCELÊNCIA',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: AppTypography.h3.copyWith(fontSize: 16),
             ),
             const Divider(height: 24),
             _buildRatingRow('BASE DE CONTRATOS', 0),
@@ -37,16 +40,14 @@ class ExcelenciaCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black54)),
+              style: AppTypography.labelSmall.copyWith(
+                  fontWeight: FontWeight.bold, color: AppColors.gray500)),
           Row(
             children: List.generate(5, (index) {
               return Icon(
                 index < stars ? Icons.star : Icons.star_border,
                 size: 16,
-                color: index < stars ? AppColors.primary : Colors.black12,
+                color: index < stars ? AppColors.primary : AppColors.gray200,
               );
             }),
           ),
@@ -63,24 +64,22 @@ class ExcelenciaCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label,
-                style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black54)),
+                style: AppTypography.labelSmall.copyWith(
+                    fontWeight: FontWeight.bold, color: AppColors.gray500)),
             Text(percentage,
-                style:
-                    const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                style: AppTypography.labelSmall.copyWith(
+                    fontWeight: FontWeight.bold, color: AppColors.gray700)),
           ],
         ),
         const SizedBox(height: 6),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
           child: LinearProgressIndicator(
             value: value,
             minHeight: 12,
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: AppColors.gray200,
             valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF10B981)), // Green from reference
+                AppColors.successGreen),
           ),
         ),
       ],

@@ -1,54 +1,107 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_spacing.dart';
 
+/// NPS Gauge — layout horizontal compacto que se adapta ao espaço disponível.
+/// Substitui o termômetro vertical que quebrava em containers estreitos.
 class NpsGauge extends StatelessWidget {
   final double score; // 0 to 10
   const NpsGauge({super.key, required this.score});
+
+  Color get _scoreColor {
+    if (score >= 9) return AppColors.successGreen;
+    if (score >= 7) return AppColors.warningYellow;
+    return AppColors.dangerRed;
+  }
+
+  String get _label {
+    if (score >= 9) return 'Excelente';
+    if (score >= 7) return 'Bom';
+    if (score >= 5) return 'Regular';
+    return 'Crítico';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('NPS',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Row(
+              children: [
+                Text('NPS',
+                    style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.gray500,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2)),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: _scoreColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    _label,
+                    style: AppTypography.caption.copyWith(
+                        color: _scoreColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Escala de números
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(
-                        11,
-                        (index) => Text('${10 - index}',
-                            style: const TextStyle(
-                                fontSize: 10, color: Colors.grey))),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  score.toStringAsFixed(1),
+                  style: AppTypography.h1.copyWith(
+                      fontSize: 32, color: _scoreColor),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4, left: 2),
+                  child: Text(
+                    '/10',
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.gray400),
                   ),
-                  const SizedBox(width: 8),
-                  // Barra Vertical
-                  Container(
-                    width: 12,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    alignment: Alignment.bottomCenter,
-                    child: FractionallySizedBox(
-                      heightFactor: score / 10,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Barra de progresso horizontal
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.xs),
+              child: LinearProgressIndicator(
+                value: score / 10,
+                minHeight: 6,
+                backgroundColor: AppColors.gray200,
+                valueColor: AlwaysStoppedAnimation<Color>(_scoreColor),
               ),
+            ),
+            const SizedBox(height: 8),
+            // Escala 0-10
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('0',
+                    style: AppTypography.caption
+                        .copyWith(fontSize: 9, color: AppColors.gray400)),
+                Text('5',
+                    style: AppTypography.caption
+                        .copyWith(fontSize: 9, color: AppColors.gray400)),
+                Text('10',
+                    style: AppTypography.caption
+                        .copyWith(fontSize: 9, color: AppColors.gray400)),
+              ],
             ),
           ],
         ),

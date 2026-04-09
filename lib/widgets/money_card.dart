@@ -1,84 +1,126 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_shadows.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_typography.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MoneyCard extends StatefulWidget {
+// StateProvider simples para gerenciar a visibilidade globalmente
+final moneyVisibilityProvider = StateProvider<bool>((ref) => false);
+
+class MoneyCard extends ConsumerWidget {
   final double total;
   final double bruto;
-  final double futuro;
+  final double liquido;
+  final VoidCallback? onTap;
 
   const MoneyCard({
     super.key,
     required this.total,
     required this.bruto,
-    required this.futuro,
+    required this.liquido,
+    this.onTap,
   });
 
   @override
-  State<MoneyCard> createState() => _MoneyCardState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isVisible = ref.watch(moneyVisibilityProvider);
 
-class _MoneyCardState extends State<MoneyCard> {
-  bool _isVisible = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFFBDBDBD), // Cinza da referência
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.x2l),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.primaryOrange, AppColors.orange600],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppShadows.md,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('TOTAL:',
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black54)),
-                    const Spacer(),
-                    IconButton(
-                      icon: Icon(
-                          _isVisible ? Icons.visibility : Icons.visibility_off,
-                          size: 20),
-                      onPressed: () => setState(() => _isVisible = !_isVisible),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.account_balance_wallet_rounded,
+                          color: AppColors.white, size: 20),
                     ),
+                    const SizedBox(width: 12),
+                    Text('FATURAMENTO TOTAL',
+                        style: AppTypography.caption.copyWith(
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white.withValues(alpha: 0.8))),
                   ],
                 ),
-                Text(
-                  _isVisible
-                      ? 'R\$ ${widget.total.toStringAsFixed(2).replaceAll('.', ',')}'
-                      : 'R\$ *****',
-                  style: const TextStyle(
-                      fontSize: 28, fontWeight: FontWeight.w900),
+                IconButton(
+                  icon: Icon(
+                    isVisible
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: AppColors.white.withValues(alpha: 0.7),
+                    size: 20,
+                  ),
+                  onPressed: () => ref
+                      .read(moneyVisibilityProvider.notifier)
+                      .state = !isVisible,
                 ),
               ],
             ),
-          ),
-          const Divider(height: 1, color: Colors.black12),
-          IntrinsicHeight(
-            child: Row(
+            const SizedBox(height: 24),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                isVisible
+                    ? 'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}'
+                    : 'R\$ •••••••',
+                style: AppTypography.heroNumber.copyWith(color: AppColors.white),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Divider(color: AppColors.white.withValues(alpha: 0.2)),
+            const SizedBox(height: 16),
+            Row(
               children: [
                 Expanded(
                   child: _SubValue(
                     label: 'FATURAMENTO BRUTO',
-                    value: widget.bruto,
-                    isVisible: _isVisible,
+                    value: bruto,
+                    isVisible: isVisible,
                   ),
                 ),
-                const VerticalDivider(width: 1, color: Colors.black12),
+                Container(
+                    width: 1,
+                    height: 40,
+                    color: AppColors.white.withValues(alpha: 0.2)),
                 Expanded(
-                  child: _SubValue(
-                    label: 'RECEITAS FUTURAS',
-                    value: widget.futuro,
-                    isVisible: _isVisible,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.lg),
+                    child: _SubValue(
+                      label: 'FATURAMENTO LÍQUIDO',
+                      value: liquido,
+                      isVisible: isVisible,
+                    ),
                   ),
                 ),
               ],
             ),
-          )
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -89,29 +131,37 @@ class _SubValue extends StatelessWidget {
   final double value;
   final bool isVisible;
 
-  const _SubValue(
-      {required this.label, required this.value, required this.isVisible});
+  const _SubValue({
+    required this.label,
+    required this.value,
+    required this.isVisible,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      child: Column(
-        children: [
-          Text(
-              isVisible
-                  ? 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}'
-                  : 'R\$ *****',
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          const SizedBox(height: 4),
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 9,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.bold)),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTypography.caption.copyWith(
+              fontSize: 10,
+              letterSpacing: 0.5,
+              color: AppColors.white.withValues(alpha: 0.7)),
+        ),
+        const SizedBox(height: 4),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            isVisible
+                ? 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}'
+                : 'R\$ •••••',
+            style: AppTypography.h3
+                .copyWith(color: AppColors.white, fontSize: 16),
+          ),
+        ),
+      ],
     );
   }
 }

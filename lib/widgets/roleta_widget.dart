@@ -13,7 +13,7 @@ class RoletaWidget extends StatefulWidget {
     required this.value,
     required this.label,
     this.fontSize = 32,
-    this.textColor = Colors.white,
+    this.textColor = AppColors.white,
   });
 
   @override

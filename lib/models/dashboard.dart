@@ -23,11 +23,17 @@ class CabineStatus {
         numero: j['numero'] as int,
         status: j['status'] as String,
         liveAtualId: j['live_atual_id'] as String?,
-        viewerCount: j['viewer_count'] ?? 0,
-        gmvAtual: (j['gmv_atual'] ?? 0).toDouble(),
+        viewerCount: j['viewer_count'] == null
+            ? 0
+            : int.tryParse(j['viewer_count'].toString()) ?? 0,
+        gmvAtual: j['gmv_atual'] == null
+            ? 0.0
+            : double.tryParse(j['gmv_atual'].toString()) ?? 0.0,
         clienteNome: j['cliente_nome'] as String?,
         apresentador: j['apresentador'] as String?,
-        duracaoMin: j['duracao_min'] ?? 0,
+        duracaoMin: j['duracao_min'] == null
+            ? 0
+            : int.tryParse(j['duracao_min'].toString()) ?? 0,
       );
 
   Map<String, dynamic> toMockMap() => {
@@ -54,8 +60,11 @@ class RankingEntry {
 
   factory RankingEntry.fromJson(Map<String, dynamic> j) => RankingEntry(
         nome: j['nome'] as String,
-        gmv: (j['gmv'] ?? 0).toDouble(),
-        lives: j['lives'] ?? 0,
+        gmv: j['gmv'] == null
+            ? 0.0
+            : double.tryParse(j['gmv'].toString()) ?? 0.0,
+        lives:
+            j['lives'] == null ? 0 : int.tryParse(j['lives'].toString()) ?? 0,
       );
 }
 
@@ -101,18 +110,42 @@ class DashboardData {
   });
 
   factory DashboardData.fromJson(Map<String, dynamic> j) => DashboardData(
-        fatTotal: (j['fat_total'] ?? 0).toDouble(),
-        fatBruto: (j['fat_bruto'] ?? 0).toDouble(),
-        fatLiquido: (j['fat_liquido'] ?? 0).toDouble(),
-        clientesAtivos: j['clientes_ativos'] ?? 0,
-        novosClientes: j['novos_clientes'] ?? 0,
-        churnMes: j['churn_mes'] ?? 0,
-        livesMes: j['lives_mes'] ?? 0,
-        gmvLivesMes: (j['gmv_lives_mes'] ?? 0).toDouble(),
-        mediaViewers: j['media_viewers'] ?? 0,
-        contratosAnalise: j['contratos_analise'] ?? 0,
-        boletosVencidos: j['boletos_vencidos'] ?? 0,
-        leadsDisponiveis: j['leads_disponiveis'] ?? 0,
+        fatTotal: j['fat_total'] == null
+            ? 0.0
+            : double.tryParse(j['fat_total'].toString()) ?? 0.0,
+        fatBruto: j['fat_bruto'] == null
+            ? 0.0
+            : double.tryParse(j['fat_bruto'].toString()) ?? 0.0,
+        fatLiquido: j['fat_liquido'] == null
+            ? 0.0
+            : double.tryParse(j['fat_liquido'].toString()) ?? 0.0,
+        clientesAtivos: j['clientes_ativos'] == null
+            ? 0
+            : int.tryParse(j['clientes_ativos'].toString()) ?? 0,
+        novosClientes: j['novos_clientes'] == null
+            ? 0
+            : int.tryParse(j['novos_clientes'].toString()) ?? 0,
+        churnMes: j['churn_mes'] == null
+            ? 0
+            : int.tryParse(j['churn_mes'].toString()) ?? 0,
+        livesMes: j['lives_mes'] == null
+            ? 0
+            : int.tryParse(j['lives_mes'].toString()) ?? 0,
+        gmvLivesMes: j['gmv_lives_mes'] == null
+            ? 0.0
+            : double.tryParse(j['gmv_lives_mes'].toString()) ?? 0.0,
+        mediaViewers: j['media_viewers'] == null
+            ? 0
+            : int.tryParse(j['media_viewers'].toString()) ?? 0,
+        contratosAnalise: j['contratos_analise'] == null
+            ? 0
+            : int.tryParse(j['contratos_analise'].toString()) ?? 0,
+        boletosVencidos: j['boletos_vencidos'] == null
+            ? 0
+            : int.tryParse(j['boletos_vencidos'].toString()) ?? 0,
+        leadsDisponiveis: j['leads_disponiveis'] == null
+            ? 0
+            : int.tryParse(j['leads_disponiveis'].toString()) ?? 0,
         cabines: (j['cabines'] as List?)
                 ?.map((e) => CabineStatus.fromJson(e as Map<String, dynamic>))
                 .toList() ??

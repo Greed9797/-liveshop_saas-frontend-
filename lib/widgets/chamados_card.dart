@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_radius.dart';
 
 class ChamadosCard extends StatelessWidget {
   final int count;
@@ -10,67 +13,89 @@ class ChamadosCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('CHAMADOS',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
-                      Stack(
-                        children: [
-                          const Icon(Icons.person_outline, size: 28),
-                          if (count > 0)
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle),
-                                child: Text('$count',
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.bold)),
-                              ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('CHAMADOS',
+                        style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.gray500,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2)),
+                    Stack(
+                      children: [
+                        const Icon(Icons.person_outline,
+                            size: 24, color: AppColors.gray400),
+                        if (count > 0)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: const BoxDecoration(
+                                  color: AppColors.primaryOrange,
+                                  shape: BoxShape.circle),
+                              child: Text('$count',
+                                  style: const TextStyle(
+                                      color: AppColors.white,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold)),
                             ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Você possui $count chamados não visualizados',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ],
-              ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  count > 0
+                      ? '$count chamados não visualizados'
+                      : 'Nenhum chamado pendente',
+                  style:
+                      AppTypography.caption.copyWith(color: AppColors.gray500),
+                ),
+              ],
             ),
           ),
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            color: AppColors.danger,
-            child: const Row(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: BoxDecoration(
+              color: count > 0
+                  ? AppColors.dangerRed
+                  : AppColors.gray200,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(14),
+                bottomRight: Radius.circular(14),
+              ),
+            ),
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'INFORMATIVO: INADIMPLÊNCIA',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12),
+                Icon(
+                    count > 0 ? Icons.money_off : Icons.check_circle_outline,
+                    color: count > 0 ? AppColors.white : AppColors.gray500,
+                    size: 14),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    count > 0
+                        ? 'INFORMATIVO: INADIMPLÊNCIA'
+                        : 'Tudo em dia',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        color: count > 0 ? AppColors.white : AppColors.gray500,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11),
+                  ),
                 ),
-                SizedBox(width: 8),
-                Icon(Icons.money_off, color: Colors.white, size: 16),
               ],
             ),
           ),

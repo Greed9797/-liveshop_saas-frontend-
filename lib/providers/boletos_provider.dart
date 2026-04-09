@@ -1,10 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/boleto.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class BoletosNotifier extends AsyncNotifier<List<Boleto>> {
   @override
-  Future<List<Boleto>> build() => _fetch();
+  Future<List<Boleto>> build() {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) return Future.value([]);
+    return _fetch();
+  }
 
   Future<List<Boleto>> _fetch() async {
     final resp = await ApiService.get('/boletos');

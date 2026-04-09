@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/boleto.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_shadows.dart';
+import '../theme/app_radius.dart';
 import '../theme/app_typography.dart';
 
 class BoletoItem extends StatelessWidget {
@@ -16,15 +18,9 @@ class BoletoItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.surfaceDivider),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.gray200),
+        boxShadow: AppShadows.sm,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -49,7 +45,7 @@ class BoletoItem extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: AppColors.infoPurple.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
                         ),
                         child: Text(
                           'AUTO',
@@ -94,7 +90,7 @@ class BoletoItem extends StatelessWidget {
                             ? _formatDate(boleto.pagoEm!)
                             : _formatDate(boleto.vencimento),
                         style: AppTypography.bodySmall.copyWith(
-                          color: boleto.isVencido ? AppColors.dangerRed : AppColors.black,
+                          color: boleto.isVencido ? AppColors.dangerRed : AppColors.gray900,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -112,7 +108,7 @@ class BoletoItem extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppColors.dangerRed.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Text(
                   'Falha ao gerar no Asaas: ${boleto.asaasError}',
@@ -151,7 +147,7 @@ class BoletoItem extends StatelessWidget {
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: AppColors.surfaceGray,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Text('Sem link de pagamento', style: AppTypography.caption),
                       ),
@@ -233,7 +229,7 @@ class _StatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(label,
           style: AppTypography.caption.copyWith(
@@ -252,7 +248,7 @@ class _TipoIcon extends StatelessWidget {
       'royalties' => (Icons.percent_rounded,          AppColors.primaryOrange),
       'imposto'   => (Icons.account_balance_rounded,  AppColors.infoBlue),
       'marketing' => (Icons.campaign_rounded,          AppColors.infoPurple),
-      _           => (Icons.receipt_long_rounded,      AppColors.textSecondary),
+      _           => (Icons.receipt_long_rounded,      AppColors.gray400),
     };
     return Icon(icon, size: 20, color: color);
   }
@@ -274,7 +270,7 @@ class _LinkButton extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: color.withValues(alpha: 0.30)),
         ),
         child: Row(

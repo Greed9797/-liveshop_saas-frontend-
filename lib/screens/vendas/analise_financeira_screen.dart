@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../models/contrato.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/action_button.dart';
+import '../../widgets/banner_alerta_comercial.dart';
 import '../../providers/contratos_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_radius.dart';
+import '../../theme/app_typography.dart';
+import '../auditoria/widgets/assumir_risco_modal.dart';
 
 /// Tela de análise financeira — chama API real e exibe resultado
 class AnaliseFinanceiraScreen extends ConsumerStatefulWidget {
@@ -33,23 +39,37 @@ class _AnaliseState extends ConsumerState<AnaliseFinanceiraScreen> {
   Future<void> _analisar() async {
     final contratoId = _contratoId;
     if (contratoId == null) {
-      setState(() { _fase = 3; _erro = 'ID do contrato não informado'; });
+      if (mounted) {
+        setState(() {
+          _fase = 3;
+          _erro =
+              'ID do contrato não informado. Retorne à esteira de vendas para iniciar uma análise de crédito.';
+        });
+      }
       return;
     }
     try {
-      final result = await ref.read(contratosProvider.notifier).analisar(contratoId);
+      final result =
+          await ref.read(contratosProvider.notifier).analisar(contratoId);
       if (!mounted) return;
       setState(() {
         _score = result['score'] as int?;
         _fase = (result['aprovado'] as bool? ?? false) ? 1 : 2;
       });
     } catch (e) {
-      if (mounted) setState(() { _fase = 3; _erro = e.toString(); });
+      if (mounted) {
+        setState(() {
+          _fase = 3;
+          _erro = e.toString();
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final contratoBanner = _contratoBanner;
+
     return AppScaffold(
       currentRoute: AppRoutes.vendas,
       child: Center(
@@ -57,48 +77,101 @@ class _AnaliseState extends ConsumerState<AnaliseFinanceiraScreen> {
           constraints: const BoxConstraints(maxWidth: 500),
           child: Card(
             child: Padding(
-              padding: const EdgeInsets.all(40),
+              padding: const EdgeInsets.all(AppSpacing.x4l),
               child: switch (_fase) {
                 0 => const _AnalisandoView(),
-                1 => _AprovadoView(
-                    score: _score,
-                    onContinuar: () => Navigator.pushNamedAndRemoveUntil(
-                        context, AppRoutes.vendas, (_) => false),
+                1 => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (contratoBanner != null) ...[
+                        BannerAlertaComercial(contrato: contratoBanner),
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
+                      _AprovadoView(
+                        score: _score,
+                        onContinuar: () => Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.vendas,
+                          (_) => false,
+                        ),
+                      ),
+                    ],
                   ),
-                2 => _RecusadoView(
-                    score: _score,
-                    onAssumir: () async {
-                      final id = _contratoId;
-                      if (id == null) return;
-                      try {
-                        await ref.read(contratosProvider.notifier).assumirRisco(id);
-                        if (context.mounted) {
-                          Navigator.pushNamedAndRemoveUntil(
-                              context, AppRoutes.vendas, (_) => false);
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Erro: $e')),
+                2 => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (contratoBanner != null) ...[
+                        BannerAlertaComercial(contrato: contratoBanner),
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
+                      _RecusadoView(
+                        score: _score,
+                        onAssumir: () async {
+                          final id = _contratoId;
+                          if (id == null) return;
+                          final accepted = await showDialog<bool>(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => AssumirRiscoModal(
+                              contrato: Contrato(
+                                id: id,
+                                clienteId: '',
+                                status: 'reprovado',
+                                valorFixo: 0,
+                                comissaoPct: 0,
+                                deRisco: true,
+                              ),
+                            ),
                           );
-                        }
-                      }
-                    },
-                    onCancelar: () async {
-                      final id = _contratoId;
-                      if (id == null) return;
-                      try {
-                        await ref.read(contratosProvider.notifier).cancelar(id);
-                      } catch (_) {}
-                      if (context.mounted) {
-                        Navigator.pushNamedAndRemoveUntil(
-                            context, AppRoutes.vendas, (_) => false);
-                      }
-                    },
+                          if (!context.mounted) return;
+                          if (accepted == true) {
+                            final messenger = ScaffoldMessenger.of(context);
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Sucesso! Risco assumido e contrato liberado para seguir na esteira comercial.',
+                                ),
+                              ),
+                            );
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              AppRoutes.vendas,
+                              (_) => false,
+                            );
+                          }
+                        },
+                        onCancelar: () async {
+                          final id = _contratoId;
+                          if (id == null) return;
+                          try {
+                            await ref
+                                .read(contratosProvider.notifier)
+                                .cancelar(id);
+                          } catch (_) {}
+                          if (!context.mounted) return;
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            AppRoutes.vendas,
+                            (_) => false,
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 _ => _ErroView(
                     mensagem: _erro ?? 'Erro desconhecido',
-                    onTentar: () { setState(() => _fase = 0); _analisar(); },
+                    onTentar: () {
+                      if (_contratoId == null) {
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.vendas,
+                          (_) => false,
+                        );
+                        return;
+                      }
+                      setState(() => _fase = 0);
+                      _analisar();
+                    },
                   ),
               },
             ),
@@ -107,22 +180,47 @@ class _AnaliseState extends ConsumerState<AnaliseFinanceiraScreen> {
       ),
     );
   }
+
+  Contrato? get _contratoBanner {
+    final id = _contratoId;
+    if (id == null) return null;
+
+    final status = switch (_fase) {
+      1 => 'aprovado',
+      2 => 'reprovado',
+      _ => 'em_analise',
+    };
+
+    return Contrato(
+      id: id,
+      clienteId: '',
+      status: status,
+      valorFixo: 0,
+      comissaoPct: 0,
+      deRisco: _fase == 2,
+      clienteScore: _score,
+      reprovacaoMotivo: _fase == 2
+          ? 'Crédito acima da política padrão. Avalie opção de garantia adicional.'
+          : null,
+    );
+  }
 }
 
 class _AnalisandoView extends StatelessWidget {
   const _AnalisandoView();
   @override
-  Widget build(BuildContext context) => const Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      CircularProgressIndicator(),
-      SizedBox(height: 24),
-      Text('Analisando dados financeiros...',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-      SizedBox(height: 8),
-      Text('Consultando score de crédito', style: TextStyle(color: Colors.grey)),
-    ],
-  );
+  Widget build(BuildContext context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: AppSpacing.x2l),
+          Text('Analisando dados financeiros...',
+              style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w500)),
+          const SizedBox(height: AppSpacing.sm),
+          Text('Consultando score de crédito',
+              style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+        ],
+      );
 }
 
 class _AprovadoView extends StatelessWidget {
@@ -132,66 +230,85 @@ class _AprovadoView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 64),
-      const SizedBox(height: 16),
-      const Text('APROVADO',
-          style: TextStyle(fontSize: 24, color: AppColors.success, fontWeight: FontWeight.w500)),
-      if (score != null) ...[
-        const SizedBox(height: 8),
-        Text('Score: $score/100', style: const TextStyle(color: Colors.grey)),
-      ],
-      const SizedBox(height: 8),
-      const Text('Cliente aprovado para contrato ativo!'),
-      const SizedBox(height: 24),
-      ActionButton(label: 'CONTINUAR', onPressed: onContinuar, color: AppColors.success),
-    ],
-  );
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.check_circle_rounded,
+              color: AppColors.success, size: 64),
+          const SizedBox(height: AppSpacing.lg),
+          Text('APROVADO',
+              style: AppTypography.h1.copyWith(
+                  fontSize: 24,
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w500)),
+          if (score != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text('Score: $score/100',
+                style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+          ],
+          const SizedBox(height: AppSpacing.sm),
+          const Text('Cliente aprovado para contrato ativo!'),
+          const SizedBox(height: AppSpacing.x2l),
+          ActionButton(
+              label: 'CONTINUAR',
+              onPressed: onContinuar,
+              color: AppColors.success),
+        ],
+      );
 }
 
 class _RecusadoView extends StatelessWidget {
   final int? score;
   final VoidCallback onAssumir;
   final VoidCallback onCancelar;
-  const _RecusadoView({required this.score, required this.onAssumir, required this.onCancelar});
+  const _RecusadoView(
+      {required this.score, required this.onAssumir, required this.onCancelar});
 
   @override
   Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      const Icon(Icons.warning_rounded, color: AppColors.danger, size: 64),
-      const SizedBox(height: 16),
-      const Text('CLIENTE COM ALTO RISCO',
-          style: TextStyle(fontSize: 18, color: AppColors.danger, fontWeight: FontWeight.w500)),
-      if (score != null) ...[
-        const SizedBox(height: 8),
-        Text('Score: $score/100', style: const TextStyle(color: Colors.grey)),
-      ],
-      const SizedBox(height: 12),
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.danger.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Text(
-          'Você pode negociar pagamento antecipado ou assumir o risco.',
-          style: TextStyle(color: AppColors.danger),
-          textAlign: TextAlign.center,
-        ),
-      ),
-      const SizedBox(height: 24),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          ActionButton(label: 'ASSUMIR RISCO',     onPressed: onAssumir,  color: AppColors.warning),
-          const SizedBox(width: 12),
-          ActionButton(label: 'CANCELAR',          onPressed: onCancelar, outlined: true, color: AppColors.danger),
+          const Icon(Icons.warning_rounded, color: AppColors.danger, size: 64),
+          const SizedBox(height: AppSpacing.lg),
+          Text('CLIENTE COM ALTO RISCO',
+              style: AppTypography.h3.copyWith(
+                  color: AppColors.danger,
+                  fontWeight: FontWeight.w500)),
+          if (score != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text('Score: $score/100',
+                style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.compactPadding),
+            decoration: BoxDecoration(
+              color: AppColors.danger.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: const Text(
+              'Você pode negociar pagamento antecipado ou assumir o risco.',
+              style: TextStyle(color: AppColors.danger),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.x2l),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ActionButton(
+                  label: 'ASSUMIR RISCO',
+                  onPressed: onAssumir,
+                  color: AppColors.warning),
+              const SizedBox(width: AppSpacing.md),
+              ActionButton(
+                  label: 'CANCELAR',
+                  onPressed: onCancelar,
+                  outlined: true,
+                  color: AppColors.danger),
+            ],
+          ),
         ],
-      ),
-    ],
-  );
+      );
 }
 
 class _ErroView extends StatelessWidget {
@@ -201,13 +318,14 @@ class _ErroView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      const Icon(Icons.error_outline, color: AppColors.danger, size: 48),
-      const SizedBox(height: 12),
-      Text(mensagem, textAlign: TextAlign.center),
-      const SizedBox(height: 16),
-      ElevatedButton(onPressed: onTentar, child: const Text('Tentar novamente')),
-    ],
-  );
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, color: AppColors.danger, size: 48),
+          const SizedBox(height: AppSpacing.md),
+          Text(mensagem, textAlign: TextAlign.center),
+          const SizedBox(height: AppSpacing.lg),
+          ElevatedButton(
+              onPressed: onTentar, child: const Text('Tentar novamente')),
+        ],
+      );
 }

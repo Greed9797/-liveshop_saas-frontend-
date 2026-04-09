@@ -8,6 +8,9 @@ import '../../providers/clientes_provider.dart';
 import '../../providers/recomendacoes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_radius.dart';
+import '../../theme/app_typography.dart';
 
 class VendasScreen extends ConsumerStatefulWidget {
   const VendasScreen({super.key});
@@ -20,12 +23,12 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
   final Set<String> _activeFilters = {};
 
   static const _statusOptions = [
-    ('negociacao',   'Negociação',      AppColors.info),
-    ('enviado',      'Enviado',         AppColors.warning),
-    ('em_analise',   'Em Análise',      AppColors.warning),
-    ('ativo',        'Ativo',           AppColors.success),
-    ('inadimplente', 'Inadimplente',    AppColors.danger),
-    ('recomendacao', 'Recomendação',    AppColors.lilac),
+    ('negociacao', 'Negociação', AppColors.info),
+    ('enviado', 'Enviado', AppColors.warning),
+    ('em_analise', 'Em Análise', AppColors.warning),
+    ('ativo', 'Ativo', AppColors.success),
+    ('inadimplente', 'Inadimplente', AppColors.danger),
+    ('recomendacao', 'Recomendação', AppColors.lilac),
   ];
 
   bool _clientePassaFiltro(String status) {
@@ -36,19 +39,21 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
   void _abrirFiltros() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Text('Filtrar por Status', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  Text('Filtrar por Status',
+                      style:
+                          AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
                   const Spacer(),
                   TextButton(
                     onPressed: () {
@@ -59,7 +64,7 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               ..._statusOptions.map((opt) {
                 final (value, label, color) = opt;
                 return CheckboxListTile(
@@ -67,13 +72,15 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
                   title: Row(
                     children: [
                       Icon(Icons.circle, color: color, size: 12),
-                      const SizedBox(width: 8),
-                      Text(label, style: const TextStyle(fontSize: 14)),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(label, style: AppTypography.bodySmall),
                     ],
                   ),
                   onChanged: (checked) {
                     setModalState(() {
-                      checked == true ? _activeFilters.add(value) : _activeFilters.remove(value);
+                      checked == true
+                          ? _activeFilters.add(value)
+                          : _activeFilters.remove(value);
                     });
                     setState(() {});
                   },
@@ -81,7 +88,7 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
                   dense: true,
                 );
               }),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
             ],
           ),
         ),
@@ -91,9 +98,9 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final clientesAsync  = ref.watch(clientesProvider);
-    final recsAsync      = ref.watch(recomendacoesProvider);
-    final hasFilter      = _activeFilters.isNotEmpty;
+    final clientesAsync = ref.watch(clientesProvider);
+    final recsAsync = ref.watch(recomendacoesProvider);
+    final hasFilter = _activeFilters.isNotEmpty;
 
     return AppScaffold(
       currentRoute: AppRoutes.vendas,
@@ -122,19 +129,37 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
                                 width: 120,
                                 height: 60,
                                 point: LatLng(c.lat!, c.lng!),
-                                child: ClientPin(status: c.status, nome: c.nome),
+                                child: ClientPin(
+                                  status: c.status,
+                                  nome: c.nome,
+                                  onTap: () => Navigator.pushNamed(
+                                      context, AppRoutes.cliente,
+                                      arguments: {'clienteId': c.id}),
+                                ),
                               ))
-                          .toList() ?? [],
-                  if (_activeFilters.isEmpty || _activeFilters.contains('recomendacao'))
+                          .toList() ??
+                      [],
+                  if (_activeFilters.isEmpty ||
+                      _activeFilters.contains('recomendacao'))
                     ...recsAsync.valueOrNull
-                            ?.where((r) => r.lat != null && r.lng != null && r.status == 'pendente')
+                            ?.where((r) =>
+                                r.lat != null &&
+                                r.lng != null &&
+                                r.status == 'pendente')
                             .map((r) => Marker(
                                   width: 120,
                                   height: 60,
                                   point: LatLng(r.lat!, r.lng!),
-                                  child: ClientPin(status: 'recomendacao', nome: r.nomeIndicado),
+                                  child: ClientPin(
+                                    status: 'recomendacao',
+                                    nome: r.nomeIndicado,
+                                    onTap: () => Navigator.pushNamed(
+                                        context, AppRoutes.contrato,
+                                        arguments: {'clienteId': r.id}),
+                                  ),
                                 ))
-                            .toList() ?? [],
+                            .toList() ??
+                        [],
                 ],
               ),
             ],
@@ -145,24 +170,30 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
             left: 16,
             child: Material(
               elevation: 3,
-              borderRadius: BorderRadius.circular(8),
-              color: hasFilter ? AppColors.primary : Colors.white,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              color: hasFilter ? AppColors.primary : AppColors.white,
               child: InkWell(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 onTap: _abrirFiltros,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.tune, size: 16, color: hasFilter ? Colors.white : AppColors.textPrimary),
+                      Icon(Icons.tune,
+                          size: 16,
+                          color:
+                              hasFilter ? AppColors.white : AppColors.textPrimary),
                       const SizedBox(width: 6),
                       Text(
-                        hasFilter ? 'Filtros (${_activeFilters.length})' : '⚙️ Filtros',
-                        style: TextStyle(
-                          fontSize: 13,
+                        hasFilter
+                            ? 'Filtros (${_activeFilters.length})'
+                            : '⚙️ Filtros',
+                        style: AppTypography.labelLarge.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: hasFilter ? Colors.white : AppColors.textPrimary,
+                          color:
+                              hasFilter ? AppColors.white : AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -181,8 +212,9 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
             right: 24,
             child: FloatingActionButton(
               backgroundColor: AppColors.primary,
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.cadastroCliente),
-              child: const Icon(Icons.add, color: Colors.white),
+              onPressed: () =>
+                  Navigator.pushNamed(context, AppRoutes.cadastroCliente),
+              child: const Icon(Icons.add, color: AppColors.white),
             ),
           ),
         ],
@@ -197,15 +229,15 @@ class _MapLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
-      ('Negociação',       AppColors.info),
+      ('Negociação', AppColors.info),
       ('Contrato Enviado', AppColors.warning),
-      ('Ativo',            AppColors.success),
-      ('Inadimplente',     AppColors.danger),
-      ('Recomendação',     AppColors.lilac),
+      ('Ativo', AppColors.success),
+      ('Inadimplente', AppColors.danger),
+      ('Recomendação', AppColors.lilac),
     ];
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: items
@@ -216,7 +248,7 @@ class _MapLegend extends StatelessWidget {
                       children: [
                         Icon(Icons.circle, color: item.$2, size: 12),
                         const SizedBox(width: 6),
-                        Text(item.$1, style: const TextStyle(fontSize: 12)),
+                        Text(item.$1, style: AppTypography.caption),
                       ],
                     ),
                   ))

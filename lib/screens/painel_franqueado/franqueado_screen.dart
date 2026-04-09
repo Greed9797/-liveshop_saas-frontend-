@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/metric_card.dart';
 import '../../providers/franqueado_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
 
 /// Painel master do franqueador — visão de todas as unidades
 class FranqueadoScreen extends ConsumerWidget {
@@ -18,20 +21,20 @@ class FranqueadoScreen extends ConsumerWidget {
     return AppScaffold(
       currentRoute: AppRoutes.franqueado,
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Painel do Franqueador',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+                        style: AppTypography.h2.copyWith(fontWeight: FontWeight.w500)),
                     Text('Visão geral de todas as unidades',
-                        style: TextStyle(color: Colors.grey)),
+                        style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
                   ],
                 ),
                 IconButton(
@@ -40,13 +43,13 @@ class FranqueadoScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
             unidadesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Text('Erro: $e'),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   ElevatedButton(
                     onPressed: () => ref.read(franqueadoProvider.notifier).refresh(),
                     child: const Text('Tentar novamente'),
@@ -71,46 +74,56 @@ class _UnidadesContent extends StatelessWidget {
     final ativas     = unidades.where((u) => u.status == 'ativo').length;
     final fatTotal   = unidades.fold(0.0, (sum, u) => sum + u.fatMes);
     final pendentes  = unidades.fold(0,   (sum, u) => sum + u.contratosPendentes);
+    final currency   = NumberFormat.simpleCurrency(locale: 'pt_BR');
 
     return Expanded(
       child: Column(
         children: [
-          Row(
+          Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.md,
             children: [
-              Expanded(child: MetricCard(
-                label: 'UNIDADES ATIVAS',
-                value: '$ativas',
-                icon: Icons.store_outlined,
-                iconColor: AppColors.success,
-              )),
-              const SizedBox(width: 12),
-              Expanded(child: MetricCard(
-                label: 'FAT. CONSOLIDADO',
-                value: 'R\$ ${fatTotal.toStringAsFixed(2).replaceAll('.', ',')}',
-                icon: Icons.attach_money,
-                iconColor: AppColors.primary,
-              )),
-              const SizedBox(width: 12),
-              Expanded(child: MetricCard(
-                label: 'CONTRATOS PENDENTES',
-                value: '$pendentes',
-                icon: Icons.pending_outlined,
-                iconColor: AppColors.warning,
-              )),
+              SizedBox(
+                width: 220,
+                child: MetricCard(
+                  label: 'UNIDADES ATIVAS',
+                  value: '$ativas',
+                  icon: Icons.store_outlined,
+                  iconColor: AppColors.success,
+                ),
+              ),
+              SizedBox(
+                width: 220,
+                child: MetricCard(
+                  label: 'FAT. CONSOLIDADO',
+                  value: currency.format(fatTotal),
+                  icon: Icons.attach_money,
+                  iconColor: AppColors.primary,
+                ),
+              ),
+              SizedBox(
+                width: 220,
+                child: MetricCard(
+                  label: 'CONTRATOS PENDENTES',
+                  value: '$pendentes',
+                  icon: Icons.pending_outlined,
+                  iconColor: AppColors.warning,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 20),
-          const Align(
+          const SizedBox(height: AppSpacing.xl),
+          Align(
             alignment: Alignment.centerLeft,
             child: Text('Unidades Franqueadas',
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
+                style: AppTypography.bodyMedium),
           ),
           const SizedBox(height: 10),
           Expanded(
             child: unidades.isEmpty
                 ? const Center(
                     child: Text('Nenhuma unidade encontrada.',
-                        style: TextStyle(color: Colors.grey)))
+                        style: TextStyle(color: AppColors.gray500)))
                 : ListView.separated(
                     itemCount: unidades.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),
@@ -120,18 +133,18 @@ class _UnidadesContent extends StatelessWidget {
                         title: Text(u.nome,
                             style: const TextStyle(fontWeight: FontWeight.w500)),
                         subtitle: Text(
-                            'Clientes: ${u.clientesCount} • Fat: R\$ ${u.fatMes.toStringAsFixed(0)}'),
+                            'Clientes: ${u.clientesCount} • Fat: ${currency.format(u.fatMes)}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (u.contratosPendentes > 0)
                               Chip(
                                 label: Text('${u.contratosPendentes} pendentes',
-                                    style: const TextStyle(fontSize: 11)),
+                                    style: AppTypography.caption.copyWith(fontSize: 11)),
                                 backgroundColor: AppColors.warning.withValues(alpha: 0.15),
                                 labelStyle: const TextStyle(color: AppColors.warning),
                               ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpacing.sm),
                             StatusBadge(status: u.status),
                           ],
                         ),

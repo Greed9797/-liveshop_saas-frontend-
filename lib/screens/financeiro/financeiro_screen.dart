@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/roleta_widget.dart';
-import '../../widgets/metric_card.dart';
 import '../../providers/financeiro_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_radius.dart';
+import '../../theme/app_typography.dart';
 
-/// Controle financeiro com 3 abas
 class FinanceiroScreen extends ConsumerWidget {
   const FinanceiroScreen({super.key});
 
@@ -20,15 +21,22 @@ class FinanceiroScreen extends ConsumerWidget {
         child: Column(
           children: [
             Container(
-              color: Colors.white,
+              color: AppColors.white,
               child: const TabBar(
-                labelColor: AppColors.primary,
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: AppColors.primary,
+                labelColor: AppColors.primaryOrange,
+                unselectedLabelColor: AppColors.gray500,
+                indicatorColor: AppColors.primaryOrange,
                 tabs: [
-                  Tab(text: 'Operacional'),
-                  Tab(text: 'Faturamento Detalhado'),
-                  Tab(text: 'Roleta do Franqueado'),
+                  Tab(
+                      icon:
+                          Icon(Icons.account_balance_wallet_outlined, size: 18),
+                      text: 'Operacional'),
+                  Tab(
+                      icon: Icon(Icons.table_chart_outlined, size: 18),
+                      text: 'Por Cliente'),
+                  Tab(
+                      icon: Icon(Icons.donut_large_outlined, size: 18),
+                      text: 'Recebíveis'),
                 ],
               ),
             ),
@@ -36,8 +44,8 @@ class FinanceiroScreen extends ConsumerWidget {
               child: TabBarView(
                 children: [
                   _OperacionalTab(),
-                  _FaturamentoTab(),
-                  _RoletaTab(),
+                  _PorClienteTab(),
+                  _ReceiveisTab(),
                 ],
               ),
             ),
@@ -48,92 +56,128 @@ class FinanceiroScreen extends ConsumerWidget {
   }
 }
 
+// ─── ABA A: OPERACIONAL (Custos + Fluxo de Caixa) ────────────────────────────
+
 class _OperacionalTab extends ConsumerWidget {
   const _OperacionalTab();
 
+  static const _categorias = [
+    _Categoria('Aluguel', Icons.home_outlined, 'aluguel'),
+    _Categoria('Salários', Icons.people_outline, 'salario'),
+    _Categoria('Energia', Icons.bolt_outlined, 'energia'),
+    _Categoria('Internet', Icons.wifi, 'internet'),
+    _Categoria('Outros', Icons.more_horiz, 'outros'),
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final financeiroAsync = ref.watch(financeiroProvider);
+    final resumoAsync = ref.watch(financeiroProvider);
+    final custosAsync = ref.watch(custosProvider);
+    final fluxoAsync = ref.watch(fluxoCaixaProvider);
 
-    return financeiroAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('Erro: $e'),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () => ref.read(financeiroProvider.notifier).carregarPeriodo(
-              DateTime.now().month, DateTime.now().year),
-            child: const Text('Tentar novamente'),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Resumo rápido ──────────────────────────────────────────────
+          resumoAsync.when(
+            loading: () => const LinearProgressIndicator(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (r) => Row(
+              children: [
+                _QuickMetric('BRUTO', r.fatBruto, AppColors.infoBlue),
+                const SizedBox(width: AppSpacing.md),
+                _QuickMetric('LÍQUIDO', r.fatLiquido, AppColors.successGreen),
+                const SizedBox(width: AppSpacing.md),
+                _QuickMetric('CUSTOS', r.totalCustos, AppColors.dangerRed),
+              ],
+            ),
           ),
-        ]),
-      ),
-      data: (resumo) => SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Controle Operacional',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-                Text(resumo.periodo,
-                    style: const TextStyle(color: Colors.grey, fontSize: 13)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12, runSpacing: 12,
-              children: [
-                SizedBox(width: 200, child: MetricCard(
-                  label: 'CUSTOS OPERACIONAIS',
-                  value: 'R\$ ${resumo.totalCustos.toStringAsFixed(2).replaceAll('.', ',')}',
-                  icon: Icons.remove_circle_outline,
-                  iconColor: AppColors.danger,
-                )),
-                SizedBox(width: 200, child: MetricCard(
-                  label: 'FATURAMENTO BRUTO',
-                  value: 'R\$ ${resumo.fatBruto.toStringAsFixed(2).replaceAll('.', ',')}',
-                  icon: Icons.swap_horiz,
-                  iconColor: AppColors.info,
-                )),
-                SizedBox(width: 200, child: MetricCard(
-                  label: 'FAT LÍQUIDO',
-                  value: 'R\$ ${resumo.fatLiquido.toStringAsFixed(2).replaceAll('.', ',')}',
-                  icon: Icons.check_circle_outline,
-                  iconColor: AppColors.success,
-                )),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Custos', style: TextStyle(fontWeight: FontWeight.w500)),
-                TextButton.icon(
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Adicionar'),
-                  onPressed: () => _showAdicionarCusto(context, ref),
-                ),
-              ],
-            ),
-          ],
-        ),
+          const SizedBox(height: AppSpacing.x2l),
+
+          // ── Fluxo de Caixa ─────────────────────────────────────────────
+          Text('Fluxo de Caixa — Mês Atual',
+              style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: AppSpacing.md),
+          fluxoAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, __) => Text('Erro ao carregar fluxo de caixa',
+                style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+            data: (fluxo) => _FluxoCaixaBar(fluxo: fluxo),
+          ),
+          const SizedBox(height: 28),
+
+          // ── Cadastrar custo ────────────────────────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Custos do Mês',
+                  style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+              TextButton.icon(
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Adicionar'),
+                onPressed: () => _showAdicionarCusto(context, ref),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+
+          // Botões de categoria rápida
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: _categorias
+                .map((cat) => ActionChip(
+                      avatar: Icon(cat.icon,
+                          size: 16, color: AppColors.primaryOrange),
+                      label:
+                          Text(cat.label, style: AppTypography.caption),
+                      onPressed: () =>
+                          _showAdicionarCustoComCategoria(context, ref, cat),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+
+          // Lista de custos cadastrados
+          custosAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (custos) => custos.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2l),
+                      child: Text('Nenhum custo cadastrado este mês.',
+                          style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                    ),
+                  )
+                : Column(
+                    children: custos
+                        .map((c) => _CustoTile(custo: c, ref: ref))
+                        .toList(),
+                  ),
+          ),
+        ],
       ),
     );
   }
 
-  void _showAdicionarCusto(BuildContext context, WidgetRef ref) {
-    final descCtrl = TextEditingController();
+  void _showAdicionarCusto(BuildContext context, WidgetRef ref) =>
+      _showAdicionarCustoComCategoria(context, ref, null);
+
+  void _showAdicionarCustoComCategoria(
+      BuildContext context, WidgetRef ref, _Categoria? categoria) {
+    final descCtrl = TextEditingController(text: categoria?.label);
     final valorCtrl = TextEditingController();
-    String tipo = 'fixo';
+    String tipo = categoria?.valor ?? 'outros';
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
           title: const Text('Adicionar Custo'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -142,21 +186,27 @@ class _OperacionalTab extends ConsumerWidget {
                 controller: descCtrl,
                 decoration: const InputDecoration(labelText: 'Descrição'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: valorCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Valor (R\$)', prefixText: 'R\$ '),
+                autofocus: true,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                    labelText: 'Valor (R\$)', prefixText: 'R\$ '),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               DropdownButtonFormField<String>(
                 initialValue: tipo,
-                decoration: const InputDecoration(labelText: 'Tipo'),
+                decoration: const InputDecoration(labelText: 'Categoria'),
                 items: const [
-                  DropdownMenuItem(value: 'fixo', child: Text('Fixo')),
-                  DropdownMenuItem(value: 'variavel', child: Text('Variável')),
+                  DropdownMenuItem(value: 'aluguel', child: Text('Aluguel')),
+                  DropdownMenuItem(value: 'salario', child: Text('Salários')),
+                  DropdownMenuItem(value: 'energia', child: Text('Energia')),
+                  DropdownMenuItem(value: 'internet', child: Text('Internet')),
+                  DropdownMenuItem(value: 'outros', child: Text('Outros')),
                 ],
-                onChanged: (v) => setState(() => tipo = v ?? 'fixo'),
+                onChanged: (v) => setState(() => tipo = v ?? 'outros'),
               ),
             ],
           ),
@@ -166,26 +216,32 @@ class _OperacionalTab extends ConsumerWidget {
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryOrange),
               onPressed: () async {
-                if (descCtrl.text.isEmpty || valorCtrl.text.isEmpty) return;
+                final valorStr = valorCtrl.text.replaceAll(',', '.');
+                if (descCtrl.text.isEmpty || valorStr.isEmpty) return;
+                final valor = double.tryParse(valorStr);
+                if (valor == null || valor <= 0) return;
                 Navigator.pop(ctx);
                 try {
-                  await ref.read(financeiroProvider.notifier).adicionarCusto({
+                  await ref.read(custosProvider.notifier).adicionar({
                     'descricao': descCtrl.text,
-                    'valor': double.parse(valorCtrl.text.replaceAll(',', '.')),
+                    'valor': valor,
                     'tipo': tipo,
-                    'competencia': '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}',
+                    'competencia':
+                        '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}',
                   });
+                  ref.invalidate(financeiroProvider);
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Erro ao salvar: $e')),
-                    );
+                        SnackBar(content: Text('Erro ao salvar: $e')));
                   }
                 }
               },
-              child: const Text('SALVAR', style: TextStyle(color: Colors.white)),
+              child:
+                  Text('SALVAR', style: AppTypography.bodySmall.copyWith(color: AppColors.white)),
             ),
           ],
         ),
@@ -194,8 +250,178 @@ class _OperacionalTab extends ConsumerWidget {
   }
 }
 
-class _FaturamentoTab extends ConsumerWidget {
-  const _FaturamentoTab();
+// ─── ABA B: FATURAMENTO POR CLIENTE ──────────────────────────────────────────
+
+class _PorClienteTab extends ConsumerWidget {
+  const _PorClienteTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final clientesAsync = ref.watch(faturamentoPorClienteProvider);
+
+    return clientesAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('Erro: $e'),
+          const SizedBox(height: AppSpacing.md),
+          ElevatedButton(
+            onPressed: () =>
+                ref.read(faturamentoPorClienteProvider.notifier).refresh(),
+            child: const Text('Tentar novamente'),
+          ),
+        ]),
+      ),
+      data: (clientes) {
+        final total = clientes.fold(0.0, (s, c) => s + c.total);
+
+        return Column(
+          children: [
+            // Header da tabela
+            Container(
+              color: AppColors.surfaceGray,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                      flex: 5,
+                      child: Text('CLIENTE',
+                          style: AppTypography.labelSmall.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.gray500))),
+                  Expanded(
+                      flex: 3,
+                      child: Text('NICHO',
+                          style: AppTypography.labelSmall.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.gray500))),
+                  Expanded(
+                      flex: 3,
+                      child: Text('FATURAMENTO',
+                          textAlign: TextAlign.right,
+                          style: AppTypography.labelSmall.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.gray500))),
+                  Expanded(
+                      flex: 3,
+                      child: Text('PARTICIPAÇÃO',
+                          textAlign: TextAlign.right,
+                          style: AppTypography.labelSmall.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.gray500))),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: clientes.isEmpty
+                  ? Center(
+                      child: Text('Nenhum faturamento registrado este mês.',
+                          style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)))
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                      itemCount: clientes.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (_, i) {
+                        final c = clientes[i];
+                        final pct = total > 0 ? (c.total / total * 100) : 0.0;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 5,
+                                child: Text(c.nome,
+                                    style: AppTypography.labelLarge.copyWith(
+                                        fontWeight: FontWeight.w500)),
+                              ),
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  c.nicho ?? '—',
+                                  style: AppTypography.caption.copyWith(
+                                      color: AppColors.gray500),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  'R\$ ${c.total.toStringAsFixed(2).replaceAll('.', ',')}',
+                                  textAlign: TextAlign.right,
+                                  style: AppTypography.labelLarge.copyWith(
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 3,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '${pct.toStringAsFixed(1)}%',
+                                      textAlign: TextAlign.right,
+                                      style: AppTypography.labelSmall.copyWith(
+                                          color: AppColors.primaryOrange,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                                    const SizedBox(height: 3),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                                      child: LinearProgressIndicator(
+                                        value: pct / 100,
+                                        minHeight: 4,
+                                        backgroundColor: AppColors.surfaceGray,
+                                        valueColor:
+                                            const AlwaysStoppedAnimation(
+                                                AppColors.primaryOrange),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            // Total
+            if (clientes.isNotEmpty)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
+                decoration: const BoxDecoration(
+                  color: AppColors.surfaceGray,
+                  border:
+                      Border(top: BorderSide(color: AppColors.surfaceDivider)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text('TOTAL DO MÊS: ',
+                        style: AppTypography.labelLarge.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.gray500)),
+                    Text(
+                      'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}',
+                      style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryOrange),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ─── ABA C: RECEBÍVEIS (Roleta + BRUTO vs LÍQUIDO + Botão Boletos) ───────────
+
+class _ReceiveisTab extends ConsumerWidget {
+  const _ReceiveisTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -205,37 +431,93 @@ class _FaturamentoTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, __) => const Center(child: Text('Erro ao carregar')),
       data: (resumo) => SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Faturamento Detalhado',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12, runSpacing: 12,
-              children: [
-                SizedBox(width: 200, child: MetricCard(
-                  label: 'FAT BRUTO',
-                  value: 'R\$ ${resumo.fatBruto.toStringAsFixed(2).replaceAll('.', ',')}',
-                  icon: Icons.person_outline,
-                  subtitle: 'período: ${resumo.periodo}',
-                )),
-                SizedBox(width: 200, child: MetricCard(
-                  label: 'FAT LÍQUIDO',
-                  value: 'R\$ ${resumo.fatLiquido.toStringAsFixed(2).replaceAll('.', ',')}',
-                  icon: Icons.percent,
-                  iconColor: AppColors.primary,
-                  subtitle: 'após custos',
-                )),
-                SizedBox(width: 200, child: MetricCard(
-                  label: 'TOTAL CUSTOS',
-                  value: 'R\$ ${resumo.totalCustos.toStringAsFixed(2).replaceAll('.', ',')}',
-                  icon: Icons.inventory_2_outlined,
-                  iconColor: AppColors.danger,
-                  subtitle: 'no período',
-                )),
-              ],
+            // ── Roleta visual ────────────────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.x3l),
+              decoration: BoxDecoration(
+                color: AppColors.infoPurple,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: Column(
+                children: [
+                  Text('RECEBÍVEIS DO FRANQUEADO',
+                      style: AppTypography.caption.copyWith(
+                          color: AppColors.white,
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 28),
+                  RoletaWidget(
+                      value: resumo.fatBruto,
+                      label: 'FAT. BRUTO',
+                      fontSize: 34),
+                  const SizedBox(height: AppSpacing.xl),
+                  RoletaWidget(
+                      value: resumo.fatLiquido,
+                      label: 'FAT. LÍQUIDO',
+                      fontSize: 26),
+                  const SizedBox(height: AppSpacing.xl),
+                  RoletaWidget(
+                      value: resumo.totalCustos, label: 'CUSTOS', fontSize: 20),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.x2l),
+
+            // ── Comparação BRUTO vs LÍQUIDO ──────────────────────────────
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('BRUTO vs LÍQUIDO',
+                        style: AppTypography.labelLarge.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5)),
+                    const SizedBox(height: AppSpacing.lg),
+                    _BrutoLiquidoBar(resumo: resumo),
+                    const SizedBox(height: AppSpacing.lg),
+                    const Row(
+                      children: [
+                        _LegendDot(
+                            color: AppColors.infoBlue, label: 'Fat. Bruto'),
+                        SizedBox(width: AppSpacing.lg),
+                        _LegendDot(
+                            color: AppColors.successGreen,
+                            label: 'Fat. Líquido'),
+                        SizedBox(width: AppSpacing.lg),
+                        _LegendDot(color: AppColors.dangerRed, label: 'Custos'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+
+            // ── Botão Meus Boletos ────────────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.receipt_long_rounded,
+                    color: AppColors.primaryOrange),
+                label: Text('VER MEUS BOLETOS',
+                    style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.primaryOrange,
+                        fontWeight: FontWeight.w700)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.primaryOrange),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg)),
+                ),
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRoutes.boletos),
+              ),
             ),
           ],
         ),
@@ -244,39 +526,276 @@ class _FaturamentoTab extends ConsumerWidget {
   }
 }
 
-class _RoletaTab extends ConsumerWidget {
-  const _RoletaTab();
+// ─── WIDGETS AUXILIARES ───────────────────────────────────────────────────────
+
+class _QuickMetric extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color color;
+  const _QuickMetric(this.label, this.value, this.color);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final financeiroAsync = ref.watch(financeiroProvider);
-
-    return financeiroAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('Erro ao carregar')),
-      data: (resumo) => Center(
-        child: Container(
-          width: 400,
-          padding: const EdgeInsets.all(40),
-          decoration: BoxDecoration(
-            color: const Color(0xFF2D2860),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('ROLETA DO FRANQUEADO',
-                  style: TextStyle(color: AppColors.lilac, fontSize: 13, letterSpacing: 1)),
-              const SizedBox(height: 32),
-              RoletaWidget(value: resumo.fatBruto,   label: 'FAT BRUTO',   fontSize: 36),
-              const SizedBox(height: 24),
-              RoletaWidget(value: resumo.fatLiquido, label: 'FAT LÍQUIDO', fontSize: 28),
-              const SizedBox(height: 24),
-              RoletaWidget(value: resumo.totalCustos, label: 'TOTAL CUSTOS', fontSize: 22),
-            ],
-          ),
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: AppTypography.caption.copyWith(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                    color: color)),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}',
+              style: AppTypography.bodySmall.copyWith(
+                  fontWeight: FontWeight.w700, color: color),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _FluxoCaixaBar extends StatelessWidget {
+  final FluxoCaixa fluxo;
+  const _FluxoCaixaBar({required this.fluxo});
+
+  String _fmt(double v) => 'R\$ ${v.toStringAsFixed(2).replaceAll('.', ',')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final total = fluxo.totalEntradas + fluxo.totalSaidas;
+    final pctEntradas = total > 0 ? fluxo.totalEntradas / total : 0.5;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.compactPadding),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceGray,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('ENTRADAS',
+                        style: AppTypography.caption.copyWith(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.successGreen,
+                            letterSpacing: 0.8)),
+                    const SizedBox(height: 2),
+                    Text(_fmt(fluxo.totalEntradas),
+                        style: AppTypography.bodyLarge.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.successGreen)),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: fluxo.saldo >= 0
+                      ? AppColors.successGreen.withValues(alpha: 0.1)
+                      : AppColors.dangerRed.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Text(
+                  '${fluxo.saldo >= 0 ? '+' : ''}${_fmt(fluxo.saldo)}',
+                  style: AppTypography.caption.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: fluxo.saldo >= 0
+                          ? AppColors.successGreen
+                          : AppColors.dangerRed),
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('SAÍDAS',
+                        style: AppTypography.caption.copyWith(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.dangerRed,
+                            letterSpacing: 0.8)),
+                    const SizedBox(height: 2),
+                    Text(_fmt(fluxo.totalSaidas),
+                        style: AppTypography.bodyLarge.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.dangerRed)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: (pctEntradas * 100).round().clamp(1, 99),
+                  child: Container(height: 12, color: AppColors.successGreen),
+                ),
+                Expanded(
+                  flex: ((1 - pctEntradas) * 100).round().clamp(1, 99),
+                  child: Container(height: 12, color: AppColors.dangerRed),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrutoLiquidoBar extends StatelessWidget {
+  final FinanceiroResumo resumo;
+  const _BrutoLiquidoBar({required this.resumo});
+
+  @override
+  Widget build(BuildContext context) {
+    final max = (resumo.fatBruto > 0 ? resumo.fatBruto : 1).toDouble();
+    return Column(
+      children: [
+        _buildBar('Bruto', resumo.fatBruto.toDouble(), max, AppColors.infoBlue),
+        const SizedBox(height: AppSpacing.sm),
+        _buildBar('Líquido', resumo.fatLiquido.toDouble(), max,
+            AppColors.successGreen),
+        const SizedBox(height: AppSpacing.sm),
+        _buildBar(
+            'Custos', resumo.totalCustos.toDouble(), max, AppColors.dangerRed),
+      ],
+    );
+  }
+
+  Widget _buildBar(String label, double value, double max, Color color) {
+    final pct = (value / max).clamp(0.0, 1.0);
+    return Row(
+      children: [
+        SizedBox(
+            width: 60,
+            child: Text(label,
+                style: AppTypography.labelSmall.copyWith(color: AppColors.gray500))),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            child: LinearProgressIndicator(
+              value: pct,
+              minHeight: 14,
+              backgroundColor: AppColors.surfaceGray,
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Text(
+          'R\$ ${value.toStringAsFixed(0)}',
+          style: AppTypography.labelSmall.copyWith(
+              fontWeight: FontWeight.w600, color: color),
+        ),
+      ],
+    );
+  }
+}
+
+class _CustoTile extends StatelessWidget {
+  final CustoCadastrado custo;
+  final WidgetRef ref;
+  const _CustoTile({required this.custo, required this.ref});
+
+  static const _tipoLabel = {
+    'aluguel': 'Aluguel',
+    'salario': 'Salários',
+    'energia': 'Energia',
+    'internet': 'Internet',
+    'outros': 'Outros',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: AppColors.primaryOrangeLight,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: const Icon(Icons.receipt_outlined,
+            color: AppColors.primaryOrange, size: 18),
+      ),
+      title: Text(custo.descricao,
+          style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w500)),
+      subtitle: Text(_tipoLabel[custo.tipo] ?? custo.tipo,
+          style: AppTypography.labelSmall.copyWith(color: AppColors.gray500)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'R\$ ${custo.valor.toStringAsFixed(2).replaceAll('.', ',')}',
+            style: AppTypography.labelLarge.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.dangerRed),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          IconButton(
+            icon:
+                const Icon(Icons.delete_outline, size: 18, color: AppColors.gray400),
+            onPressed: () async {
+              await ref.read(custosProvider.notifier).deletar(custo.id);
+              ref.invalidate(financeiroProvider);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: AppSpacing.xs),
+        Text(label, style: AppTypography.labelSmall.copyWith(color: AppColors.gray500)),
+      ],
+    );
+  }
+}
+
+// ─── HELPER ───────────────────────────────────────────────────────────────────
+
+class _Categoria {
+  final String label;
+  final IconData icon;
+  final String valor;
+  const _Categoria(this.label, this.icon, this.valor);
 }

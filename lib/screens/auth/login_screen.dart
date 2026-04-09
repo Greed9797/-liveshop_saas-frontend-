@@ -3,6 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
+import '../../theme/app_radius.dart';
+import '../../theme/app_shadows.dart';
+import '../../widgets/app_card.dart';
 
 /// Tela de login — ponto de entrada do sistema
 class LoginScreen extends ConsumerStatefulWidget {
@@ -15,6 +20,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _senhaCtrl = TextEditingController();
   bool _obscure = true;
+  String? _localError;
 
   @override
   void dispose() {
@@ -24,106 +30,129 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _login() async {
+    final email = _emailCtrl.text.trim();
+    final senha = _senhaCtrl.text;
+
+    // Validação local — sem chamada de rede
+    if (email.isEmpty || !email.contains('@') || !email.contains('.')) {
+      setState(() => _localError = 'Email inválido.');
+      return;
+    }
+    if (senha.isEmpty) {
+      setState(() => _localError = 'Informe a senha.');
+      return;
+    }
+    setState(() => _localError = null);
+
     final auth = ref.read(authProvider.notifier);
-    final ok = await auth.login(_emailCtrl.text.trim(), _senhaCtrl.text);
+    final ok = await auth.login(email, senha);
     if (!mounted) return;
 
     if (ok) {
       final user = ref.read(authProvider).user!;
-      final route = switch (user.papel) {
-        'franqueador_master' => AppRoutes.franqueado,
-        'cliente_parceiro'   => AppRoutes.cliente,
-        _                    => AppRoutes.home,
-      };
+      final route = AppRoutes.routeForRole(user.papel);
       Navigator.pushReplacementNamed(context, route);
-    } else {
-      final err = ref.read(authProvider).error ?? 'Erro ao fazer login';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(err), backgroundColor: AppColors.danger),
-      );
     }
+    // Erro do backend exibido pelo bloco inline via authState.error
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(authProvider).isLoading;
+    final authState = ref.watch(authProvider);
+    final isLoading = authState.isLoading;
+    final authError = _localError ?? authState.error;
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.background,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
-          child: Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.all(40),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+          child: AppCard(
+            boxShadow: AppShadows.xl,
+            padding: const EdgeInsets.all(AppSpacing.x4l),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 120,
+                  child: Image.asset('assets/images/logo.png'),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Text('Livelab',
+                    style: AppTypography.h2.copyWith(fontWeight: FontWeight.w500)),
+                const SizedBox(height: AppSpacing.xs),
+                Text('Gestão de Franquias',
+                    style: AppTypography.labelLarge.copyWith(color: AppColors.gray600)),
+                const SizedBox(height: AppSpacing.x3l),
+                TextField(
+                  controller: _emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md)),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                TextField(
+                  controller: _senhaCtrl,
+                  obscureText: _obscure,
+                  decoration: InputDecoration(
+                    labelText: 'Senha',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                          _obscure ? Icons.visibility_off : Icons.visibility),
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md)),
+                  ),
+                  onSubmitted: (_) => _login(),
+                ),
+                const SizedBox(height: AppSpacing.x2l),
+                if (authError != null) ...[
                   Container(
-                    width: 64, height: 64,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.live_tv, color: Colors.white, size: 32),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('LiveShop SaaS',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 4),
-                  Text('Gestão de Franquias',
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-                  const SizedBox(height: 32),
-                  TextField(
-                    controller: _emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _senhaCtrl,
-                    obscureText: _obscure,
-                    decoration: InputDecoration(
-                      labelText: 'Senha',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () => setState(() => _obscure = !_obscure),
-                      ),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    onSubmitted: (_) => _login(),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : _login,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.danger.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: AppColors.danger.withValues(alpha: 0.25),
                       ),
-                      child: isLoading
-                          ? const SizedBox(
-                              width: 20, height: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2))
-                          : const Text('ENTRAR',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500)),
+                    ),
+                    child: Text(
+                      authError,
+                      style: const TextStyle(color: AppColors.danger),
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.lg),
                 ],
-              ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md)),
+                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                color: AppColors.white, strokeWidth: 2))
+                        : const Text('ENTRAR',
+                            style: TextStyle(
+                                color: AppColors.white,
+                                fontWeight: FontWeight.w500)),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

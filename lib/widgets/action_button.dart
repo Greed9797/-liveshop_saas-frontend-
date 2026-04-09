@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
 
 /// Botão de ação padrão do sistema
 class ActionButton extends StatelessWidget {
@@ -25,11 +26,15 @@ class ActionButton extends StatelessWidget {
     if (outlined) {
       return OutlinedButton.icon(
         onPressed: onPressed,
-        icon: icon != null ? Icon(icon, size: 16, color: btnColor) : const SizedBox.shrink(),
-        label: Text(label, style: TextStyle(color: btnColor, fontWeight: FontWeight.w500)),
+        icon: icon != null
+            ? Icon(icon, size: 16, color: btnColor)
+            : const SizedBox.shrink(),
+        label: Text(label,
+            style: TextStyle(color: btnColor, fontWeight: FontWeight.w500),
+            overflow: TextOverflow.ellipsis),
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: btnColor),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         ),
       );
@@ -37,12 +42,17 @@ class ActionButton extends StatelessWidget {
 
     return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: icon != null ? Icon(icon, size: 16, color: Colors.white) : const SizedBox.shrink(),
-      label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+      icon: icon != null
+          ? Icon(icon, size: 16, color: AppColors.white)
+          : const SizedBox.shrink(),
+      label: Text(label,
+          style: const TextStyle(
+              color: AppColors.white, fontWeight: FontWeight.w500),
+          overflow: TextOverflow.ellipsis),
       style: ElevatedButton.styleFrom(
         backgroundColor: btnColor,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       ),
     );

@@ -8,6 +8,9 @@ import 'package:intl/intl.dart';
 import '../../providers/cabines/cabine_detail_provider.dart';
 import '../../providers/live_stream_provider.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_radius.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
 
 class CabineDetailScreen extends ConsumerStatefulWidget {
   final String cabineId;
@@ -76,14 +79,14 @@ class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
     final detailState = ref.watch(cabineDetailProvider(widget.cabineId));
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: AppColors.gray100,
       appBar: AppBar(
         title: Text(
           'Cabine ${widget.cabineNumero.toString().padLeft(2, '0')}',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: AppColors.white,
+        foregroundColor: AppColors.gray900,
         elevation: 1,
         actions: [
           IconButton(
@@ -112,7 +115,7 @@ class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppColors.dangerRed),
               const SizedBox(height: 16),
               Text('Erro ao carregar dados da cabine: $error',
                   textAlign: TextAlign.center),
@@ -174,18 +177,18 @@ class _LiveTab extends ConsumerWidget {
             )
           : SingleChildScrollView(
               key: ValueKey(live.liveId),
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppSpacing.screenPadding),
               child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Card(
             elevation: 4,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               side: const BorderSide(color: AppColors.successGreen, width: 2),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppSpacing.screenPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -196,7 +199,7 @@ class _LiveTab extends ConsumerWidget {
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: AppColors.successGreen.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         child: const Row(
                           children: [
@@ -214,12 +217,12 @@ class _LiveTab extends ConsumerWidget {
                         ),
                       ),
                       const Spacer(),
-                      const Icon(Icons.timer_outlined, color: Colors.grey),
+                      const Icon(Icons.timer_outlined, color: AppColors.gray400),
                       const SizedBox(width: 4),
                       Text(
                         '${live.duracaoMinutos} min',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
+                        style: AppTypography.bodyLarge.copyWith(
+                            fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -293,16 +296,16 @@ class _LiveTab extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              border: Border.all(color: AppColors.gray200),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Pulso operacional',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                  style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -340,7 +343,7 @@ class _InsightsTab extends StatelessWidget {
     final hasHorarioData = melhoresHorarios.isNotEmpty;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.screenPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -370,7 +373,7 @@ class _InsightsTab extends StatelessWidget {
                                   NumberFormat.compactSimpleCurrency(
                                           locale: 'pt_BR')
                                       .format(value),
-                                  style: const TextStyle(fontSize: 10),
+                                  style: AppTypography.caption.copyWith(fontSize: 10),
                                 ),
                               ),
                             ),
@@ -387,7 +390,7 @@ class _InsightsTab extends StatelessWidget {
                                     padding: const EdgeInsets.only(top: 8),
                                     child: Text(
                                       melhoresHorarios[index]['hora'] as String,
-                                      style: const TextStyle(fontSize: 11),
+                                      style: AppTypography.labelSmall,
                                     ),
                                   );
                                 },
@@ -404,7 +407,7 @@ class _InsightsTab extends StatelessWidget {
                                             as num)
                                         .toDouble(),
                                     width: 18,
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(AppRadius.sm),
                                     color: AppColors.primaryOrange,
                                   ),
                                 ],
@@ -490,18 +493,18 @@ class _HistoricoTab extends StatelessWidget {
     final totais = historico!.totais;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.screenPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (meses.length >= 2)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.compactPadding),
               decoration: BoxDecoration(
                 color: crescimento >= 0
                     ? AppColors.successGreen.withValues(alpha: 0.10)
                     : AppColors.dangerRed.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               child: Row(
                 children: [
@@ -585,15 +588,14 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title,
-                style:
-                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Text(subtitle,
                 style: const TextStyle(color: AppColors.textSecondary)),
@@ -623,15 +625,15 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 240,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.compactPadding),
       decoration: BoxDecoration(
         color: iconColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 0.12),
               shape: BoxShape.circle,
@@ -644,12 +646,10 @@ class _MetricCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(value,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w700)),
+                    style: AppTypography.h3.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 Text(label,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary)),
+                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
               ],
             ),
           ),
@@ -682,8 +682,7 @@ class _RankListTile extends StatelessWidget {
               Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 2),
               Text(subtitle,
-                  style: const TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary)),
+                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
             ],
           ),
         ),
@@ -733,11 +732,11 @@ class _HistoryMetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 220,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.compactPadding),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.gray200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -746,8 +745,7 @@ class _HistoryMetricCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w700, color: color),
+            style: AppTypography.h2.copyWith(fontSize: 20, fontWeight: FontWeight.w700, color: color),
           ),
         ],
       ),
@@ -772,15 +770,14 @@ class _EmptyTabState extends StatelessWidget {
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 420),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 44, color: AppColors.textSecondary),
             const SizedBox(height: 12),
             Text(title,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: AppTypography.h3.copyWith(fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(description,

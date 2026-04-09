@@ -35,7 +35,7 @@ class Boleto {
   factory Boleto.fromJson(Map<String, dynamic> j) => Boleto(
     id:                  j['id'] as String,
     tipo:                j['tipo'] as String,
-    valor:               (j['valor'] as num).toDouble(),
+    valor:               double.tryParse(j['valor']?.toString() ?? '') ?? 0.0,
     vencimento:          DateTime.parse(j['vencimento'] as String),
     status:              j['status'] as String,
     pagoEm:              j['pago_em'] != null ? DateTime.parse(j['pago_em'] as String) : null,

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_radius.dart';
 import 'action_button.dart';
 
 /// Card de lead com botão "PEGAR LEAD"
@@ -17,7 +20,7 @@ class LeadCard extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSpacing.compactPadding),
         child: Row(
           children: [
             Expanded(
@@ -27,26 +30,26 @@ class LeadCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(lead['nome'] as String,
-                        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                        style: AppTypography.bodyMedium),
                       if (isNovo) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.danger,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
                           ),
                           child: const Text('NOVO',
-                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500)),
+                            style: TextStyle(color: AppColors.white, fontSize: 10, fontWeight: FontWeight.w500)),
                         ),
                       ],
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text('${lead['nicho']} • ${lead['cidade']}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                    style: AppTypography.caption),
                   Text('Fat. est.: R\$ $fatFormatted',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                    style: AppTypography.caption),
                 ],
               ),
             ),

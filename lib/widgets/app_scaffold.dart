@@ -1,8 +1,17 @@
+import '../providers/billing_alert_provider.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
+import '../providers/boletos_provider.dart';
 
-class AppScaffold extends StatelessWidget {
+class AppScaffold extends ConsumerWidget {
   final Widget child;
   final String currentRoute;
   final String? userName;
@@ -11,160 +20,407 @@ class AppScaffold extends StatelessWidget {
     super.key,
     required this.child,
     required this.currentRoute,
-    this.userName = 'FVC PROMOCOES DE VENDAS LTDA',
+    this.userName = 'FVC Promoções',
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(billingAlertProvider, (prev, next) {
+      if (next.valueOrNull != null) {
+        final alert = next.valueOrNull!;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  const Icon(Icons.receipt_long_rounded, color: AppColors.primaryOrange),
+                  const SizedBox(width: 8),
+                  const Text('Fatura Disponível'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Seu boleto referente aos serviços e comissões do período foi emitido.'),
+                  const SizedBox(height: 12),
+                  Text('Valor: ' + NumberFormat.simpleCurrency(locale: 'pt_BR').format(alert.valor), style: const TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+              actions: [
+                if (alert.asaasPixCopiaCola != null)
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.successGreen),
+                    icon: const Icon(Icons.pix_rounded, size: 16, color: AppColors.white),
+                    label: const Text('Copiar PIX', style: TextStyle(color: AppColors.white)),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: alert.asaasPixCopiaCola!));
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Código PIX copiado!')));
+                      ref.read(billingAlertProvider.notifier).marcarVisto(alert.id);
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                TextButton(
+                  onPressed: () {
+                    ref.read(billingAlertProvider.notifier).marcarVisto(alert.id);
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Fechar'),
+                ),
+              ],
+            ),
+          );
+        });
+      }
+    });
+
+    final boletosAsync = ref.watch(boletosProvider);
+    final authState = ref.watch(authProvider);
+    final isFranqueadorMaster = authState.user?.papel == 'franqueador_master';
+    final isClienteParceiro = authState.user?.papel == 'cliente_parceiro';
+    final displayName = authState.user?.nome ?? userName ?? 'Livelab';
+    final boletosCount = boletosAsync.valueOrNull
+            ?.where((b) => b.status == 'vencido' || b.status == 'pendente')
+            .length ??
+        0;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'LIVESHOP', // Logo placeholder
-          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded,
-                color: AppColors.primary),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      drawer: _buildDrawer(context),
-      body: Column(
-        children: [
-          // Faixa Amarela de Saudação (Estilo Referência)
-          Container(
-            width: double.infinity,
-            color: AppColors.primary,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Row(
+      backgroundColor: AppColors.surfaceGray,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 800;
+
+          if (isDesktop) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CircleAvatar(
-                  backgroundColor: Colors.white24,
-                  child: Icon(Icons.person, color: Colors.white),
+                _buildPermanentMenu(
+                  context,
+                  boletosCount,
+                  isFranqueadorMaster,
+                  isClienteParceiro,
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Oi, $userName',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.textPrimary,
+                Expanded(
+                  child: Column(
+                    children: [
+                      _buildHeader(
+                        context,
+                        isDesktop: true,
+                        displayName: displayName,
+                        isClienteParceiro: isClienteParceiro,
                       ),
-                    ),
-                    const Text(
-                      'Franqueado LiveShop',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
+                      Expanded(child: child),
+                    ],
+                  ),
                 ),
               ],
-            ),
-          ),
-          // Área de Conteúdo
-          Expanded(
-            child: Row(
-              children: [
-                // No iPad Landscape da referência, o menu é persistente ou um Drawer largo
-                // Vou manter o LayoutBuilder para suportar Desktop/Tablet com menu fixo
-                LayoutBuilder(builder: (context, constraints) {
-                  if (MediaQuery.of(context).size.width >= 1000) {
-                    return _buildPermanentMenu(context);
-                  }
-                  return const SizedBox.shrink();
-                }),
-                Expanded(child: child),
-              ],
-            ),
-          ),
-        ],
+            );
+          }
+
+          return Column(
+            children: [
+              _buildHeader(
+                context,
+                isDesktop: false,
+                displayName: displayName,
+                isClienteParceiro: isClienteParceiro,
+              ),
+              Expanded(child: child),
+            ],
+          );
+        },
       ),
+      drawer: MediaQuery.of(context).size.width < 800
+          ? _buildDrawer(
+              context, boletosCount, isFranqueadorMaster, isClienteParceiro)
+          : null,
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      child: _MenuContent(currentRoute: currentRoute),
-    );
-  }
-
-  Widget _buildPermanentMenu(BuildContext context) {
+  Widget _buildHeader(
+    BuildContext context, {
+    required bool isDesktop,
+    required String displayName,
+    required bool isClienteParceiro,
+  }) {
     return Container(
-      width: 250,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(right: BorderSide(color: Colors.black12)),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        border: Border(
+          bottom: BorderSide(color: AppColors.sidebarBorder, width: 1),
+        ),
       ),
-      child: _MenuContent(currentRoute: currentRoute),
+      padding:
+          EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 16),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          children: [
+            if (!isDesktop) ...[
+              Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Icons.menu, color: AppColors.gray700),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: AppColors.primaryOrange,
+              child: Text(
+                displayName.length >= 2
+                    ? displayName.substring(0, 2).toUpperCase()
+                    : 'LS',
+                style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.surfaceWhite, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Olá, $displayName!',
+                    style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.gray900,
+                        fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    isClienteParceiro
+                        ? 'Cliente Parceiro'
+                        : 'Franqueado Livelab',
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.gray500),
+                  ),
+                ],
+              ),
+            ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.notifications_none_rounded,
+                  color: AppColors.gray400),
+              tooltip: 'Notificações',
+              offset: const Offset(0, 40),
+              color: AppColors.white,
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  enabled: false,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        'Nenhuma notificação no momento',
+                        style: AppTypography.caption
+                            .copyWith(color: AppColors.gray500),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (isDesktop) ...[
+              const SizedBox(width: 16),
+              Image.asset('assets/images/logo.png', height: 32),
+            ]
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawer(
+    BuildContext context,
+    int boletosCount,
+    bool isFranqueadorMaster,
+    bool isClienteParceiro,
+  ) {
+    return Drawer(
+      backgroundColor: AppColors.sidebarBg,
+      child: SafeArea(
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24.0),
+              child: Image(
+                  image: AssetImage('assets/images/logo.png'), height: 40),
+            ),
+            const Divider(color: AppColors.sidebarBorder, height: 1),
+            Expanded(
+                child: _MenuContent(
+              currentRoute: currentRoute,
+              boletosCount: boletosCount,
+              isFranqueadorMaster: isFranqueadorMaster,
+              isClienteParceiro: isClienteParceiro,
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPermanentMenu(
+    BuildContext context,
+    int boletosCount,
+    bool isFranqueadorMaster,
+    bool isClienteParceiro,
+  ) {
+    return Container(
+      width: 260,
+      decoration: BoxDecoration(
+        color: AppColors.sidebarBg,
+        border: Border(
+          right: BorderSide(color: AppColors.sidebarBorder, width: 1),
+        ),
+      ),
+      child: Column(
+        children: [
+          const SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 32.0),
+              child: Image(
+                  image: AssetImage('assets/images/logo.png'), height: 40),
+            ),
+          ),
+          Expanded(
+              child: _MenuContent(
+            currentRoute: currentRoute,
+            boletosCount: boletosCount,
+            isFranqueadorMaster: isFranqueadorMaster,
+            isClienteParceiro: isClienteParceiro,
+          )),
+        ],
+      ),
     );
   }
 }
 
-class _MenuContent extends StatelessWidget {
+class _MenuContent extends ConsumerWidget {
   final String currentRoute;
-  const _MenuContent({required this.currentRoute});
+  final int boletosCount;
+  final bool isFranqueadorMaster;
+  final bool isClienteParceiro;
+
+  const _MenuContent({
+    required this.currentRoute,
+    required this.boletosCount,
+    required this.isFranqueadorMaster,
+    required this.isClienteParceiro,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 16),
       children: [
-        const SizedBox(height: 10),
         _MenuItem(
             icon: Icons.home_rounded,
-            label: 'HOME',
-            route: AppRoutes.home,
-            isSelected: currentRoute == AppRoutes.home),
+            label: 'Home',
+            route: isClienteParceiro ? AppRoutes.cliente : AppRoutes.home,
+            isSelected: currentRoute == AppRoutes.home ||
+                currentRoute == AppRoutes.cliente),
+        if (isClienteParceiro) ...[
+          _MenuItem(
+              icon: Icons.history_rounded,
+              label: 'Histórico de Vendas',
+              route: AppRoutes.vendas,
+              isSelected: currentRoute == AppRoutes.vendas),
+          _MenuItem(
+              icon: Icons.inventory_2_rounded,
+              label: 'Meus Produtos',
+              route: AppRoutes
+                  .manuais, // placeholder para rota de produtos futuramente
+              isSelected: false),
+        ],
+        if (!isClienteParceiro) ...[
+          _MenuItem(
+              icon: Icons.videocam_rounded,
+              label: 'Cabines',
+              route: AppRoutes.cabines,
+              isSelected: currentRoute == AppRoutes.cabines ||
+                  currentRoute == AppRoutes.cabineDetail),
+          _MenuItem(
+              icon: Icons.map_rounded,
+              label: 'Vendas em Andamento',
+              route: AppRoutes.vendas,
+              isSelected: currentRoute == AppRoutes.vendas ||
+                  currentRoute == AppRoutes.cadastroCliente ||
+                  currentRoute == AppRoutes.contrato ||
+                  currentRoute == AppRoutes.analiseCredito),
+          _MenuItem(
+              icon: Icons.bar_chart_rounded,
+              label: 'Análise de Vendas',
+              route: AppRoutes.analise,
+              isSelected: currentRoute == AppRoutes.analise),
+          _MenuItem(
+              icon: Icons.account_balance_wallet_rounded,
+              label: 'Financeiro',
+              route: AppRoutes.financeiro,
+              isSelected: currentRoute == AppRoutes.financeiro),
+          if (isFranqueadorMaster)
+            _MenuItem(
+              icon: Icons.fact_check_rounded,
+              label: 'Auditoria de Contratos',
+              route: AppRoutes.auditoriaContratos,
+              isSelected: currentRoute == AppRoutes.auditoriaContratos,
+            ),
+          _MenuItem(
+              icon: Icons.receipt_long_rounded,
+              label: 'Meus Boletos',
+              route: AppRoutes.boletos,
+              isSelected: currentRoute == AppRoutes.boletos,
+              badge: boletosCount > 0 ? '$boletosCount' : null),
+          _MenuItem(
+              icon: Icons.people_alt_rounded,
+              label: 'Leads',
+              route: AppRoutes.leads,
+              isSelected: currentRoute == AppRoutes.leads),
+          _MenuItem(
+              icon: Icons.pin_drop_rounded,
+              label: 'Carteira de Clientes',
+              route: AppRoutes.carteiraClientes,
+              isSelected: currentRoute == AppRoutes.carteiraClientes),
+          _MenuItem(
+              icon: Icons.workspace_premium_rounded,
+              label: 'Programa de Excelência',
+              route: AppRoutes.excelencia,
+              isSelected: currentRoute == AppRoutes.excelencia),
+        ],
         _MenuItem(
-            icon: Icons.description_outlined,
-            label: 'VENDAS EM ANDAMENTO',
-            route: AppRoutes.vendas,
-            isSelected: currentRoute == AppRoutes.vendas),
-        _MenuItem(
-            icon: Icons.analytics_outlined,
-            label: 'ANÁLISE DE VENDAS',
-            route: AppRoutes.analise,
-            isSelected: currentRoute == AppRoutes.analise),
-        const _MenuItem(
-            icon: Icons.emoji_events_outlined,
-            label: 'RECONHECIMENTOS',
-            route: null,
-            isSelected: false),
-        _MenuItem(
-            icon: Icons.receipt_outlined,
-            label: 'MEUS BOLETOS',
-            route: AppRoutes.boletos,
-            isSelected: currentRoute == AppRoutes.boletos,
-            badge: '1'),
-        _MenuItem(
-            icon: Icons.person_search_outlined,
-            label: 'LEADS',
-            route: AppRoutes.leads,
-            isSelected: currentRoute == AppRoutes.leads),
-        _MenuItem(
-            icon: Icons.menu_book_outlined,
-            label: 'MANUAIS',
+            icon: Icons.menu_book_rounded,
+            label: 'Manuais',
             route: AppRoutes.manuais,
             isSelected: currentRoute == AppRoutes.manuais),
+        if (!isClienteParceiro) ...[
+          _MenuItem(
+              icon: Icons.handshake_rounded,
+              label: 'Recomendações',
+              route: AppRoutes.recomendacoes,
+              isSelected: currentRoute == AppRoutes.recomendacoes),
+          _MenuItem(
+              icon: Icons.settings_outlined,
+              label: 'Configurações',
+              route: AppRoutes.configuracoes,
+              isSelected: currentRoute == AppRoutes.configuracoes),
+        ],
+        const Divider(color: AppColors.sidebarBorder, height: 32),
         _MenuItem(
-            icon: Icons.group_outlined,
-            label: 'RECOMENDAÇÕES',
-            route: AppRoutes.recomendacoes,
-            isSelected: currentRoute == AppRoutes.recomendacoes),
-        const Spacer(),
-        const _MenuItem(
-            icon: Icons.logout,
-            label: 'Sair',
-            route: AppRoutes.login,
-            isSelected: false),
-        const SizedBox(height: 20),
+          icon: Icons.logout_rounded,
+          label: 'Sair',
+          route: AppRoutes.login,
+          isSelected: false,
+          onTap: () {
+            unawaited(ref.read(authProvider.notifier).logout());
+          },
+        ),
       ],
     );
   }
@@ -176,6 +432,7 @@ class _MenuItem extends StatelessWidget {
   final String? route;
   final bool isSelected;
   final String? badge;
+  final VoidCallback? onTap;
 
   const _MenuItem({
     required this.icon,
@@ -183,32 +440,60 @@ class _MenuItem extends StatelessWidget {
     this.route,
     required this.isSelected,
     this.badge,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: isSelected ? Colors.black : Colors.black54),
-      title: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-          color: isSelected ? Colors.black : Colors.black54,
-        ),
+    final color =
+        isSelected ? AppColors.primaryOrange : AppColors.gray400;
+    final bgColor = isSelected ? AppColors.sidebarItemActive : Colors.transparent;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: isSelected
+            ? const Border(
+                left: BorderSide(color: AppColors.primaryOrange, width: 3))
+            : null,
       ),
-      trailing: badge != null
-          ? Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                  color: AppColors.danger, shape: BoxShape.circle),
-              child: Text(badge!,
-                  style: const TextStyle(color: Colors.white, fontSize: 10)),
-            )
-          : null,
-      onTap: () {
-        if (route != null) Navigator.pushReplacementNamed(context, route!);
-      },
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        hoverColor: AppColors.sidebarItemHover,
+        leading: Icon(icon, color: color, size: 22),
+        title: Text(
+          label,
+          style: AppTypography.bodySmall.copyWith(
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            color:
+                isSelected ? AppColors.gray900 : AppColors.gray500,
+          ),
+        ),
+        trailing: badge != null
+            ? Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                    color: AppColors.primaryOrange, shape: BoxShape.circle),
+                child: Text(badge!,
+                    style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold)),
+              )
+            : null,
+        onTap: () {
+          if (onTap != null) {
+            onTap!();
+            return;
+          }
+
+          if (route != null && route != AppRoutes.login) {
+            Navigator.pushReplacementNamed(context, route!);
+          }
+        },
+      ),
     );
   }
 }

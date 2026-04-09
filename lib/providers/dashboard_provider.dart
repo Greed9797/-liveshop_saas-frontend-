@@ -3,12 +3,23 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/dashboard.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class DashboardNotifier extends AsyncNotifier<DashboardData> {
   Timer? _timer;
 
   @override
   Future<DashboardData> build() async {
+    final authState = ref.watch(authProvider);
+
+    // Se não autenticado, cancela timer e aguarda — quando auth mudar,
+    // o Riverpod re-executa build() automaticamente.
+    if (!authState.isAuthenticated) {
+      _timer?.cancel();
+      _timer = null;
+      throw Exception('Não autenticado');
+    }
+
     final data = await _fetch();
 
     // Inicia polling de 15 segundos

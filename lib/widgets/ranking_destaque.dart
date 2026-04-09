@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_spacing.dart';
 
 class RankingDestaque extends StatelessWidget {
   final List<Map<String, dynamic>> rankings;
@@ -7,84 +10,138 @@ class RankingDestaque extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (rankings.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.x2l),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.emoji_events_outlined,
+                  size: 36, color: AppColors.gray200),
+              const SizedBox(height: 8),
+              Text('Sem vendas registradas hoje',
+                  style: AppTypography.bodySmall),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final safe = [
+      ...rankings,
+      if (rankings.length < 2) {'nome': '—'},
+      if (rankings.length < 3) {'nome': '—'},
+    ];
+
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.flag_outlined, size: 24),
-                SizedBox(width: 8),
-                Text(
-                  'FRANQUIAS EM DESTAQUE DO DIA',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.black87),
+                const Icon(Icons.flag_outlined, size: 20, color: AppColors.gray400),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    'DESTAQUES DO DIA',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.gray500,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                SizedBox(width: 8),
-                Icon(Icons.flag_outlined, size: 24),
+                const SizedBox(width: 8),
+                const Icon(Icons.flag_outlined, size: 20, color: AppColors.gray400),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _buildAvatar(
-                    rankings[1], '2º LUGAR', 0.8), // 2nd place slightly smaller
-                _buildAvatar(rankings[0], '1º LUGAR', 1.0), // 1st place
-                _buildAvatar(rankings[2], '3º LUGAR', 0.8), // 3rd place
+                Flexible(child: _buildAvatar(safe[1], '2º', AppColors.medalSilver, 0.8)),
+                Flexible(child: _buildAvatar(safe[0], '1º', AppColors.medalGold, 1.0)),
+                Flexible(child: _buildAvatar(safe[2], '3º', AppColors.medalBronze, 0.8)),
               ],
             ),
-            const SizedBox(height: 16),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Icon(Icons.military_tech, color: Color(0xFFC0C0C0)), // Silver
-                Icon(Icons.military_tech, color: Color(0xFFFFD700)), // Gold
-                Icon(Icons.military_tech, color: Color(0xFFCD7F32)), // Bronze
-              ],
-            )
           ],
         ),
       ),
     );
   }
 
-  Widget _buildAvatar(Map<String, dynamic> data, String place, double scale) {
+  Widget _buildAvatar(
+      Map<String, dynamic> data, String place, Color medalColor, double scale) {
+    final nome = data['nome'] as String? ?? '—';
+    final isEmpty = nome == '—';
+
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 70 * scale,
-          height: 70 * scale,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.black12, width: 2),
-            image: const DecorationImage(
-              image: NetworkImage(
-                  'https://i.pravatar.cc/150'), // Placeholder avatar
-              fit: BoxFit.cover,
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 56 * scale,
+              height: 56 * scale,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isEmpty ? AppColors.gray100 : null,
+                border: Border.all(color: medalColor, width: 2),
+                image: isEmpty
+                    ? null
+                    : const DecorationImage(
+                        image: NetworkImage('https://i.pravatar.cc/150'),
+                        fit: BoxFit.cover,
+                      ),
+              ),
+              child: isEmpty
+                  ? Icon(Icons.person_outline,
+                      size: 22 * scale, color: AppColors.gray300)
+                  : null,
             ),
-          ),
+            Positioned(
+              bottom: -4,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: medalColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    place,
+                    style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         SizedBox(
-          width: 100,
+          width: 80,
           child: Text(
-            data['nome'],
+            nome,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
+            style: AppTypography.caption
+                .copyWith(fontWeight: FontWeight.w600, fontSize: 11),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-        ),
-        Text(
-          place,
-          style: const TextStyle(
-              fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold),
         ),
       ],
     );

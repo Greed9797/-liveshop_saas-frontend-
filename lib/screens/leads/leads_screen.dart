@@ -4,6 +4,9 @@ import '../../widgets/app_scaffold.dart';
 import '../../widgets/lead_card.dart';
 import '../../providers/leads_provider.dart';
 import '../../routes/app_routes.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
+import '../../theme/app_colors.dart';
 
 /// Painel de leads disponíveis da franqueadora
 class LeadsScreen extends ConsumerWidget {
@@ -16,64 +19,72 @@ class LeadsScreen extends ConsumerWidget {
     return AppScaffold(
       currentRoute: AppRoutes.leads,
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Leads Disponíveis',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+                Text('Leads Disponíveis',
+                    style: AppTypography.h2.copyWith(fontSize: 20, fontWeight: FontWeight.w500)),
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   onPressed: () => ref.read(leadsProvider.notifier).refresh(),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             leadsAsync.when(
-              loading: () => const Text('Carregando...', style: TextStyle(color: Colors.grey)),
-              error: (_, __) => const Text('Erro ao carregar leads', style: TextStyle(color: Colors.grey)),
-              data: (leads) => Text('${leads.length} leads disponíveis para você',
-                  style: const TextStyle(color: Colors.grey)),
+              loading: () => Text('Carregando...',
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+              error: (e, __) => Text(
+                e.toString(),
+                style: AppTypography.bodySmall.copyWith(color: AppColors.gray500),
+              ),
+              data: (leads) => Text(
+                  '${leads.length} leads disponíveis para você',
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Expanded(
               child: leadsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Text('Erro: $e'),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     ElevatedButton(
-                      onPressed: () => ref.read(leadsProvider.notifier).refresh(),
+                      onPressed: () =>
+                          ref.read(leadsProvider.notifier).refresh(),
                       child: const Text('Tentar novamente'),
                     ),
                   ]),
                 ),
                 data: (leads) => leads.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text('Nenhum lead disponível no momento.',
-                            style: TextStyle(color: Colors.grey)))
+                            style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)))
                     : ListView.separated(
                         itemCount: leads.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
                         itemBuilder: (_, i) {
                           final lead = leads[i];
                           return LeadCard(
                             lead: {
-                              'id':           lead.id,
-                              'nome':         lead.nome,
-                              'nicho':        lead.nicho ?? '',
-                              'cidade':       lead.cidade ?? '',
+                              'id': lead.id,
+                              'nome': lead.nome,
+                              'nicho': lead.nicho ?? '',
+                              'cidade': lead.cidade ?? '',
                               'fat_estimado': lead.fatEstimado,
-                              'status':       lead.status,
-                              'novo':         lead.isNovo,
-                              'expira_em':    lead.expiraEm?.toIso8601String(),
+                              'status': lead.status,
+                              'novo': lead.isNovo,
+                              'expira_em': lead.expiraEm?.toIso8601String(),
                             },
                             onPegar: lead.status == 'disponivel'
-                                ? () => ref.read(leadsProvider.notifier).pegar(lead.id)
+                                ? () => ref
+                                    .read(leadsProvider.notifier)
+                                    .pegar(lead.id)
                                 : null,
                           );
                         },

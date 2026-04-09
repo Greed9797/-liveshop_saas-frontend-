@@ -1,10 +1,27 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/contrato.dart';
 import '../services/api_service.dart';
+import 'dashboard_provider.dart';
+import 'clientes_provider.dart';
+import 'cabines_provider.dart';
 
 class ContratosNotifier extends Notifier<void> {
   @override
   void build() {}
+
+  void _invalidateRelacionados() {
+    refreshAuditoriaAba('all');
+    refreshAuditoriaAba('novos');
+    refreshAuditoriaAba('em_tratativa');
+    refreshAuditoriaAba('finalizados');
+    ref.invalidate(dashboardProvider);
+    ref.invalidate(clientesProvider);
+    ref.invalidate(cabinesProvider);
+  }
+
+  void refreshAuditoriaAba(String aba) {
+    ref.invalidate(analiseCreditoProvider(aba));
+  }
 
   Future<String> criar({
     required String clienteId,
@@ -12,8 +29,8 @@ class ContratosNotifier extends Notifier<void> {
     required double comissaoPct,
   }) async {
     final resp = await ApiService.post('/contratos', data: {
-      'cliente_id':   clienteId,
-      'valor_fixo':   valorFixo,
+      'cliente_id': clienteId,
+      'valor_fixo': valorFixo,
       'comissao_pct': comissaoPct,
     });
     return (resp.data as Map<String, dynamic>)['id'] as String;
@@ -42,17 +59,46 @@ class ContratosNotifier extends Notifier<void> {
     return resp.data as Map<String, dynamic>;
   }
 
-  Future<void> assumirRisco(String id) async {
-    await ApiService.patch('/contratos/$id/assumir-risco');
+  Future<void> assumirRisco(
+    String id, {
+    String? confirmacao,
+    String? senha,
+  }) async {
+    await ApiService.patch(
+      '/contratos/$id/assumir-risco',
+      data: (confirmacao != null && senha != null)
+          ? {
+              'confirmacao': confirmacao,
+              'senha': senha,
+            }
+          : null,
+    );
+    _invalidateRelacionados();
   }
 
   Future<void> cancelar(String id) async {
     await ApiService.patch('/contratos/$id/cancelar');
+    _invalidateRelacionados();
   }
 
   // Backoffice — Análise de Crédito
   Future<void> aprovar(String id) async {
     await ApiService.patch('/contratos/$id/aprovar');
+    _invalidateRelacionados();
+  }
+
+  Future<void> pendencia(String id, String motivo) async {
+    await ApiService.patch('/contratos/$id/pendencia', data: {
+      'motivo': motivo,
+    });
+    _invalidateRelacionados();
+  }
+
+  Future<void> reprovar(String id, String motivo) async {
+    await ApiService.patch('/contratos/$id/reprovar', data: {
+      'motivo': motivo,
+    });
+    _invalidateRelacionados();
   }
 
   Future<void> arquivar(String id, {String? motivo}) async {
@@ -60,10 +106,12 @@ class ContratosNotifier extends Notifier<void> {
       '/contratos/$id/arquivar',
       data: motivo != null ? {'motivo': motivo} : null,
     );
+    _invalidateRelacionados();
   }
 
   Future<void> sinalizarRisco(String id) async {
     await ApiService.patch('/contratos/$id/sinalizar-risco');
+    _invalidateRelacionados();
   }
 }
 
@@ -71,9 +119,17 @@ final contratosProvider =
     NotifierProvider<ContratosNotifier, void>(ContratosNotifier.new);
 
 // Provider para a tela de Análise de Crédito
-final analiseCreditoProvider = FutureProvider<List<Contrato>>((ref) async {
-  final resp = await ApiService.get('/analise-credito');
-  return (resp.data as List? ?? [])
+final auditoriaAbaProvider = StateProvider<String>((ref) => 'all');
+
+final analiseCreditoProvider =
+    FutureProvider.family<List<Contrato>, String>((ref, aba) async {
+  final resp = await ApiService.get('/analise-credito', params: {'aba': aba});
+  final data = resp.data;
+  final items = data is Map<String, dynamic>
+      ? (data['items'] as List? ?? const [])
+      : (data as List? ?? const []);
+
+  return items
       .map((e) => Contrato.fromJson(e as Map<String, dynamic>))
       .toList();
 });

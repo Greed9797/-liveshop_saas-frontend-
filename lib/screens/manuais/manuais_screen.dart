@@ -5,6 +5,9 @@ import '../../widgets/app_scaffold.dart';
 import '../../widgets/action_button.dart';
 import '../../providers/manuais_provider.dart';
 import '../../routes/app_routes.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
+import '../../theme/app_colors.dart';
 
 /// Lista de manuais e documentos da franqueadora
 class ManuaisScreen extends ConsumerWidget {
@@ -19,20 +22,20 @@ class ManuaisScreen extends ConsumerWidget {
       child: RefreshIndicator(
         onRefresh: () => ref.read(manuaisProvider.notifier).refresh(),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.screenPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Manuais e Documentos',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 16),
+              Text('Manuais e Documentos',
+                  style: AppTypography.h2.copyWith(fontSize: 20, fontWeight: FontWeight.w500)),
+              const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: manuaisAsync.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
                       Text('Erro: $e'),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       ElevatedButton(
                         onPressed: () => ref.read(manuaisProvider.notifier).refresh(),
                         child: const Text('Tentar novamente'),
@@ -40,9 +43,9 @@ class ManuaisScreen extends ConsumerWidget {
                     ]),
                   ),
                   data: (manuais) => manuais.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Text('Nenhum documento disponível.',
-                              style: TextStyle(color: Colors.grey)))
+                              style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)))
                       : ListView.separated(
                           itemCount: manuais.length,
                           separatorBuilder: (_, __) => const Divider(height: 1),
@@ -52,7 +55,7 @@ class ManuaisScreen extends ConsumerWidget {
                                 '${m.atualizadoEm.day.toString().padLeft(2, '0')}/${m.atualizadoEm.month.toString().padLeft(2, '0')}/${m.atualizadoEm.year}';
                             return ListTile(
                               leading: const Icon(Icons.picture_as_pdf,
-                                  color: Colors.red, size: 28),
+                                  color: AppColors.dangerRed, size: 28),
                               title: Text(m.titulo,
                                   style: const TextStyle(fontWeight: FontWeight.w500)),
                               subtitle: Text('Atualizado em: $atualStr'),

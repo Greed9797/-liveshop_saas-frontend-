@@ -1,10 +1,15 @@
 class Cabine {
   final String id;
   final int numero;
-  final String status; // 'ao_vivo' | 'disponivel' | 'manutencao'
+  final String
+      status; // 'ao_vivo' | 'ativa' | 'reservada' | 'disponivel' | 'manutencao'
   final String? liveAtualId;
+  final String? contratoId;
+  final String? clienteId;
   final String? apresentadorNome;
   final String? clienteNome;
+  final int viewerCount;
+  final double gmvAtual;
   final DateTime? iniciadoEm;
 
   const Cabine({
@@ -12,31 +17,49 @@ class Cabine {
     required this.numero,
     required this.status,
     this.liveAtualId,
+    this.contratoId,
+    this.clienteId,
     this.apresentadorNome,
     this.clienteNome,
+    this.viewerCount = 0,
+    this.gmvAtual = 0,
     this.iniciadoEm,
   });
 
   factory Cabine.fromJson(Map<String, dynamic> j) => Cabine(
-    id:               j['id'] as String,
-    numero:           j['numero'] as int,
-    status:           j['status'] as String,
-    liveAtualId:      j['live_atual_id'] as String?,
-    apresentadorNome: j['apresentador_nome'] as String?,
-    clienteNome:      j['cliente_nome'] as String?,
-    iniciadoEm:       j['iniciado_em'] != null ? DateTime.parse(j['iniciado_em'] as String) : null,
-  );
+        id: j['id'] as String,
+        numero: j['numero'] as int,
+        status: j['status'] as String,
+        liveAtualId: j['live_atual_id'] as String?,
+        contratoId: j['contrato_id'] as String?,
+        clienteId: j['cliente_id'] as String?,
+        apresentadorNome: j['apresentador_nome'] as String?,
+        clienteNome: j['cliente_nome'] as String?,
+        viewerCount: j['viewer_count'] == null
+            ? 0
+            : int.tryParse(j['viewer_count'].toString()) ?? 0,
+        gmvAtual: j['gmv_atual'] == null
+            ? 0.0
+            : double.tryParse(j['gmv_atual'].toString()) ?? 0.0,
+        iniciadoEm: j['iniciado_em'] != null
+            ? DateTime.parse(j['iniciado_em'] as String)
+            : null,
+      );
 
   Map<String, dynamic> toCardMap() => {
-    'numero':       numero,
-    'status':       status,
-    'apresentador': apresentadorNome,
-    'cliente':      clienteNome,
-    'horario':      iniciadoEm?.toLocal().toString().substring(11, 16),
-    'tempo':        iniciadoEm != null
-        ? _duracao(DateTime.now().difference(iniciadoEm!))
-        : null,
-  };
+        'numero': numero,
+        'status': status,
+        'contrato_id': contratoId,
+        'cliente_id': clienteId,
+        'apresentador': apresentadorNome,
+        'cliente': clienteNome,
+        'viewer_count': viewerCount,
+        'gmv_atual': gmvAtual,
+        'horario': iniciadoEm?.toLocal().toString().substring(11, 16),
+        'tempo': iniciadoEm != null
+            ? _duracao(DateTime.now().difference(iniciadoEm!))
+            : null,
+      };
 
   static String _duracao(Duration d) {
     final h = d.inHours;

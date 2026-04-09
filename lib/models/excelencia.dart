@@ -18,12 +18,12 @@ class ExcelenciaData {
   });
 
   factory ExcelenciaData.fromJson(Map<String, dynamic> j) => ExcelenciaData(
-    ativos:           (j['ativos'] as num).toInt(),
-    cancelados:       (j['cancelados'] as num).toInt(),
-    taxaRetencao:     (j['taxa_retencao'] as num).toInt(),
-    fatMesAtual:      (j['fat_mes_atual'] as num).toDouble(),
-    fatMesAnterior:   (j['fat_mes_anterior'] as num).toDouble(),
-    crescimentoPct:   (j['crescimento_pct'] as num).toInt(),
-    score:            (j['score'] as num).toInt(),
+    ativos:         (j['ativos'] as num? ?? 0).toInt(),
+    cancelados:     (j['cancelados'] as num? ?? 0).toInt(),
+    taxaRetencao:   (j['taxa_retencao'] as num? ?? 0).toInt(),
+    fatMesAtual:    double.tryParse(j['fat_mes_atual']?.toString() ?? '') ?? 0.0,
+    fatMesAnterior: double.tryParse(j['fat_mes_anterior']?.toString() ?? '') ?? 0.0,
+    crescimentoPct: (j['crescimento_pct'] as num? ?? 0).toInt(),
+    score:          (j['score'] as num? ?? 0).toInt(),
   );
 }

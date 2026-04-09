@@ -19,13 +19,13 @@ class Recomendacao {
   });
 
   factory Recomendacao.fromJson(Map<String, dynamic> j) => Recomendacao(
-    id:            j['id'] as String,
-    nomeIndicado:  j['nome_indicado'] as String,
-    recomendante:  j['recomendante'] as String,
-    status:        j['status'] as String,
-    lat:           (j['lat'] as num?)?.toDouble(),
-    lng:           (j['lng'] as num?)?.toDouble(),
-  );
+        id: j['id'] as String,
+        nomeIndicado: j['nome_indicado'] as String,
+        recomendante: j['recomendante'] as String,
+        status: j['status'] as String,
+        lat: (j['lat'] as num?)?.toDouble(),
+        lng: (j['lng'] as num?)?.toDouble(),
+      );
 }
 
 class RecomendacoesNotifier extends AsyncNotifier<List<Recomendacao>> {
@@ -51,13 +51,17 @@ class RecomendacoesNotifier extends AsyncNotifier<List<Recomendacao>> {
     return rec;
   }
 
-  Future<String> converter(String id) async {
-    final resp = await ApiService.patch('/recomendacoes/$id/converter');
-    final clienteId = (resp.data as Map<String, dynamic>)['cliente_id'] as String;
+  Future<String> converter(String id, {String? clienteIdExistente}) async {
+    final resp = await ApiService.patch('/recomendacoes/$id/converter', data: {
+      if (clienteIdExistente != null) 'cliente_id': clienteIdExistente,
+    });
+    final clienteId =
+        (resp.data as Map<String, dynamic>)['cliente_id'] as String;
     state = await AsyncValue.guard(_fetch);
     return clienteId;
   }
 }
 
 final recomendacoesProvider =
-    AsyncNotifierProvider<RecomendacoesNotifier, List<Recomendacao>>(RecomendacoesNotifier.new);
+    AsyncNotifierProvider<RecomendacoesNotifier, List<Recomendacao>>(
+        RecomendacoesNotifier.new);

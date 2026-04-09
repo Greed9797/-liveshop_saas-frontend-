@@ -6,6 +6,9 @@ import '../../providers/boletos_provider.dart';
 import '../../models/boleto.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
+import '../../theme/app_radius.dart';
 
 class BoletosScreen extends ConsumerStatefulWidget {
   const BoletosScreen({super.key});
@@ -64,13 +67,12 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
           children: [
             // ── Header ──────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.screenPadding, AppSpacing.xl, AppSpacing.screenPadding, 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Meus Boletos',
-                      style: TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.w600)),
+                  Text('Meus Boletos',
+                      style: AppTypography.h2.copyWith(fontSize: 20, fontWeight: FontWeight.w600)),
                   boletosAsync.when(
                     loading: () => const SizedBox.shrink(),
                     error: (_, __) => const SizedBox.shrink(),
@@ -78,15 +80,14 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
                       final filtrados = _filtrar(boletos);
                       return Text(
                         '${filtrados.length} boleto${filtrados.length == 1 ? '' : 's'}',
-                        style: const TextStyle(
-                            color: Colors.grey, fontSize: 14),
+                        style: AppTypography.bodySmall.copyWith(color: AppColors.gray500),
                       );
                     },
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
 
             // ── Filtro por categoria (chips) ─────────────────────────────
             Padding(
@@ -96,17 +97,16 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
                 child: Row(
                   children: _tipoFiltros
                       .map((t) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
+                            padding: const EdgeInsets.only(right: AppSpacing.inlineGap),
                             child: FilterChip(
                               label: Text(t,
-                                  style: TextStyle(
-                                      fontSize: 12,
+                                  style: AppTypography.caption.copyWith(
                                       color: _filtroTipo == t
-                                          ? Colors.white
+                                          ? AppColors.white
                                           : AppColors.textPrimary)),
                               selected: _filtroTipo == t,
                               selectedColor: AppColors.primaryOrange,
-                              checkmarkColor: Colors.white,
+                              checkmarkColor: AppColors.white,
                               onSelected: (_) =>
                                   setState(() => _filtroTipo = t),
                             ),
@@ -115,7 +115,7 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
 
             // ── Filtro por status ────────────────────────────────────────
             Padding(
@@ -125,14 +125,14 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
                 child: Row(
                   children: _statusFiltros
                       .map((s) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
+                            padding: const EdgeInsets.only(right: AppSpacing.inlineGap),
                             child: ChoiceChip(
                               label: Text(s,
-                                  style: TextStyle(
+                                  style: AppTypography.caption.copyWith(
                                       fontSize: 11,
                                       color: _filtroStatus == s
-                                          ? Colors.white
-                                          : Colors.grey)),
+                                          ? AppColors.white
+                                          : AppColors.gray500)),
                               selected: _filtroStatus == s,
                               selectedColor: _statusColor(s),
                               onSelected: (_) =>
@@ -143,7 +143,7 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
 
             // ── Lista ────────────────────────────────────────────────────
             Expanded(
@@ -155,7 +155,7 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text('Erro: $e'),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       ElevatedButton(
                         onPressed: () =>
                             ref.read(boletosProvider.notifier).refresh(),
@@ -167,21 +167,21 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
                 data: (boletos) {
                   final filtrados = _filtrar(boletos);
                   if (filtrados.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.receipt_long_outlined,
+                          const Icon(Icons.receipt_long_outlined,
                               size: 40, color: Colors.black26),
-                          SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.sm),
                           Text('Nenhum boleto encontrado.',
-                              style: TextStyle(color: Colors.grey)),
+                              style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
                         ],
                       ),
                     );
                   }
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding, vertical: AppSpacing.sm),
                     itemCount: filtrados.length,
                     itemBuilder: (_, i) => BoletoItem(boleto: filtrados[i]),
                   );

@@ -201,6 +201,10 @@ class ApiService {
 
   static Future<String?> getAccessToken() => _storage.read(key: _tokenKey);
 
+  /// Tenta renovar o access token usando o refresh token armazenado.
+  /// Retorna o novo access token, ou null se o refresh falhar.
+  static Future<String?> tryRefresh() => _performRefresh();
+
   static Future<Response<T>> get<T>(String path,
           {Map<String, dynamic>? params}) =>
       _runRequest(() => _dio.get(path, queryParameters: params));

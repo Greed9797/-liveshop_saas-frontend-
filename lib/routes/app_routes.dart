@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import '../models/cabine.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/cabines/cabine_detail_screen.dart';
 import '../screens/vendas/vendas_screen.dart';
 import '../screens/vendas/cadastro_cliente_screen.dart';
 import '../screens/vendas/contrato_screen.dart';
 import '../screens/vendas/analise_financeira_screen.dart';
+import '../screens/vendas/analise_vendas_screen.dart';
 import '../screens/financeiro/financeiro_screen.dart';
 import '../screens/cabines/cabines_screen.dart';
 import '../screens/painel_franqueado/franqueado_screen.dart';
@@ -15,6 +18,9 @@ import '../screens/recomendacoes/recomendacoes_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/painel_cliente/carteira_clientes_screen.dart';
+import '../screens/auditoria/analise_credito_screen.dart';
+import '../screens/configuracoes/configuracoes_screen.dart';
+import '../widgets/role_route_guard.dart';
 
 /// Rotas nomeadas da aplicação
 class AppRoutes {
@@ -24,8 +30,10 @@ class AppRoutes {
   static const cadastroCliente = '/vendas/cadastro';
   static const contrato = '/vendas/contrato';
   static const analise = '/vendas/analise';
+  static const analiseCredito = '/vendas/analise_credito';
   static const financeiro = '/financeiro';
   static const cabines = '/cabines';
+  static const cabineDetail = '/cabines/detalhe';
   static const franqueado = '/franqueado';
   static const cliente = '/cliente';
   static const leads = '/leads';
@@ -34,23 +42,160 @@ class AppRoutes {
   static const recomendacoes = '/recomendacoes';
   static const manuais = '/manuais';
   static const carteiraClientes = '/carteira-clientes';
+  static const auditoriaContratos = '/auditoria-contratos';
+  static const configuracoes = '/configuracoes';
+
+  static String routeForRole(String? role) {
+    switch (role) {
+      case 'franqueador_master':
+        return franqueado;
+      case 'cliente_parceiro':
+        return cliente;
+      case 'franqueado':
+        return home;
+      default:
+        return login;
+    }
+  }
 
   static Map<String, WidgetBuilder> get routes => {
         login: (_) => const LoginScreen(),
-        home: (_) => const HomeScreen(),
-        vendas: (_) => const VendasScreen(),
-        cadastroCliente: (_) => const CadastroClienteScreen(),
-        contrato: (_) => const ContratoScreen(),
-        analise: (_) => const AnaliseFinanceiraScreen(),
-        financeiro: (_) => const FinanceiroScreen(),
-        cabines: (_) => const CabinesScreen(),
-        franqueado: (_) => const FranqueadoScreen(),
-        cliente: (_) => const ClienteScreen(),
-        leads: (_) => const LeadsScreen(),
-        boletos: (_) => const BoletosScreen(),
-        excelencia: (_) => const ExcelenciaScreen(),
-        recomendacoes: (_) => const RecomendacoesScreen(),
-        manuais: (_) => const ManuaisScreen(),
-        carteiraClientes: (_) => const CarteiraClientesScreen(),
+        home: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: HomeScreen(),
+            ),
+        vendas: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: VendasScreen(),
+            ),
+        cadastroCliente: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: CadastroClienteScreen(),
+            ),
+        contrato: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: ContratoScreen(),
+            ),
+        analise: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: AnaliseVendasScreen(),
+            ),
+        analiseCredito: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: AnaliseFinanceiraScreen(),
+            ),
+        financeiro: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: FinanceiroScreen(),
+            ),
+        cabines: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: CabinesScreen(),
+            ),
+        franqueado: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master'},
+              fallbackRoute: home,
+              unauthenticatedRoute: login,
+              child: FranqueadoScreen(),
+            ),
+        cliente: (_) => const RoleRouteGuard(
+              allowedRoles: {'cliente_parceiro'},
+              fallbackRoute: login,
+              unauthenticatedRoute: login,
+              child: ClienteScreen(),
+            ),
+        leads: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: LeadsScreen(),
+            ),
+        boletos: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado', 'cliente_parceiro'},
+              fallbackRoute: login,
+              unauthenticatedRoute: login,
+              child: BoletosScreen(),
+            ),
+        excelencia: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: ExcelenciaScreen(),
+            ),
+        recomendacoes: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: RecomendacoesScreen(),
+            ),
+        manuais: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado', 'cliente_parceiro'},
+              fallbackRoute: login,
+              unauthenticatedRoute: login,
+              child: ManuaisScreen(),
+            ),
+        carteiraClientes: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: CarteiraClientesScreen(),
+            ),
+        auditoriaContratos: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: AnaliseCreditoScreen(),
+            ),
+        configuracoes: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master', 'franqueado'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: ConfiguracoesScreen(),
+            ),
       };
+
+  static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    if (settings.name == cabineDetail) {
+      final cabine = settings.arguments;
+      if (cabine is! Cabine) {
+        return MaterialPageRoute(
+          builder: (_) => const Scaffold(
+            body: Center(child: Text('Cabine inválida para detalhamento.')),
+          ),
+          settings: settings,
+        );
+      }
+
+      return MaterialPageRoute(
+        builder: (_) => RoleRouteGuard(
+          allowedRoles: const {'franqueador_master', 'franqueado'},
+          fallbackRoute: home,
+          unauthenticatedRoute: login,
+          child: CabineDetailScreen(
+            cabineId: cabine.id,
+            cabineNumero: cabine.numero,
+          ),
+        ),
+        settings: settings,
+      );
+    }
+
+    return null;
+  }
 }
