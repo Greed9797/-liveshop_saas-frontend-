@@ -22,6 +22,16 @@ class VendasScreen extends ConsumerStatefulWidget {
 class _VendasScreenState extends ConsumerState<VendasScreen> {
   final Set<String> _activeFilters = {};
 
+  @override
+  void initState() {
+    super.initState();
+    // Garante dados frescos ao entrar na tela
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(clientesProvider);
+      ref.invalidate(recomendacoesProvider);
+    });
+  }
+
   static const _statusOptions = [
     ('negociacao', 'Negociação', AppColors.info),
     ('enviado', 'Enviado', AppColors.warning),

@@ -37,7 +37,9 @@ class _AnaliseState extends ConsumerState<AnaliseFinanceiraScreen> {
   }
 
   Future<void> _analisar() async {
-    final contratoId = _contratoId;
+    final args = ModalRoute.of(context)?.settings.arguments as Map?;
+    final contratoId = args?['contratoId'] as String?;
+
     if (contratoId == null) {
       if (mounted) {
         setState(() {
@@ -48,6 +50,20 @@ class _AnaliseState extends ConsumerState<AnaliseFinanceiraScreen> {
       }
       return;
     }
+
+    // Se veio da assinatura digital, o resultado já foi calculado
+    final aprovadoAutomatico = args?['aprovadoAutomatico'] as bool?;
+    if (aprovadoAutomatico != null) {
+      if (mounted) {
+        setState(() {
+          _score = args?['score'] as int?;
+          _fase = aprovadoAutomatico ? 1 : 2;
+        });
+      }
+      return;
+    }
+
+    // Fallback: chamar API (quando acessado fora do fluxo de assinatura)
     try {
       final result =
           await ref.read(contratosProvider.notifier).analisar(contratoId);

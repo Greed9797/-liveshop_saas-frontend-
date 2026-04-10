@@ -68,25 +68,31 @@ class _CarteiraMapState extends State<_CarteiraMap> {
     'Inadimplente': 'inadimplente',
   };
 
-  List<Cliente> get _clientesFiltrados {
-    if (_filtroStatus == 'Todos') {
-      return widget.clientes.where((c) => c.lat != null && c.lng != null).toList();
-    }
+  List<Cliente> get _todosClientesFiltrados {
+    if (_filtroStatus == 'Todos') return widget.clientes;
     final apiStatus = _statusMap[_filtroStatus];
-    return widget.clientes
-        .where((c) => c.lat != null && c.lng != null && c.status == apiStatus)
-        .toList();
+    return widget.clientes.where((c) => c.status == apiStatus).toList();
+  }
+
+  List<Cliente> get _clientesNoMapa {
+    return _todosClientesFiltrados.where((c) => c.lat != null && c.lng != null).toList();
+  }
+
+  List<Cliente> get _clientesSemCoordenadas {
+    return _todosClientesFiltrados.where((c) => c.lat == null || c.lng == null).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final clientes = _clientesFiltrados;
+    final noMapa = _clientesNoMapa;
+    final semCoord = _clientesSemCoordenadas;
+    final total = _todosClientesFiltrados.length;
 
     return Stack(
       children: [
         FlutterMap(
           options: const MapOptions(
-            initialCenter: LatLng(-15.7801, -47.9292), // Centro do Brasil
+            initialCenter: LatLng(-15.7801, -47.9292),
             initialZoom: 4.5,
           ),
           children: [
@@ -95,7 +101,7 @@ class _CarteiraMapState extends State<_CarteiraMap> {
               userAgentPackageName: 'com.liveshop.app',
             ),
             MarkerLayer(
-              markers: clientes
+              markers: noMapa
                   .map((c) => Marker(
                         point: LatLng(c.lat!, c.lng!),
                         width: 80,
@@ -136,7 +142,7 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Text(
-                          '${clientes.length}',
+                          '$total',
                           style: AppTypography.caption.copyWith(
                               color: AppColors.primaryOrange,
                               fontWeight: FontWeight.bold),
@@ -169,6 +175,68 @@ class _CarteiraMapState extends State<_CarteiraMap> {
             ],
           ),
         ),
+        // Lista de clientes sem coordenadas
+        if (semCoord.isNotEmpty)
+          Positioned(
+            bottom: AppSpacing.x2l,
+            left: AppSpacing.lg,
+            child: Card(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 280, maxHeight: 200),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Sem localização (${semCoord.length})',
+                        style: AppTypography.labelSmall.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.gray500,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: semCoord.length,
+                          itemBuilder: (_, i) {
+                            final c = semCoord[i];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.person_outline,
+                                      size: 14, color: _statusColor(c.status)),
+                                  const SizedBox(width: AppSpacing.xs),
+                                  Expanded(
+                                    child: Text(
+                                      c.nome,
+                                      style: AppTypography.caption,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Text(
+                                    c.status.toUpperCase(),
+                                    style: AppTypography.caption.copyWith(
+                                      fontSize: 9,
+                                      color: _statusColor(c.status),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         // Legenda
         const Positioned(
           bottom: AppSpacing.x2l,
@@ -197,6 +265,14 @@ class _CarteiraMapState extends State<_CarteiraMap> {
       ],
     );
   }
+
+  Color _statusColor(String status) => switch (status) {
+    'negociacao' => AppColors.infoBlue,
+    'enviado' => AppColors.warningYellow,
+    'ativo' => AppColors.successGreen,
+    'inadimplente' => AppColors.dangerRed,
+    _ => AppColors.gray400,
+  };
 }
 
 class _LegendItem extends StatelessWidget {

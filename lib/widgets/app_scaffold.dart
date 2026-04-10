@@ -1,8 +1,6 @@
 import '../providers/billing_alert_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
@@ -380,14 +378,9 @@ class _MenuContent extends ConsumerWidget {
               badge: boletosCount > 0 ? '$boletosCount' : null),
           _MenuItem(
               icon: Icons.people_alt_rounded,
-              label: 'Leads',
-              route: AppRoutes.leads,
-              isSelected: currentRoute == AppRoutes.leads),
-          _MenuItem(
-              icon: Icons.pin_drop_rounded,
-              label: 'Carteira de Clientes',
-              route: AppRoutes.carteiraClientes,
-              isSelected: currentRoute == AppRoutes.carteiraClientes),
+              label: 'Clientes / Leads',
+              route: AppRoutes.clientesLeads,
+              isSelected: currentRoute == AppRoutes.clientesLeads),
           _MenuItem(
               icon: Icons.workspace_premium_rounded,
               label: 'Programa de Excelência',
@@ -418,7 +411,7 @@ class _MenuContent extends ConsumerWidget {
           route: AppRoutes.login,
           isSelected: false,
           onTap: () {
-            unawaited(ref.read(authProvider.notifier).logout());
+            ref.read(authProvider.notifier).logout();
           },
         ),
       ],

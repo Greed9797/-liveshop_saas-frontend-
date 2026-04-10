@@ -26,10 +26,10 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
   final _nomeCtrl = TextEditingController();
   final _celularCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
-  final _cpfCtrl = TextEditingController();
+  final _docCtrl = TextEditingController(); // CPF ou CNPJ unificado
+  String _docType = 'cpf'; // 'cpf' ou 'cnpj'
 
   // Step 2 — Dados comerciais
-  final _cnpjCtrl = TextEditingController();
   final _razaoCtrl = TextEditingController();
   final _fatCtrl = TextEditingController();
   final _nichoCtrl = TextEditingController();
@@ -52,8 +52,7 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
     _nomeCtrl.dispose();
     _celularCtrl.dispose();
     _emailCtrl.dispose();
-    _cpfCtrl.dispose();
-    _cnpjCtrl.dispose();
+    _docCtrl.dispose();
     _razaoCtrl.dispose();
     _fatCtrl.dispose();
     _nichoCtrl.dispose();
@@ -119,8 +118,8 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
         'nome': _nomeCtrl.text,
         'celular': _celularCtrl.text,
         if (_emailCtrl.text.isNotEmpty) 'email': _emailCtrl.text,
-        if (_cpfCtrl.text.isNotEmpty) 'cpf': _cpfCtrl.text,
-        if (_cnpjCtrl.text.isNotEmpty) 'cnpj': _cnpjCtrl.text,
+        if (_docCtrl.text.isNotEmpty && _docType == 'cpf') 'cpf': _docCtrl.text,
+        if (_docCtrl.text.isNotEmpty && _docType == 'cnpj') 'cnpj': _docCtrl.text,
         if (_razaoCtrl.text.isNotEmpty) 'razao_social': _razaoCtrl.text,
         if (_nichoCtrl.text.isNotEmpty) 'nicho': _nichoCtrl.text,
         if (_sigaCtrl.text.isNotEmpty) 'siga': _sigaCtrl.text,
@@ -205,7 +204,7 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
             _field('Celular (WhatsApp) *', _celularCtrl,
                 type: TextInputType.phone),
             _field('Email', _emailCtrl, type: TextInputType.emailAddress),
-            _field('CPF', _cpfCtrl),
+            _docField(),
           ],
         ),
       );
@@ -217,12 +216,10 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
             Text('Dados Comerciais',
                 style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: AppSpacing.lg),
-            _field('CNPJ', _cnpjCtrl),
             _field('Razão Social', _razaoCtrl),
             _field('Faturamento Anual R\$', _fatCtrl,
                 type: TextInputType.number),
             _field('Nicho (ex: Moda, Eletrônicos)', _nichoCtrl),
-            _field('@ TikTok / Instagram', _sigaCtrl),
           ],
         ),
       );
@@ -284,19 +281,28 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
           children: [
             Text('Qualificação',
                 style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSpacing.xl),
-            Row(children: [
-              Text('Já vende no TikTok Live?',
-                  style: AppTypography.bodySmall),
-              const SizedBox(width: AppSpacing.md),
-              Switch(
+            const SizedBox(height: AppSpacing.lg),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.gray300),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: SwitchListTile(
+                title: const Text('Já vende no TikTok Live?'),
+                subtitle: Text(
+                  _jaVendeTikTok ? 'Sim — informe o handle abaixo' : 'Não',
+                  style: AppTypography.caption.copyWith(color: AppColors.gray400),
+                ),
                 value: _jaVendeTikTok,
-                activeThumbColor: AppColors.primary,
+                activeColor: AppColors.primary,
                 onChanged: (v) => setState(() => _jaVendeTikTok = v),
               ),
-              Text(_jaVendeTikTok ? 'Sim' : 'Não'),
-            ]),
-            const SizedBox(height: AppSpacing.x2l),
+            ),
+            if (_jaVendeTikTok) ...[
+              const SizedBox(height: AppSpacing.md),
+              _field('@ Handle no TikTok (opcional)', _sigaCtrl),
+            ],
+            const SizedBox(height: AppSpacing.lg),
             const Divider(),
             const SizedBox(height: AppSpacing.md),
             Text('Revisão',
@@ -306,7 +312,8 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
             _reviewRow('Celular', _celularCtrl.text),
             if (_emailCtrl.text.isNotEmpty)
               _reviewRow('Email', _emailCtrl.text),
-            if (_cnpjCtrl.text.isNotEmpty) _reviewRow('CNPJ', _cnpjCtrl.text),
+            if (_docCtrl.text.isNotEmpty)
+              _reviewRow(_docType.toUpperCase(), _docCtrl.text),
             if (_nichoCtrl.text.isNotEmpty)
               _reviewRow('Nicho', _nichoCtrl.text),
             if (_cidadeCtrl.text.isNotEmpty)
@@ -358,6 +365,72 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
           ),
         ],
       ],
+    );
+  }
+
+  String _applyDocMask(String digits) {
+    if (digits.length <= 11) {
+      // CPF: 000.000.000-00
+      final d = digits.padRight(11, ' ').substring(0, 11);
+      final buf = StringBuffer();
+      for (var i = 0; i < d.length; i++) {
+        if (i == 3 || i == 6) buf.write('.');
+        if (i == 9) buf.write('-');
+        buf.write(d[i]);
+      }
+      return buf.toString().trimRight();
+    } else {
+      // CNPJ: 00.000.000/0000-00
+      final d = digits.substring(0, digits.length.clamp(0, 14)).padRight(14, ' ');
+      final buf = StringBuffer();
+      for (var i = 0; i < d.length; i++) {
+        if (i == 2 || i == 5) buf.write('.');
+        if (i == 8) buf.write('/');
+        if (i == 12) buf.write('-');
+        buf.write(d[i]);
+      }
+      return buf.toString().trimRight();
+    }
+  }
+
+  Widget _docField() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextField(
+        controller: _docCtrl,
+        keyboardType: TextInputType.number,
+        onChanged: (value) {
+          final digits = value.replaceAll(RegExp(r'\D'), '');
+          final newType = digits.length <= 11 ? 'cpf' : 'cnpj';
+          final masked = _applyDocMask(digits);
+          if (masked != _docCtrl.text) {
+            _docCtrl.value = TextEditingValue(
+              text: masked,
+              selection: TextSelection.collapsed(offset: masked.length),
+            );
+          }
+          if (newType != _docType) setState(() => _docType = newType);
+        },
+        decoration: InputDecoration(
+          labelText: 'CPF / CNPJ',
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md)),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          suffixIcon: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Chip(
+              label: Text(_docType.toUpperCase(),
+                  style: AppTypography.caption.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.gray700)),
+              backgroundColor: AppColors.gray200,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: EdgeInsets.zero,
+            ),
+          ),
+        ),
+      ),
     );
   }
 

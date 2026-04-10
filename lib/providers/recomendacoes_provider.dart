@@ -51,14 +51,11 @@ class RecomendacoesNotifier extends AsyncNotifier<List<Recomendacao>> {
     return rec;
   }
 
-  Future<String> converter(String id, {String? clienteIdExistente}) async {
-    final resp = await ApiService.patch('/recomendacoes/$id/converter', data: {
-      if (clienteIdExistente != null) 'cliente_id': clienteIdExistente,
-    });
-    final clienteId =
-        (resp.data as Map<String, dynamic>)['cliente_id'] as String;
+  Future<Map<String, dynamic>> converter(String id, {Map<String, dynamic>? dados}) async {
+    final resp = await ApiService.patch('/recomendacoes/$id/converter', data: dados ?? {});
+    final result = resp.data as Map<String, dynamic>;
     state = await AsyncValue.guard(_fetch);
-    return clienteId;
+    return result;
   }
 }
 

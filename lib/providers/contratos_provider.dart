@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import 'dashboard_provider.dart';
 import 'clientes_provider.dart';
 import 'cabines_provider.dart';
+import 'recomendacoes_provider.dart';
 
 class ContratosNotifier extends Notifier<void> {
   @override
@@ -17,6 +18,7 @@ class ContratosNotifier extends Notifier<void> {
     ref.invalidate(dashboardProvider);
     ref.invalidate(clientesProvider);
     ref.invalidate(cabinesProvider);
+    ref.invalidate(recomendacoesProvider);
   }
 
   void refreshAuditoriaAba(String aba) {

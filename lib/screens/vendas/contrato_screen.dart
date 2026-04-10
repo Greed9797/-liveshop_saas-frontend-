@@ -36,7 +36,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
 
   Future<void> _criarContrato() async {
     final clienteId = _clienteId;
-    if (clienteId == null) return;
+    if (clienteId == null || _contratoId != null) return;
     try {
       final id = await ref.read(contratosProvider.notifier).criar(
         clienteId: clienteId,
@@ -75,7 +75,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
         signatureBase64: base64,
       );
       if (!mounted) return;
-      Navigator.pushNamed(context, AppRoutes.analise, arguments: {
+      Navigator.pushNamed(context, AppRoutes.analiseCredito, arguments: {
         'contratoId': contratoId,
         'aprovadoAutomatico': result['aprovado'] == true,
         'requerBackoffice': result['requer_backoffice'] == true,

@@ -189,32 +189,40 @@ class RecomendacoesScreen extends ConsumerWidget {
 
   Future<void> _converter(
       BuildContext context, WidgetRef ref, Recomendacao r) async {
-    showDialog(
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (ctx) => _ConverterDialog(recomendacao: r),
-    ).then((result) async {
-      if (result != null &&
-          result is Map<String, dynamic> &&
-          context.mounted) {
-        try {
-          final clienteId =
-              await ref.read(recomendacoesProvider.notifier).converter(
-                    r.id,
-                    clienteIdExistente: result['clienteId'],
-                  );
-          if (context.mounted) {
-            Navigator.pushNamed(context, AppRoutes.contrato,
-                arguments: {'clienteId': clienteId});
-          }
-        } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Erro ao iniciar negociação: $e')),
-            );
-          }
-        }
+      barrierDismissible: false,
+      builder: (_) => _NegociarDialog(recomendacao: r),
+    );
+    if (result == null || !context.mounted) return;
+
+    try {
+      final resp = await ref.read(recomendacoesProvider.notifier).converter(
+        r.id,
+        dados: result,
+      );
+      if (!context.mounted) return;
+
+      final altoRisco = resp['alto_risco'] == true;
+      final score = resp['score'] as int? ?? 0;
+
+      ref.invalidate(clientesProvider);
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(altoRisco
+            ? 'Cliente convertido (Score: $score — alto risco). Acompanhe em Clientes/Leads.'
+            : 'Cliente convertido com sucesso! (Score: $score)'),
+        backgroundColor: altoRisco ? AppColors.dangerRed : AppColors.successGreen,
+      ));
+
+      Navigator.pushNamed(context, AppRoutes.clientesLeads);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao converter: $e')),
+        );
       }
-    });
+    }
   }
 }
 
@@ -280,114 +288,267 @@ class _RecomendacaoTile extends StatelessWidget {
   }
 }
 
-// ─── Dialog de conversão ─────────────────────────────────────────────────────
+// ─── Dialog de negociação com mini-formulário ───────────────────────────────
 
-class _ConverterDialog extends ConsumerStatefulWidget {
+class _NegociarDialog extends StatefulWidget {
   final Recomendacao recomendacao;
-  const _ConverterDialog({required this.recomendacao});
+  const _NegociarDialog({required this.recomendacao});
 
   @override
-  ConsumerState<_ConverterDialog> createState() => _ConverterDialogState();
+  State<_NegociarDialog> createState() => _NegociarDialogState();
 }
 
-class _ConverterDialogState extends ConsumerState<_ConverterDialog> {
-  String? _selectedClienteId;
-  bool _createNew = true;
+class _NegociarDialogState extends State<_NegociarDialog> {
+  final _celularCtrl = TextEditingController();
+  final _cnpjCtrl = TextEditingController();
+  final _cepCtrl = TextEditingController();
+  final _cidadeCtrl = TextEditingController();
+  final _estadoCtrl = TextEditingController();
+  final _fatCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  bool _hasCnpj = false;
+  bool _highFat = false;
+
+  String get _riscoLabel {
+    int score = 0;
+    if (_highFat) score += 50;
+    if (_hasCnpj) score += 20;
+    if (score >= 60) return 'BAIXO RISCO';
+    if (score >= 20) return 'RISCO MODERADO';
+    return 'ALTO RISCO';
+  }
+
+  Color get _riscoColor {
+    int score = 0;
+    if (_highFat) score += 50;
+    if (_hasCnpj) score += 20;
+    if (score >= 60) return AppColors.successGreen;
+    if (score >= 20) return AppColors.warningYellow;
+    return AppColors.dangerRed;
+  }
+
+  void _updateRisco() {
+    final fat = double.tryParse(_fatCtrl.text.replaceAll(',', '.')) ?? 0;
+    setState(() {
+      _hasCnpj = _cnpjCtrl.text.replaceAll(RegExp(r'\D'), '').length >= 14;
+      _highFat = fat > 50000;
+    });
+  }
+
+  @override
+  void dispose() {
+    _celularCtrl.dispose();
+    _cnpjCtrl.dispose();
+    _cepCtrl.dispose();
+    _cidadeCtrl.dispose();
+    _estadoCtrl.dispose();
+    _fatCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final clientesAsync = ref.watch(clientesProvider);
-
-    return AlertDialog(
+    return Dialog(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl)),
-      title: const Text('Iniciar Negociação'),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Como deseja registrar o cliente indicado (${widget.recomendacao.nomeIndicado})?',
-              style: AppTypography.bodySmall,
-            ),
-            const SizedBox(height: AppSpacing.x2l),
-            RadioListTile<bool>(
-              title: const Text('Criar como novo cliente'),
-              value: true,
-              groupValue: _createNew,
-              activeColor: AppColors.primaryOrange,
-              onChanged: (val) => setState(() {
-                _createNew = true;
-                _selectedClienteId = null;
-              }),
-            ),
-            RadioListTile<bool>(
-              title: const Text('Vincular a um cliente existente'),
-              value: false,
-              groupValue: _createNew,
-              activeColor: AppColors.primaryOrange,
-              onChanged: (val) => setState(() {
-                _createNew = false;
-              }),
-            ),
-            if (!_createNew) ...[
-              const SizedBox(height: AppSpacing.lg),
-              clientesAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Text('Erro ao carregar clientes: $e'),
-                data: (clientes) {
-                  if (clientes.isEmpty) {
-                    return Text('Nenhum cliente cadastrado.',
-                        style: AppTypography.bodySmall
-                            .copyWith(color: AppColors.dangerRed));
-                  }
-                  return DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Selecione o Cliente',
-                      border: OutlineInputBorder(),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.x2l),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    const Icon(Icons.handshake_outlined,
+                        color: AppColors.lilac),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text('Negociar com ${widget.recomendacao.nomeIndicado}',
+                          style: AppTypography.h3),
                     ),
-                    value: _selectedClienteId,
-                    items: clientes.map((c) {
-                      return DropdownMenuItem(
-                        value: c.id,
-                        child: Text(c.nome),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      setState(() => _selectedClienteId = val);
-                    },
-                  );
-                },
-              ),
-            ]
-          ],
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Indicador de risco
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: _riscoColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: _riscoColor.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _riscoLabel == 'ALTO RISCO'
+                            ? Icons.warning_amber_rounded
+                            : Icons.shield_outlined,
+                        color: _riscoColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _riscoLabel,
+                        style: AppTypography.labelSmall.copyWith(
+                          color: _riscoColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'Preencha para melhorar o score',
+                        style: AppTypography.caption
+                            .copyWith(color: AppColors.gray400, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Campos
+                TextFormField(
+                  controller: _celularCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Celular (WhatsApp) *',
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Obrigatório' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _cnpjCtrl,
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => _updateRisco(),
+                  decoration: InputDecoration(
+                    labelText: 'CNPJ',
+                    border: const OutlineInputBorder(),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    suffixIcon: _hasCnpj
+                        ? const Icon(Icons.check_circle,
+                            color: AppColors.successGreen, size: 18)
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _fatCtrl,
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => _updateRisco(),
+                  decoration: InputDecoration(
+                    labelText: 'Faturamento Anual R\$',
+                    border: const OutlineInputBorder(),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    suffixIcon: _highFat
+                        ? const Icon(Icons.check_circle,
+                            color: AppColors.successGreen, size: 18)
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                        controller: _cepCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'CEP',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                        controller: _cidadeCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Cidade',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _estadoCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'UF',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.x2l),
+
+                // Ações
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancelar'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.lilac),
+                        onPressed: () {
+                          if (!_formKey.currentState!.validate()) return;
+                          Navigator.pop(context, {
+                            'celular': _celularCtrl.text.trim(),
+                            if (_cnpjCtrl.text.trim().isNotEmpty)
+                              'cnpj': _cnpjCtrl.text.trim(),
+                            if (_fatCtrl.text.trim().isNotEmpty)
+                              'fat_anual': double.tryParse(
+                                      _fatCtrl.text.replaceAll(',', '.')) ??
+                                  0,
+                            if (_cepCtrl.text.trim().isNotEmpty)
+                              'cep': _cepCtrl.text.trim(),
+                            if (_cidadeCtrl.text.trim().isNotEmpty)
+                              'cidade': _cidadeCtrl.text.trim(),
+                            if (_estadoCtrl.text.trim().isNotEmpty)
+                              'estado': _estadoCtrl.text.trim(),
+                          });
+                        },
+                        icon: const Icon(Icons.send_rounded,
+                            size: 16, color: AppColors.white),
+                        label: Text('Converter para Lead',
+                            style: AppTypography.bodySmall
+                                .copyWith(color: AppColors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryOrange),
-          onPressed: (!_createNew && _selectedClienteId == null)
-              ? null
-              : () {
-                  Navigator.pop(context, {
-                    'createNew': _createNew,
-                    'clienteId': _selectedClienteId,
-                  });
-                },
-          child: Text('Confirmar',
-              style:
-                  AppTypography.bodyMedium.copyWith(color: AppColors.white)),
-        ),
-      ],
     );
   }
 }

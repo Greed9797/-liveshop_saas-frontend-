@@ -102,11 +102,7 @@ class _DesktopLayout extends StatelessWidget {
               const SizedBox(height: AppSpacing.cardGap),
               const ExcelenciaCard(),
               const SizedBox(height: AppSpacing.cardGap),
-              _ActionButtons(
-                cabinesDisponiveis: dashboard.cabines
-                    .where((cabine) => cabine.status == 'disponivel')
-                    .length,
-              ),
+              const _ActionButtons(),
             ],
           ),
         ),
@@ -174,11 +170,7 @@ class _MobileLayout extends StatelessWidget {
         else
           const _CabinesEmptyCard(),
         const SizedBox(height: AppSpacing.cardGap),
-        _ActionButtons(
-          cabinesDisponiveis: dashboard.cabines
-              .where((cabine) => cabine.status == 'disponivel')
-              .length,
-        ),
+        const _ActionButtons(),
         const SizedBox(height: AppSpacing.cardGap),
         RankingDestaque(
           rankings: dashboard.rankingDia
@@ -198,8 +190,7 @@ class _MobileLayout extends StatelessWidget {
 // ─── WIDGETS INTERNOS ─────────────────────────────────────────────────────────
 
 class _ActionButtons extends StatelessWidget {
-  final int cabinesDisponiveis;
-  const _ActionButtons({required this.cabinesDisponiveis});
+  const _ActionButtons();
 
   @override
   Widget build(BuildContext context) {
@@ -238,23 +229,19 @@ class _ActionButtons extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.lg),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
-              onTap: () => Navigator.pushNamed(context, AppRoutes.cabines),
-              child: SizedBox(
+              onTap: () => Navigator.pushNamed(context, AppRoutes.financeiro),
+              child: const SizedBox(
                 height: 110,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.video_camera_front_outlined,
+                    Icon(Icons.account_balance_wallet_rounded,
                         size: 38, color: AppColors.gray500),
-                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(height: AppSpacing.sm),
                     Text(
-                      'CABINES',
-                      style: AppTypography.bodyLarge.copyWith(
+                      'FINANCEIRO',
+                      style: TextStyle(
                           fontWeight: FontWeight.bold, color: AppColors.gray700),
-                    ),
-                    Text(
-                      '$cabinesDisponiveis disponíveis',
-                      style: AppTypography.caption.copyWith(fontSize: 10, color: AppColors.gray400),
                     ),
                   ],
                 ),
@@ -295,7 +282,6 @@ class _CabinesMiniGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      onTap: () => Navigator.pushNamed(context, AppRoutes.cabines),
       padding: const EdgeInsets.all(AppSpacing.compactPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,17 +301,25 @@ class _CabinesMiniGrid extends StatelessWidget {
                   liveCount:
                       cabines.where((c) => c.status == 'ao_vivo').length),
               const Spacer(),
-              Text(
-                'Ver tudo',
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.primaryOrange,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0,
+              GestureDetector(
+                onTap: () => Navigator.pushNamed(context, AppRoutes.cabines),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Ver tudo',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.primaryOrange,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    const Icon(Icons.chevron_right,
+                        color: AppColors.primaryOrange, size: 16),
+                  ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.xs),
-              const Icon(Icons.chevron_right,
-                  color: AppColors.primaryOrange, size: 16),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -390,6 +384,82 @@ class _CabineMiniTile extends StatelessWidget {
   final CabineStatus cabine;
   const _CabineMiniTile({required this.cabine});
 
+  void _showDetails(BuildContext context) {
+    final statusLabel = switch (cabine.status) {
+      'ao_vivo'    => 'AO VIVO',
+      'reservada'  => 'RESERVADA',
+      'ativa'      => 'ATIVA',
+      'disponivel' => 'DISPONÍVEL',
+      'manutencao' => 'MANUTENÇÃO',
+      _            => cabine.status.toUpperCase(),
+    };
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Cabine ${cabine.numero}',
+                  style: AppTypography.h3,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: cabine.status == 'ao_vivo'
+                        ? AppColors.successGreen.withValues(alpha: 0.15)
+                        : AppColors.gray200,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    statusLabel,
+                    style: AppTypography.caption.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: cabine.status == 'ao_vivo'
+                          ? AppColors.successGreen
+                          : AppColors.gray500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _DetailRow(icon: Icons.person_outline,
+                label: 'Cliente', value: cabine.clienteNome ?? '—'),
+            _DetailRow(icon: Icons.attach_money,
+                label: 'GMV', value: 'R\$ ${cabine.gmvAtual.toStringAsFixed(2)}'),
+            _DetailRow(icon: Icons.visibility_outlined,
+                label: 'Viewers', value: '${cabine.viewerCount}'),
+            if (cabine.duracaoMin > 0)
+              _DetailRow(icon: Icons.timer_outlined,
+                  label: 'Duração', value: '${cabine.duracaoMin} min'),
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.cabines);
+                },
+                child: const Text('Ver detalhes completos'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Heatmap: intensidade laranja por status (mais ativo = mais escuro)
@@ -402,17 +472,69 @@ class _CabineMiniTile extends StatelessWidget {
       _            => (AppColors.gray100, AppColors.gray400),
     };
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(AppRadius.xs),
-      ),
-      child: Center(
-        child: Text(
-          '${cabine.numero}',
-          style: AppTypography.bodySmall.copyWith(
-              color: textColor, fontWeight: FontWeight.w700),
+    final showName = cabine.clienteNome != null &&
+        (cabine.status == 'ao_vivo' || cabine.status == 'reservada');
+
+    return GestureDetector(
+      onTap: () => _showDetails(context),
+      child: Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '${cabine.numero}',
+              style: AppTypography.bodySmall.copyWith(
+                  color: textColor, fontWeight: FontWeight.w700),
+            ),
+            if (showName)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Text(
+                  cabine.clienteNome!,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 8,
+                    color: textColor.withValues(alpha: 0.85),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _DetailRow({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppColors.gray400),
+          const SizedBox(width: AppSpacing.sm),
+          Text('$label: ',
+              style: AppTypography.labelSmall
+                  .copyWith(color: AppColors.gray500, fontWeight: FontWeight.w600)),
+          Expanded(
+            child: Text(value,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.labelSmall.copyWith(color: AppColors.gray700)),
+          ),
+        ],
       ),
     );
   }

@@ -14,7 +14,7 @@ class LeadCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNovo = lead['novo'] == true;
-    final fat = lead['fat'] as int;
+    final fat = (lead['fat_estimado'] as num?)?.toInt() ?? 0;
     final fatFormatted = fat.toString().replaceAllMapped(
       RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
 
