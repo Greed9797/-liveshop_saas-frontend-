@@ -16,6 +16,9 @@ import '../screens/boletos/boletos_screen.dart';
 import '../screens/excelencia/excelencia_screen.dart';
 import '../screens/recomendacoes/recomendacoes_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
+import '../screens/cliente/cliente_historico_screen.dart';
+import '../screens/cliente/cliente_cabines_screen.dart';
+import '../screens/cliente/cliente_cabine_detail_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/painel_cliente/carteira_clientes_screen.dart';
 import '../screens/auditoria/analise_credito_screen.dart';
@@ -37,6 +40,9 @@ class AppRoutes {
   static const cabineDetail = '/cabines/detalhe';
   static const franqueado = '/franqueado';
   static const cliente = '/cliente';
+  static const clienteHistorico = '/cliente/historico';
+  static const clienteCabines = '/cliente/cabines';
+  static const clienteCabineDetail = '/cliente/cabines/detalhe';
   static const leads = '/leads';
   static const boletos = '/boletos';
   static const excelencia = '/excelencia';
@@ -122,6 +128,18 @@ class AppRoutes {
               unauthenticatedRoute: login,
               child: ClienteScreen(),
             ),
+        clienteHistorico: (_) => const RoleRouteGuard(
+              allowedRoles: {'cliente_parceiro'},
+              fallbackRoute: login,
+              unauthenticatedRoute: login,
+              child: ClienteHistoricoScreen(),
+            ),
+        clienteCabines: (_) => const RoleRouteGuard(
+              allowedRoles: {'cliente_parceiro'},
+              fallbackRoute: login,
+              unauthenticatedRoute: login,
+              child: ClienteCabinesScreen(),
+            ),
         leads: (_) => const RoleRouteGuard(
               allowedRoles: {'franqueador_master', 'franqueado'},
               fallbackRoute: franqueado,
@@ -196,6 +214,31 @@ class AppRoutes {
           fallbackRoute: home,
           unauthenticatedRoute: login,
           child: CabineDetailScreen(
+            cabineId: cabine.id,
+            cabineNumero: cabine.numero,
+          ),
+        ),
+        settings: settings,
+      );
+    }
+
+    if (settings.name == clienteCabineDetail) {
+      final cabine = settings.arguments;
+      if (cabine is! Cabine) {
+        return MaterialPageRoute(
+          builder: (_) => const Scaffold(
+            body: Center(child: Text('Cabine inválida.')),
+          ),
+          settings: settings,
+        );
+      }
+
+      return MaterialPageRoute(
+        builder: (_) => RoleRouteGuard(
+          allowedRoles: const {'cliente_parceiro'},
+          fallbackRoute: login,
+          unauthenticatedRoute: login,
+          child: ClienteCabineDetailScreen(
             cabineId: cabine.id,
             cabineNumero: cabine.numero,
           ),

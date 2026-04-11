@@ -329,14 +329,14 @@ class _MenuContent extends ConsumerWidget {
           _MenuItem(
               icon: Icons.history_rounded,
               label: 'Histórico de Vendas',
-              route: AppRoutes.vendas,
-              isSelected: currentRoute == AppRoutes.vendas),
+              route: AppRoutes.clienteHistorico,
+              isSelected: currentRoute == AppRoutes.clienteHistorico),
           _MenuItem(
-              icon: Icons.inventory_2_rounded,
-              label: 'Meus Produtos',
-              route: AppRoutes
-                  .manuais, // placeholder para rota de produtos futuramente
-              isSelected: false),
+              icon: Icons.videocam_rounded,
+              label: 'Minhas Cabines',
+              route: AppRoutes.clienteCabines,
+              isSelected: currentRoute == AppRoutes.clienteCabines ||
+                  currentRoute == AppRoutes.clienteCabineDetail),
         ],
         if (!isClienteParceiro) ...[
           _MenuItem(
