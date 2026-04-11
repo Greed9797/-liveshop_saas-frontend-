@@ -13,7 +13,7 @@ class AppColors {
   static const Color successGreen = Color(0xFF2ECC71);
   static const Color warningYellow = Color(0xFFF1C40F);
   static const Color dangerRed = Color(0xFFE74C3C);
-  static const Color infoPurple = Color(0xFF8E44AD);
+  static const Color infoPurple = Color(0xFFE8673C);
   static const Color infoBlue = Color(0xFF3498DB);
 
   // Gray scale (Tailwind-style)
