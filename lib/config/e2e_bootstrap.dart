@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
@@ -31,13 +30,11 @@ Future<void> bootstrapE2EAuth(
   ProviderContainer container, {
   required String role,
 }) async {
-  if (kReleaseMode) return;
-
   final normalizedRole = _normalizeRole(role);
   final credential = _credentialsByRole[normalizedRole];
 
   if (credential == null) {
-    debugPrint('[E2E] Role not configured: $role');
+    print('[E2E] Role not configured: $role');
     return;
   }
 
@@ -47,8 +44,8 @@ Future<void> bootstrapE2EAuth(
 
   if (!ok) {
     final error = container.read(authProvider).error;
-    debugPrint('[E2E] Auto login failed for role $normalizedRole: $error');
+    print('[E2E] Auto login failed for role $normalizedRole: $error');
   } else {
-    debugPrint('[E2E] Auto login active for role: $normalizedRole');
+    print('[E2E] Auto login active for role: $normalizedRole');
   }
 }
