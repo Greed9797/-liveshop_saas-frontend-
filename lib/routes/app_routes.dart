@@ -205,7 +205,7 @@ class AppRoutes {
               child: SolicitacoesScreen(),
             ),
         analyticsDashboard: (_) => const RoleRouteGuard(
-              allowedRoles: {'franqueador_master'},
+              allowedRoles: {'franqueador_master', 'franqueado'},
               fallbackRoute: franqueado,
               unauthenticatedRoute: login,
               child: AnalyticsDashboardScreen(),

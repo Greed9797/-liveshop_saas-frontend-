@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
-import '../routes/app_routes.dart';
 
 class RoleRouteGuard extends ConsumerStatefulWidget {
   final Set<String> allowedRoles;
@@ -57,8 +56,7 @@ class _RoleRouteGuardState extends ConsumerState<RoleRouteGuard> {
     }
 
     if (!widget.allowedRoles.contains(user.papel)) {
-      final roleRoute = AppRoutes.routeForRole(user.papel);
-      _scheduleRedirect(roleRoute);
+      _scheduleRedirect(widget.fallbackRoute);
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );

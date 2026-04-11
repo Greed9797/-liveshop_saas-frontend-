@@ -125,6 +125,13 @@ class ApiService {
       }
 
       await _storage.write(key: _tokenKey, value: newToken);
+
+      // Persistir novo refresh token (rotação — o antigo foi revogado no servidor)
+      final newRefreshToken = response.data?['refresh_token'] as String?;
+      if (newRefreshToken != null && newRefreshToken.isNotEmpty) {
+        await _storage.write(key: _refreshKey, value: newRefreshToken);
+      }
+
       return newToken;
     } catch (_) {
       return null;

@@ -62,14 +62,15 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
-    // Limpa o estado local imediatamente — não depende do backend.
-    await ApiService.clearTokens();
-    state = const AuthState();
+    // Revogar sessão no servidor ANTES de limpar tokens locais.
+    // Garante que o refresh_token seja invalidado mesmo se a limpeza local falhar.
     try {
       await ApiService.post('/auth/logout');
     } catch (_) {
-      // Ignora falhas de rede — sessão local já foi encerrada.
+      // Ignora falhas de rede — limpa tokens localmente de qualquer forma.
     }
+    await ApiService.clearTokens();
+    state = const AuthState();
   }
 
   Future<void> expireSession([

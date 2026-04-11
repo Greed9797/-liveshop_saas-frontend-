@@ -73,9 +73,10 @@ class CabineDetailState {
   CabineDetailState copyWith({
     CabineLiveAtual? liveAtual,
     CabineHistorico? historico,
+    bool clearLive = false,
   }) {
     return CabineDetailState(
-      liveAtual: liveAtual ?? this.liveAtual,
+      liveAtual: clearLive ? null : (liveAtual ?? this.liveAtual),
       historico: historico ?? this.historico,
     );
   }
@@ -116,7 +117,12 @@ class CabineDetailNotifier
 
     try {
       final liveAtual = await _fetchLiveAtual(arg);
-      state = AsyncValue.data(state.value!.copyWith(liveAtual: liveAtual));
+      state = AsyncValue.data(
+        state.value!.copyWith(
+          liveAtual: liveAtual,
+          clearLive: liveAtual == null,
+        ),
+      );
     } catch (_) {
       // Mantemos o último estado estável se o refresh parcial falhar.
     }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/cabine.dart';
 import '../models/fila_ativacao_item.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 import 'dashboard_provider.dart';
 
 class CabinesNotifier extends AsyncNotifier<List<Cabine>> {
@@ -10,6 +11,16 @@ class CabinesNotifier extends AsyncNotifier<List<Cabine>> {
 
   @override
   Future<List<Cabine>> build() {
+    final authState = ref.watch(authProvider);
+
+    // Aguarda autenticação antes de iniciar fetch/polling.
+    // Sem este guard, chamadas 401 ocorreriam em background logo após logout.
+    if (!authState.isAuthenticated) {
+      _timer?.cancel();
+      _timer = null;
+      throw Exception('Não autenticado');
+    }
+
     // Polling a cada 15 segundos
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 15), (_) => _reload());

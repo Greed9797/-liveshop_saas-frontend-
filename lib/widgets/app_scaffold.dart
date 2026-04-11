@@ -108,6 +108,7 @@ class AppScaffold extends ConsumerWidget {
                         context,
                         isDesktop: true,
                         displayName: displayName,
+                        isFranqueadorMaster: isFranqueadorMaster,
                         isClienteParceiro: isClienteParceiro,
                       ),
                       Expanded(child: child),
@@ -124,6 +125,7 @@ class AppScaffold extends ConsumerWidget {
                 context,
                 isDesktop: false,
                 displayName: displayName,
+                isFranqueadorMaster: isFranqueadorMaster,
                 isClienteParceiro: isClienteParceiro,
               ),
               Expanded(child: child),
@@ -142,6 +144,7 @@ class AppScaffold extends ConsumerWidget {
     BuildContext context, {
     required bool isDesktop,
     required String displayName,
+    required bool isFranqueadorMaster,
     required bool isClienteParceiro,
   }) {
     return Container(
@@ -195,7 +198,9 @@ class AppScaffold extends ConsumerWidget {
                   Text(
                     isClienteParceiro
                         ? 'Cliente Parceiro'
-                        : 'Franqueado Livelab',
+                        : isFranqueadorMaster
+                            ? 'Franqueador Master'
+                            : 'Franqueado Livelab',
                     style: AppTypography.caption
                         .copyWith(color: AppColors.gray500),
                   ),
