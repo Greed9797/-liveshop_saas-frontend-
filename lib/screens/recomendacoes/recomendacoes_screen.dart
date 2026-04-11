@@ -205,17 +205,22 @@ class RecomendacoesScreen extends ConsumerWidget {
 
       final altoRisco = resp['alto_risco'] == true;
       final score = resp['score'] as int? ?? 0;
+      final clienteId = resp['cliente_id'] as String?;
 
       ref.invalidate(clientesProvider);
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(altoRisco
-            ? 'Cliente convertido (Score: $score — alto risco). Acompanhe em Clientes/Leads.'
-            : 'Cliente convertido com sucesso! (Score: $score)'),
+            ? 'Cliente convertido (Score: $score — alto risco). Iniciando contrato...'
+            : 'Cliente convertido com sucesso! (Score: $score). Iniciando contrato...'),
         backgroundColor: altoRisco ? AppColors.dangerRed : AppColors.successGreen,
       ));
 
-      Navigator.pushNamed(context, AppRoutes.clientesLeads);
+      Navigator.pushNamed(
+        context,
+        AppRoutes.contrato,
+        arguments: {'clienteId': clienteId},
+      );
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
