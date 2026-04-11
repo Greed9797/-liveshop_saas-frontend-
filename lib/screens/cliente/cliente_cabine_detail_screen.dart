@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/live_request.dart';
 import '../../providers/cliente_cabine_detail_provider.dart';
+import '../../providers/live_requests_provider.dart';
 import '../../providers/live_stream_provider.dart';
+import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
@@ -53,6 +56,15 @@ class _ClienteCabineDetailScreenState
     super.dispose();
   }
 
+  void _showSolicitarLiveSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _SolicitarLiveSheet(cabineId: widget.cabineId),
+    );
+  }
+
   void _syncPolling() {
     final detail =
         ref.read(clienteCabineDetailProvider(widget.cabineId)).valueOrNull;
@@ -85,6 +97,17 @@ class _ClienteCabineDetailScreenState
 
     return Scaffold(
       backgroundColor: AppColors.gray100,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showSolicitarLiveSheet(context),
+        backgroundColor: AppColors.primaryOrange,
+        icon: const Icon(Icons.calendar_today_rounded,
+            color: AppColors.white),
+        label: const Text(
+          'Solicitar Live',
+          style: TextStyle(
+              color: AppColors.white, fontWeight: FontWeight.w600),
+        ),
+      ),
       appBar: AppBar(
         title: Text(
           'Cabine ${widget.cabineNumero.toString().padLeft(2, '0')}',
@@ -559,6 +582,444 @@ class _StatColumn extends StatelessWidget {
               .copyWith(color: AppColors.textSecondary),
         ),
       ],
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Modal: Solicitar Live
+// ──────────────────────────────────────────────────────────────
+
+class _SolicitarLiveSheet extends ConsumerStatefulWidget {
+  final String cabineId;
+  const _SolicitarLiveSheet({required this.cabineId});
+
+  @override
+  ConsumerState<_SolicitarLiveSheet> createState() =>
+      _SolicitarLiveSheetState();
+}
+
+class _SolicitarLiveSheetState
+    extends ConsumerState<_SolicitarLiveSheet> {
+  DateTime? _selectedDate;
+  TimeOfDay? _horaInicio;
+  TimeOfDay? _horaFim;
+  final _observacaoCtrl = TextEditingController();
+  bool _isSubmitting = false;
+  String? _formError;
+
+  static final _dateFmt = DateFormat('dd/MM/yyyy');
+  static final _dateIso = DateFormat('yyyy-MM-dd');
+
+  @override
+  void dispose() {
+    _observacaoCtrl.dispose();
+    super.dispose();
+  }
+
+  // ── Conversão de fuso-segura: apenas string, sem DateTime ──
+
+  /// Formata DateTime → "yyyy-MM-dd" (ISO, string pura para o backend)
+  String _toDateString(DateTime d) => _dateIso.format(d);
+
+  /// Formata TimeOfDay → "HH:mm" (string pura para o backend)
+  String _toTimeString(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  /// Compara "HH:mm" strings lexicograficamente (funciona porque são zero-padded)
+  bool _horaFimValida(String inicio, String fim) =>
+      fim.compareTo(inicio) > 0;
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+      locale: const Locale('pt', 'BR'),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+        _formError = null;
+      });
+    }
+  }
+
+  Future<void> _pickHoraInicio() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _horaInicio ?? const TimeOfDay(hour: 9, minute: 0),
+      builder: (ctx, child) => MediaQuery(
+        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _horaInicio = picked;
+        _formError = null;
+      });
+    }
+  }
+
+  Future<void> _pickHoraFim() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _horaFim ??
+          (_horaInicio != null
+              ? TimeOfDay(hour: _horaInicio!.hour + 2, minute: 0)
+              : const TimeOfDay(hour: 11, minute: 0)),
+      builder: (ctx, child) => MediaQuery(
+        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _horaFim = picked;
+        _formError = null;
+      });
+    }
+  }
+
+  Future<void> _submit() async {
+    // Validação completa antes de qualquer chamada à API
+    if (_selectedDate == null || _horaInicio == null || _horaFim == null) {
+      setState(
+          () => _formError = 'Preencha a data, hora de início e hora de fim.');
+      return;
+    }
+
+    final dateStr = _toDateString(_selectedDate!);
+    final inicioStr = _toTimeString(_horaInicio!);
+    final fimStr = _toTimeString(_horaFim!);
+    final todayStr = _toDateString(DateTime.now());
+
+    if (dateStr.compareTo(todayStr) < 0) {
+      setState(() => _formError = 'A data não pode ser anterior a hoje.');
+      return;
+    }
+
+    if (!_horaFimValida(inicioStr, fimStr)) {
+      setState(
+          () => _formError = 'O horário de fim deve ser após o de início.');
+      return;
+    }
+
+    setState(() {
+      _formError = null;
+      _isSubmitting = true;
+    });
+
+    try {
+      await ref.read(liveRequestsProvider(widget.cabineId).notifier)
+          .solicitarLive(
+            dataSolicitada: dateStr,
+            horaInicio: inicioStr,
+            horaFim: fimStr,
+            observacao: _observacaoCtrl.text.trim().isEmpty
+                ? null
+                : _observacaoCtrl.text.trim(),
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Solicitação enviada! Aguarde aprovação do franqueador.'),
+          backgroundColor: AppColors.successGreen,
+        ),
+      );
+      // Reset form
+      setState(() {
+        _selectedDate = null;
+        _horaInicio = null;
+        _horaFim = null;
+      });
+      _observacaoCtrl.clear();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.dangerRed,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final requestsAsync = ref.watch(liveRequestsProvider(widget.cabineId));
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.screenPadding, AppSpacing.lg,
+            AppSpacing.screenPadding, AppSpacing.x3l),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Handle visual ──
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.gray200,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
+            Text(
+              'Solicitar Live',
+              style: AppTypography.h3
+                  .copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: AppSpacing.x2l),
+
+            // ── Data ──
+            _PickerRow(
+              icon: Icons.calendar_today_rounded,
+              label: _selectedDate != null
+                  ? _dateFmt.format(_selectedDate!)
+                  : 'Selecionar data',
+              placeholder: _selectedDate == null,
+              onTap: _pickDate,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // ── Hora início ──
+            _PickerRow(
+              icon: Icons.access_time_rounded,
+              label: _horaInicio != null
+                  ? _toTimeString(_horaInicio!)
+                  : 'Hora de início',
+              placeholder: _horaInicio == null,
+              onTap: _pickHoraInicio,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // ── Hora fim ──
+            _PickerRow(
+              icon: Icons.access_time_filled_rounded,
+              label: _horaFim != null
+                  ? _toTimeString(_horaFim!)
+                  : 'Hora de fim',
+              placeholder: _horaFim == null,
+              onTap: _pickHoraFim,
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // ── Observação ──
+            TextField(
+              controller: _observacaoCtrl,
+              decoration: InputDecoration(
+                hintText: 'Observação (opcional)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                filled: true,
+                fillColor: AppColors.gray50,
+              ),
+              maxLines: 2,
+              textCapitalization: TextCapitalization.sentences,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // ── Erro de validação ──
+            if (_formError != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: Text(
+                  _formError!,
+                  style: AppTypography.caption
+                      .copyWith(color: AppColors.dangerRed),
+                ),
+              ),
+
+            // ── Botão enviar ──
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryOrange,
+                padding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.md),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+              ),
+              onPressed: _isSubmitting ? null : _submit,
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.white,
+                      ),
+                    )
+                  : const Text(
+                      'Enviar Solicitação',
+                      style: TextStyle(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.w600),
+                    ),
+            ),
+
+            // ── Histórico de solicitações desta cabine ──
+            const SizedBox(height: AppSpacing.x3l),
+            const Divider(),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Minhas Solicitações',
+              style: AppTypography.bodyMedium
+                  .copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            requestsAsync.when(
+              loading: () => const Center(
+                  child: CircularProgressIndicator()),
+              error: (_, __) => const Text(
+                'Não foi possível carregar as solicitações.',
+                style: TextStyle(color: AppColors.gray400),
+              ),
+              data: (requests) => requests.isEmpty
+                  ? const Padding(
+                      padding:
+                          EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                      child: Text(
+                        'Nenhuma solicitação ainda.',
+                        style: TextStyle(color: AppColors.gray400),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : Column(
+                      children: requests
+                          .map((r) => _LiveRequestTile(request: r))
+                          .toList(),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Linha clicável do picker ──
+class _PickerRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool placeholder;
+  final VoidCallback onTap;
+
+  const _PickerRow({
+    required this.icon,
+    required this.label,
+    required this.placeholder,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md, vertical: AppSpacing.md),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.gray200),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          color: AppColors.gray50,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: AppColors.primaryOrange),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              label,
+              style: AppTypography.bodySmall.copyWith(
+                color: placeholder
+                    ? AppColors.gray400
+                    : AppColors.gray900,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Tile de solicitação existente ──
+class _LiveRequestTile extends StatelessWidget {
+  final LiveRequest request;
+
+  const _LiveRequestTile({required this.request});
+
+  static final _dateFmt = DateFormat('dd/MM/yyyy');
+
+  String _formatDate(String iso) {
+    try {
+      return _dateFmt
+          .format(DateFormat('yyyy-MM-dd').parse(iso));
+    } catch (_) {
+      return iso;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.gray50,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.gray100),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${_formatDate(request.dataSolicitada)}  '
+                  '${request.horaInicioDisplay} – ${request.horaFimDisplay}',
+                  style: AppTypography.bodySmall
+                      .copyWith(fontWeight: FontWeight.w600),
+                ),
+                if (request.motivoRecusa != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    request.motivoRecusa!,
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.dangerRed),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          StatusBadge(status: request.status),
+        ],
+      ),
     );
   }
 }

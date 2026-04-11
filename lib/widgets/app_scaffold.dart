@@ -346,6 +346,11 @@ class _MenuContent extends ConsumerWidget {
               isSelected: currentRoute == AppRoutes.cabines ||
                   currentRoute == AppRoutes.cabineDetail),
           _MenuItem(
+              icon: Icons.event_note_rounded,
+              label: 'Solicitações',
+              route: AppRoutes.solicitacoes,
+              isSelected: currentRoute == AppRoutes.solicitacoes),
+          _MenuItem(
               icon: Icons.map_rounded,
               label: 'Vendas em Andamento',
               route: AppRoutes.vendas,
