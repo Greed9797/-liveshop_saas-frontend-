@@ -32,7 +32,7 @@ void main() async {
 
   await container.read(authProvider.notifier).restoreSession();
 
-  if (!kReleaseMode && isE2ETesting) {
+  if (isE2ETesting) {
     WidgetsBinding.instance.ensureSemantics();
     await bootstrapE2EAuth(container, role: e2eRole);
   }
