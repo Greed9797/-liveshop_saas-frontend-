@@ -25,6 +25,7 @@ import '../screens/auditoria/analise_credito_screen.dart';
 import '../screens/configuracoes/configuracoes_screen.dart';
 import '../screens/clientes/clientes_leads_screen.dart';
 import '../screens/solicitacoes/solicitacoes_screen.dart';
+import '../screens/analytics/analytics_dashboard_screen.dart';
 import '../widgets/role_route_guard.dart';
 
 /// Rotas nomeadas da aplicação
@@ -54,6 +55,7 @@ class AppRoutes {
   static const clientesLeads = '/clientes-leads';
   static const configuracoes = '/configuracoes';
   static const solicitacoes = '/solicitacoes';
+  static const analyticsDashboard = '/analytics-dashboard';
 
   static String routeForRole(String? role) {
     switch (role) {
@@ -201,6 +203,12 @@ class AppRoutes {
               fallbackRoute: franqueado,
               unauthenticatedRoute: login,
               child: SolicitacoesScreen(),
+            ),
+        analyticsDashboard: (_) => const RoleRouteGuard(
+              allowedRoles: {'franqueador_master'},
+              fallbackRoute: franqueado,
+              unauthenticatedRoute: login,
+              child: AnalyticsDashboardScreen(),
             ),
       };
 

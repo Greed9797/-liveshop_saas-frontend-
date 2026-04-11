@@ -368,13 +368,20 @@ class _MenuContent extends ConsumerWidget {
               label: 'Financeiro',
               route: AppRoutes.financeiro,
               isSelected: currentRoute == AppRoutes.financeiro),
-          if (isFranqueadorMaster)
+          if (isFranqueadorMaster) ...[
             _MenuItem(
               icon: Icons.fact_check_rounded,
               label: 'Auditoria de Contratos',
               route: AppRoutes.auditoriaContratos,
               isSelected: currentRoute == AppRoutes.auditoriaContratos,
             ),
+            _MenuItem(
+              icon: Icons.insights_rounded,
+              label: 'Analytics',
+              route: AppRoutes.analyticsDashboard,
+              isSelected: currentRoute == AppRoutes.analyticsDashboard,
+            ),
+          ],
           _MenuItem(
               icon: Icons.receipt_long_rounded,
               label: 'Meus Boletos',
