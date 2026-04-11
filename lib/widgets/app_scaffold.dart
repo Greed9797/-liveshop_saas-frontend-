@@ -375,13 +375,13 @@ class _MenuContent extends ConsumerWidget {
               route: AppRoutes.auditoriaContratos,
               isSelected: currentRoute == AppRoutes.auditoriaContratos,
             ),
-            _MenuItem(
-              icon: Icons.insights_rounded,
-              label: 'Analytics',
-              route: AppRoutes.analyticsDashboard,
-              isSelected: currentRoute == AppRoutes.analyticsDashboard,
-            ),
           ],
+          _MenuItem(
+            icon: Icons.insights_rounded,
+            label: 'Analytics',
+            route: AppRoutes.analyticsDashboard,
+            isSelected: currentRoute == AppRoutes.analyticsDashboard,
+          ),
           _MenuItem(
               icon: Icons.receipt_long_rounded,
               label: 'Meus Boletos',
