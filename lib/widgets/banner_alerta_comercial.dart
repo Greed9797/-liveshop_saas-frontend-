@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../models/contrato.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import '../theme/theme.dart';
 
 class BannerAlertaComercial extends StatelessWidget {
   final Contrato contrato;
@@ -14,7 +14,7 @@ class BannerAlertaComercial extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final data = _resolveBannerData(contrato);
+    final data = _resolveBannerData(context, contrato);
     if (data == null) {
       return const SizedBox.shrink();
     }
@@ -57,10 +57,10 @@ class BannerAlertaComercial extends StatelessWidget {
     );
   }
 
-  _BannerData? _resolveBannerData(Contrato contrato) {
+  _BannerData? _resolveBannerData(BuildContext context, Contrato contrato) {
     final status = contrato.status.toLowerCase();
-    const pendenciaColor = AppColors.orange600;
-    const reprovacaoColor = AppColors.dangerRed;
+    final pendenciaColor = context.colors.primaryHover;
+    final reprovacaoColor = context.colors.error;
 
     if (status == 'pendencia' || status == 'pendencia_comercial') {
       final motivo = contrato.pendenciaMotivo?.trim();
@@ -93,28 +93,30 @@ class BannerAlertaComercial extends StatelessWidget {
     }
 
     if (status == 'aprovado' || status == 'ativo') {
+      final successColor = context.colors.success;
       return _BannerData(
         icon: Icons.check_circle_rounded,
         title: 'Contrato liberado',
         message:
             'Tudo certo para avançar com implantação e ativação comercial do cliente.',
-        background: AppColors.success.withValues(alpha: 0.10),
-        border: AppColors.success.withValues(alpha: 0.35),
-        iconColor: AppColors.success,
-        textColor: AppColors.success,
+        background: successColor.withValues(alpha: 0.10),
+        border: successColor.withValues(alpha: 0.35),
+        iconColor: successColor,
+        textColor: successColor,
       );
     }
 
     if (status == 'em_analise' || status == 'novo' || status == 'assinado') {
+      final infoColor = context.colors.info;
       return _BannerData(
         icon: Icons.hourglass_top_rounded,
         title: 'Análise em andamento',
         message:
             'Estamos processando os dados do contrato. Você receberá o próximo passo em instantes.',
-        background: AppColors.info.withValues(alpha: 0.10),
-        border: AppColors.info.withValues(alpha: 0.35),
-        iconColor: AppColors.info,
-        textColor: AppColors.info,
+        background: infoColor.withValues(alpha: 0.10),
+        border: infoColor.withValues(alpha: 0.35),
+        iconColor: infoColor,
+        textColor: infoColor,
       );
     }
 

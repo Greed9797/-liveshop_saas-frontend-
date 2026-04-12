@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_typography.dart';
+import '../theme/theme.dart';
 
 class BoletoItem extends StatelessWidget {
   final Boleto boleto;
@@ -17,9 +18,9 @@ class BoletoItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.cardBackground,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.gray200),
+        border: Border.all(color: context.colors.cardBorder),
         boxShadow: AppShadows.sm,
       ),
       child: Padding(
@@ -75,7 +76,7 @@ class BoletoItem extends StatelessWidget {
                       Text('Valor', style: AppTypography.caption),
                       Text(
                         _formatCurrency(boleto.valor),
-                        style: AppTypography.h3.copyWith(color: AppColors.primaryOrange),
+                        style: AppTypography.h3.copyWith(color: context.colors.primary),
                       ),
                     ],
                   ),
@@ -90,7 +91,7 @@ class BoletoItem extends StatelessWidget {
                             ? _formatDate(boleto.pagoEm!)
                             : _formatDate(boleto.vencimento),
                         style: AppTypography.bodySmall.copyWith(
-                          color: boleto.isVencido ? AppColors.dangerRed : AppColors.gray900,
+                          color: boleto.isVencido ? context.colors.error : context.colors.textPrimary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -107,12 +108,12 @@ class BoletoItem extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.dangerRed.withValues(alpha: 0.08),
+                  color: context.colors.error.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Text(
                   'Falha ao gerar no Asaas: ${boleto.asaasError}',
-                  style: AppTypography.caption.copyWith(color: AppColors.dangerRed),
+                  style: AppTypography.caption.copyWith(color: context.colors.error),
                 ),
               ),
             ],
@@ -127,7 +128,7 @@ class BoletoItem extends StatelessWidget {
                       child: _LinkButton(
                         label: 'Abrir Boleto',
                         icon: Icons.open_in_new_rounded,
-                        color: AppColors.primaryOrange,
+                        color: context.colors.primary,
                         onTap: () => _abrirLink(context, boleto.asaasUrl!),
                       ),
                     ),
@@ -136,7 +137,7 @@ class BoletoItem extends StatelessWidget {
                       _LinkButton(
                         label: 'Copiar PIX',
                         icon: Icons.copy_rounded,
-                        color: AppColors.successGreen,
+                        color: context.colors.success,
                         onTap: () => _copiarPix(context, boleto.asaasPix!),
                       ),
                     ],
@@ -146,7 +147,7 @@ class BoletoItem extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceGray,
+                          color: context.colors.background,
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Text('Sem link de pagamento', style: AppTypography.caption),
@@ -187,8 +188,8 @@ class BoletoItem extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('PIX copiado!',
-              style: AppTypography.bodySmall.copyWith(color: AppColors.white)),
-          backgroundColor: AppColors.successGreen,
+              style: AppTypography.bodySmall.copyWith(color: Colors.white)),
+          backgroundColor: context.colors.success,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -221,9 +222,9 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'pago'    => ('Pago',     AppColors.successGreen),
-      'vencido' => ('Vencido',  AppColors.dangerRed),
-      _         => ('Pendente', AppColors.warningYellow),
+      'pago'    => ('Pago',     context.colors.success),
+      'vencido' => ('Vencido',  context.colors.error),
+      _         => ('Pendente', context.colors.warning),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -245,10 +246,10 @@ class _TipoIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, color) = switch (tipo) {
-      'royalties' => (Icons.percent_rounded,          AppColors.primaryOrange),
-      'imposto'   => (Icons.account_balance_rounded,  AppColors.infoBlue),
+      'royalties' => (Icons.percent_rounded,          context.colors.primary),
+      'imposto'   => (Icons.account_balance_rounded,  context.colors.info),
       'marketing' => (Icons.campaign_rounded,          AppColors.infoPurple),
-      _           => (Icons.receipt_long_rounded,      AppColors.gray400),
+      _           => (Icons.receipt_long_rounded,      context.colors.textTertiary),
     };
     return Icon(icon, size: 20, color: color);
   }

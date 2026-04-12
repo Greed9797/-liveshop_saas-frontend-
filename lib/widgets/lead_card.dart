@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_radius.dart';
+import '../theme/theme.dart';
 import 'action_button.dart';
 
 /// Card de lead com botão "PEGAR LEAD"
@@ -36,11 +36,11 @@ class LeadCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.danger,
+                            color: context.colors.error,
                             borderRadius: BorderRadius.circular(AppRadius.xs),
                           ),
                           child: const Text('NOVO',
-                            style: TextStyle(color: AppColors.white, fontSize: 10, fontWeight: FontWeight.w500)),
+                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500)),
                         ),
                       ],
                     ],

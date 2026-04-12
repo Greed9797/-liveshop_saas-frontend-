@@ -2,10 +2,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/analytics_dashboard.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_shadows.dart';
 import '../../theme/app_typography.dart';
+import '../../theme/theme.dart';
 
 class HorasLiveChart extends StatelessWidget {
   final List<HorasLiveDia> dados;
@@ -17,7 +17,7 @@ class HorasLiveChart extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 24, 24, 16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.cardBackground,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: AppShadows.md,
       ),
@@ -32,12 +32,12 @@ class HorasLiveChart extends StatelessWidget {
               children: [
                 Text('Horas de Live por Dia', style: AppTypography.h3.copyWith(fontSize: 15)),
                 const SizedBox(height: 2),
-                Text('Últimos 30 dias do período', style: AppTypography.caption.copyWith(color: AppColors.gray500)),
+                Text('Últimos 30 dias do período', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
               ],
             ),
           ),
           if (dados.isEmpty)
-            _buildEmptyState()
+            _buildEmptyState(context)
           else
             // Scroll horizontal obrigatório para evitar ilegibilidade no mobile (30 pontos)
             SingleChildScrollView(
@@ -48,7 +48,7 @@ class HorasLiveChart extends StatelessWidget {
                   width: 800,
                   height: 220,
                   child: LineChart(
-                    _buildChartData(),
+                    _buildChartData(context),
                     duration: const Duration(milliseconds: 400),
                   ),
                 ),
@@ -64,7 +64,7 @@ class HorasLiveChart extends StatelessWidget {
     return maxH > 0 ? maxH * 1.2 : 5;
   }
 
-  LineChartData _buildChartData() {
+  LineChartData _buildChartData(BuildContext context) {
     final maxY = _maxY();
     final spots = dados.asMap().entries
         .map((e) => FlSpot(e.key.toDouble(), e.value.horas))
@@ -80,23 +80,23 @@ class HorasLiveChart extends StatelessWidget {
           spots: spots,
           isCurved: true,
           curveSmoothness: 0.3,
-          color: AppColors.primaryOrange,
+          color: context.colors.primary,
           barWidth: 3,
           dotData: FlDotData(
             show: true,
             getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
               radius: 3,
-              color: AppColors.primaryOrange,
+              color: context.colors.primary,
               strokeWidth: 1.5,
-              strokeColor: AppColors.white,
+              strokeColor: context.colors.cardBackground,
             ),
           ),
           belowBarData: BarAreaData(
             show: true,
             gradient: LinearGradient(
               colors: [
-                AppColors.primaryOrange.withValues(alpha: 0.3),
-                AppColors.primaryOrange.withValues(alpha: 0.0),
+                context.colors.primary.withValues(alpha: 0.3),
+                context.colors.primary.withValues(alpha: 0.0),
               ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -104,14 +104,14 @@ class HorasLiveChart extends StatelessWidget {
           ),
         ),
       ],
-      titlesData: _buildTitles(),
+      titlesData: _buildTitles(context),
       borderData: FlBorderData(show: false),
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
         horizontalInterval: maxY / 4 > 0 ? maxY / 4 : 1,
         getDrawingHorizontalLine: (_) => FlLine(
-          color: AppColors.darkNavyLight.withValues(alpha: 0.1),
+          color: context.colors.divider,
           strokeWidth: 1,
           dashArray: [4, 4],
         ),
@@ -119,7 +119,7 @@ class HorasLiveChart extends StatelessWidget {
       lineTouchData: LineTouchData(
         enabled: true,
         touchTooltipData: LineTouchTooltipData(
-          getTooltipColor: (_) => AppColors.darkNavy.withValues(alpha: 0.9),
+          getTooltipColor: (_) => context.colors.tooltipBg,
           tooltipRoundedRadius: 8,
           getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
             final idx = spot.x.toInt();
@@ -127,11 +127,11 @@ class HorasLiveChart extends StatelessWidget {
             final d = dados[idx];
             return LineTooltipItem(
               '${d.horas.toStringAsFixed(1)}h\n',
-              const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              TextStyle(color: context.colors.tooltipText, fontWeight: FontWeight.bold, fontSize: 13),
               children: [
                 TextSpan(
                   text: d.dia,
-                  style: TextStyle(color: AppColors.white.withValues(alpha: 0.7), fontSize: 11),
+                  style: TextStyle(color: context.colors.tooltipText.withValues(alpha: 0.7), fontSize: 11),
                 ),
               ],
             );
@@ -141,7 +141,7 @@ class HorasLiveChart extends StatelessWidget {
     );
   }
 
-  FlTitlesData _buildTitles() {
+  FlTitlesData _buildTitles(BuildContext context) {
     return FlTitlesData(
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
@@ -157,7 +157,7 @@ class HorasLiveChart extends StatelessWidget {
               padding: const EdgeInsets.only(top: 6),
               child: Text(
                 dayNum,
-                style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                style: AppTypography.caption.copyWith(color: context.colors.textSecondary, fontSize: 10),
               ),
             );
           },
@@ -174,7 +174,7 @@ class HorasLiveChart extends StatelessWidget {
               child: Text(
                 '${value.toStringAsFixed(1)}h',
                 style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary.withValues(alpha: 0.6),
+                  color: context.colors.textSecondary.withValues(alpha: 0.6),
                   fontSize: 10,
                 ),
                 textAlign: TextAlign.right,
@@ -188,15 +188,15 @@ class HorasLiveChart extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return SizedBox(
       height: 220,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.show_chart_rounded, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.3)),
+          Icon(Icons.show_chart_rounded, size: 48, color: context.colors.textSecondary.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
-          Text('Sem dados de horas de live', style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+          Text('Sem dados de horas de live', style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
         ],
       ),
     );

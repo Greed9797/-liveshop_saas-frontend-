@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import '../theme/theme.dart';
 
 /// Pin do mapa por status do cliente
 class ClientPin extends StatefulWidget {
@@ -60,11 +61,13 @@ class _ClientPinState extends State<ClientPin>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.surfaceWhite,
+              color: context.colors.cardBackground,
               borderRadius: BorderRadius.circular(6),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                    color: Colors.black26, blurRadius: 6, offset: Offset(0, 2))
+                    color: context.colors.textPrimary.withValues(alpha: 0.16),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2))
               ],
             ),
             child: Text(
@@ -72,7 +75,7 @@ class _ClientPinState extends State<ClientPin>
               style: AppTypography.caption.copyWith(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary),
+                  color: context.colors.textPrimary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

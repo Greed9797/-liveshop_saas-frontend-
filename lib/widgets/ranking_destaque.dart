@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_spacing.dart';
+import '../theme/theme.dart';
 
 class RankingDestaque extends StatelessWidget {
   final List<Map<String, dynamic>> rankings;
@@ -17,8 +18,8 @@ class RankingDestaque extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.emoji_events_outlined,
-                  size: 36, color: AppColors.gray200),
+              Icon(Icons.emoji_events_outlined,
+                  size: 36, color: context.colors.textTertiary),
               const SizedBox(height: 8),
               Text('Sem vendas registradas hoje',
                   style: AppTypography.bodySmall),
@@ -43,13 +44,13 @@ class RankingDestaque extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.flag_outlined, size: 20, color: AppColors.gray400),
+                Icon(Icons.flag_outlined, size: 20, color: context.colors.textTertiary),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     'DESTAQUES DO DIA',
                     style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.gray500,
+                      color: context.colors.textSecondary,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
                     ),
@@ -58,7 +59,7 @@ class RankingDestaque extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(Icons.flag_outlined, size: 20, color: AppColors.gray400),
+                Icon(Icons.flag_outlined, size: 20, color: context.colors.textTertiary),
               ],
             ),
             const SizedBox(height: 20),
@@ -66,9 +67,9 @@ class RankingDestaque extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Flexible(child: _buildAvatar(safe[1], '2º', AppColors.medalSilver, 0.8)),
-                Flexible(child: _buildAvatar(safe[0], '1º', AppColors.medalGold, 1.0)),
-                Flexible(child: _buildAvatar(safe[2], '3º', AppColors.medalBronze, 0.8)),
+                Flexible(child: _buildAvatar(context, safe[1], '2º', AppColors.medalSilver, 0.8)),
+                Flexible(child: _buildAvatar(context, safe[0], '1º', AppColors.medalGold, 1.0)),
+                Flexible(child: _buildAvatar(context, safe[2], '3º', AppColors.medalBronze, 0.8)),
               ],
             ),
           ],
@@ -78,7 +79,7 @@ class RankingDestaque extends StatelessWidget {
   }
 
   Widget _buildAvatar(
-      Map<String, dynamic> data, String place, Color medalColor, double scale) {
+      BuildContext context, Map<String, dynamic> data, String place, Color medalColor, double scale) {
     final nome = data['nome'] as String? ?? '—';
     final isEmpty = nome == '—';
 
@@ -93,7 +94,7 @@ class RankingDestaque extends StatelessWidget {
               height: 56 * scale,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isEmpty ? AppColors.gray100 : null,
+                color: isEmpty ? context.colors.background : null,
                 border: Border.all(color: medalColor, width: 2),
                 image: isEmpty
                     ? null
@@ -104,7 +105,7 @@ class RankingDestaque extends StatelessWidget {
               ),
               child: isEmpty
                   ? Icon(Icons.person_outline,
-                      size: 22 * scale, color: AppColors.gray300)
+                      size: 22 * scale, color: context.colors.textTertiary)
                   : null,
             ),
             Positioned(
@@ -122,7 +123,7 @@ class RankingDestaque extends StatelessWidget {
                   child: Text(
                     place,
                     style: const TextStyle(
-                        color: AppColors.white,
+                        color: Colors.white,
                         fontSize: 9,
                         fontWeight: FontWeight.w800),
                   ),

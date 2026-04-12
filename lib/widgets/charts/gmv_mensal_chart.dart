@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/analytics_dashboard.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_shadows.dart';
 import '../../theme/app_typography.dart';
+import '../../theme/theme.dart';
 
 class GmvMensalChart extends StatelessWidget {
   final List<FaturamentoMensal> dados;
@@ -15,7 +15,7 @@ class GmvMensalChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (dados.isEmpty) return _buildEmptyState();
+    if (dados.isEmpty) return _buildEmptyState(context);
 
     final maxY = _maxY();
 
@@ -24,7 +24,7 @@ class GmvMensalChart extends StatelessWidget {
         height: 300,
         padding: const EdgeInsets.fromLTRB(16, 24, 24, 16),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colors.cardBackground,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: AppShadows.md,
         ),
@@ -38,7 +38,7 @@ class GmvMensalChart extends StatelessWidget {
                 children: [
                   Text('Faturamento Mensal (GMV)', style: AppTypography.h3.copyWith(fontSize: 15)),
                   const SizedBox(height: 2),
-                  Text('Últimos 12 meses', style: AppTypography.caption.copyWith(color: AppColors.gray500)),
+                  Text('Últimos 12 meses', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                 ],
               ),
             ),
@@ -48,11 +48,11 @@ class GmvMensalChart extends StatelessWidget {
                   alignment: BarChartAlignment.spaceAround,
                   maxY: maxY,
                   minY: 0,
-                  barTouchData: _buildTouchData(),
-                  titlesData: _buildTitles(),
+                  barTouchData: _buildTouchData(context),
+                  titlesData: _buildTitles(context),
                   borderData: FlBorderData(show: false),
-                  gridData: _buildGridData(maxY),
-                  barGroups: _buildBarGroups(),
+                  gridData: _buildGridData(maxY, context),
+                  barGroups: _buildBarGroups(context),
                 ),
                 swapAnimationDuration: const Duration(milliseconds: 600),
                 swapAnimationCurve: Curves.easeOutQuint,
@@ -69,22 +69,22 @@ class GmvMensalChart extends StatelessWidget {
     return maxGmv > 0 ? maxGmv * 1.15 : 1000;
   }
 
-  BarTouchData _buildTouchData() {
+  BarTouchData _buildTouchData(BuildContext context) {
     return BarTouchData(
       enabled: true,
       touchTooltipData: BarTouchTooltipData(
-        getTooltipColor: (_) => AppColors.darkNavy.withValues(alpha: 0.9),
+        getTooltipColor: (_) => context.colors.tooltipBg,
         tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         tooltipRoundedRadius: 8,
         getTooltipItem: (group, _, rod, __) {
           final dado = dados[group.x];
           return BarTooltipItem(
             NumberFormat.simpleCurrency(locale: 'pt_BR').format(dado.gmv),
-            const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold, fontSize: 13),
+            TextStyle(color: context.colors.tooltipText, fontWeight: FontWeight.bold, fontSize: 13),
             children: [
               TextSpan(
                 text: '\n${dado.mes}',
-                style: TextStyle(color: AppColors.white.withValues(alpha: 0.7), fontSize: 11),
+                style: TextStyle(color: context.colors.tooltipText.withValues(alpha: 0.7), fontSize: 11),
               ),
             ],
           );
@@ -93,7 +93,7 @@ class GmvMensalChart extends StatelessWidget {
     );
   }
 
-  FlTitlesData _buildTitles() {
+  FlTitlesData _buildTitles(BuildContext context) {
     final shortMonths = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     return FlTitlesData(
       bottomTitles: AxisTitles(
@@ -108,7 +108,7 @@ class GmvMensalChart extends StatelessWidget {
               padding: const EdgeInsets.only(top: 6),
               child: Text(
                 shortMonths[month - 1],
-                style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                style: AppTypography.caption.copyWith(color: context.colors.textSecondary, fontSize: 10),
               ),
             );
           },
@@ -125,7 +125,7 @@ class GmvMensalChart extends StatelessWidget {
               child: Text(
                 NumberFormat.compactCurrency(locale: 'pt_BR', symbol: 'R\$').format(value),
                 style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary.withValues(alpha: 0.6),
+                  color: context.colors.textSecondary.withValues(alpha: 0.6),
                   fontSize: 10,
                 ),
                 textAlign: TextAlign.right,
@@ -140,20 +140,20 @@ class GmvMensalChart extends StatelessWidget {
     );
   }
 
-  FlGridData _buildGridData(double maxY) {
+  FlGridData _buildGridData(double maxY, BuildContext context) {
     return FlGridData(
       show: true,
       drawVerticalLine: false,
       horizontalInterval: maxY / 4 > 0 ? maxY / 4 : 250,
       getDrawingHorizontalLine: (_) => FlLine(
-        color: AppColors.darkNavyLight.withValues(alpha: 0.1),
+        color: context.colors.divider,
         strokeWidth: 1,
         dashArray: [4, 4],
       ),
     );
   }
 
-  List<BarChartGroupData> _buildBarGroups() {
+  List<BarChartGroupData> _buildBarGroups(BuildContext context) {
     return dados.asMap().entries.map((entry) {
       return BarChartGroupData(
         x: entry.key,
@@ -162,7 +162,7 @@ class GmvMensalChart extends StatelessWidget {
             toY: entry.value.gmv,
             width: dados.length > 12 ? 14 : 18,
             gradient: LinearGradient(
-              colors: [AppColors.primaryOrange, AppColors.primaryOrange.withValues(alpha: 0.4)],
+              colors: [context.colors.primary, context.colors.primary.withValues(alpha: 0.4)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -173,7 +173,7 @@ class GmvMensalChart extends StatelessWidget {
             backDrawRodData: BackgroundBarChartRodData(
               show: true,
               toY: _maxY(),
-              color: AppColors.darkNavyLight.withValues(alpha: 0.05),
+              color: context.colors.divider.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -181,21 +181,21 @@ class GmvMensalChart extends StatelessWidget {
     }).toList();
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Container(
       height: 300,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.cardBackground,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.darkNavyLight.withValues(alpha: 0.5)),
+        border: Border.all(color: context.colors.cardBorder),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.bar_chart_rounded, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.3)),
+          Icon(Icons.bar_chart_rounded, size: 48, color: context.colors.textSecondary.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
-          Text('Sem dados de faturamento', style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+          Text('Sem dados de faturamento', style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
         ],
       ),
     );
