@@ -119,13 +119,17 @@ class _KpiRow extends StatelessWidget {
     ];
 
     if (isMobile) {
+      final cardWidth = (width - AppSpacing.screenPadding * 2 - AppSpacing.cardGap) / 2;
       return Wrap(
         spacing: AppSpacing.cardGap,
         runSpacing: AppSpacing.cardGap,
         children: cards
             .map((c) => SizedBox(
-                  width: (width - AppSpacing.screenPadding * 2 - AppSpacing.cardGap) / 2,
-                  child: c,
+                  width: cardWidth,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 110),
+                    child: c,
+                  ),
                 ))
             .toList(),
       );

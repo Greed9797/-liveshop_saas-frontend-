@@ -320,29 +320,61 @@ class _KpiCardsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.md,
-      children: [
-        _KpiCard(
-          icon: Icons.attach_money_rounded,
-          label: 'Faturamento Total',
-          value: _currency.format(data.kpis.faturamentoTotal),
-          color: context.colors.success,
-        ),
-        _KpiCard(
-          icon: Icons.confirmation_number_rounded,
-          label: 'Total de Vendas',
-          value: '${data.kpis.totalVendas}',
-          color: context.colors.info,
-        ),
-        _KpiCard(
-          icon: Icons.trending_up_rounded,
-          label: 'Ticket Médio',
-          value: _currency.format(data.kpis.ticketMedio),
-          color: context.colors.primary,
-        ),
-      ],
+    final card1 = _KpiCard(
+      icon: Icons.attach_money_rounded,
+      label: 'Faturamento Total',
+      value: _currency.format(data.kpis.faturamentoTotal),
+      color: context.colors.success,
+    );
+    final card2 = _KpiCard(
+      icon: Icons.confirmation_number_rounded,
+      label: 'Total de Vendas',
+      value: '${data.kpis.totalVendas}',
+      color: context.colors.info,
+    );
+    final card3 = _KpiCard(
+      icon: Icons.trending_up_rounded,
+      label: 'Ticket Médio',
+      value: _currency.format(data.kpis.ticketMedio),
+      color: context.colors.primary,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+
+        if (isMobile) {
+          return Column(
+            children: [
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: card1),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(child: card2),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(width: double.infinity, child: card3),
+            ],
+          );
+        }
+
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: card1),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: card2),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: card3),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -363,7 +395,6 @@ class _KpiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 220,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.colors.cardBackground,
@@ -384,6 +415,7 @@ class _KpiCard extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   label,

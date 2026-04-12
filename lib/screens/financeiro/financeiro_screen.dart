@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../providers/financeiro_provider.dart';
 import '../../routes/app_routes.dart';
@@ -526,44 +527,49 @@ class _ReceiveisTab extends ConsumerWidget {
 class _QuickMetric extends StatelessWidget {
   final String label;
   final double value;
-  final Color color;
-  const _QuickMetric(this.label, this.value, this.color);
+  final Color accentColor;
+
+  static final _currency = NumberFormat.simpleCurrency(locale: 'pt_BR');
+
+  const _QuickMetric(this.label, this.value, this.accentColor);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-        decoration: BoxDecoration(
-          color: context.colors.cardBackground,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border(
-            left: BorderSide(color: color, width: 4),
-            top: BorderSide(color: context.colors.divider, width: 1),
-            right: BorderSide(color: context.colors.divider, width: 1),
-            bottom: BorderSide(color: context.colors.divider, width: 1),
-          ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.colors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border(
+          left: BorderSide(color: accentColor, width: 4),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: AppTypography.caption.copyWith(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                    color: context.colors.textSecondary)),
-            const SizedBox(height: AppSpacing.xs),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}',
-                style: AppTypography.bodySmall.copyWith(
-                    fontWeight: FontWeight.w700, color: context.colors.textPrimary),
-              ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              color: context.colors.textSecondary,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _currency.format(value),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: context.colors.textPrimary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -806,46 +812,44 @@ class _KpiReceita extends StatelessWidget {
   final String label;
   final double value;
   final Color accentColor;
+
+  static final _currency = NumberFormat.simpleCurrency(locale: 'pt_BR');
+
   const _KpiReceita({required this.label, required this.value, required this.accentColor});
 
   @override
   Widget build(BuildContext context) {
-    final formatted = 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',').replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.colors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border(
           left: BorderSide(color: accentColor, width: 4),
-          top: BorderSide(color: context.colors.divider, width: 1),
-          right: BorderSide(color: context.colors.divider, width: 1),
-          bottom: BorderSide(color: context.colors.divider, width: 1),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
-            style: AppTypography.labelSmall.copyWith(
+            style: TextStyle(
               fontSize: 11,
-              color: context.colors.textSecondary,
-              letterSpacing: 0.8,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              color: accentColor,
             ),
           ),
           const SizedBox(height: 8),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              formatted,
-              style: AppTypography.bodyLarge.copyWith(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: context.colors.textPrimary,
-              ),
+          Text(
+            _currency.format(value),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: context.colors.textPrimary,
             ),
           ),
         ],
