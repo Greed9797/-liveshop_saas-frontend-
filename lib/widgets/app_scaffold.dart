@@ -4,8 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import '../providers/theme_mode_provider.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_colors_extension.dart';
 import '../theme/app_typography.dart';
 import '../providers/boletos_provider.dart';
 
@@ -86,7 +88,7 @@ class AppScaffold extends ConsumerWidget {
         0;
 
     return Scaffold(
-      backgroundColor: AppColors.surfaceGray,
+      backgroundColor: context.colors.background,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth >= 800;
@@ -106,6 +108,7 @@ class AppScaffold extends ConsumerWidget {
                     children: [
                       _buildHeader(
                         context,
+                        ref,
                         isDesktop: true,
                         displayName: displayName,
                         isFranqueadorMaster: isFranqueadorMaster,
@@ -123,6 +126,7 @@ class AppScaffold extends ConsumerWidget {
             children: [
               _buildHeader(
                 context,
+                ref,
                 isDesktop: false,
                 displayName: displayName,
                 isFranqueadorMaster: isFranqueadorMaster,
@@ -141,7 +145,8 @@ class AppScaffold extends ConsumerWidget {
   }
 
   Widget _buildHeader(
-    BuildContext context, {
+    BuildContext context,
+    WidgetRef ref, {
     required bool isDesktop,
     required String displayName,
     required bool isFranqueadorMaster,
@@ -150,9 +155,9 @@ class AppScaffold extends ConsumerWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.surface,
         border: Border(
-          bottom: BorderSide(color: AppColors.sidebarBorder, width: 1),
+          bottom: BorderSide(color: context.colors.divider, width: 1),
         ),
       ),
       padding:
@@ -164,7 +169,7 @@ class AppScaffold extends ConsumerWidget {
             if (!isDesktop) ...[
               Builder(
                 builder: (context) => IconButton(
-                  icon: const Icon(Icons.menu, color: AppColors.gray700),
+                  icon: Icon(Icons.menu, color: context.colors.textSecondary),
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
               ),
@@ -190,7 +195,7 @@ class AppScaffold extends ConsumerWidget {
                   Text(
                     'Olá, $displayName!',
                     style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.gray900,
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -202,17 +207,36 @@ class AppScaffold extends ConsumerWidget {
                             ? 'Franqueador Master'
                             : 'Franqueado Livelab',
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.gray500),
+                        .copyWith(color: context.colors.textSecondary),
                   ),
                 ],
               ),
             ),
+            Consumer(
+              builder: (context, ref, _) {
+                final mode = ref.watch(themeModeProvider);
+                return IconButton(
+                  icon: Icon(
+                    mode == ThemeMode.dark
+                        ? Icons.light_mode_outlined
+                        : Icons.dark_mode_outlined,
+                    color: context.colors.textTertiary,
+                    size: 20,
+                  ),
+                  tooltip: mode == ThemeMode.dark ? 'Modo claro' : 'Modo escuro',
+                  onPressed: () {
+                    ref.read(themeModeProvider.notifier).state =
+                        mode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+                  },
+                );
+              },
+            ),
             PopupMenuButton<String>(
-              icon: const Icon(Icons.notifications_none_rounded,
-                  color: AppColors.gray400),
+              icon: Icon(Icons.notifications_none_rounded,
+                  color: context.colors.textTertiary),
               tooltip: 'Notificações',
               offset: const Offset(0, 40),
-              color: AppColors.white,
+              color: context.colors.surface,
               itemBuilder: (context) => [
                 PopupMenuItem(
                   enabled: false,
@@ -222,7 +246,7 @@ class AppScaffold extends ConsumerWidget {
                       child: Text(
                         'Nenhuma notificação no momento',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.gray500),
+                            .copyWith(color: context.colors.textSecondary),
                       ),
                     ),
                   ),
@@ -246,7 +270,7 @@ class AppScaffold extends ConsumerWidget {
     bool isClienteParceiro,
   ) {
     return Drawer(
-      backgroundColor: AppColors.sidebarBg,
+      backgroundColor: context.colors.sidebarBg,
       child: SafeArea(
         child: Column(
           children: [
@@ -255,7 +279,7 @@ class AppScaffold extends ConsumerWidget {
               child: Image(
                   image: AssetImage('assets/images/logo.png'), height: 40),
             ),
-            const Divider(color: AppColors.sidebarBorder, height: 1),
+            Divider(color: context.colors.divider, height: 1),
             Expanded(
                 child: _MenuContent(
               currentRoute: currentRoute,
@@ -278,9 +302,9 @@ class AppScaffold extends ConsumerWidget {
     return Container(
       width: 260,
       decoration: BoxDecoration(
-        color: AppColors.sidebarBg,
+        color: context.colors.sidebarBg,
         border: Border(
-          right: BorderSide(color: AppColors.sidebarBorder, width: 1),
+          right: BorderSide(color: context.colors.divider, width: 1),
         ),
       ),
       child: Column(
@@ -421,7 +445,7 @@ class _MenuContent extends ConsumerWidget {
               route: AppRoutes.configuracoes,
               isSelected: currentRoute == AppRoutes.configuracoes),
         ],
-        const Divider(color: AppColors.sidebarBorder, height: 32),
+        Divider(color: context.colors.divider, height: 32),
         _MenuItem(
           icon: Icons.logout_rounded,
           label: 'Sair',
@@ -455,40 +479,38 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        isSelected ? AppColors.primaryOrange : AppColors.gray400;
-    final bgColor = isSelected ? AppColors.sidebarItemActive : Colors.transparent;
+    final colors = context.colors;
+    final color = isSelected ? colors.sidebarActiveText : colors.sidebarInactiveText;
+    final bgColor = isSelected ? colors.sidebarActiveBg : Colors.transparent;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
-        border: isSelected
-            ? const Border(
-                left: BorderSide(color: AppColors.primaryOrange, width: 3))
-            : null,
+        // No left border accent — pill background is the active indicator
       ),
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        hoverColor: AppColors.sidebarItemHover,
+        hoverColor: colors.sidebarHover,
         leading: Icon(icon, color: color, size: 22),
         title: Text(
           label,
-          style: AppTypography.bodySmall.copyWith(
+          style: TextStyle(
+            fontFamily: 'Outfit',
+            fontSize: 14,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color:
-                isSelected ? AppColors.gray900 : AppColors.gray500,
+            color: color,
           ),
         ),
         trailing: badge != null
             ? Container(
                 padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
-                    color: AppColors.primaryOrange, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                    color: colors.primary, shape: BoxShape.circle),
                 child: Text(badge!,
                     style: const TextStyle(
-                        color: AppColors.white,
+                        color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.bold)),
               )
@@ -498,7 +520,6 @@ class _MenuItem extends StatelessWidget {
             onTap!();
             return;
           }
-
           if (route != null && route != AppRoutes.login) {
             Navigator.pushReplacementNamed(context, route!);
           }
