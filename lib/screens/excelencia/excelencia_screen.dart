@@ -5,6 +5,7 @@ import '../../widgets/metric_card.dart';
 import '../../providers/excelencia_provider.dart';
 import '../../models/excelencia.dart' show ExcelenciaData;
 import '../../routes/app_routes.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
@@ -104,13 +105,13 @@ class _ExcelenciaContent extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: data.score / 100,
                     minHeight: 10,
-                    backgroundColor: AppColors.gray200,
+                    backgroundColor: context.colors.divider,
                     valueColor: AlwaysStoppedAnimation(
                       data.score >= 80
-                          ? AppColors.success
+                          ? context.colors.success
                           : data.score >= 50
-                              ? AppColors.warning
-                              : AppColors.danger,
+                              ? context.colors.warning
+                              : context.colors.error,
                     ),
                   ),
                 ),
@@ -129,7 +130,7 @@ class _ExcelenciaContent extends StatelessWidget {
                   label: 'RETENÇÃO DE CLIENTES',
                   value: '${data.taxaRetencao}%',
                   icon: Icons.favorite_border,
-                  iconColor: AppColors.success,
+                  iconColor: context.colors.success,
                   subtitle:
                       '${data.ativos} ativos / ${data.cancelados} cancelados',
                 )),
@@ -139,7 +140,7 @@ class _ExcelenciaContent extends StatelessWidget {
                   label: 'CRESCIMENTO',
                   value: '${crescendo ? '+' : ''}${data.crescimentoPct}%',
                   icon: crescendo ? Icons.trending_up : Icons.trending_down,
-                  iconColor: crescendo ? AppColors.success : AppColors.danger,
+                  iconColor: crescendo ? context.colors.success : context.colors.error,
                   subtitle: 'vs. mês anterior',
                 )),
             SizedBox(
@@ -148,7 +149,7 @@ class _ExcelenciaContent extends StatelessWidget {
                   label: 'PRODUTIVIDADE',
                   value: '${data.ativos} clientes',
                   icon: Icons.bolt_outlined,
-                  iconColor: AppColors.primary,
+                  iconColor: context.colors.primary,
                   subtitle: 'carteira ativa',
                 )),
             SizedBox(
@@ -157,7 +158,7 @@ class _ExcelenciaContent extends StatelessWidget {
                   label: 'CHURN',
                   value: '${100 - data.taxaRetencao}%',
                   icon: Icons.remove_circle_outline,
-                  iconColor: AppColors.danger,
+                  iconColor: context.colors.error,
                   subtitle:
                       '${data.cancelados} cancelamento${data.cancelados == 1 ? '' : 's'}',
                 )),
@@ -185,7 +186,7 @@ class _ExcelenciaContent extends StatelessWidget {
                         '${mesesROI.toStringAsFixed(1)} meses',
                         style: AppTypography.h1.copyWith(
                             fontSize: 32,
-                            color: AppColors.white,
+                            color: Colors.white,
                             fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: AppSpacing.xs),

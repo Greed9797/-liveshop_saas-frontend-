@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/contrato.dart';
-import '../../../theme/app_colors.dart';
+import '../../../theme/theme.dart';
 import '../../../theme/app_typography.dart';
 import 'auditoria_sla_chip.dart';
 import 'auditoria_status_badge.dart';
@@ -77,7 +77,7 @@ class AuditoriaContractCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryOrangeLight,
+                  color: context.colors.primaryLightBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(reason, style: AppTypography.bodySmall),
@@ -105,8 +105,8 @@ class AuditoriaContractCard extends StatelessWidget {
                 ),
                 TextButton.icon(
                   onPressed: onArquivar,
-                  icon: const Icon(Icons.archive_outlined,
-                      size: 16, color: AppColors.textSecondary),
+                  icon: Icon(Icons.archive_outlined,
+                      size: 16, color: context.colors.textSecondary),
                   label: const Text('Arquivar'),
                 ),
               ],

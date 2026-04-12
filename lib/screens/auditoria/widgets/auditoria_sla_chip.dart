@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_colors.dart';
+import '../../../theme/theme.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_typography.dart';
 
@@ -13,16 +13,16 @@ class AuditoriaSlaChip extends StatelessWidget {
     if (hours == null) return const SizedBox.shrink();
 
     final color = hours! >= 24
-        ? AppColors.dangerRed
+        ? context.colors.error
         : hours! >= 12
-            ? AppColors.primaryOrange
-            : AppColors.textSecondary;
+            ? context.colors.primary
+            : context.colors.textSecondary;
 
     final bg = hours! >= 24
-        ? AppColors.dangerRed.withValues(alpha: 0.12)
+        ? context.colors.error.withValues(alpha: 0.12)
         : hours! >= 12
-            ? AppColors.primaryOrange.withValues(alpha: 0.12)
-            : AppColors.black.withValues(alpha: 0.05);
+            ? context.colors.primary.withValues(alpha: 0.12)
+            : context.colors.textPrimary.withValues(alpha: 0.05);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_colors.dart';
+import '../../../theme/theme.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_typography.dart';
 
@@ -11,12 +11,12 @@ class AuditoriaStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'em_analise' => ('Em Análise', AppColors.warningYellow),
-      'pendencia_comercial' => ('Pendência', AppColors.warningYellow),
-      'reprovado' => ('Restrição', AppColors.dangerRed),
-      'ativo' || 'aprovado' => ('Aprovado', AppColors.successGreen),
-      'arquivado' => ('Arquivado', AppColors.textSecondary),
-      _ => (status, AppColors.textSecondary),
+      'em_analise' => ('Em Análise', context.colors.warning),
+      'pendencia_comercial' => ('Pendência', context.colors.warning),
+      'reprovado' => ('Restrição', context.colors.error),
+      'ativo' || 'aprovado' => ('Aprovado', context.colors.success),
+      'arquivado' => ('Arquivado', context.colors.textSecondary),
+      _ => (status, context.colors.textSecondary),
     };
 
     return Container(

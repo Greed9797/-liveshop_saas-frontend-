@@ -9,6 +9,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_radius.dart';
+import '../../theme/theme.dart';
 import '../../widgets/app_card.dart';
 
 class RecomendacoesScreen extends ConsumerWidget {
@@ -40,7 +41,7 @@ class RecomendacoesScreen extends ConsumerWidget {
                           Text(
                             'Gerencie indicações de potenciais clientes',
                             style: AppTypography.caption
-                                .copyWith(color: AppColors.gray500),
+                                .copyWith(color: context.colors.textSecondary),
                           ),
                         ],
                       ),
@@ -77,12 +78,12 @@ class RecomendacoesScreen extends ConsumerWidget {
                             child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.diamond_outlined,
-                                  size: 48, color: AppColors.gray200),
+                              Icon(Icons.diamond_outlined,
+                                  size: 48, color: context.colors.divider),
                               const SizedBox(height: 12),
                               Text('Nenhuma recomendação ainda.',
                                   style: AppTypography.bodySmall
-                                      .copyWith(color: AppColors.gray500)),
+                                      .copyWith(color: context.colors.textSecondary)),
                             ],
                           ))
                         : AppCard(
@@ -180,7 +181,7 @@ class RecomendacoesScreen extends ConsumerWidget {
             },
             child: Text('SALVAR',
                 style:
-                    AppTypography.bodyMedium.copyWith(color: AppColors.white)),
+                    AppTypography.bodyMedium.copyWith(color: Colors.white)),
           ),
         ],
       ),
@@ -213,7 +214,7 @@ class RecomendacoesScreen extends ConsumerWidget {
         content: Text(altoRisco
             ? 'Cliente convertido (Score: $score — alto risco). Iniciando contrato...'
             : 'Cliente convertido com sucesso! (Score: $score). Iniciando contrato...'),
-        backgroundColor: altoRisco ? AppColors.dangerRed : AppColors.successGreen,
+        backgroundColor: altoRisco ? context.colors.error : context.colors.success,
       ));
 
       Navigator.pushNamed(
@@ -260,7 +261,7 @@ class _RecomendacaoTile extends StatelessWidget {
       ),
       subtitle: Text(
         'Indicado por: ${recomendacao.recomendante}',
-        style: AppTypography.caption.copyWith(color: AppColors.gray500),
+        style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -277,15 +278,15 @@ class _RecomendacaoTile extends StatelessWidget {
                 recomendacao.status.toUpperCase(),
                 style: AppTypography.caption.copyWith(
                   color: recomendacao.status == 'convertido'
-                      ? AppColors.successGreen
-                      : AppColors.gray500,
+                      ? context.colors.success
+                      : context.colors.textSecondary,
                   fontWeight: FontWeight.w700,
                   fontSize: 10,
                 ),
               ),
               backgroundColor: recomendacao.status == 'convertido'
-                  ? AppColors.successGreen.withValues(alpha: 0.12)
-                  : AppColors.gray100,
+                  ? context.colors.success.withValues(alpha: 0.12)
+                  : context.colors.background,
               side: BorderSide.none,
               padding: const EdgeInsets.symmetric(horizontal: 4),
             ),
@@ -324,13 +325,13 @@ class _NegociarDialogState extends State<_NegociarDialog> {
     return 'ALTO RISCO';
   }
 
-  Color get _riscoColor {
+  Color _riscoColor(BuildContext context) {
     int score = 0;
     if (_highFat) score += 50;
     if (_hasCnpj) score += 20;
-    if (score >= 60) return AppColors.successGreen;
-    if (score >= 20) return AppColors.warningYellow;
-    return AppColors.dangerRed;
+    if (score >= 60) return context.colors.success;
+    if (score >= 20) return context.colors.warning;
+    return context.colors.error;
   }
 
   void _updateRisco() {
@@ -354,6 +355,7 @@ class _NegociarDialogState extends State<_NegociarDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final riscoColor = _riscoColor(context);
     return Dialog(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl)),
@@ -386,9 +388,9 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: _riscoColor.withValues(alpha: 0.1),
+                    color: riscoColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: _riscoColor.withValues(alpha: 0.4)),
+                    border: Border.all(color: riscoColor.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     children: [
@@ -396,14 +398,14 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                         _riscoLabel == 'ALTO RISCO'
                             ? Icons.warning_amber_rounded
                             : Icons.shield_outlined,
-                        color: _riscoColor,
+                        color: riscoColor,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         _riscoLabel,
                         style: AppTypography.labelSmall.copyWith(
-                          color: _riscoColor,
+                          color: riscoColor,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -411,7 +413,7 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                       Text(
                         'Preencha para melhorar o score',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.gray400, fontSize: 10),
+                            .copyWith(color: context.colors.textTertiary, fontSize: 10),
                       ),
                     ],
                   ),
@@ -442,8 +444,8 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     suffixIcon: _hasCnpj
-                        ? const Icon(Icons.check_circle,
-                            color: AppColors.successGreen, size: 18)
+                        ? Icon(Icons.check_circle,
+                            color: context.colors.success, size: 18)
                         : null,
                   ),
                 ),
@@ -458,8 +460,8 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     suffixIcon: _highFat
-                        ? const Icon(Icons.check_circle,
-                            color: AppColors.successGreen, size: 18)
+                        ? Icon(Icons.check_circle,
+                            color: context.colors.success, size: 18)
                         : null,
                   ),
                 ),
@@ -541,10 +543,10 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                           });
                         },
                         icon: const Icon(Icons.send_rounded,
-                            size: 16, color: AppColors.white),
+                            size: 16, color: Colors.white),
                         label: Text('Converter para Lead',
                             style: AppTypography.bodySmall
-                                .copyWith(color: AppColors.white)),
+                                .copyWith(color: Colors.white)),
                       ),
                     ),
                   ],

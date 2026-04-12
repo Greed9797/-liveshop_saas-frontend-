@@ -16,6 +16,7 @@ import '../../theme/app_breakpoints.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_shadows.dart';
 import '../../theme/app_typography.dart';
+import '../../theme/theme.dart';
 import '../../widgets/app_card.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -198,7 +199,7 @@ class _ActionButtons extends StatelessWidget {
       children: [
         Expanded(
           child: Material(
-            color: AppColors.primaryOrange,
+            color: context.colors.primary,
             borderRadius: BorderRadius.circular(AppRadius.lg),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -209,12 +210,12 @@ class _ActionButtons extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.point_of_sale, size: 38, color: AppColors.white),
+                    const Icon(Icons.point_of_sale, size: 38, color: Colors.white),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       'VENDER',
                       style: AppTypography.h3.copyWith(
-                          fontWeight: FontWeight.bold, color: AppColors.white),
+                          fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ],
                 ),
@@ -225,23 +226,23 @@ class _ActionButtons extends StatelessWidget {
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Material(
-            color: AppColors.gray100,
+            color: context.colors.background,
             borderRadius: BorderRadius.circular(AppRadius.lg),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: () => Navigator.pushNamed(context, AppRoutes.financeiro),
-              child: const SizedBox(
+              child: SizedBox(
                 height: 110,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.account_balance_wallet_rounded,
-                        size: 38, color: AppColors.gray500),
-                    SizedBox(height: AppSpacing.sm),
+                        size: 38, color: context.colors.textSecondary),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       'FINANCEIRO',
                       style: TextStyle(
-                          fontWeight: FontWeight.bold, color: AppColors.gray700),
+                          fontWeight: FontWeight.bold, color: context.colors.textPrimary),
                     ),
                   ],
                 ),
@@ -262,13 +263,13 @@ class _CabinesEmptyCard extends StatelessWidget {
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: AppColors.gray50,
+        color: context.colors.background,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.sidebarBorder),
+        border: Border.all(color: context.colors.divider),
       ),
       child: Center(
         child: Text('Nenhuma cabine configurada',
-            style: AppTypography.labelLarge.copyWith(color: AppColors.gray400)),
+            style: AppTypography.labelLarge.copyWith(color: context.colors.textTertiary)),
       ),
     );
   }
@@ -291,7 +292,7 @@ class _CabinesMiniGrid extends StatelessWidget {
               Text(
                 'CABINES',
                 style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.gray500,
+                  color: context.colors.textSecondary,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
                 ),
@@ -309,14 +310,14 @@ class _CabinesMiniGrid extends StatelessWidget {
                     Text(
                       'Ver tudo',
                       style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.primaryOrange,
+                        color: context.colors.primary,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.xs),
-                    const Icon(Icons.chevron_right,
-                        color: AppColors.primaryOrange, size: 16),
+                    Icon(Icons.chevron_right,
+                        color: context.colors.primary, size: 16),
                   ],
                 ),
               ),
@@ -351,10 +352,10 @@ class _LiveBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.successGreen.withValues(alpha: 0.15),
+        color: context.colors.success.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.pill),
         border:
-            Border.all(color: AppColors.successGreen.withValues(alpha: 0.4)),
+            Border.all(color: context.colors.success.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -362,15 +363,15 @@ class _LiveBadge extends StatelessWidget {
           Container(
             width: 6,
             height: 6,
-            decoration: const BoxDecoration(
-                color: AppColors.successGreen, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+                color: context.colors.success, shape: BoxShape.circle),
           ),
           const SizedBox(width: AppSpacing.xs),
           Text(
             '$liveCount AO VIVO',
             style: AppTypography.caption.copyWith(
                 fontSize: 9,
-                color: AppColors.successGreen,
+                color: context.colors.success,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.5),
           ),
@@ -412,22 +413,24 @@ class _CabineMiniTile extends StatelessWidget {
                   style: AppTypography.h3,
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: cabine.status == 'ao_vivo'
-                        ? AppColors.successGreen.withValues(alpha: 0.15)
-                        : AppColors.gray200,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    style: AppTypography.caption.copyWith(
-                      fontWeight: FontWeight.w700,
+                Builder(
+                  builder: (ctx) => Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm, vertical: 2),
+                    decoration: BoxDecoration(
                       color: cabine.status == 'ao_vivo'
-                          ? AppColors.successGreen
-                          : AppColors.gray500,
+                          ? ctx.colors.success.withValues(alpha: 0.15)
+                          : ctx.colors.divider,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(
+                      statusLabel,
+                      style: AppTypography.caption.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: cabine.status == 'ao_vivo'
+                            ? ctx.colors.success
+                            : ctx.colors.textSecondary,
+                      ),
                     ),
                   ),
                 ),
@@ -464,12 +467,12 @@ class _CabineMiniTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // Heatmap: intensidade laranja por status (mais ativo = mais escuro)
     final (Color bgColor, Color textColor) = switch (cabine.status) {
-      'ao_vivo'    => (AppColors.primaryOrange, AppColors.white),
-      'reservada'  => (AppColors.orange200, AppColors.white),
-      'ativa'      => (AppColors.orange100, AppColors.orange600),
-      'disponivel' => (AppColors.primaryOrangeLight, AppColors.orange200),
-      'manutencao' => (AppColors.gray200, AppColors.gray500),
-      _            => (AppColors.gray100, AppColors.gray400),
+      'ao_vivo'    => (context.colors.primary, Colors.white),
+      'reservada'  => (AppColors.orange200, Colors.white),
+      'ativa'      => (AppColors.orange100, context.colors.primaryHover),
+      'disponivel' => (context.colors.primaryLightBg, AppColors.orange200),
+      'manutencao' => (context.colors.divider, context.colors.textSecondary),
+      _            => (context.colors.background, context.colors.textTertiary),
     };
 
     final showName = cabine.clienteNome != null &&
@@ -524,15 +527,15 @@ class _DetailRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: AppColors.gray400),
+          Icon(icon, size: 16, color: context.colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Text('$label: ',
               style: AppTypography.labelSmall
-                  .copyWith(color: AppColors.gray500, fontWeight: FontWeight.w600)),
+                  .copyWith(color: context.colors.textSecondary, fontWeight: FontWeight.w600)),
           Expanded(
             child: Text(value,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.labelSmall.copyWith(color: AppColors.gray700)),
+                style: AppTypography.labelSmall.copyWith(color: context.colors.textPrimary)),
           ),
         ],
       ),
@@ -550,8 +553,8 @@ class _HomeShimmerLoader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.screenPadding),
       child: Shimmer.fromColors(
-        baseColor: AppColors.gray200,
-        highlightColor: AppColors.gray100,
+        baseColor: context.colors.divider,
+        highlightColor: context.colors.background,
         child: Row(
           children: [
             Expanded(
@@ -559,7 +562,7 @@ class _HomeShimmerLoader extends StatelessWidget {
               child: Container(
                 height: 400,
                 decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: context.colors.cardBackground,
                     borderRadius: BorderRadius.circular(AppRadius.lg)),
               ),
             ),
@@ -569,7 +572,7 @@ class _HomeShimmerLoader extends StatelessWidget {
               child: Container(
                 height: 400,
                 decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: context.colors.cardBackground,
                     borderRadius: BorderRadius.circular(AppRadius.lg)),
               ),
             ),
@@ -579,3 +582,4 @@ class _HomeShimmerLoader extends StatelessWidget {
     );
   }
 }
+

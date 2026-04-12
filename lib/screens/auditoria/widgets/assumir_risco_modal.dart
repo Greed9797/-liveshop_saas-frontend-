@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/contrato.dart';
 import '../../../providers/contratos_provider.dart';
-import '../../../theme/app_colors.dart';
+import '../../../theme/theme.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_typography.dart';
@@ -102,8 +102,8 @@ class _AssumirRiscoModalState extends ConsumerState<AssumirRiscoModal> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded,
-                        color: AppColors.primaryOrange),
+                    Icon(Icons.warning_amber_rounded,
+                        color: context.colors.primary),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text('Assumir Risco da Operação',
@@ -116,14 +116,14 @@ class _AssumirRiscoModalState extends ConsumerState<AssumirRiscoModal> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryOrangeLight,
+                    color: context.colors.primaryLightBg,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: AppColors.primaryOrange),
+                    border: Border.all(color: context.colors.primary),
                   ),
                   child: Text(
                     'Ao assumir esta operação, os valores de inadimplência poderão ser descontados integralmente dos seus repasses futuros, conforme as regras comerciais da franqueadora.',
                     style: AppTypography.bodySmall
-                        .copyWith(color: AppColors.textPrimary),
+                        .copyWith(color: context.colors.textPrimary),
                   ),
                 ),
                 const SizedBox(height: 20),

@@ -14,6 +14,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
+import '../../theme/theme.dart';
 import '../../widgets/action_button.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/cabine_card.dart';
@@ -108,7 +109,7 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: AppColors.white,
+      backgroundColor: context.colors.cardBackground,
       builder: (_) => const _FilaAtivacaoBottomSheet(),
     );
 
@@ -515,10 +516,10 @@ class _HeaderSection extends StatelessWidget {
               'Painel de Cabines',
               style: AppTypography.h1.copyWith(fontSize: 24, fontWeight: FontWeight.w700),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               'Visão operacional da unidade: quem está ao vivo, quem está reservado e o que está rendendo agora.',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colors.textSecondary),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -535,7 +536,7 @@ class _HeaderSection extends StatelessWidget {
               icon: Icons.playlist_add_check_circle_outlined,
               outlined: selectedContrato == null,
               color:
-                  selectedContrato == null ? AppColors.info : AppColors.primary,
+                  selectedContrato == null ? context.colors.info : context.colors.primary,
               onPressed: onOpenQueue,
             ),
             IconButton(
@@ -558,23 +559,23 @@ class _KpiSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _KpiCardData('Total', metrics.total.toString(), AppColors.darkNavy,
+      _KpiCardData('Total', metrics.total.toString(), context.colors.textPrimary,
           'cabines mapeadas'),
-      _KpiCardData('Ao vivo', metrics.aoVivo.toString(), AppColors.successGreen,
+      _KpiCardData('Ao vivo', metrics.aoVivo.toString(), context.colors.success,
           'sessões em andamento'),
       _KpiCardData('Reservadas', metrics.reservadas.toString(),
-          AppColors.warningYellow, 'aguardando ativação'),
-      _KpiCardData('Ativas', metrics.ativas.toString(), AppColors.infoBlue,
+          context.colors.warning, 'aguardando ativação'),
+      _KpiCardData('Ativas', metrics.ativas.toString(), context.colors.info,
           'cabines com contrato vigente'),
       _KpiCardData('Livres', metrics.disponiveis.toString(),
-          AppColors.textSecondary, 'prontas para receber'),
+          context.colors.textSecondary, 'prontas para receber'),
       _KpiCardData(
           'GMV Total Hoje',
           'R\$ ${metrics.gmvTotalHoje.toStringAsFixed(2)}',
-          AppColors.successGreen,
+          context.colors.success,
           'soma do ao vivo'),
       _KpiCardData('Audiência Total', metrics.audienciaTotal.toString(),
-          AppColors.primaryOrange, 'público simultâneo'),
+          context.colors.primary, 'público simultâneo'),
     ];
 
     return Wrap(
@@ -587,15 +588,15 @@ class _KpiSection extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(AppSpacing.compactPadding),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.colors.cardBackground,
                   borderRadius: BorderRadius.circular(AppRadius.xl),
-                  border: Border.all(color: AppColors.gray200),
+                  border: Border.all(color: context.colors.divider),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(item.label,
-                        style: const TextStyle(color: AppColors.textSecondary)),
+                        style: TextStyle(color: context.colors.textSecondary)),
                     const SizedBox(height: 8),
                     Text(
                       item.value,
@@ -605,7 +606,7 @@ class _KpiSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(item.helper,
-                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                   ],
                 ),
               ),
@@ -642,14 +643,14 @@ class _ToolbarSection extends StatelessWidget {
                 'Buscar por cliente, apresentador, contrato ou número da cabine',
             prefixIcon: const Icon(Icons.search),
             filled: true,
-            fillColor: AppColors.white,
+            fillColor: context.colors.cardBackground,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide(color: AppColors.gray200),
+              borderSide: BorderSide(color: context.colors.divider),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide(color: AppColors.gray200),
+              borderSide: BorderSide(color: context.colors.divider),
             ),
           ),
         ),
@@ -700,14 +701,14 @@ class _SelectedContractBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.compactPadding),
       decoration: BoxDecoration(
-        color: AppColors.primaryOrangeLight,
+        color: context.colors.primaryLightBg,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border:
-            Border.all(color: AppColors.primaryOrange.withValues(alpha: 0.25)),
+            Border.all(color: context.colors.primary.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.link_rounded, color: AppColors.primaryOrange),
+          Icon(Icons.link_rounded, color: context.colors.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -831,7 +832,7 @@ class _OperationalActions extends StatelessWidget {
         label: 'ENCERRAR LIVE',
         icon: Icons.stop_circle_rounded,
         outlined: false,
-        color: AppColors.dangerRed,
+        color: context.colors.error,
         onPressed: onEncerrarLive,
       );
     }
@@ -857,15 +858,15 @@ class _OperationalActions extends StatelessWidget {
         label: 'VINCULAR CONTRATO',
         icon: Icons.link_rounded,
         outlined: true,
-        color: AppColors.info,
+        color: context.colors.info,
         onPressed: onReservar,
       );
     }
 
-    return const ActionButton(
+    return ActionButton(
       label: 'MANUTENÇÃO',
       outlined: true,
-      color: AppColors.gray400,
+      color: context.colors.textTertiary,
       onPressed: null,
     );
   }
@@ -897,9 +898,9 @@ class _SidebarContent extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.cardBackground,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.gray200),
+        border: Border.all(color: context.colors.divider),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -910,9 +911,9 @@ class _SidebarContent extends ConsumerWidget {
             style: AppTypography.h3.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Da fila de ativação ao raio-X da cabine, sem sair do painel.',
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: context.colors.textSecondary),
           ),
           const SizedBox(height: 20),
           Expanded(
@@ -1077,13 +1078,13 @@ class _QueuePanel extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                           color: isSelected
-                              ? AppColors.primaryOrangeLight
-                              : AppColors.surfaceGray,
+                              ? context.colors.primaryLightBg
+                              : context.colors.background,
                           border: Border.all(
                             color: isSelected
-                                ? AppColors.primaryOrange
+                                ? context.colors.primary
                                     .withValues(alpha: 0.35)
-                                : AppColors.gray200,
+                                : context.colors.divider,
                           ),
                         ),
                         child: Column(
@@ -1094,12 +1095,12 @@ class _QueuePanel extends StatelessWidget {
                                     fontWeight: FontWeight.w700)),
                             const SizedBox(height: 4),
                             Text(item.localizacao,
-                                style: const TextStyle(
-                                    color: AppColors.textSecondary)),
+                                style: TextStyle(
+                                    color: context.colors.textSecondary)),
                             const SizedBox(height: 8),
                             Text(
                               'Contrato ${item.id.substring(0, 8)} • Fixo R\$ ${item.valorFixo.toStringAsFixed(2)}',
-                              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                              style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                             ),
                           ],
                         ),
@@ -1277,7 +1278,7 @@ class _SidebarCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.compactPadding),
       decoration: BoxDecoration(
-        color: AppColors.surfaceGray,
+        color: context.colors.background,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
@@ -1310,7 +1311,7 @@ class _InfoLine extends StatelessWidget {
             width: 94,
             child: Text(
               '$label:',
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colors.textSecondary),
             ),
           ),
           Expanded(
@@ -1344,7 +1345,7 @@ class _MetricRankRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Flexible(child: Text(value, style: const TextStyle(color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis)),
+        Flexible(child: Text(value, style: TextStyle(color: context.colors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis)),
       ],
     );
   }
@@ -1400,12 +1401,12 @@ class _RankedMetricRow extends StatelessWidget {
               Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 2),
               Text(subtitle,
-                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
             ],
           ),
         ),
         const SizedBox(width: 8),
-        Text(value, style: const TextStyle(color: AppColors.textSecondary)),
+        Text(value, style: TextStyle(color: context.colors.textSecondary)),
       ],
     );
   }
@@ -1425,10 +1426,10 @@ class _AnalyticsSummaryRow extends StatelessWidget {
       (
         'GMV hoje',
         _currency.format(resumo.gmvTotalHoje),
-        AppColors.successGreen
+        context.colors.success
       ),
-      ('Audiência', '${resumo.audienciaTotalAoVivo}', AppColors.primaryOrange),
-      ('Lives hoje', '${resumo.totalLivesHoje}', AppColors.infoBlue),
+      ('Audiência', '${resumo.audienciaTotalAoVivo}', context.colors.primary),
+      ('Lives hoje', '${resumo.totalLivesHoje}', context.colors.info),
     ];
 
     return Row(
@@ -1439,15 +1440,15 @@ class _AnalyticsSummaryRow extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpacing.md),
                 margin: EdgeInsets.only(right: item == cards.last ? 0 : 8),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.colors.cardBackground,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: AppColors.gray200),
+                  border: Border.all(color: context.colors.divider),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(item.$1,
-                        style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary)),
+                        style: AppTypography.labelSmall.copyWith(color: context.colors.textSecondary)),
                     const SizedBox(height: 6),
                     Text(
                       item.$2,
@@ -1474,15 +1475,15 @@ class _CabinesEmptyState extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 420),
         padding: const EdgeInsets.all(AppSpacing.screenPadding),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colors.cardBackground,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: AppColors.gray200),
+          border: Border.all(color: context.colors.divider),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.video_camera_front_outlined,
-                size: 42, color: AppColors.gray400),
+            Icon(Icons.video_camera_front_outlined,
+                size: 42, color: context.colors.textTertiary),
             const SizedBox(height: 12),
             Text(
               'Nenhuma cabine cadastrada nesta unidade.',
@@ -1492,7 +1493,7 @@ class _CabinesEmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Quando a infraestrutura estiver configurada, as cabines aparecerão aqui com estado operacional em tempo real.',
-              style: AppTypography.bodySmall.copyWith(color: AppColors.gray400),
+              style: AppTypography.bodySmall.copyWith(color: context.colors.textTertiary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1521,9 +1522,9 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
               style: AppTypography.h2.copyWith(fontSize: 20, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Selecione um contrato ativo e depois toque em uma cabine disponível.',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colors.textSecondary),
             ),
             const SizedBox(height: 16),
             Flexible(
@@ -1552,9 +1553,9 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
                         child: Container(
                           padding: const EdgeInsets.all(AppSpacing.compactPadding),
                           decoration: BoxDecoration(
-                            color: AppColors.white,
+                            color: context.colors.cardBackground,
                             borderRadius: BorderRadius.circular(AppRadius.lg),
-                            border: Border.all(color: AppColors.gray200),
+                            border: Border.all(color: context.colors.divider),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1564,13 +1565,13 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
                                       fontWeight: FontWeight.w700)),
                               const SizedBox(height: 4),
                               Text(item.localizacao,
-                                  style: const TextStyle(
-                                      color: AppColors.textSecondary)),
+                                  style: TextStyle(
+                                      color: context.colors.textSecondary)),
                               const SizedBox(height: 8),
                               Text(
                                 'Contrato ${item.id.substring(0, 8)} • Fixo R\$ ${item.valorFixo.toStringAsFixed(2)} • Comissão ${item.comissaoPct.toStringAsFixed(0)}%',
                                 style: AppTypography.caption.copyWith(
-                                    color: AppColors.textSecondary),
+                                    color: context.colors.textSecondary),
                               ),
                             ],
                           ),
@@ -1597,6 +1598,8 @@ class _KpiCardData {
   const _KpiCardData(this.label, this.value, this.color, this.helper);
 }
 
+// ─── METRICS ─────────────────────────────────────────────────────────────────
+
 class _CabinesMetrics {
   final int total;
   final int aoVivo;
@@ -1617,20 +1620,15 @@ class _CabinesMetrics {
   });
 
   factory _CabinesMetrics.from(List<Cabine> cabines) {
-    final aoVivo =
-        cabines.where((cabine) => cabine.status == 'ao_vivo').toList();
     return _CabinesMetrics(
       total: cabines.length,
-      aoVivo: aoVivo.length,
-      reservadas:
-          cabines.where((cabine) => cabine.status == 'reservada').length,
-      ativas: cabines.where((cabine) => cabine.status == 'ativa').length,
-      disponiveis:
-          cabines.where((cabine) => cabine.status == 'disponivel').length,
-      gmvTotalHoje:
-          aoVivo.fold<double>(0, (sum, cabine) => sum + cabine.gmvAtual),
-      audienciaTotal:
-          aoVivo.fold<int>(0, (sum, cabine) => sum + cabine.viewerCount),
+      aoVivo: cabines.where((c) => c.status == 'ao_vivo').length,
+      reservadas: cabines.where((c) => c.status == 'reservada').length,
+      ativas: cabines.where((c) => c.status == 'ativa').length,
+      disponiveis: cabines.where((c) => c.status == 'disponivel').length,
+      gmvTotalHoje: cabines.fold(0.0, (sum, c) => sum + c.gmvAtual),
+      audienciaTotal: cabines.fold(0, (sum, c) => sum + c.viewerCount),
     );
   }
 }
+

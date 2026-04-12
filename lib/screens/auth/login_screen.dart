@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_radius.dart';
@@ -63,7 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authError = _localError ?? authState.error;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
@@ -82,7 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: AppTypography.h2.copyWith(fontWeight: FontWeight.w500)),
                 const SizedBox(height: AppSpacing.xs),
                 Text('Gestão de Franquias',
-                    style: AppTypography.labelLarge.copyWith(color: AppColors.gray600)),
+                    style: AppTypography.labelLarge.copyWith(color: context.colors.textSecondary)),
                 const SizedBox(height: AppSpacing.x3l),
                 TextField(
                   controller: _emailCtrl,
@@ -117,15 +117,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: AppColors.danger.withValues(alpha: 0.08),
+                      color: context.colors.error.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(
-                        color: AppColors.danger.withValues(alpha: 0.25),
+                        color: context.colors.error.withValues(alpha: 0.25),
                       ),
                     ),
                     child: Text(
                       authError,
-                      style: const TextStyle(color: AppColors.danger),
+                      style: TextStyle(color: context.colors.error),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -135,20 +135,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: context.colors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md)),
                     ),
                     child: isLoading
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                                color: AppColors.white, strokeWidth: 2))
-                        : const Text('ENTRAR',
+                                color: context.colors.cardBackground, strokeWidth: 2))
+                        : Text('ENTRAR',
                             style: TextStyle(
-                                color: AppColors.white,
+                                color: context.colors.cardBackground,
                                 fontWeight: FontWeight.w500)),
                   ),
                 ),

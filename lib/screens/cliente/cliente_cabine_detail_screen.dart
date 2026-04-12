@@ -9,10 +9,10 @@ import '../../providers/cliente_cabine_detail_provider.dart';
 import '../../providers/live_requests_provider.dart';
 import '../../providers/live_stream_provider.dart';
 import '../../services/api_service.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
+import '../../theme/theme.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/status_badge.dart';
 
@@ -96,16 +96,16 @@ class _ClienteCabineDetailScreenState
         ref.watch(clienteCabineDetailProvider(widget.cabineId));
 
     return Scaffold(
-      backgroundColor: AppColors.gray100,
+      backgroundColor: context.colors.background,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showSolicitarLiveSheet(context),
-        backgroundColor: AppColors.primaryOrange,
+        backgroundColor: context.colors.primary,
         icon: const Icon(Icons.calendar_today_rounded,
-            color: AppColors.white),
+            color: Colors.white),
         label: const Text(
           'Solicitar Live',
           style: TextStyle(
-              color: AppColors.white, fontWeight: FontWeight.w600),
+              color: Colors.white, fontWeight: FontWeight.w600),
         ),
       ),
       appBar: AppBar(
@@ -113,8 +113,8 @@ class _ClienteCabineDetailScreenState
           'Cabine ${widget.cabineNumero.toString().padLeft(2, '0')}',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppColors.white,
-        foregroundColor: AppColors.gray900,
+        backgroundColor: context.colors.cardBackground,
+        foregroundColor: context.colors.textPrimary,
         elevation: 1,
         actions: [
           IconButton(
@@ -127,9 +127,9 @@ class _ClienteCabineDetailScreenState
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppColors.primaryOrange,
-          unselectedLabelColor: AppColors.gray500,
-          indicatorColor: AppColors.primaryOrange,
+          labelColor: context.colors.primary,
+          unselectedLabelColor: context.colors.textSecondary,
+          indicatorColor: context.colors.primary,
           tabs: const [
             Tab(text: 'Live', icon: Icon(Icons.live_tv_outlined)),
             Tab(text: 'Histórico', icon: Icon(Icons.history_outlined)),
@@ -144,8 +144,8 @@ class _ClienteCabineDetailScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline,
-                    size: 48, color: AppColors.dangerRed),
+                Icon(Icons.error_outline,
+                    size: 48, color: context.colors.error),
                 const SizedBox(height: AppSpacing.md),
                 Text('Erro ao carregar dados: $error',
                     textAlign: TextAlign.center),
@@ -206,27 +206,27 @@ class _LiveTab extends ConsumerWidget {
     final commentsCount = snapshot?.commentsCount  ?? live?.commentsCount ?? 0;
 
     if (live == null) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(AppSpacing.screenPadding),
+          padding: const EdgeInsets.all(AppSpacing.screenPadding),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.videocam_off_outlined,
-                  size: 64, color: AppColors.gray300),
-              SizedBox(height: AppSpacing.lg),
+                  size: 64, color: context.colors.textTertiary),
+              const SizedBox(height: AppSpacing.lg),
               Text(
                 'Nenhuma live em andamento',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.gray600),
+                    color: context.colors.textSecondary),
               ),
-              SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 'Quando sua cabine estiver ao vivo, as métricas\naparecerão aqui em tempo real.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.gray400),
+                style: TextStyle(color: context.colors.textTertiary),
               ),
             ],
           ),
@@ -251,7 +251,7 @@ class _LiveTab extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.dangerRed,
+                        color: context.colors.error,
                         borderRadius:
                             BorderRadius.circular(AppRadius.pill),
                       ),
@@ -259,11 +259,11 @@ class _LiveTab extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.circle,
-                              size: 8, color: AppColors.white),
+                              size: 8, color: Colors.white),
                           SizedBox(width: 4),
                           Text('AO VIVO',
                               style: TextStyle(
-                                  color: AppColors.white,
+                                  color: Colors.white,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold)),
                         ],
@@ -275,7 +275,7 @@ class _LiveTab extends ConsumerWidget {
                         child: Text(
                           live.apresentadorNome!,
                           style: AppTypography.bodySmall
-                              .copyWith(color: AppColors.gray600),
+                              .copyWith(color: context.colors.textSecondary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -283,7 +283,7 @@ class _LiveTab extends ConsumerWidget {
                     Text(
                       '${live.duracaoMinutos}min',
                       style: AppTypography.caption
-                          .copyWith(color: AppColors.gray500),
+                          .copyWith(color: context.colors.textSecondary),
                     ),
                   ],
                 ),
@@ -295,25 +295,25 @@ class _LiveTab extends ConsumerWidget {
                       icon: Icons.remove_red_eye_outlined,
                       label: 'Espectadores',
                       value: '$viewerCount',
-                      color: AppColors.infoBlue,
+                      color: context.colors.info,
                     ),
                     _MetricItem(
                       icon: Icons.attach_money_rounded,
                       label: 'GMV',
                       value: currency.format(gmvAtual),
-                      color: AppColors.successGreen,
+                      color: context.colors.success,
                     ),
                     _MetricItem(
                       icon: Icons.shopping_bag_outlined,
                       label: 'Pedidos',
                       value: '$totalOrders',
-                      color: AppColors.primaryOrange,
+                      color: context.colors.primary,
                     ),
                     _MetricItem(
                       icon: Icons.favorite_outline_rounded,
                       label: 'Curtidas',
                       value: '$likesCount',
-                      color: AppColors.dangerRed,
+                      color: context.colors.error,
                     ),
                   ],
                 ),
@@ -321,13 +321,13 @@ class _LiveTab extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.sm),
                   Row(
                     children: [
-                      const Icon(Icons.chat_bubble_outline,
-                          size: 14, color: AppColors.gray400),
+                      Icon(Icons.chat_bubble_outline,
+                          size: 14, color: context.colors.textTertiary),
                       const SizedBox(width: 4),
                       Text(
                         '$commentsCount comentários',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.gray500),
+                            .copyWith(color: context.colors.textSecondary),
                       ),
                     ],
                   ),
@@ -336,8 +336,8 @@ class _LiveTab extends ConsumerWidget {
                   const Divider(height: AppSpacing.x2l),
                   Row(
                     children: [
-                      const Icon(Icons.star_outline_rounded,
-                          size: 16, color: AppColors.warningYellow),
+                      Icon(Icons.star_outline_rounded,
+                          size: 16, color: context.colors.warning),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -394,14 +394,14 @@ class _MetricGrid extends StatelessWidget {
                             item.value,
                             style: AppTypography.bodyMedium.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.gray900),
+                                color: context.colors.textPrimary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             item.label,
                             style: AppTypography.caption
-                                .copyWith(color: AppColors.gray500),
+                                .copyWith(color: context.colors.textSecondary),
                           ),
                         ],
                       ),
@@ -446,19 +446,19 @@ class _HistoricoTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (lives.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(AppSpacing.screenPadding),
+          padding: const EdgeInsets.all(AppSpacing.screenPadding),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.history_outlined,
-                  size: 64, color: AppColors.gray300),
-              SizedBox(height: AppSpacing.lg),
+                  size: 64, color: context.colors.textTertiary),
+              const SizedBox(height: AppSpacing.lg),
               Text(
                 'Nenhuma live registrada nesta cabine',
                 style:
-                    TextStyle(color: AppColors.gray500, fontSize: 15),
+                    TextStyle(color: context.colors.textSecondary, fontSize: 15),
               ),
             ],
           ),
@@ -521,13 +521,13 @@ class _LiveHistoricoCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              const Icon(Icons.timer_outlined,
-                  size: 14, color: AppColors.gray400),
+              Icon(Icons.timer_outlined,
+                  size: 14, color: context.colors.textTertiary),
               const SizedBox(width: 4),
               Text(
                 '${live.duracaoMin} min',
                 style: AppTypography.caption
-                    .copyWith(color: AppColors.gray500),
+                    .copyWith(color: context.colors.textSecondary),
               ),
             ],
           ),
@@ -537,7 +537,7 @@ class _LiveHistoricoCard extends StatelessWidget {
               _StatColumn(
                 value: currency.format(live.fatGerado),
                 label: 'faturamento',
-                color: AppColors.successGreen,
+                color: context.colors.success,
               ),
               if (live.comissaoCalculada > 0) ...[
                 const SizedBox(width: AppSpacing.x2l),
@@ -579,7 +579,7 @@ class _StatColumn extends StatelessWidget {
         Text(
           label,
           style: AppTypography.caption
-              .copyWith(color: AppColors.textSecondary),
+              .copyWith(color: context.colors.textSecondary),
         ),
       ],
     );
@@ -725,9 +725,9 @@ class _SolicitarLiveSheetState
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Solicitação enviada! Aguarde aprovação do franqueador.'),
-          backgroundColor: AppColors.successGreen,
+        SnackBar(
+          content: const Text('Solicitação enviada! Aguarde aprovação do franqueador.'),
+          backgroundColor: context.colors.success,
         ),
       );
       // Reset form
@@ -742,7 +742,7 @@ class _SolicitarLiveSheetState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
-          backgroundColor: AppColors.dangerRed,
+          backgroundColor: context.colors.error,
         ),
       );
     } finally {
@@ -755,9 +755,9 @@ class _SolicitarLiveSheetState
     final requestsAsync = ref.watch(liveRequestsProvider(widget.cabineId));
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: context.colors.cardBackground,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -776,7 +776,7 @@ class _SolicitarLiveSheetState
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.gray200,
+                  color: context.colors.divider,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -832,7 +832,7 @@ class _SolicitarLiveSheetState
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 filled: true,
-                fillColor: AppColors.gray50,
+                fillColor: context.colors.background,
               ),
               maxLines: 2,
               textCapitalization: TextCapitalization.sentences,
@@ -846,14 +846,14 @@ class _SolicitarLiveSheetState
                 child: Text(
                   _formError!,
                   style: AppTypography.caption
-                      .copyWith(color: AppColors.dangerRed),
+                      .copyWith(color: context.colors.error),
                 ),
               ),
 
             // ── Botão enviar ──
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryOrange,
+                backgroundColor: context.colors.primary,
                 padding: const EdgeInsets.symmetric(
                     vertical: AppSpacing.md),
                 shape: RoundedRectangleBorder(
@@ -867,13 +867,13 @@ class _SolicitarLiveSheetState
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.white,
+                        color: Colors.white,
                       ),
                     )
                   : const Text(
                       'Enviar Solicitação',
                       style: TextStyle(
-                          color: AppColors.white,
+                          color: Colors.white,
                           fontWeight: FontWeight.w600),
                     ),
             ),
@@ -891,17 +891,17 @@ class _SolicitarLiveSheetState
             requestsAsync.when(
               loading: () => const Center(
                   child: CircularProgressIndicator()),
-              error: (_, __) => const Text(
+              error: (_, __) => Text(
                 'Não foi possível carregar as solicitações.',
-                style: TextStyle(color: AppColors.gray400),
+                style: TextStyle(color: context.colors.textTertiary),
               ),
               data: (requests) => requests.isEmpty
-                  ? const Padding(
+                  ? Padding(
                       padding:
-                          EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                          const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                       child: Text(
                         'Nenhuma solicitação ainda.',
-                        style: TextStyle(color: AppColors.gray400),
+                        style: TextStyle(color: context.colors.textTertiary),
                         textAlign: TextAlign.center,
                       ),
                     )
@@ -941,20 +941,20 @@ class _PickerRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md, vertical: AppSpacing.md),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.gray200),
+          border: Border.all(color: context.colors.divider),
           borderRadius: BorderRadius.circular(AppRadius.md),
-          color: AppColors.gray50,
+          color: context.colors.background,
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: AppColors.primaryOrange),
+            Icon(icon, size: 18, color: context.colors.primary),
             const SizedBox(width: AppSpacing.sm),
             Text(
               label,
               style: AppTypography.bodySmall.copyWith(
                 color: placeholder
-                    ? AppColors.gray400
-                    : AppColors.gray900,
+                    ? context.colors.textTertiary
+                    : context.colors.textPrimary,
               ),
             ),
           ],
@@ -987,9 +987,9 @@ class _LiveRequestTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.gray50,
+        color: context.colors.background,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.gray100),
+        border: Border.all(color: context.colors.background),
       ),
       child: Row(
         children: [
@@ -1008,7 +1008,7 @@ class _LiveRequestTile extends StatelessWidget {
                   Text(
                     request.motivoRecusa!,
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.dangerRed),
+                        .copyWith(color: context.colors.error),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

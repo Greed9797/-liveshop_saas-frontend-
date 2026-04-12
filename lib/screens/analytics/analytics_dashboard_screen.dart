@@ -6,7 +6,7 @@ import '../../providers/analytics_dashboard_provider.dart';
 import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_breakpoints.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_shadows.dart';
 import '../../theme/app_spacing.dart';
@@ -102,11 +102,11 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: AppColors.dangerRed),
+                    Icon(Icons.error_outline, size: 48, color: context.colors.error),
                     const SizedBox(height: AppSpacing.md),
                     Text('Erro ao carregar dados', style: AppTypography.bodyMedium),
                     const SizedBox(height: AppSpacing.xs),
-                    Text('$e', style: AppTypography.caption.copyWith(color: AppColors.gray500), textAlign: TextAlign.center),
+                    Text('$e', style: AppTypography.caption.copyWith(color: context.colors.textSecondary), textAlign: TextAlign.center),
                     const SizedBox(height: AppSpacing.md),
                     TextButton(
                       onPressed: () => ref.read(analyticsDashboardProvider.notifier).refresh(),
@@ -180,8 +180,8 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(
           AppSpacing.screenPadding, 16, AppSpacing.screenPadding, 16),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        border: Border(bottom: BorderSide(color: AppColors.sidebarBorder)),
+        color: context.colors.cardBackground,
+        border: Border(bottom: BorderSide(color: context.colors.divider)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -238,7 +238,7 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
                   children: [
                     Text('Painel de Analytics', style: AppTypography.h2.copyWith(fontSize: 18)),
                     Text('Análise avançada de faturamento e performance',
-                        style: AppTypography.caption.copyWith(color: AppColors.gray500)),
+                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                   ],
                 ),
                 const Spacer(),
@@ -247,7 +247,7 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.sidebarBorder),
+                    border: Border.all(color: context.colors.divider),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: clienteDropdown,
@@ -268,7 +268,7 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.sidebarBorder),
+                        border: Border.all(color: context.colors.divider),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: clienteDropdown,
@@ -308,19 +308,19 @@ class _KpiCardsRow extends StatelessWidget {
           icon: Icons.attach_money_rounded,
           label: 'Faturamento Total',
           value: _currency.format(data.kpis.faturamentoTotal),
-          color: AppColors.successGreen,
+          color: context.colors.success,
         ),
         _KpiCard(
           icon: Icons.confirmation_number_rounded,
           label: 'Total de Vendas',
           value: '${data.kpis.totalVendas}',
-          color: AppColors.infoBlue,
+          color: context.colors.info,
         ),
         _KpiCard(
           icon: Icons.trending_up_rounded,
           label: 'Ticket Médio',
           value: _currency.format(data.kpis.ticketMedio),
-          color: AppColors.primaryOrange,
+          color: context.colors.primary,
         ),
       ],
     );
@@ -346,7 +346,7 @@ class _KpiCard extends StatelessWidget {
       width: 220,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.cardBackground,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: AppShadows.md,
       ),
@@ -367,7 +367,7 @@ class _KpiCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: AppTypography.caption.copyWith(color: AppColors.gray500),
+                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -376,7 +376,7 @@ class _KpiCard extends StatelessWidget {
                   value,
                   style: AppTypography.bodyLarge.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.gray900,
+                    color: context.colors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

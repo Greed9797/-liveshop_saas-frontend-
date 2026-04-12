@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../providers/cliente_historico_provider.dart';
 import '../../routes/app_routes.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
@@ -165,7 +166,7 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'FATURAMENTO',
                 value: currency.format(data.resumo.totalFaturamento),
                 icon: Icons.attach_money,
-                iconColor: AppColors.successGreen,
+                iconColor: context.colors.success,
               ),
             ),
             SizedBox(
@@ -174,7 +175,7 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'ITENS VENDIDOS',
                 value: '${data.resumo.totalVendas}',
                 icon: Icons.shopping_bag_outlined,
-                iconColor: AppColors.primaryOrange,
+                iconColor: context.colors.primary,
               ),
             ),
             SizedBox(
@@ -183,19 +184,19 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'TOTAL DE LIVES',
                 value: '${data.resumo.totalLives}',
                 icon: Icons.live_tv_outlined,
-                iconColor: AppColors.infoBlue,
+                iconColor: context.colors.info,
               ),
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.x3l),
         if (data.lives.isEmpty)
-          const Center(
+          Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: AppSpacing.x3l),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.x3l),
               child: Text(
                 'Nenhuma live encontrada neste período.',
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.colors.textSecondary),
               ),
             ),
           )
@@ -250,31 +251,31 @@ class _LiveCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              const Icon(Icons.videocam_outlined,
-                  size: 16, color: AppColors.gray500),
+              Icon(Icons.videocam_outlined,
+                  size: 16, color: context.colors.textSecondary),
               const SizedBox(width: 4),
               Text(
                 'Cabine ${live.cabineNumero.toString().padLeft(2, '0')}',
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.colors.textSecondary),
               ),
               if (live.streamerNome != null) ...[
                 const SizedBox(width: AppSpacing.md),
-                const Icon(Icons.person_outline,
-                    size: 16, color: AppColors.gray500),
+                Icon(Icons.person_outline,
+                    size: 16, color: context.colors.textSecondary),
                 const SizedBox(width: 4),
                 Text(
                   live.streamerNome!,
-                  style: const TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: context.colors.textSecondary),
                 ),
               ],
               const Spacer(),
-              const Icon(Icons.timer_outlined,
-                  size: 16, color: AppColors.gray500),
+              Icon(Icons.timer_outlined,
+                  size: 16, color: context.colors.textSecondary),
               const SizedBox(width: 4),
               Text(
                 '${live.duracaoMin} min',
                 style: AppTypography.caption
-                    .copyWith(color: AppColors.gray500, fontWeight: FontWeight.bold),
+                    .copyWith(color: context.colors.textSecondary, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -288,13 +289,13 @@ class _LiveCard extends StatelessWidget {
                     currency.format(live.totalFaturamento),
                     style: AppTypography.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.successGreen,
+                      color: context.colors.success,
                     ),
                   ),
                   Text(
                     'faturamento',
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.textSecondary),
+                        .copyWith(color: context.colors.textSecondary),
                   ),
                 ],
               ),
@@ -310,7 +311,7 @@ class _LiveCard extends StatelessWidget {
                   Text(
                     'vendidos',
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.textSecondary),
+                        .copyWith(color: context.colors.textSecondary),
                   ),
                 ],
               ),
@@ -329,7 +330,7 @@ class _LiveCard extends StatelessWidget {
                     Text(
                       'sua comissão',
                       style: AppTypography.caption
-                          .copyWith(color: AppColors.textSecondary),
+                          .copyWith(color: context.colors.textSecondary),
                     ),
                   ],
                 ),
@@ -354,14 +355,14 @@ class _StatusBadge extends StatelessWidget {
           horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       decoration: BoxDecoration(
         color: encerrada
-            ? AppColors.gray100
-            : AppColors.successGreen.withValues(alpha: 0.15),
+            ? context.colors.background
+            : context.colors.success.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         encerrada ? 'Encerrada' : 'Em andamento',
         style: AppTypography.caption.copyWith(
-          color: encerrada ? AppColors.gray500 : AppColors.successGreen,
+          color: encerrada ? context.colors.textSecondary : context.colors.success,
           fontWeight: FontWeight.w600,
         ),
       ),

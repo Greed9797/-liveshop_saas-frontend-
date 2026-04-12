@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/configuracoes_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_radius.dart';
@@ -31,21 +31,21 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
     return AppScaffold(
       currentRoute: AppRoutes.analise,
       child: analyticsAsync.when(
-        loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primaryOrange)),
-        error: (err, _) => _buildError(err.toString()),
+        loading: () => Center(
+            child: CircularProgressIndicator(color: context.colors.primary)),
+        error: (err, _) => _buildError(context, err.toString()),
         data: (analytics) => _buildDashboard(context, analytics, metaReal),
       ),
     );
   }
 
-  Widget _buildError(String error) {
+  Widget _buildError(BuildContext context, String error) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline_rounded,
-              color: AppColors.dangerRed, size: 48),
+          Icon(Icons.error_outline_rounded,
+              color: context.colors.error, size: 48),
           const SizedBox(height: 16),
           Text(
             'Erro ao carregar o dashboard de vendas.',
@@ -56,16 +56,16 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
           Text(
             error,
             style: AppTypography.bodySmall
-                .copyWith(color: AppColors.textSecondary),
+                .copyWith(color: context.colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => ref.invalidate(franqueadoAnalyticsResumoProvider),
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryOrange),
+                backgroundColor: context.colors.primary),
             child: const Text('Tentar novamente',
-                style: TextStyle(color: AppColors.white)),
+                style: TextStyle(color: Colors.white)),
           )
         ],
       ),
@@ -90,7 +90,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
                     Text(
                       'Visão estratégica e heatmap de conversão operacional.',
                       style: AppTypography.bodySmall
-                          .copyWith(color: AppColors.textSecondary),
+                          .copyWith(color: context.colors.textSecondary),
                     ),
                   ],
                 ),
@@ -99,10 +99,10 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
                   children: [
                     Text('Exibir Meta',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.textSecondary)),
+                            .copyWith(color: context.colors.textSecondary)),
                     Switch(
                       value: _mostrarMeta,
-                      activeColor: AppColors.primaryOrange,
+                      activeColor: context.colors.primary,
                       onChanged: (val) {
                         setState(() {
                           _mostrarMeta = val;
@@ -111,8 +111,8 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.refresh_rounded,
-                          color: AppColors.textSecondary),
+                      icon: Icon(Icons.refresh_rounded,
+                          color: context.colors.textSecondary),
                       tooltip: 'Atualizar',
                       onPressed: () =>
                           ref.invalidate(franqueadoAnalyticsResumoProvider),
@@ -131,7 +131,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
               return Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.colors.cardBackground,
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                   boxShadow: AppShadows.md,
                 ),
@@ -151,7 +151,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
               child: Text(
                 'Mais relatórios de Inteligência de Negócio em breve...',
                 style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.colors.textSecondary,
                     fontStyle: FontStyle.italic),
                 textAlign: TextAlign.center,
               ),

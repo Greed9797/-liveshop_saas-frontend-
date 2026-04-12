@@ -6,7 +6,7 @@ import '../../widgets/status_badge.dart';
 import '../../widgets/metric_card.dart';
 import '../../providers/franqueado_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 
@@ -34,7 +34,7 @@ class FranqueadoScreen extends ConsumerWidget {
                     Text('Painel do Franqueador',
                         style: AppTypography.h2.copyWith(fontWeight: FontWeight.w500)),
                     Text('Visão geral de todas as unidades',
-                        style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                        style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
                   ],
                 ),
                 IconButton(
@@ -89,7 +89,7 @@ class _UnidadesContent extends StatelessWidget {
                   label: 'UNIDADES ATIVAS',
                   value: '$ativas',
                   icon: Icons.store_outlined,
-                  iconColor: AppColors.success,
+                  iconColor: context.colors.success,
                 ),
               ),
               SizedBox(
@@ -98,7 +98,7 @@ class _UnidadesContent extends StatelessWidget {
                   label: 'FAT. CONSOLIDADO',
                   value: currency.format(fatTotal),
                   icon: Icons.attach_money,
-                  iconColor: AppColors.primary,
+                  iconColor: context.colors.primary,
                 ),
               ),
               SizedBox(
@@ -107,7 +107,7 @@ class _UnidadesContent extends StatelessWidget {
                   label: 'CONTRATOS PENDENTES',
                   value: '$pendentes',
                   icon: Icons.pending_outlined,
-                  iconColor: AppColors.warning,
+                  iconColor: context.colors.warning,
                 ),
               ),
             ],
@@ -121,9 +121,9 @@ class _UnidadesContent extends StatelessWidget {
           const SizedBox(height: 10),
           Expanded(
             child: unidades.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text('Nenhuma unidade encontrada.',
-                        style: TextStyle(color: AppColors.gray500)))
+                        style: TextStyle(color: context.colors.textSecondary)))
                 : ListView.separated(
                     itemCount: unidades.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),
@@ -141,8 +141,8 @@ class _UnidadesContent extends StatelessWidget {
                               Chip(
                                 label: Text('${u.contratosPendentes} pendentes',
                                     style: AppTypography.caption.copyWith(fontSize: 11)),
-                                backgroundColor: AppColors.warning.withValues(alpha: 0.15),
-                                labelStyle: const TextStyle(color: AppColors.warning),
+                                backgroundColor: context.colors.warning.withValues(alpha: 0.15),
+                                labelStyle: TextStyle(color: context.colors.warning),
                               ),
                             const SizedBox(width: AppSpacing.sm),
                             StatusBadge(status: u.status),

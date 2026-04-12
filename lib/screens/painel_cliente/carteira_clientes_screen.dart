@@ -7,6 +7,7 @@ import '../../widgets/client_pin.dart';
 import '../../routes/app_routes.dart';
 import '../../providers/clientes_provider.dart';
 import '../../models/cliente.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
@@ -125,8 +126,8 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.people_alt_rounded,
-                          size: 18, color: AppColors.primaryOrange),
+                      Icon(Icons.people_alt_rounded,
+                          size: 18, color: context.colors.primary),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
                         'Carteira de Clientes',
@@ -138,13 +139,13 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.sm, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryOrangeLight,
+                          color: context.colors.primaryLightBg,
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Text(
                           '$total',
                           style: AppTypography.caption.copyWith(
-                              color: AppColors.primaryOrange,
+                              color: context.colors.primary,
                               fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -193,7 +194,7 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                         'Sem localização (${semCoord.length})',
                         style: AppTypography.labelSmall.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.gray500,
+                          color: context.colors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
@@ -208,7 +209,7 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                               child: Row(
                                 children: [
                                   Icon(Icons.person_outline,
-                                      size: 14, color: _statusColor(c.status)),
+                                      size: 14, color: _statusColor(c.status, context)),
                                   const SizedBox(width: AppSpacing.xs),
                                   Expanded(
                                     child: Text(
@@ -221,7 +222,7 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                                     c.status.toUpperCase(),
                                     style: AppTypography.caption.copyWith(
                                       fontSize: 9,
-                                      color: _statusColor(c.status),
+                                      color: _statusColor(c.status, context),
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -238,25 +239,23 @@ class _CarteiraMapState extends State<_CarteiraMap> {
             ),
           ),
         // Legenda
-        const Positioned(
+        Positioned(
           bottom: AppSpacing.x2l,
           right: AppSpacing.lg,
           child: Card(
             child: Padding(
-              padding: EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _LegendItem(color: AppColors.infoBlue, label: 'Negociação'),
-                  SizedBox(height: AppSpacing.xs),
-                  _LegendItem(
-                      color: AppColors.warningYellow, label: 'Enviado'),
-                  SizedBox(height: AppSpacing.xs),
-                  _LegendItem(color: AppColors.successGreen, label: 'Ativo'),
-                  SizedBox(height: AppSpacing.xs),
-                  _LegendItem(
-                      color: AppColors.dangerRed, label: 'Inadimplente'),
+                  _LegendItem(color: context.colors.info, label: 'Negociação'),
+                  const SizedBox(height: AppSpacing.xs),
+                  _LegendItem(color: context.colors.warning, label: 'Enviado'),
+                  const SizedBox(height: AppSpacing.xs),
+                  _LegendItem(color: context.colors.success, label: 'Ativo'),
+                  const SizedBox(height: AppSpacing.xs),
+                  _LegendItem(color: context.colors.error, label: 'Inadimplente'),
                 ],
               ),
             ),
@@ -266,12 +265,12 @@ class _CarteiraMapState extends State<_CarteiraMap> {
     );
   }
 
-  Color _statusColor(String status) => switch (status) {
-    'negociacao' => AppColors.infoBlue,
-    'enviado' => AppColors.warningYellow,
-    'ativo' => AppColors.successGreen,
-    'inadimplente' => AppColors.dangerRed,
-    _ => AppColors.gray400,
+  Color _statusColor(String status, BuildContext context) => switch (status) {
+    'negociacao' => context.colors.info,
+    'enviado' => context.colors.warning,
+    'ativo' => context.colors.success,
+    'inadimplente' => context.colors.error,
+    _ => context.colors.textTertiary,
   };
 }
 

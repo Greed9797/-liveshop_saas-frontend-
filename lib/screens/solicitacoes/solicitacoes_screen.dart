@@ -5,10 +5,10 @@ import 'package:intl/intl.dart';
 import '../../providers/solicitacoes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
+import '../../theme/theme.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/status_badge.dart';
@@ -42,9 +42,9 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
       await ref.read(solicitacoesProvider.notifier).aprovar(id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Live aprovada com sucesso!'),
-          backgroundColor: AppColors.successGreen,
+        SnackBar(
+          content: const Text('Live aprovada com sucesso!'),
+          backgroundColor: context.colors.success,
         ),
       );
     } on ApiException catch (e) {
@@ -52,7 +52,7 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
-          backgroundColor: AppColors.dangerRed,
+          backgroundColor: context.colors.error,
           duration: const Duration(seconds: 5),
         ),
       );
@@ -80,7 +80,7 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(e.message),
-                backgroundColor: AppColors.dangerRed,
+                backgroundColor: context.colors.error,
               ),
             );
           }
@@ -104,13 +104,13 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
         children: [
           // ── Barra de abas ──
           Material(
-            color: AppColors.white,
+            color: context.colors.cardBackground,
             elevation: 1,
             child: TabBar(
               controller: _tabController,
-              labelColor: AppColors.primaryOrange,
-              unselectedLabelColor: AppColors.gray500,
-              indicatorColor: AppColors.primaryOrange,
+              labelColor: context.colors.primary,
+              unselectedLabelColor: context.colors.textSecondary,
+              indicatorColor: context.colors.primary,
               tabs: [
                 Tab(
                   text: pendentesCount > 0
@@ -134,8 +134,8 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: AppColors.dangerRed),
+                      Icon(Icons.error_outline,
+                          size: 48, color: context.colors.error),
                       const SizedBox(height: AppSpacing.md),
                       Text('Erro: $error',
                           textAlign: TextAlign.center),
@@ -208,11 +208,11 @@ class _RecusarDialog extends StatelessWidget {
     return AlertDialog(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg)),
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.block_rounded, color: AppColors.dangerRed, size: 20),
-          SizedBox(width: 8),
-          Text('Motivo da recusa'),
+          Icon(Icons.block_rounded, color: context.colors.error, size: 20),
+          const SizedBox(width: 8),
+          const Text('Motivo da recusa'),
         ],
       ),
       content: TextField(
@@ -232,7 +232,7 @@ class _RecusarDialog extends StatelessWidget {
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.dangerRed),
+              backgroundColor: context.colors.error),
           onPressed: () {
             final motivo = ctrl.text.trim();
             if (motivo.isEmpty) {
@@ -245,7 +245,7 @@ class _RecusarDialog extends StatelessWidget {
             onConfirmar(motivo);
           },
           child: const Text('Confirmar',
-              style: TextStyle(color: AppColors.white)),
+              style: TextStyle(color: Colors.white)),
         ),
       ],
     );
@@ -282,12 +282,12 @@ class _SolicitacoesLista extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(emptyIcon, size: 64, color: AppColors.gray300),
+            Icon(emptyIcon, size: 64, color: context.colors.textTertiary),
             const SizedBox(height: AppSpacing.lg),
             Text(
               emptyMessage,
               style: AppTypography.bodyMedium
-                  .copyWith(color: AppColors.gray500),
+                  .copyWith(color: context.colors.textSecondary),
             ),
           ],
         ),
@@ -296,7 +296,7 @@ class _SolicitacoesLista extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: onRefresh,
-      color: AppColors.primaryOrange,
+      color: context.colors.primary,
       child: ListView.separated(
         padding: const EdgeInsets.all(AppSpacing.screenPadding),
         itemCount: items.length,
@@ -363,14 +363,14 @@ class _SolicitacaoCardState extends State<_SolicitacaoCard> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryOrange.withValues(alpha: 0.12),
+                  color: context.colors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Text(
                   'Cabine ${s.cabineNumero.toString().padLeft(2, '0')}',
                   style: AppTypography.caption.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primaryOrange,
+                    color: context.colors.primary,
                   ),
                 ),
               ),
@@ -392,22 +392,22 @@ class _SolicitacaoCardState extends State<_SolicitacaoCard> {
           // ── Data e horário ──
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined,
-                  size: 14, color: AppColors.gray400),
+              Icon(Icons.calendar_today_outlined,
+                  size: 14, color: context.colors.textTertiary),
               const SizedBox(width: 4),
               Text(
                 _formatDate(s.dataSolicitada),
                 style: AppTypography.caption
-                    .copyWith(color: AppColors.gray600),
+                    .copyWith(color: context.colors.textSecondary),
               ),
               const SizedBox(width: AppSpacing.md),
-              const Icon(Icons.access_time_rounded,
-                  size: 14, color: AppColors.gray400),
+              Icon(Icons.access_time_rounded,
+                  size: 14, color: context.colors.textTertiary),
               const SizedBox(width: 4),
               Text(
                 '${s.horaInicioDisplay} – ${s.horaFimDisplay}',
                 style: AppTypography.caption
-                    .copyWith(color: AppColors.gray600),
+                    .copyWith(color: context.colors.textSecondary),
               ),
             ],
           ),
@@ -418,14 +418,14 @@ class _SolicitacaoCardState extends State<_SolicitacaoCard> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.chat_bubble_outline,
-                    size: 13, color: AppColors.gray400),
+                Icon(Icons.chat_bubble_outline,
+                    size: 13, color: context.colors.textTertiary),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     s.observacao!,
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.gray500),
+                        .copyWith(color: context.colors.textSecondary),
                   ),
                 ),
               ],
@@ -440,19 +440,19 @@ class _SolicitacaoCardState extends State<_SolicitacaoCard> {
             Container(
               padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
-                color: AppColors.dangerRed.withValues(alpha: 0.07),
+                color: context.colors.error.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.block_rounded,
-                      size: 13, color: AppColors.dangerRed),
+                  Icon(Icons.block_rounded,
+                      size: 13, color: context.colors.error),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       s.motivoRecusa!,
                       style: AppTypography.caption
-                          .copyWith(color: AppColors.dangerRed),
+                          .copyWith(color: context.colors.error),
                     ),
                   ),
                 ],
@@ -467,12 +467,12 @@ class _SolicitacaoCardState extends State<_SolicitacaoCard> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 OutlinedButton.icon(
-                  icon: const Icon(Icons.close_rounded,
-                      size: 16, color: AppColors.dangerRed),
-                  label: const Text('Recusar',
-                      style: TextStyle(color: AppColors.dangerRed)),
+                  icon: Icon(Icons.close_rounded,
+                      size: 16, color: context.colors.error),
+                  label: Text('Recusar',
+                      style: TextStyle(color: context.colors.error)),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.dangerRed),
+                    side: BorderSide(color: context.colors.error),
                   ),
                   onPressed: _isAprovando
                       ? null
@@ -486,15 +486,15 @@ class _SolicitacaoCardState extends State<_SolicitacaoCard> {
                           height: 14,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppColors.white,
+                            color: Colors.white,
                           ),
                         )
                       : const Icon(Icons.check_rounded,
-                          size: 16, color: AppColors.white),
+                          size: 16, color: Colors.white),
                   label: const Text('Aprovar',
-                      style: TextStyle(color: AppColors.white)),
+                      style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.successGreen),
+                      backgroundColor: context.colors.success),
                   onPressed: _isAprovando
                       ? null
                       : () async {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_colors.dart';
+import '../../../theme/theme.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_typography.dart';
@@ -45,8 +45,8 @@ class _ReprovarModalState extends State<ReprovarModal> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded,
-                      color: AppColors.dangerRed),
+                  Icon(Icons.warning_amber_rounded,
+                      color: context.colors.error),
                   const SizedBox(width: 12),
                   Text('Reprovar Operação', style: AppTypography.h3),
                 ],

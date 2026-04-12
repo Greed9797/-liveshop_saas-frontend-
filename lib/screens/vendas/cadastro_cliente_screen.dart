@@ -5,7 +5,7 @@ import '../../widgets/app_scaffold.dart';
 import '../../widgets/action_button.dart';
 import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
@@ -263,12 +263,12 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Row(children: [
-                  const Icon(Icons.check_circle_outline,
-                      color: AppColors.success, size: 14),
+                  Icon(Icons.check_circle_outline,
+                      color: context.colors.success, size: 14),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
                       'Geolocalizado (${_lat!.toStringAsFixed(4)}, ${_lng!.toStringAsFixed(4)})',
-                      style: AppTypography.labelSmall.copyWith(color: AppColors.success)),
+                      style: AppTypography.labelSmall.copyWith(color: context.colors.success)),
                 ]),
               ),
           ],
@@ -284,17 +284,17 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
             const SizedBox(height: AppSpacing.lg),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.gray300),
+                border: Border.all(color: context.colors.textTertiary),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: SwitchListTile(
                 title: const Text('Já vende no TikTok Live?'),
                 subtitle: Text(
                   _jaVendeTikTok ? 'Sim — informe o handle abaixo' : 'Não',
-                  style: AppTypography.caption.copyWith(color: AppColors.gray400),
+                  style: AppTypography.caption.copyWith(color: context.colors.textTertiary),
                 ),
                 value: _jaVendeTikTok,
-                activeColor: AppColors.primary,
+                activeColor: context.colors.primary,
                 onChanged: (v) => setState(() => _jaVendeTikTok = v),
               ),
             ),
@@ -329,7 +329,7 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
           SizedBox(
               width: 80,
               child: Text(label,
-                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary))),
+                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary))),
           Expanded(child: Text(value, style: AppTypography.caption)),
         ]),
       );
@@ -423,8 +423,8 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
               label: Text(_docType.toUpperCase(),
                   style: AppTypography.caption.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.gray700)),
-              backgroundColor: AppColors.gray200,
+                      color: context.colors.textPrimary)),
+              backgroundColor: context.colors.divider,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               padding: EdgeInsets.zero,
             ),
@@ -479,18 +479,18 @@ class _StepIndicator extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: done
-                          ? AppColors.success
+                          ? context.colors.success
                           : active
-                              ? AppColors.primary
-                              : AppColors.gray200,
+                              ? context.colors.primary
+                              : context.colors.divider,
                     ),
                     child: Center(
                       child: done
                           ? const Icon(Icons.check,
-                              size: 14, color: AppColors.white)
+                              size: 14, color: Colors.white)
                           : Text('${i + 1}',
                               style: AppTypography.caption.copyWith(
-                                  color: active ? AppColors.white : AppColors.gray500,
+                                  color: active ? Colors.white : context.colors.textSecondary,
                                   fontWeight: FontWeight.w700)),
                     ),
                   ),
@@ -498,14 +498,14 @@ class _StepIndicator extends StatelessWidget {
                   Text(_labels[i],
                       style: AppTypography.caption.copyWith(
                           fontSize: 9,
-                          color: active ? AppColors.primary : AppColors.gray400)),
+                          color: active ? context.colors.primary : context.colors.textTertiary)),
                 ],
               ),
               if (i < _labels.length - 1)
                 Expanded(
                     child: Container(
                         height: 1,
-                        color: done ? AppColors.success : AppColors.gray300,
+                        color: done ? context.colors.success : context.colors.textTertiary,
                         margin: const EdgeInsets.only(bottom: AppSpacing.lg))),
             ],
           ),

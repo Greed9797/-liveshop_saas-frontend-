@@ -8,6 +8,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
+import '../../theme/theme.dart';
 
 class FinanceiroScreen extends ConsumerWidget {
   const FinanceiroScreen({super.key});
@@ -21,12 +22,12 @@ class FinanceiroScreen extends ConsumerWidget {
         child: Column(
           children: [
             Container(
-              color: AppColors.white,
-              child: const TabBar(
-                labelColor: AppColors.primaryOrange,
-                unselectedLabelColor: AppColors.gray500,
-                indicatorColor: AppColors.primaryOrange,
-                tabs: [
+              color: context.colors.cardBackground,
+              child: TabBar(
+                labelColor: context.colors.primary,
+                unselectedLabelColor: context.colors.textSecondary,
+                indicatorColor: context.colors.primary,
+                tabs: const [
                   Tab(
                       icon:
                           Icon(Icons.account_balance_wallet_outlined, size: 18),
@@ -86,11 +87,11 @@ class _OperacionalTab extends ConsumerWidget {
             error: (_, __) => const SizedBox.shrink(),
             data: (r) => Row(
               children: [
-                _QuickMetric('BRUTO', r.fatBruto, AppColors.infoBlue),
+                _QuickMetric('BRUTO', r.fatBruto, context.colors.info),
                 const SizedBox(width: AppSpacing.md),
-                _QuickMetric('LÍQUIDO', r.fatLiquido, AppColors.successGreen),
+                _QuickMetric('LÍQUIDO', r.fatLiquido, context.colors.success),
                 const SizedBox(width: AppSpacing.md),
-                _QuickMetric('CUSTOS', r.totalCustos, AppColors.dangerRed),
+                _QuickMetric('CUSTOS', r.totalCustos, context.colors.error),
               ],
             ),
           ),
@@ -103,7 +104,7 @@ class _OperacionalTab extends ConsumerWidget {
           fluxoAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, __) => Text('Erro ao carregar fluxo de caixa',
-                style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
             data: (fluxo) => _FluxoCaixaBar(fluxo: fluxo),
           ),
           const SizedBox(height: 28),
@@ -130,7 +131,7 @@ class _OperacionalTab extends ConsumerWidget {
             children: _categorias
                 .map((cat) => ActionChip(
                       avatar: Icon(cat.icon,
-                          size: 16, color: AppColors.primaryOrange),
+                          size: 16, color: context.colors.primary),
                       label:
                           Text(cat.label, style: AppTypography.caption),
                       onPressed: () =>
@@ -149,7 +150,7 @@ class _OperacionalTab extends ConsumerWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2l),
                       child: Text('Nenhum custo cadastrado este mês.',
-                          style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                          style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
                     ),
                   )
                 : Column(
@@ -217,7 +218,7 @@ class _OperacionalTab extends ConsumerWidget {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryOrange),
+                  backgroundColor: context.colors.primary),
               onPressed: () async {
                 final valorStr = valorCtrl.text.replaceAll(',', '.');
                 if (descCtrl.text.isEmpty || valorStr.isEmpty) return;
@@ -241,7 +242,7 @@ class _OperacionalTab extends ConsumerWidget {
                 }
               },
               child:
-                  Text('SALVAR', style: AppTypography.bodySmall.copyWith(color: AppColors.white)),
+                  Text('SALVAR', style: AppTypography.bodySmall.copyWith(color: Colors.white)),
             ),
           ],
         ),
@@ -279,7 +280,7 @@ class _PorClienteTab extends ConsumerWidget {
           children: [
             // Header da tabela
             Container(
-              color: AppColors.surfaceGray,
+              color: context.colors.background,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: 10),
               child: Row(
                 children: [
@@ -288,27 +289,27 @@ class _PorClienteTab extends ConsumerWidget {
                       child: Text('CLIENTE',
                           style: AppTypography.labelSmall.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.gray500))),
+                              color: context.colors.textSecondary))),
                   Expanded(
                       flex: 3,
                       child: Text('NICHO',
                           style: AppTypography.labelSmall.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.gray500))),
+                              color: context.colors.textSecondary))),
                   Expanded(
                       flex: 3,
                       child: Text('FATURAMENTO',
                           textAlign: TextAlign.right,
                           style: AppTypography.labelSmall.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.gray500))),
+                              color: context.colors.textSecondary))),
                   Expanded(
                       flex: 3,
                       child: Text('PARTICIPAÇÃO',
                           textAlign: TextAlign.right,
                           style: AppTypography.labelSmall.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.gray500))),
+                              color: context.colors.textSecondary))),
                 ],
               ),
             ),
@@ -317,7 +318,7 @@ class _PorClienteTab extends ConsumerWidget {
               child: clientes.isEmpty
                   ? Center(
                       child: Text('Nenhum faturamento registrado este mês.',
-                          style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)))
+                          style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)))
                   : ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                       itemCount: clientes.length,
@@ -340,7 +341,7 @@ class _PorClienteTab extends ConsumerWidget {
                                 child: Text(
                                   c.nicho ?? '—',
                                   style: AppTypography.caption.copyWith(
-                                      color: AppColors.gray500),
+                                      color: context.colors.textSecondary),
                                 ),
                               ),
                               Expanded(
@@ -361,7 +362,7 @@ class _PorClienteTab extends ConsumerWidget {
                                       '${pct.toStringAsFixed(1)}%',
                                       textAlign: TextAlign.right,
                                       style: AppTypography.labelSmall.copyWith(
-                                          color: AppColors.primaryOrange,
+                                          color: context.colors.primary,
                                           fontWeight: FontWeight.w600),
                                     ),
                                                     const SizedBox(height: 3),
@@ -370,10 +371,10 @@ class _PorClienteTab extends ConsumerWidget {
                                       child: LinearProgressIndicator(
                                         value: pct / 100,
                                         minHeight: 4,
-                                        backgroundColor: AppColors.surfaceGray,
+                                        backgroundColor: context.colors.background,
                                         valueColor:
-                                            const AlwaysStoppedAnimation(
-                                                AppColors.primaryOrange),
+                                            AlwaysStoppedAnimation(
+                                                context.colors.primary),
                                       ),
                                     ),
                                   ],
@@ -390,10 +391,10 @@ class _PorClienteTab extends ConsumerWidget {
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
-                decoration: const BoxDecoration(
-                  color: AppColors.surfaceGray,
+                decoration: BoxDecoration(
+                  color: context.colors.background,
                   border:
-                      Border(top: BorderSide(color: AppColors.surfaceDivider)),
+                      Border(top: BorderSide(color: context.colors.divider)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -401,12 +402,12 @@ class _PorClienteTab extends ConsumerWidget {
                     Text('TOTAL DO MÊS: ',
                         style: AppTypography.labelLarge.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.gray500)),
+                            color: context.colors.textSecondary)),
                     Text(
                       'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}',
                       style: AppTypography.bodyMedium.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primaryOrange),
+                          color: context.colors.primary),
                     ),
                   ],
                 ),
@@ -439,14 +440,14 @@ class _ReceiveisTab extends ConsumerWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(AppSpacing.x3l),
               decoration: BoxDecoration(
-                color: AppColors.infoPurple,
+                color: AppColors.infoPurple, // mode-independent, keep as-is
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Column(
                 children: [
                   Text('RECEBÍVEIS DO FRANQUEADO',
                       style: AppTypography.caption.copyWith(
-                          color: AppColors.white,
+                          color: Colors.white,
                           letterSpacing: 1.2,
                           fontWeight: FontWeight.w700)),
                   const SizedBox(height: 28),
@@ -481,16 +482,16 @@ class _ReceiveisTab extends ConsumerWidget {
                     const SizedBox(height: AppSpacing.lg),
                     _BrutoLiquidoBar(resumo: resumo),
                     const SizedBox(height: AppSpacing.lg),
-                    const Row(
+                    Row(
                       children: [
                         _LegendDot(
-                            color: AppColors.infoBlue, label: 'Fat. Bruto'),
-                        SizedBox(width: AppSpacing.lg),
+                            color: context.colors.info, label: 'Fat. Bruto'),
+                        const SizedBox(width: AppSpacing.lg),
                         _LegendDot(
-                            color: AppColors.successGreen,
+                            color: context.colors.success,
                             label: 'Fat. Líquido'),
-                        SizedBox(width: AppSpacing.lg),
-                        _LegendDot(color: AppColors.dangerRed, label: 'Custos'),
+                        const SizedBox(width: AppSpacing.lg),
+                        _LegendDot(color: context.colors.error, label: 'Custos'),
                       ],
                     ),
                   ],
@@ -503,14 +504,14 @@ class _ReceiveisTab extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.receipt_long_rounded,
-                    color: AppColors.primaryOrange),
+                icon: Icon(Icons.receipt_long_rounded,
+                    color: context.colors.primary),
                 label: Text('VER MEUS BOLETOS',
                     style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.primaryOrange,
+                        color: context.colors.primary,
                         fontWeight: FontWeight.w700)),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.primaryOrange),
+                  side: BorderSide(color: context.colors.primary),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg)),
@@ -580,7 +581,7 @@ class _FluxoCaixaBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.compactPadding),
       decoration: BoxDecoration(
-        color: AppColors.surfaceGray,
+        color: context.colors.background,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
@@ -595,13 +596,13 @@ class _FluxoCaixaBar extends StatelessWidget {
                         style: AppTypography.caption.copyWith(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.successGreen,
+                            color: context.colors.success,
                             letterSpacing: 0.8)),
                     const SizedBox(height: 2),
                     Text(_fmt(fluxo.totalEntradas),
                         style: AppTypography.bodyLarge.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.successGreen)),
+                            color: context.colors.success)),
                   ],
                 ),
               ),
@@ -610,8 +611,8 @@ class _FluxoCaixaBar extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: fluxo.saldo >= 0
-                      ? AppColors.successGreen.withValues(alpha: 0.1)
-                      : AppColors.dangerRed.withValues(alpha: 0.1),
+                      ? context.colors.success.withValues(alpha: 0.1)
+                      : context.colors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Text(
@@ -619,8 +620,8 @@ class _FluxoCaixaBar extends StatelessWidget {
                   style: AppTypography.caption.copyWith(
                       fontWeight: FontWeight.w700,
                       color: fluxo.saldo >= 0
-                          ? AppColors.successGreen
-                          : AppColors.dangerRed),
+                          ? context.colors.success
+                          : context.colors.error),
                 ),
               ),
               Expanded(
@@ -631,13 +632,13 @@ class _FluxoCaixaBar extends StatelessWidget {
                         style: AppTypography.caption.copyWith(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.dangerRed,
+                            color: context.colors.error,
                             letterSpacing: 0.8)),
                     const SizedBox(height: 2),
                     Text(_fmt(fluxo.totalSaidas),
                         style: AppTypography.bodyLarge.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.dangerRed)),
+                            color: context.colors.error)),
                   ],
                 ),
               ),
@@ -650,11 +651,11 @@ class _FluxoCaixaBar extends StatelessWidget {
               children: [
                 Expanded(
                   flex: (pctEntradas * 100).round().clamp(1, 99),
-                  child: Container(height: 12, color: AppColors.successGreen),
+                  child: Container(height: 12, color: context.colors.success),
                 ),
                 Expanded(
                   flex: ((1 - pctEntradas) * 100).round().clamp(1, 99),
-                  child: Container(height: 12, color: AppColors.dangerRed),
+                  child: Container(height: 12, color: context.colors.error),
                 ),
               ],
             ),
@@ -674,32 +675,32 @@ class _BrutoLiquidoBar extends StatelessWidget {
     final max = (resumo.fatBruto > 0 ? resumo.fatBruto : 1).toDouble();
     return Column(
       children: [
-        _buildBar('Bruto', resumo.fatBruto.toDouble(), max, AppColors.infoBlue),
+        _buildBar(context, 'Bruto', resumo.fatBruto.toDouble(), max, context.colors.info),
         const SizedBox(height: AppSpacing.sm),
-        _buildBar('Líquido', resumo.fatLiquido.toDouble(), max,
-            AppColors.successGreen),
+        _buildBar(context, 'Líquido', resumo.fatLiquido.toDouble(), max,
+            context.colors.success),
         const SizedBox(height: AppSpacing.sm),
-        _buildBar(
-            'Custos', resumo.totalCustos.toDouble(), max, AppColors.dangerRed),
+        _buildBar(context,
+            'Custos', resumo.totalCustos.toDouble(), max, context.colors.error),
       ],
     );
   }
 
-  Widget _buildBar(String label, double value, double max, Color color) {
+  Widget _buildBar(BuildContext context, String label, double value, double max, Color color) {
     final pct = (value / max).clamp(0.0, 1.0);
     return Row(
       children: [
         SizedBox(
             width: 60,
             child: Text(label,
-                style: AppTypography.labelSmall.copyWith(color: AppColors.gray500))),
+                style: AppTypography.labelSmall.copyWith(color: context.colors.textSecondary))),
         Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.xs),
             child: LinearProgressIndicator(
               value: pct,
               minHeight: 14,
-              backgroundColor: AppColors.surfaceGray,
+              backgroundColor: context.colors.background,
               valueColor: AlwaysStoppedAnimation(color),
             ),
           ),
@@ -736,16 +737,16 @@ class _CustoTile extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: AppColors.primaryOrangeLight,
+          color: context.colors.primaryLightBg,
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
-        child: const Icon(Icons.receipt_outlined,
-            color: AppColors.primaryOrange, size: 18),
+        child: Icon(Icons.receipt_outlined,
+            color: context.colors.primary, size: 18),
       ),
       title: Text(custo.descricao,
           style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w500)),
       subtitle: Text(_tipoLabel[custo.tipo] ?? custo.tipo,
-          style: AppTypography.labelSmall.copyWith(color: AppColors.gray500)),
+          style: AppTypography.labelSmall.copyWith(color: context.colors.textSecondary)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -753,12 +754,12 @@ class _CustoTile extends StatelessWidget {
             'R\$ ${custo.valor.toStringAsFixed(2).replaceAll('.', ',')}',
             style: AppTypography.labelLarge.copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppColors.dangerRed),
+                color: context.colors.error),
           ),
           const SizedBox(width: AppSpacing.xs),
           IconButton(
             icon:
-                const Icon(Icons.delete_outline, size: 18, color: AppColors.gray400),
+                Icon(Icons.delete_outline, size: 18, color: context.colors.textTertiary),
             onPressed: () async {
               await ref.read(custosProvider.notifier).deletar(custo.id);
               ref.invalidate(financeiroProvider);
@@ -785,7 +786,7 @@ class _LegendDot extends StatelessWidget {
             height: 10,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: AppSpacing.xs),
-        Text(label, style: AppTypography.labelSmall.copyWith(color: AppColors.gray500)),
+        Text(label, style: AppTypography.labelSmall.copyWith(color: context.colors.textSecondary)),
       ],
     );
   }

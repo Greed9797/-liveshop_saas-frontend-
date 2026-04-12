@@ -7,7 +7,7 @@ import '../../providers/manuais_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 
 /// Lista de manuais e documentos da franqueadora
 class ManuaisScreen extends ConsumerWidget {
@@ -45,7 +45,7 @@ class ManuaisScreen extends ConsumerWidget {
                   data: (manuais) => manuais.isEmpty
                       ? Center(
                           child: Text('Nenhum documento disponível.',
-                              style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)))
+                              style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)))
                       : ListView.separated(
                           itemCount: manuais.length,
                           separatorBuilder: (_, __) => const Divider(height: 1),
@@ -54,8 +54,8 @@ class ManuaisScreen extends ConsumerWidget {
                             final atualStr =
                                 '${m.atualizadoEm.day.toString().padLeft(2, '0')}/${m.atualizadoEm.month.toString().padLeft(2, '0')}/${m.atualizadoEm.year}';
                             return ListTile(
-                              leading: const Icon(Icons.picture_as_pdf,
-                                  color: AppColors.dangerRed, size: 28),
+                              leading: Icon(Icons.picture_as_pdf,
+                                  color: context.colors.error, size: 28),
                               title: Text(m.titulo,
                                   style: const TextStyle(fontWeight: FontWeight.w500)),
                               subtitle: Text('Atualizado em: $atualStr'),

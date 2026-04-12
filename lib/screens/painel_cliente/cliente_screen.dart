@@ -4,11 +4,11 @@ import 'package:intl/intl.dart';
 
 import '../../providers/cliente_dashboard_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_shadows.dart';
+import '../../theme/theme.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/metric_card.dart';
@@ -77,17 +77,17 @@ class _ClienteContent extends StatelessWidget {
       children: [
         Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 28,
-              backgroundColor: AppColors.primaryOrange,
-              child: Icon(Icons.store, color: AppColors.white, size: 28),
+              backgroundColor: context.colors.primary,
+              child: const Icon(Icons.store, color: Colors.white, size: 28),
             ),
             const SizedBox(width: AppSpacing.md),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Minha Loja', style: AppTypography.h3.copyWith(fontWeight: FontWeight.w500)),
-                Text('Visão Geral do Parceiro', style: AppTypography.labelLarge.copyWith(color: AppColors.gray500)),
+                Text('Visão Geral do Parceiro', style: AppTypography.labelLarge.copyWith(color: context.colors.textSecondary)),
               ],
             ),
           ],
@@ -102,7 +102,7 @@ class _ClienteContent extends StatelessWidget {
           _LivePanel(live: dashboard.liveAtiva!),
           const SizedBox(height: AppSpacing.x2l),
         ],
-        Text('RESULTADOS DO MÊS', style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: AppColors.gray700)),
+        Text('RESULTADOS DO MÊS', style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: context.colors.textPrimary)),
         const SizedBox(height: AppSpacing.md),
         Wrap(
           spacing: AppSpacing.md,
@@ -114,7 +114,7 @@ class _ClienteContent extends StatelessWidget {
                 label: 'CRESCIMENTO',
                 value: '${crescendo ? '+' : ''}${dashboard.crescimentoPct}%',
                 icon: crescendo ? Icons.trending_up : Icons.trending_down,
-                iconColor: crescendo ? AppColors.success : AppColors.danger,
+                iconColor: crescendo ? context.colors.success : context.colors.error,
               ),
             ),
             SizedBox(
@@ -123,7 +123,7 @@ class _ClienteContent extends StatelessWidget {
                 label: 'VENDAS DO MÊS',
                 value: _currency.format(dashboard.faturamentoMes),
                 icon: Icons.attach_money,
-                iconColor: AppColors.primary,
+                iconColor: context.colors.primary,
               ),
             ),
             SizedBox(
@@ -141,7 +141,7 @@ class _ClienteContent extends StatelessWidget {
                 label: 'ITENS VENDIDOS',
                 value: '${dashboard.volumeVendas}',
                 icon: Icons.inventory_2_outlined,
-                iconColor: AppColors.infoBlue,
+                iconColor: context.colors.info,
               ),
             ),
           ],
@@ -185,14 +185,14 @@ class _ProximaReservaCard extends StatelessWidget {
     return Card(
       elevation: 0,
       color: hasReserva
-          ? AppColors.infoBlue.withValues(alpha: 0.10)
-          : AppColors.warningYellow.withValues(alpha: 0.10),
+          ? context.colors.info.withValues(alpha: 0.10)
+          : context.colors.warning.withValues(alpha: 0.10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.xl),
         side: BorderSide(
           color: hasReserva
-              ? AppColors.infoBlue.withValues(alpha: 0.35)
-              : AppColors.warningYellow.withValues(alpha: 0.35),
+              ? context.colors.info.withValues(alpha: 0.35)
+              : context.colors.warning.withValues(alpha: 0.35),
         ),
       ),
       child: Padding(
@@ -203,12 +203,12 @@ class _ProximaReservaCard extends StatelessWidget {
             CircleAvatar(
               radius: 22,
               backgroundColor:
-                  hasReserva ? AppColors.infoBlue : AppColors.warningYellow,
+                  hasReserva ? context.colors.info : context.colors.warning,
               child: Icon(
                 hasReserva
                     ? Icons.event_available_outlined
                     : Icons.event_busy_outlined,
-                color: AppColors.white,
+                color: Colors.white,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -231,12 +231,12 @@ class _ProximaReservaCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       subtitleBuilder(reserva!),
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: context.colors.textSecondary),
                     ),
                   ] else ...[
-                    const Text(
+                    Text(
                       'No momento não há cabine vinculada à sua operação. Fale com seu franqueado para abrir a próxima janela de live.',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: context.colors.textSecondary),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     Wrap(
@@ -244,8 +244,8 @@ class _ProximaReservaCard extends StatelessWidget {
                       children: [
                         Chip(
                           label: const Text('CTA consultivo'),
-                          backgroundColor: AppColors.white,
-                          side: const BorderSide(color: AppColors.gray200),
+                          backgroundColor: context.colors.cardBackground,
+                          side: BorderSide(color: context.colors.divider),
                         ),
                       ],
                     ),
@@ -275,7 +275,7 @@ class _BenchmarkSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('BENCHMARK DA UNIDADE', style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: AppColors.gray700)),
+        Text('BENCHMARK DA UNIDADE', style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: context.colors.textPrimary)),
         const SizedBox(height: AppSpacing.md),
         Wrap(
           spacing: AppSpacing.lg,
@@ -354,7 +354,7 @@ class _BenchmarkCard extends StatelessWidget {
                 style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Text(description,
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: context.colors.textSecondary)),
             if (benchmark.nicho != null) ...[
               const SizedBox(height: AppSpacing.sm),
               Text('Nicho: ${benchmark.nicho}',
@@ -369,15 +369,15 @@ class _BenchmarkCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 minHeight: 10,
                 value: progress,
-                backgroundColor: AppColors.gray200,
+                backgroundColor: context.colors.divider,
                 color: benchmark.acimaDaMedia
-                    ? AppColors.successGreen
-                    : AppColors.primaryOrange,
+                    ? context.colors.success
+                    : context.colors.primary,
               ),
             ),
             const SizedBox(height: 10),
             Text(_subCopy(),
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: context.colors.textSecondary)),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -419,7 +419,7 @@ class _BenchmarkMetric extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+            style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
         const SizedBox(height: 4),
         Text(value, style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w700)),
       ],
@@ -433,17 +433,17 @@ class _BenchmarkEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      backgroundColor: AppColors.surfaceGray,
+      backgroundColor: context.colors.background,
       boxShadow: const [],
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('BENCHMARK DA UNIDADE', style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: AppColors.gray700)),
+          Text('BENCHMARK DA UNIDADE', style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: context.colors.textPrimary)),
           const SizedBox(height: AppSpacing.sm),
-          const Text(
+          Text(
             'Os dados comparativos ainda estão em processamento. Assim que houver amostra suficiente, vamos mostrar como a sua operação se posiciona no nicho e na unidade.',
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: context.colors.textSecondary),
           ),
         ],
       ),
@@ -484,9 +484,9 @@ class _LivePanelState extends State<_LivePanel>
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.cardBackground,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.successGreen, width: 2),
+        border: Border.all(color: context.colors.success, width: 2),
         boxShadow: AppShadows.lg,
       ),
       padding: const EdgeInsets.all(AppSpacing.xl),
@@ -499,17 +499,17 @@ class _LivePanelState extends State<_LivePanel>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
                   decoration: BoxDecoration(
-                    color: AppColors.successGreen,
+                    color: context.colors.success,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.live_tv, color: AppColors.white, size: 16),
+                      const Icon(Icons.live_tv, color: Colors.white, size: 16),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
                         'AO VIVO AGORA',
                         style: AppTypography.caption.copyWith(
-                          color: AppColors.white,
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -521,10 +521,10 @@ class _LivePanelState extends State<_LivePanel>
               Text('Cabine ${widget.live.cabineNumero}',
                   style: const TextStyle(fontWeight: FontWeight.w500)),
               const Spacer(),
-              const Icon(Icons.timer_outlined, color: AppColors.gray400, size: 18),
+              Icon(Icons.timer_outlined, color: context.colors.textTertiary, size: 18),
               const SizedBox(width: AppSpacing.xs),
               Text('${widget.live.duracaoMin} min',
-                  style: AppTypography.caption.copyWith(color: AppColors.gray400, fontWeight: FontWeight.bold)),
+                  style: AppTypography.caption.copyWith(color: context.colors.textTertiary, fontWeight: FontWeight.bold)),
             ],
           ),
           const Divider(height: 32),
@@ -535,17 +535,17 @@ class _LivePanelState extends State<_LivePanel>
             children: [
               _LiveMetric(
                   icon: Icons.visibility,
-                  color: AppColors.infoBlue,
+                  color: context.colors.info,
                   label: 'Espectadores',
                   value: '${widget.live.viewerCount}'),
               _LiveMetric(
                   icon: Icons.shopping_cart,
-                  color: AppColors.primaryOrange,
+                  color: context.colors.primary,
                   label: 'GMV Atual',
                   value: currency.format(widget.live.gmvAtual)),
               _LiveMetric(
                   icon: Icons.savings,
-                  color: AppColors.successGreen,
+                  color: context.colors.success,
                   label: 'Sua Comissão',
                   value: currency.format(widget.live.comissaoProjetada)),
             ],
@@ -579,7 +579,7 @@ class _LiveMetric extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(value,
               style: AppTypography.h2.copyWith(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(label, style: AppTypography.caption.copyWith(color: AppColors.gray400)),
+          Text(label, style: AppTypography.caption.copyWith(color: context.colors.textTertiary)),
         ],
       ),
     );
@@ -604,10 +604,10 @@ class _MaisVendidosCard extends StatelessWidget {
               style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold)),
           const Divider(),
           if (produtos.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(AppSpacing.compactPadding),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.compactPadding),
               child: Text('Nenhuma venda registrada neste mês.',
-                  style: TextStyle(color: AppColors.gray400)),
+                  style: TextStyle(color: context.colors.textTertiary)),
             ),
           ...produtos.map((p) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
@@ -616,14 +616,14 @@ class _MaisVendidosCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.sm),
                       decoration: BoxDecoration(
-                        color: AppColors.gray100,
+                        color: context.colors.background,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Text(
                         '${p.qty}x',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary),
+                            color: context.colors.primary),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.md),
@@ -633,8 +633,8 @@ class _MaisVendidosCard extends StatelessWidget {
                               const TextStyle(fontWeight: FontWeight.w500)),
                     ),
                     Text(currency.format(p.valor),
-                        style: const TextStyle(
-                            color: AppColors.successGreen,
+                        style: TextStyle(
+                            color: context.colors.success,
                             fontWeight: FontWeight.w500)),
                   ],
                 ),
@@ -655,11 +655,11 @@ class _RankingCard extends StatelessWidget {
     final currency = NumberFormat.simpleCurrency(locale: 'pt_BR');
 
     return Card(
-      color: AppColors.warningYellow.withValues(alpha: 0.1),
+      color: context.colors.warning.withValues(alpha: 0.1),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: AppColors.warningYellow.withValues(alpha: 0.5)),
+        side: BorderSide(color: context.colors.warning.withValues(alpha: 0.5)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.compactPadding),
@@ -668,7 +668,7 @@ class _RankingCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('RANKING DE HOJE',
-                style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, color: AppColors.primaryOrange, letterSpacing: 0.5)),
+                style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, color: context.colors.primary, letterSpacing: 0.5)),
             const SizedBox(height: AppSpacing.lg),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -676,12 +676,12 @@ class _RankingCard extends StatelessWidget {
               children: [
                 Text(
                   '#${ranking.posicao}',
-                  style: AppTypography.h1.copyWith(fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.orange600),
+                  style: AppTypography.h1.copyWith(fontSize: 48, fontWeight: FontWeight.bold, color: context.colors.primaryHover),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10, left: 4),
                   child: Text('/ ${ranking.totalParticipantes}',
-                      style: AppTypography.bodyLarge.copyWith(color: AppColors.gray400)),
+                      style: AppTypography.bodyLarge.copyWith(color: context.colors.textTertiary)),
                 ),
               ],
             ),

@@ -7,10 +7,11 @@ import '../../widgets/client_pin.dart';
 import '../../providers/clientes_provider.dart';
 import '../../providers/recomendacoes_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
+import '../../theme/app_colors.dart';
 
 class VendasScreen extends ConsumerStatefulWidget {
   const VendasScreen({super.key});
@@ -181,7 +182,7 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
             child: Material(
               elevation: 3,
               borderRadius: BorderRadius.circular(AppRadius.md),
-              color: hasFilter ? AppColors.primary : AppColors.white,
+              color: hasFilter ? context.colors.primary : context.colors.cardBackground,
               child: InkWell(
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 onTap: _abrirFiltros,
@@ -194,7 +195,7 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
                       Icon(Icons.tune,
                           size: 16,
                           color:
-                              hasFilter ? AppColors.white : AppColors.textPrimary),
+                              hasFilter ? Colors.white : context.colors.textPrimary),
                       const SizedBox(width: 6),
                       Text(
                         hasFilter
@@ -203,7 +204,7 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
                         style: AppTypography.labelLarge.copyWith(
                           fontWeight: FontWeight.w600,
                           color:
-                              hasFilter ? AppColors.white : AppColors.textPrimary,
+                              hasFilter ? Colors.white : context.colors.textPrimary,
                         ),
                       ),
                     ],
@@ -221,10 +222,10 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
             bottom: 24,
             right: 24,
             child: FloatingActionButton(
-              backgroundColor: AppColors.primary,
+              backgroundColor: context.colors.primary,
               onPressed: () =>
                   Navigator.pushNamed(context, AppRoutes.cadastroCliente),
-              child: const Icon(Icons.add, color: AppColors.white),
+              child: const Icon(Icons.add, color: Colors.white),
             ),
           ),
         ],

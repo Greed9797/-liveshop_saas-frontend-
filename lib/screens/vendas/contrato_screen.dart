@@ -8,7 +8,7 @@ import '../../models/cliente.dart';
 import '../../providers/contratos_provider.dart';
 import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
@@ -125,7 +125,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                       Center(child: Text('CONTRATO DE PARCERIA',
                           style: AppTypography.h3.copyWith(fontWeight: FontWeight.w500, letterSpacing: 1))),
                       Center(child: Text('LIVELAB ESTÚDIO',
-                          style: AppTypography.bodySmall.copyWith(color: AppColors.primary))),
+                          style: AppTypography.bodySmall.copyWith(color: context.colors.primary))),
                       const SizedBox(height: AppSpacing.x3l),
                       Text('CONTRATANTE: ${cliente?.nome ?? '[Nome do Cliente]'}'),
                       if (cliente?.email != null) ...[
@@ -145,16 +145,16 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                         style: AppTypography.caption.copyWith(height: 1.6),
                       ),
                       const SizedBox(height: AppSpacing.x4l),
-                      Text('Assinatura do Contratante:', style: AppTypography.caption.copyWith(color: AppColors.gray500)),
+                      Text('Assinatura do Contratante:', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                       const SizedBox(height: AppSpacing.sm),
                       Container(
                         width: 240, height: 64,
                         decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.gray300),
+                          border: Border.all(color: context.colors.textTertiary),
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: Center(
-                          child: Text('(clique em "Assinar Agora" →)', style: AppTypography.labelSmall.copyWith(color: AppColors.gray500)),
+                          child: Text('(clique em "Assinar Agora" →)', style: AppTypography.labelSmall.copyWith(color: context.colors.textSecondary)),
                         ),
                       ),
                     ],
@@ -165,7 +165,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
           ),
           Container(
             width: 220,
-            color: AppColors.white,
+            color: context.colors.cardBackground,
             padding: const EdgeInsets.all(AppSpacing.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -180,7 +180,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                   ActionButton(
                     label: 'ASSINAR AGORA',
                     icon: Icons.draw_outlined,
-                    color: AppColors.success,
+                    color: context.colors.success,
                     onPressed: _abrirPadAssinatura,
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -219,7 +219,7 @@ class _SignatureDialogState extends State<_SignatureDialog> {
     super.initState();
     _ctrl = SignatureController(
       penStrokeWidth: 2.5,
-      penColor: Colors.black,
+      penColor: Colors.black, // intentional: black ink on white canvas
     );
   }
 
@@ -256,18 +256,18 @@ class _SignatureDialogState extends State<_SignatureDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Desenhe sua assinatura abaixo:', style: AppTypography.labelLarge.copyWith(color: AppColors.gray500)),
+            Text('Desenhe sua assinatura abaixo:', style: AppTypography.labelLarge.copyWith(color: context.colors.textSecondary)),
             const SizedBox(height: AppSpacing.sm),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.gray300),
+                border: Border.all(color: context.colors.textTertiary),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                color: AppColors.gray50,
+                color: context.colors.background,
               ),
               child: Signature(
                 controller: _ctrl,
                 height: 180,
-                backgroundColor: AppColors.gray50,
+                backgroundColor: context.colors.background,
               ),
             ),
             Align(
@@ -298,10 +298,10 @@ class _SignatureDialogState extends State<_SignatureDialog> {
         TextButton(onPressed: widget.onCancel, child: const Text('Cancelar')),
         ElevatedButton(
           onPressed: (_acceptedTerms && !_saving) ? _confirmar : null,
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+          style: ElevatedButton.styleFrom(backgroundColor: context.colors.success),
           child: _saving
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white))
-              : const Text('Confirmar Assinatura', style: TextStyle(color: AppColors.white)),
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Confirmar Assinatura', style: TextStyle(color: Colors.white)),
         ),
       ],
     );

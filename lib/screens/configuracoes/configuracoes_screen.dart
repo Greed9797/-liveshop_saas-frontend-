@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/configuracoes_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_radius.dart';
@@ -86,7 +86,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
             padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.screenPadding,
                 vertical: AppSpacing.compactPadding),
-            color: AppColors.white,
+            color: context.colors.cardBackground,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -94,14 +94,14 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
                 const SizedBox(height: AppSpacing.xs),
                 Text('Gerencie sua franquia, integrações e segurança',
                     style: AppTypography.bodySmall
-                        .copyWith(color: AppColors.textSecondary)),
+                        .copyWith(color: context.colors.textSecondary)),
                 const SizedBox(height: AppSpacing.lg),
                 TabBar(
                   controller: _tabCtrl,
                   isScrollable: true,
-                  labelColor: AppColors.primaryOrange,
-                  unselectedLabelColor: AppColors.textSecondary,
-                  indicatorColor: AppColors.primaryOrange,
+                  labelColor: context.colors.primary,
+                  unselectedLabelColor: context.colors.textSecondary,
+                  indicatorColor: context.colors.primary,
                   tabs: const [
                     Tab(text: 'Geral'),
                     Tab(text: 'Financeiro'),
@@ -171,7 +171,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
                 Container(
                   height: 60,
                   decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.gray300),
+                      border: Border.all(color: context.colors.textTertiary),
                       borderRadius: BorderRadius.circular(AppRadius.md)),
                   child: Image.network(conf.logoUrl!,
                       errorBuilder: (_, __, ___) => const Padding(
@@ -221,12 +221,12 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
             padding: const EdgeInsets.only(top: AppSpacing.lg),
             child: Row(
               children: [
-                const Icon(Icons.check_circle_rounded,
-                    color: AppColors.successGreen, size: 16),
+                Icon(Icons.check_circle_rounded,
+                    color: context.colors.success, size: 16),
                 const SizedBox(width: AppSpacing.sm),
                 Text('Conexão Asaas configurada e protegida.',
                     style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.successGreen,
+                        color: context.colors.success,
                         fontWeight: FontWeight.bold)),
               ],
             ),
@@ -307,7 +307,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
           padding: const EdgeInsets.all(AppSpacing.screenPadding),
           child: AppCard(
             borderRadius: AppRadius.xl,
-            borderColor: AppColors.gray200,
+            borderColor: context.colors.divider,
             child: Padding(
               padding: const EdgeInsets.all(32),
               child: Column(
@@ -320,8 +320,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
                       Text(title, style: AppTypography.h3),
                       if (!isEditing)
                         IconButton(
-                            icon: const Icon(Icons.edit_rounded,
-                                color: AppColors.textSecondary),
+                            icon: Icon(Icons.edit_rounded,
+                                color: context.colors.textSecondary),
                             onPressed: onEdit),
                     ],
                   ),
@@ -338,11 +338,11 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
                         const SizedBox(width: AppSpacing.sm),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryOrange),
+                              backgroundColor: context.colors.primary),
                           onPressed: onSave,
                           child: Text('Salvar',
                               style: AppTypography.bodyMedium
-                                  .copyWith(color: AppColors.white)),
+                                  .copyWith(color: Colors.white)),
                         ),
                       ],
                     ),
@@ -368,7 +368,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
         decoration: InputDecoration(
           labelText: label,
           filled: !enabled,
-          fillColor: enabled ? Colors.transparent : AppColors.gray50,
+          fillColor: enabled ? Colors.transparent : context.colors.background,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
           contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg, vertical: AppSpacing.md),

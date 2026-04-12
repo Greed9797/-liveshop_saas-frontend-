@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/cabine.dart';
 import '../../providers/cliente_cabines_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_scaffold.dart';
@@ -28,8 +28,8 @@ class ClienteCabinesScreen extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline,
-                    size: 48, color: AppColors.dangerRed),
+                Icon(Icons.error_outline,
+                    size: 48, color: context.colors.error),
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   'Erro ao carregar cabines:\n$error',
@@ -65,19 +65,19 @@ class _CabinesContent extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.videocam_off_outlined,
-                size: 64, color: AppColors.gray300),
+            Icon(Icons.videocam_off_outlined,
+                size: 64, color: context.colors.textTertiary),
             const SizedBox(height: AppSpacing.lg),
             Text(
               'Nenhuma cabine vinculada',
-              style: AppTypography.h3.copyWith(color: AppColors.gray500),
+              style: AppTypography.h3.copyWith(color: context.colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Suas cabines aparecerão aqui assim que\nhouver um contrato ativo.',
               textAlign: TextAlign.center,
               style: AppTypography.bodySmall
-                  .copyWith(color: AppColors.gray400),
+                  .copyWith(color: context.colors.textTertiary),
             ),
           ],
         ),

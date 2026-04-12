@@ -5,7 +5,7 @@ import '../../widgets/boleto_item.dart';
 import '../../providers/boletos_provider.dart';
 import '../../models/boleto.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_radius.dart';
@@ -80,7 +80,7 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
                       final filtrados = _filtrar(boletos);
                       return Text(
                         '${filtrados.length} boleto${filtrados.length == 1 ? '' : 's'}',
-                        style: AppTypography.bodySmall.copyWith(color: AppColors.gray500),
+                        style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary),
                       );
                     },
                   ),
@@ -102,11 +102,11 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
                               label: Text(t,
                                   style: AppTypography.caption.copyWith(
                                       color: _filtroTipo == t
-                                          ? AppColors.white
-                                          : AppColors.textPrimary)),
+                                          ? Colors.white
+                                          : context.colors.textPrimary)),
                               selected: _filtroTipo == t,
-                              selectedColor: AppColors.primaryOrange,
-                              checkmarkColor: AppColors.white,
+                              selectedColor: context.colors.primary,
+                              checkmarkColor: Colors.white,
                               onSelected: (_) =>
                                   setState(() => _filtroTipo = t),
                             ),
@@ -131,10 +131,10 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
                                   style: AppTypography.caption.copyWith(
                                       fontSize: 11,
                                       color: _filtroStatus == s
-                                          ? AppColors.white
-                                          : AppColors.gray500)),
+                                          ? Colors.white
+                                          : context.colors.textSecondary)),
                               selected: _filtroStatus == s,
-                              selectedColor: _statusColor(s),
+                              selectedColor: _statusColor(s, context),
                               onSelected: (_) =>
                                   setState(() => _filtroStatus = s),
                             ),
@@ -175,7 +175,7 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
                               size: 40, color: Colors.black26),
                           const SizedBox(height: AppSpacing.sm),
                           Text('Nenhum boleto encontrado.',
-                              style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                              style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
                         ],
                       ),
                     );
@@ -194,14 +194,14 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
     );
   }
 
-  Color _statusColor(String s) {
+  Color _statusColor(String s, BuildContext context) {
     switch (s) {
       case 'Vencido':
-        return AppColors.dangerRed;
+        return context.colors.error;
       case 'Pago':
-        return AppColors.successGreen;
+        return context.colors.success;
       default:
-        return AppColors.warningYellow;
+        return context.colors.warning;
     }
   }
 }

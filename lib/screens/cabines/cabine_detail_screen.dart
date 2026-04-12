@@ -11,6 +11,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
+import '../../theme/theme.dart';
 
 class CabineDetailScreen extends ConsumerStatefulWidget {
   final String cabineId;
@@ -79,14 +80,14 @@ class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
     final detailState = ref.watch(cabineDetailProvider(widget.cabineId));
 
     return Scaffold(
-      backgroundColor: AppColors.gray100,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
         title: Text(
           'Cabine ${widget.cabineNumero.toString().padLeft(2, '0')}',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppColors.white,
-        foregroundColor: AppColors.gray900,
+        backgroundColor: context.colors.cardBackground,
+        foregroundColor: context.colors.textPrimary,
         elevation: 1,
         actions: [
           IconButton(
@@ -115,7 +116,7 @@ class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.dangerRed),
+              Icon(Icons.error_outline, size: 48, color: context.colors.error),
               const SizedBox(height: 16),
               Text('Erro ao carregar dados da cabine: $error',
                   textAlign: TextAlign.center),
@@ -185,7 +186,7 @@ class _LiveTab extends ConsumerWidget {
             elevation: 4,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              side: const BorderSide(color: AppColors.successGreen, width: 2),
+              side: BorderSide(color: context.colors.success, width: 2),
             ),
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.screenPadding),
@@ -198,18 +199,18 @@ class _LiveTab extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.successGreen.withValues(alpha: 0.15),
+                          color: context.colors.success.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
                             Icon(Icons.circle,
-                                color: AppColors.successGreen, size: 12),
-                            SizedBox(width: 8),
+                                color: context.colors.success, size: 12),
+                            const SizedBox(width: 8),
                             Text(
                               'AO VIVO AGORA',
                               style: TextStyle(
-                                color: AppColors.successGreen,
+                                color: context.colors.success,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -217,7 +218,7 @@ class _LiveTab extends ConsumerWidget {
                         ),
                       ),
                       const Spacer(),
-                      const Icon(Icons.timer_outlined, color: AppColors.gray400),
+                      Icon(Icons.timer_outlined, color: context.colors.textTertiary),
                       const SizedBox(width: 4),
                       Text(
                         '${live.duracaoMinutos} min',
@@ -233,19 +234,19 @@ class _LiveTab extends ConsumerWidget {
                     children: [
                       _MetricCard(
                         icon: Icons.visibility,
-                        iconColor: AppColors.infoBlue,
+                        iconColor: context.colors.info,
                         value: '$viewerCount',
                         label: 'Espectadores',
                       ),
                       _MetricCard(
                         icon: Icons.attach_money,
-                        iconColor: AppColors.successGreen,
+                        iconColor: context.colors.success,
                         value: _CabineDetailScreenState._currency.format(gmvAtual),
                         label: 'GMV da live',
                       ),
                       _MetricCard(
                         icon: Icons.shopping_cart,
-                        iconColor: AppColors.primaryOrange,
+                        iconColor: context.colors.primary,
                         value: '$totalOrders',
                         label: 'Pedidos',
                       ),
@@ -261,7 +262,7 @@ class _LiveTab extends ConsumerWidget {
                       ),
                       _MetricCard(
                         icon: Icons.favorite_rounded,
-                        iconColor: AppColors.dangerRed,
+                        iconColor: context.colors.error,
                         value: '$likesCount',
                         label: 'Curtidas',
                       ),
@@ -296,9 +297,9 @@ class _LiveTab extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: context.colors.cardBackground,
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(color: AppColors.gray200),
+              border: Border.all(color: context.colors.divider),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,7 +311,7 @@ class _LiveTab extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Cabine ${cabineNumero.toString().padLeft(2, '0')} em monitoramento real-time. Mantenha esta aba aberta para acompanhar audiência, GMV e top produto sem sair do contexto da unidade.',
-                  style: const TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: context.colors.textSecondary),
                 ),
               ],
             ),
@@ -408,7 +409,7 @@ class _InsightsTab extends StatelessWidget {
                                         .toDouble(),
                                     width: 18,
                                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                                    color: AppColors.primaryOrange,
+                                    color: context.colors.primary,
                                   ),
                                 ],
                               ),
@@ -502,8 +503,8 @@ class _HistoricoTab extends StatelessWidget {
               padding: const EdgeInsets.all(AppSpacing.compactPadding),
               decoration: BoxDecoration(
                 color: crescimento >= 0
-                    ? AppColors.successGreen.withValues(alpha: 0.10)
-                    : AppColors.dangerRed.withValues(alpha: 0.10),
+                    ? context.colors.success.withValues(alpha: 0.10)
+                    : context.colors.error.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               child: Row(
@@ -511,8 +512,8 @@ class _HistoricoTab extends StatelessWidget {
                   Icon(
                     crescimento >= 0 ? Icons.trending_up : Icons.trending_down,
                     color: crescimento >= 0
-                        ? AppColors.successGreen
-                        : AppColors.dangerRed,
+                        ? context.colors.success
+                        : context.colors.error,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -556,13 +557,13 @@ class _HistoricoTab extends StatelessWidget {
                 _HistoryMetricCard(
                   label: 'Total de lives',
                   value: '${totais['total_lives'] ?? 0}',
-                  color: AppColors.infoBlue,
+                  color: context.colors.info,
                 ),
                 _HistoryMetricCard(
                   label: 'Faturamento acumulado',
                   value: _CabineDetailScreenState._currency
                       .format((totais['gmv_total'] as num? ?? 0).toDouble()),
-                  color: AppColors.successGreen,
+                  color: context.colors.success,
                 ),
               ],
             ),
@@ -598,7 +599,7 @@ class _SectionCard extends StatelessWidget {
                 style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Text(subtitle,
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: context.colors.textSecondary)),
             const Divider(height: 24),
             child,
           ],
@@ -649,7 +650,7 @@ class _MetricCard extends StatelessWidget {
                     style: AppTypography.h3.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 Text(label,
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                    style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
               ],
             ),
           ),
@@ -682,7 +683,7 @@ class _RankListTile extends StatelessWidget {
               Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 2),
               Text(subtitle,
-                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
             ],
           ),
         ),
@@ -705,9 +706,9 @@ class _InsightBullet extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 4),
-            child: Icon(Icons.circle, size: 8, color: AppColors.primaryOrange),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Icon(Icons.circle, size: 8, color: context.colors.primary),
           ),
           const SizedBox(width: 10),
           Expanded(child: Text(text)),
@@ -734,14 +735,14 @@ class _HistoryMetricCard extends StatelessWidget {
       width: 220,
       padding: const EdgeInsets.all(AppSpacing.compactPadding),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.cardBackground,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.gray200),
+        border: Border.all(color: context.colors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(color: context.colors.textSecondary)),
           const SizedBox(height: 6),
           Text(
             value,
@@ -774,14 +775,14 @@ class _EmptyTabState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 44, color: AppColors.textSecondary),
+            Icon(icon, size: 44, color: context.colors.textSecondary),
             const SizedBox(height: 12),
             Text(title,
                 style: AppTypography.h3.copyWith(fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(description,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.colors.textSecondary),
                 textAlign: TextAlign.center),
           ],
         ),

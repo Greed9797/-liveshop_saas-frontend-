@@ -6,7 +6,7 @@ import '../../widgets/action_button.dart';
 import '../../widgets/banner_alerta_comercial.dart';
 import '../../providers/contratos_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
@@ -234,7 +234,7 @@ class _AnalisandoView extends StatelessWidget {
               style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w500)),
           const SizedBox(height: AppSpacing.sm),
           Text('Consultando score de crédito',
-              style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+              style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
         ],
       );
 }
@@ -248,18 +248,18 @@ class _AprovadoView extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check_circle_rounded,
-              color: AppColors.success, size: 64),
+          Icon(Icons.check_circle_rounded,
+              color: context.colors.success, size: 64),
           const SizedBox(height: AppSpacing.lg),
           Text('APROVADO',
               style: AppTypography.h1.copyWith(
                   fontSize: 24,
-                  color: AppColors.success,
+                  color: context.colors.success,
                   fontWeight: FontWeight.w500)),
           if (score != null) ...[
             const SizedBox(height: AppSpacing.sm),
             Text('Score: $score/100',
-                style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
           ],
           const SizedBox(height: AppSpacing.sm),
           const Text('Cliente aprovado para contrato ativo!'),
@@ -267,7 +267,7 @@ class _AprovadoView extends StatelessWidget {
           ActionButton(
               label: 'CONTINUAR',
               onPressed: onContinuar,
-              color: AppColors.success),
+              color: context.colors.success),
         ],
       );
 }
@@ -283,27 +283,27 @@ class _RecusadoView extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.warning_rounded, color: AppColors.danger, size: 64),
+          Icon(Icons.warning_rounded, color: context.colors.error, size: 64),
           const SizedBox(height: AppSpacing.lg),
           Text('CLIENTE COM ALTO RISCO',
               style: AppTypography.h3.copyWith(
-                  color: AppColors.danger,
+                  color: context.colors.error,
                   fontWeight: FontWeight.w500)),
           if (score != null) ...[
             const SizedBox(height: AppSpacing.sm),
             Text('Score: $score/100',
-                style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
           ],
           const SizedBox(height: AppSpacing.md),
           Container(
             padding: const EdgeInsets.all(AppSpacing.compactPadding),
             decoration: BoxDecoration(
-              color: AppColors.danger.withValues(alpha: 0.08),
+              color: context.colors.error.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: const Text(
+            child: Text(
               'Você pode negociar pagamento antecipado ou assumir o risco.',
-              style: TextStyle(color: AppColors.danger),
+              style: TextStyle(color: context.colors.error),
               textAlign: TextAlign.center,
             ),
           ),
@@ -314,13 +314,13 @@ class _RecusadoView extends StatelessWidget {
               ActionButton(
                   label: 'ASSUMIR RISCO',
                   onPressed: onAssumir,
-                  color: AppColors.warning),
+                  color: context.colors.warning),
               const SizedBox(width: AppSpacing.md),
               ActionButton(
                   label: 'CANCELAR',
                   onPressed: onCancelar,
                   outlined: true,
-                  color: AppColors.danger),
+                  color: context.colors.error),
             ],
           ),
         ],
@@ -336,7 +336,7 @@ class _ErroView extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.danger, size: 48),
+          Icon(Icons.error_outline, color: context.colors.error, size: 48),
           const SizedBox(height: AppSpacing.md),
           Text(mensagem, textAlign: TextAlign.center),
           const SizedBox(height: AppSpacing.lg),

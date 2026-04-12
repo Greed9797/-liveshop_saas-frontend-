@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/contratos_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/app_scaffold.dart';
 import 'widgets/auditoria_contract_card.dart';
@@ -32,7 +32,7 @@ class _AnaliseCreditoScreenState extends ConsumerState<AnaliseCreditoScreen>
     messenger.showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? AppColors.danger : null,
+        backgroundColor: isError ? context.colors.error : null,
       ),
     );
   }
@@ -246,8 +246,8 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.fact_check_outlined,
-              size: 48, color: AppColors.textSecondary),
+          Icon(Icons.fact_check_outlined,
+              size: 48, color: context.colors.textSecondary),
           const SizedBox(height: 12),
           Text('Nenhum contrato nesta fila', style: AppTypography.h3),
           const SizedBox(height: 6),
@@ -274,8 +274,8 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.cloud_off_rounded,
-              size: 48, color: AppColors.textSecondary),
+          Icon(Icons.cloud_off_rounded,
+              size: 48, color: context.colors.textSecondary),
           const SizedBox(height: 12),
           Text('Ops, algo deu errado', style: AppTypography.h3),
           const SizedBox(height: 8),

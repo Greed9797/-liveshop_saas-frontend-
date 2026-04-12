@@ -6,7 +6,7 @@ import '../../providers/leads_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/theme.dart';
 
 /// Painel de leads disponíveis da franqueadora
 class LeadsScreen extends ConsumerWidget {
@@ -37,14 +37,14 @@ class LeadsScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.xs),
             leadsAsync.when(
               loading: () => Text('Carregando...',
-                  style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                  style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
               error: (e, __) => Text(
                 e.toString(),
-                style: AppTypography.bodySmall.copyWith(color: AppColors.gray500),
+                style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary),
               ),
               data: (leads) => Text(
                   '${leads.length} leads disponíveis para você',
-                  style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                  style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
             ),
             const SizedBox(height: AppSpacing.lg),
             Expanded(
@@ -64,7 +64,7 @@ class LeadsScreen extends ConsumerWidget {
                 data: (leads) => leads.isEmpty
                     ? Center(
                         child: Text('Nenhum lead disponível no momento.',
-                            style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)))
+                            style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)))
                     : ListView.separated(
                         itemCount: leads.length,
                         separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
