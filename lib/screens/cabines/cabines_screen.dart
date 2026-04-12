@@ -865,18 +865,31 @@ class _OperationalActions extends StatelessWidget {
     }
 
     if (cabine.status == 'reservada' || cabine.status == 'ativa') {
-      return Row(
-        children: [
-          Expanded(
-            child: ActionButton(
-              label: 'INICIAR LIVE',
-              icon: Icons.play_arrow_rounded,
-              onPressed: onIniciarLive,
-            ),
-          ),
-          const SizedBox(width: 8),
-          TextButton(onPressed: onLiberar, child: const Text('Liberar')),
-        ],
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 200;
+          return Row(
+            children: [
+              Expanded(
+                child: ActionButton(
+                  label: isNarrow ? 'INICIAR' : 'INICIAR LIVE',
+                  icon: Icons.play_arrow_rounded,
+                  onPressed: onIniciarLive,
+                ),
+              ),
+              const SizedBox(width: 6),
+              TextButton(
+                onPressed: onLiberar,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, 36),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('Liberar', style: TextStyle(fontSize: 12)),
+              ),
+            ],
+          );
+        },
       );
     }
 
