@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'providers/auth_provider.dart';
+import 'providers/theme_mode_provider.dart';
 import 'theme/app_theme.dart';
 import 'routes/app_navigator.dart';
 import 'routes/app_routes.dart';
@@ -64,6 +64,8 @@ class LiveShopApp extends ConsumerWidget {
       title: 'Livelab SaaS',
       debugShowCheckedModeBanner: false,
       theme: appTheme,
+      darkTheme: darkTheme,
+      themeMode: ref.watch(themeModeProvider),
       initialRoute: authState.isAuthenticated
           ? AppRoutes.routeForRole(authState.user?.papel)
           : AppRoutes.login,

@@ -1,75 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'app_colors.dart';
 
 class AppTypography {
-  static final TextStyle h1 = GoogleFonts.inter(
+  // ── Headings ──
+  static final TextStyle h1 = GoogleFonts.outfit(
     fontSize: 28,
-    fontWeight: FontWeight.w800,
-    color: AppColors.black,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.56,
   );
 
-  static final TextStyle h2 = GoogleFonts.inter(
+  static final TextStyle h2 = GoogleFonts.outfit(
     fontSize: 22,
     fontWeight: FontWeight.w600,
-    color: AppColors.black,
+    letterSpacing: -0.22,
   );
 
-  static final TextStyle h3 = GoogleFonts.inter(
+  static final TextStyle h3 = GoogleFonts.outfit(
     fontSize: 18,
-    fontWeight: FontWeight.w600,
-    color: AppColors.black,
+    fontWeight: FontWeight.w500,
   );
 
-  static final TextStyle heroNumber = GoogleFonts.inter(
+  // ── KPI / Large numbers ──
+  static final TextStyle heroNumber = GoogleFonts.outfit(
     fontSize: 36,
-    fontWeight: FontWeight.w800,
-    color: AppColors.black,
-    letterSpacing: -0.5,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -1.08,
   );
 
-  static final TextStyle bodyLarge = GoogleFonts.inter(
+  static final TextStyle kpiNumber = GoogleFonts.outfit(
+    fontSize: 32,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.96,
+  );
+
+  // ── Body ──
+  static final TextStyle bodyLarge = GoogleFonts.outfit(
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    color: AppColors.black,
+    height: 1.5,
   );
 
-  static final TextStyle bodySmall = GoogleFonts.inter(
-    fontSize: 14,
-    fontWeight: FontWeight.w400,
-    color: AppColors.gray500,
-  );
-
-  static final TextStyle caption = GoogleFonts.inter(
-    fontSize: 12,
-    fontWeight: FontWeight.w500,
-    color: AppColors.gray400,
-  );
-
-  static final TextStyle bodyMedium = GoogleFonts.inter(
+  static final TextStyle bodyMedium = GoogleFonts.outfit(
     fontSize: 15,
     fontWeight: FontWeight.w500,
-    color: AppColors.gray700,
+    height: 1.5,
   );
 
-  static final TextStyle labelLarge = GoogleFonts.inter(
+  static final TextStyle bodySmall = GoogleFonts.outfit(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    height: 1.5,
+  );
+
+  // ── Labels / Captions ──
+  static final TextStyle caption = GoogleFonts.outfit(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.24,
+  );
+
+  static final TextStyle labelLarge = GoogleFonts.outfit(
     fontSize: 13,
     fontWeight: FontWeight.w600,
-    color: AppColors.gray500,
     letterSpacing: 0.8,
   );
 
-  static final TextStyle labelSmall = GoogleFonts.inter(
+  static final TextStyle labelSmall = GoogleFonts.outfit(
     fontSize: 11,
     fontWeight: FontWeight.w600,
-    color: AppColors.gray400,
     letterSpacing: 1.0,
   );
 
-  static final TextStyle buttonText = GoogleFonts.inter(
+  // ── Button ──
+  static final TextStyle buttonText = GoogleFonts.outfit(
     fontSize: 15,
     fontWeight: FontWeight.w600,
-    color: AppColors.white,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   );
 }
