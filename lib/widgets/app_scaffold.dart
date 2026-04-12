@@ -200,6 +200,7 @@ class AppScaffold extends ConsumerWidget {
                         color: context.colors.textPrimary,
                         fontWeight: FontWeight.w600),
                     maxLines: 1,
+                    softWrap: false,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
@@ -210,10 +211,14 @@ class AppScaffold extends ConsumerWidget {
                             : 'Franqueado Livelab',
                     style: AppTypography.caption
                         .copyWith(color: context.colors.textSecondary),
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 4),
             Consumer(
               builder: (context, ref, _) {
                 final mode = ref.watch(themeModeProvider);

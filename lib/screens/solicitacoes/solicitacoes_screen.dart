@@ -464,18 +464,21 @@ class _SolicitacaoCardState extends State<_SolicitacaoCard> {
           if (widget.showActions) ...[
             const SizedBox(height: AppSpacing.md),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Flexible(
+                Expanded(
                   child: OutlinedButton.icon(
                     icon: Icon(Icons.close_rounded,
-                        size: 16, color: context.colors.error),
+                        size: 14, color: context.colors.error),
                     label: Text('Recusar',
-                        style: TextStyle(color: context.colors.error)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            color: context.colors.error, fontSize: 12)),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: context.colors.error),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                          horizontal: 8, vertical: 6),
+                      minimumSize: const Size(0, 36),
                     ),
                     onPressed: _isAprovando
                         ? null
@@ -483,25 +486,28 @@ class _SolicitacaoCardState extends State<_SolicitacaoCard> {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                Flexible(
+                Expanded(
                   child: ElevatedButton.icon(
                     icon: _isAprovando
                         ? const SizedBox(
-                            width: 14,
-                            height: 14,
+                            width: 12,
+                            height: 12,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               color: Colors.white,
                             ),
                           )
                         : const Icon(Icons.check_rounded,
-                            size: 16, color: Colors.white),
+                            size: 14, color: Colors.white),
                     label: const Text('Aprovar',
-                        style: TextStyle(color: Colors.white)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.white, fontSize: 12)),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: context.colors.success,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8)),
+                            horizontal: 8, vertical: 6),
+                        minimumSize: const Size(0, 36)),
                     onPressed: _isAprovando
                         ? null
                         : () async {

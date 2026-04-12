@@ -39,7 +39,7 @@ class MetricCard extends StatelessWidget {
     final colors = context.colors;
 
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.xl), // 20 px
+      padding: const EdgeInsets.all(AppSpacing.lg), // 16 px
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -47,23 +47,31 @@ class MetricCard extends StatelessWidget {
           // ── Label ────────────────────────────────────────────────
           Text(
             label.toUpperCase(),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: AppTypography.labelSmall.copyWith(
-              fontSize: 11,
+              fontSize: 10,
               color: colors.textSecondary,
-              letterSpacing: 0.8,
+              letterSpacing: 0.6,
               fontWeight: FontWeight.w500,
+              height: 1.2,
             ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           // ── Value ────────────────────────────────────────────────
-          Text(
-            value,
-            style: AppTypography.heroNumber.copyWith(
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
-              color: colors.textPrimary,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: AppTypography.heroNumber.copyWith(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: colors.textPrimary,
+              ),
             ),
           ),
 
@@ -72,7 +80,10 @@ class MetricCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               delta!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTypography.caption.copyWith(
+                fontSize: 10,
                 color: (deltaPositive ?? true) ? colors.success : colors.error,
                 fontWeight: FontWeight.w500,
               ),
@@ -81,7 +92,10 @@ class MetricCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               subtitle!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTypography.caption.copyWith(
+                fontSize: 10,
                 color: colors.textSecondary,
               ),
             ),

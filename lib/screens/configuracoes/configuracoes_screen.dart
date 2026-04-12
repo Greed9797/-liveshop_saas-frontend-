@@ -380,22 +380,23 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
     required VoidCallback onSave,
     required List<Widget> children,
   }) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.screenPadding),
-          child: AppCard(
-            borderRadius: AppRadius.xl,
-            borderColor: context.colors.divider,
-            child: Padding(
-              padding: EdgeInsets.all(
-                MediaQuery.sizeOf(context).width < 600 ? AppSpacing.lg : 32,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.screenPadding),
+            child: AppCard(
+              borderRadius: AppRadius.xl,
+              borderColor: context.colors.divider,
+              child: Padding(
+                padding: EdgeInsets.all(
+                  MediaQuery.sizeOf(context).width < 600 ? AppSpacing.lg : 32,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -430,6 +431,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
                     ),
                   ],
                 ],
+                ),
               ),
             ),
           ),

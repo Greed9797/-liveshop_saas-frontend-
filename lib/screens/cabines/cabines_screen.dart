@@ -29,7 +29,7 @@ class CabinesScreen extends ConsumerStatefulWidget {
 }
 
 class _CabinesScreenState extends ConsumerState<CabinesScreen> {
-  static const _desktopBreakpoint = 1100.0;
+  static const _desktopBreakpoint = 950.0;
 
   static const _statusFilters = [
     'todos',
@@ -397,14 +397,25 @@ class _MainOperationalArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final crossAxisCount = switch (MediaQuery.of(context).size.width) {
-      > 1750 => 5,
-      > 1500 => 4,
-      > 1200 => 3,
-      > 760 => 2,
-      _ => 2,
-    };
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width > 1400
+            ? 5
+            : width > 1100
+                ? 4
+                : width > 800
+                    ? 3
+                    : width > 500
+                        ? 2
+                        : 2;
 
+        return _buildScrollView(context, crossAxisCount);
+      },
+    );
+  }
+
+  Widget _buildScrollView(BuildContext context, int crossAxisCount) {
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -483,7 +494,7 @@ class _MainOperationalArea extends StatelessWidget {
                     crossAxisCount: crossAxisCount,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: 0.62,
+                    childAspectRatio: 0.82,
                   ),
                 ),
         ),
@@ -786,35 +797,26 @@ class _OperationalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CabineCard(
-            cabine: cabine,
-            onTap: onTap,
-            isSelected: isSelected,
-            isSelectable:
-                hasSelectedContrato && cabine.status == 'disponivel',
-          ),
-          const SizedBox(height: 8),
-          _OperationalActions(
-            cabine: cabine,
-            onReservar: onReservar,
-            onIniciarLive: onIniciarLive,
-            onEncerrarLive: onEncerrarLive,
-            onLiberar: onLiberar,
-          ),
-          if (!isDesktop) ...[
-            const SizedBox(height: 4),
-            TextButton(
-              onPressed: onTap,
-              child: const Text('Ver dashboard'),
-            ),
-          ],
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CabineCard(
+          cabine: cabine,
+          onTap: onTap,
+          isSelected: isSelected,
+          isSelectable:
+              hasSelectedContrato && cabine.status == 'disponivel',
+        ),
+        const SizedBox(height: 8),
+        _OperationalActions(
+          cabine: cabine,
+          onReservar: onReservar,
+          onIniciarLive: onIniciarLive,
+          onEncerrarLive: onEncerrarLive,
+          onLiberar: onLiberar,
+        ),
+      ],
     );
   }
 }
