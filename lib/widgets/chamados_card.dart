@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_colors_extension.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_radius.dart';
@@ -26,25 +27,25 @@ class ChamadosCard extends StatelessWidget {
                   children: [
                     Text('CHAMADOS',
                         style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.gray500,
+                            color: context.colors.textSecondary,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1.2)),
                     Stack(
                       children: [
-                        const Icon(Icons.person_outline,
-                            size: 24, color: AppColors.gray400),
+                        Icon(Icons.person_outline,
+                            size: 24, color: context.colors.textTertiary),
                         if (count > 0)
                           Positioned(
                             right: 0,
                             top: 0,
                             child: Container(
                               padding: const EdgeInsets.all(3),
-                              decoration: const BoxDecoration(
-                                  color: AppColors.primaryOrange,
+                              decoration: BoxDecoration(
+                                  color: context.colors.primary,
                                   shape: BoxShape.circle),
                               child: Text('$count',
                                   style: const TextStyle(
-                                      color: AppColors.white,
+                                      color: Colors.white,
                                       fontSize: 8,
                                       fontWeight: FontWeight.bold)),
                             ),
@@ -59,7 +60,7 @@ class ChamadosCard extends StatelessWidget {
                       ? '$count chamados não visualizados'
                       : 'Nenhum chamado pendente',
                   style:
-                      AppTypography.caption.copyWith(color: AppColors.gray500),
+                      AppTypography.caption.copyWith(color: context.colors.textSecondary),
                 ),
               ],
             ),
@@ -69,10 +70,10 @@ class ChamadosCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: count > 0
                   ? AppColors.dangerRed
-                  : AppColors.gray200,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(14),
-                bottomRight: Radius.circular(14),
+                  : context.colors.progressBg,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(AppRadius.lg),
+                bottomRight: Radius.circular(AppRadius.lg),
               ),
             ),
             child: Row(
@@ -80,7 +81,7 @@ class ChamadosCard extends StatelessWidget {
               children: [
                 Icon(
                     count > 0 ? Icons.money_off : Icons.check_circle_outline,
-                    color: count > 0 ? AppColors.white : AppColors.gray500,
+                    color: count > 0 ? Colors.white : context.colors.textSecondary,
                     size: 14),
                 const SizedBox(width: 6),
                 Flexible(
@@ -91,7 +92,7 @@ class ChamadosCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        color: count > 0 ? AppColors.white : AppColors.gray500,
+                        color: count > 0 ? Colors.white : context.colors.textSecondary,
                         fontWeight: FontWeight.w700,
                         fontSize: 11),
                   ),

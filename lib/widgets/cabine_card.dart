@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/cabine.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_colors_extension.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -47,7 +48,7 @@ class _CabineCardState extends State<CabineCard>
 
   bool get _isLive => widget.cabine.status == 'ao_vivo';
 
-  ({Color background, Color border, Color accent}) get _palette {
+  ({Color background, Color border, Color accent}) _palette(BuildContext context) {
     switch (widget.cabine.status) {
       case 'ao_vivo':
         return (
@@ -75,16 +76,16 @@ class _CabineCardState extends State<CabineCard>
         );
       default:
         return (
-          background: AppColors.white,
-          border: AppColors.gray200,
-          accent: AppColors.gray400,
+          background: context.colors.cardBackground,
+          border: context.colors.divider,
+          accent: context.colors.textTertiary,
         );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final palette = _palette;
+    final palette = _palette(context);
     final shortContrato = widget.cabine.contratoId == null
         ? 'Sem contrato'
         : 'Contrato ${widget.cabine.contratoId!.substring(0, 8)}';
@@ -102,7 +103,7 @@ class _CabineCardState extends State<CabineCard>
             borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color:
-                  widget.isSelected ? AppColors.primaryOrange : palette.border,
+                  widget.isSelected ? context.colors.primary : palette.border,
               width: widget.isSelected ? 2 : 1.2,
             ),
             boxShadow: AppShadows.sm,
@@ -158,7 +159,7 @@ class _CabineCardState extends State<CabineCard>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.caption
-                    .copyWith(color: AppColors.gray500, fontSize: 11),
+                    .copyWith(color: context.colors.textSecondary, fontSize: 11),
               ),
 
               // ── Apresentador (condicional) ──
@@ -169,7 +170,7 @@ class _CabineCardState extends State<CabineCard>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.caption
-                      .copyWith(color: AppColors.gray500, fontSize: 11),
+                      .copyWith(color: context.colors.textSecondary, fontSize: 11),
                 ),
               ],
 
@@ -178,7 +179,7 @@ class _CabineCardState extends State<CabineCard>
 
               // ── Métricas ao vivo OU hint de ação ──
               if (_isLive) ...[
-                const Divider(height: 16, color: AppColors.gray200),
+                Divider(height: 16, color: context.colors.divider),
                 Row(
                   children: [
                     Icon(Icons.remove_red_eye_outlined,
@@ -191,7 +192,7 @@ class _CabineCardState extends State<CabineCard>
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.caption.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.gray700),
+                            color: context.colors.textSecondary),
                       ),
                     ),
                   ],
@@ -205,7 +206,7 @@ class _CabineCardState extends State<CabineCard>
                       color: AppColors.successGreen, fontWeight: FontWeight.w700),
                 ),
               ] else ...[
-                const Divider(height: 16, color: AppColors.gray200),
+                Divider(height: 16, color: context.colors.divider),
                 Row(
                   children: [
                     Icon(Icons.chevron_right_rounded,
@@ -219,7 +220,7 @@ class _CabineCardState extends State<CabineCard>
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.gray400, fontSize: 11),
+                            .copyWith(color: context.colors.textTertiary, fontSize: 11),
                       ),
                     ),
                   ],

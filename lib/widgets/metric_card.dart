@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_colors_extension.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'app_card.dart';
@@ -31,7 +31,7 @@ class MetricCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: iconColor ?? AppColors.primary, size: 20),
+              Icon(icon, color: iconColor ?? context.colors.primary, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(

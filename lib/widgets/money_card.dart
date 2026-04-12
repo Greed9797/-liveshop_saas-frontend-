@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_colors_extension.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
@@ -32,8 +32,8 @@ class MoneyCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.x2l),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.primaryOrange, AppColors.orange600],
+          gradient: LinearGradient(
+            colors: [context.colors.primary, context.colors.primaryHover],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -52,18 +52,18 @@ class MoneyCard extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.white.withValues(alpha: 0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(Icons.account_balance_wallet_rounded,
-                          color: AppColors.white, size: 20),
+                          color: Colors.white, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Text('FATURAMENTO TOTAL',
                         style: AppTypography.caption.copyWith(
                             letterSpacing: 1.2,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.white.withValues(alpha: 0.8))),
+                            color: Colors.white.withValues(alpha: 0.8))),
                   ],
                 ),
                 IconButton(
@@ -71,7 +71,7 @@ class MoneyCard extends ConsumerWidget {
                     isVisible
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
-                    color: AppColors.white.withValues(alpha: 0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                     size: 20,
                   ),
                   onPressed: () => ref
@@ -88,11 +88,11 @@ class MoneyCard extends ConsumerWidget {
                 isVisible
                     ? 'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}'
                     : 'R\$ •••••••',
-                style: AppTypography.heroNumber.copyWith(color: AppColors.white),
+                style: AppTypography.heroNumber.copyWith(color: Colors.white),
               ),
             ),
             const SizedBox(height: 16),
-            Divider(color: AppColors.white.withValues(alpha: 0.2)),
+            Divider(color: Colors.white.withValues(alpha: 0.2)),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -106,7 +106,7 @@ class MoneyCard extends ConsumerWidget {
                 Container(
                     width: 1,
                     height: 40,
-                    color: AppColors.white.withValues(alpha: 0.2)),
+                    color: Colors.white.withValues(alpha: 0.2)),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: AppSpacing.lg),
@@ -147,7 +147,7 @@ class _SubValue extends StatelessWidget {
           style: AppTypography.caption.copyWith(
               fontSize: 10,
               letterSpacing: 0.5,
-              color: AppColors.white.withValues(alpha: 0.7)),
+              color: Colors.white.withValues(alpha: 0.7)),
         ),
         const SizedBox(height: 4),
         FittedBox(
@@ -158,7 +158,7 @@ class _SubValue extends StatelessWidget {
                 ? 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}'
                 : 'R\$ •••••',
             style: AppTypography.h3
-                .copyWith(color: AppColors.white, fontSize: 16),
+                .copyWith(color: Colors.white, fontSize: 16),
           ),
         ),
       ],

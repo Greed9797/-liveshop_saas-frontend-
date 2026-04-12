@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_colors_extension.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -36,7 +37,7 @@ class NpsGauge extends StatelessWidget {
               children: [
                 Text('NPS',
                     style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.gray500,
+                        color: context.colors.textSecondary,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.2)),
                 const Spacer(),
@@ -71,7 +72,7 @@ class NpsGauge extends StatelessWidget {
                   child: Text(
                     '/10',
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.gray400),
+                        .copyWith(color: context.colors.textTertiary),
                   ),
                 ),
               ],
@@ -83,7 +84,7 @@ class NpsGauge extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: score / 10,
                 minHeight: 6,
-                backgroundColor: AppColors.gray200,
+                backgroundColor: context.colors.progressBg,
                 valueColor: AlwaysStoppedAnimation<Color>(_scoreColor),
               ),
             ),
@@ -94,13 +95,13 @@ class NpsGauge extends StatelessWidget {
               children: [
                 Text('0',
                     style: AppTypography.caption
-                        .copyWith(fontSize: 9, color: AppColors.gray400)),
+                        .copyWith(fontSize: 9, color: context.colors.textTertiary)),
                 Text('5',
                     style: AppTypography.caption
-                        .copyWith(fontSize: 9, color: AppColors.gray400)),
+                        .copyWith(fontSize: 9, color: context.colors.textTertiary)),
                 Text('10',
                     style: AppTypography.caption
-                        .copyWith(fontSize: 9, color: AppColors.gray400)),
+                        .copyWith(fontSize: 9, color: context.colors.textTertiary)),
               ],
             ),
           ],
