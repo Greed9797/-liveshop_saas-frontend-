@@ -18,6 +18,7 @@ import '../../theme/theme.dart';
 import '../../widgets/action_button.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/cabine_card.dart';
+import '../../widgets/responsive_grid.dart';
 import '../../widgets/status_badge.dart';
 
 class CabinesScreen extends ConsumerStatefulWidget {
@@ -578,37 +579,43 @@ class _KpiSection extends StatelessWidget {
           context.colors.primary, 'público simultâneo'),
     ];
 
-    return Wrap(
+    return ResponsiveGrid(
+      mobileColumns: 2,
+      tabletColumns: 4,
+      desktopColumns: 7,
       spacing: 12,
       runSpacing: 12,
       children: items
           .map(
-            (item) => SizedBox(
-              width: 220,
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.compactPadding),
-                decoration: BoxDecoration(
-                  color: context.colors.cardBackground,
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  border: Border.all(color: context.colors.divider),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.label,
-                        style: TextStyle(color: context.colors.textSecondary)),
-                    const SizedBox(height: 8),
-                    Text(
+            (item) => Container(
+              padding: const EdgeInsets.all(AppSpacing.compactPadding),
+              decoration: BoxDecoration(
+                color: context.colors.cardBackground,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                border: Border.all(color: context.colors.divider),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.label,
+                      style: TextStyle(color: context.colors.textSecondary)),
+                  const SizedBox(height: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
                       item.value,
                       style: AppTypography.h1.copyWith(fontSize: 26,
                           fontWeight: FontWeight.w700,
                           color: item.color),
                     ),
-                    const SizedBox(height: 4),
-                    Text(item.helper,
-                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(item.helper,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+                ],
               ),
             ),
           )
@@ -714,12 +721,13 @@ class _SelectedContractBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Contrato selecionado para ativação',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary),
                 ),
                 const SizedBox(height: 4),
-                Text('${contrato.clienteNome} • ${contrato.localizacao}'),
+                Text('${contrato.clienteNome} • ${contrato.localizacao}',
+                    style: TextStyle(color: context.colors.textSecondary)),
               ],
             ),
           ),
@@ -1091,8 +1099,8 @@ class _QueuePanel extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(item.clienteNome,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700)),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
                             const SizedBox(height: 4),
                             Text(item.localizacao,
                                 style: TextStyle(
@@ -1163,11 +1171,12 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
               children: [
                 _AnalyticsSummaryRow(resumo: analytics.resumoHoje),
                 const SizedBox(height: 16),
-                const Text('Top Closers da unidade',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                Text('Top Closers da unidade',
+                    style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
                 const SizedBox(height: 8),
                 if (analytics.rankingClosers.isEmpty)
-                  const Text('Nenhum closer com histórico suficiente ainda.')
+                  Text('Nenhum closer com histórico suficiente ainda.',
+                      style: TextStyle(color: context.colors.textSecondary))
                 else
                   ...analytics.rankingClosers
                       .take(3)
@@ -1187,11 +1196,12 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                         ),
                       ),
                 const SizedBox(height: 16),
-                const Text('Top Parceiros por volume',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                Text('Top Parceiros por volume',
+                    style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
                 const SizedBox(height: 8),
                 if (analytics.rankingClientes.isEmpty)
-                  const Text('Nenhum parceiro com volume relevante ainda.')
+                  Text('Nenhum parceiro com volume relevante ainda.',
+                      style: TextStyle(color: context.colors.textSecondary))
                 else
                   ...analytics.rankingClientes.take(3).map(
                         (cliente) => Padding(
@@ -1203,12 +1213,13 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                         ),
                       ),
                 const SizedBox(height: 16),
-                const Text('Prime time da franquia',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                Text('Prime time da franquia',
+                    style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
                 const SizedBox(height: 8),
                 if (analytics.heatmapHorarios.isEmpty)
-                  const Text(
-                      'Ainda não há dados suficientes para mapear o melhor horário da unidade.')
+                  Text(
+                      'Ainda não há dados suficientes para mapear o melhor horário da unidade.',
+                      style: TextStyle(color: context.colors.textSecondary))
                 else
                   ...heatmapTop.take(3).map(
                         (horario) => Padding(
@@ -1220,16 +1231,18 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                         ),
                       ),
                 const SizedBox(height: 16),
-                const Text('Raio-X da cabine selecionada',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                Text('Raio-X da cabine selecionada',
+                    style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
                 const SizedBox(height: 8),
                 if (historico == null)
-                  const Text(
-                      'Selecione uma cabine no grid para ver os clientes e horários fortes desta unidade.')
+                  Text(
+                      'Selecione uma cabine no grid para ver os clientes e horários fortes desta unidade.',
+                      style: TextStyle(color: context.colors.textSecondary))
                 else ...[
                   if (cabineTopClientes.isEmpty)
-                    const Text(
-                        'Sem histórico de clientes para esta cabine ainda.')
+                    Text(
+                        'Sem histórico de clientes para esta cabine ainda.',
+                        style: TextStyle(color: context.colors.textSecondary))
                   else
                     ...cabineTopClientes.map(
                       (cliente) => Padding(
@@ -1317,7 +1330,7 @@ class _InfoLine extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.textPrimary),
             ),
           ),
         ],
@@ -1341,7 +1354,7 @@ class _MetricRankRow extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.textPrimary),
           ),
         ),
         const SizedBox(width: 8),
@@ -1398,7 +1411,7 @@ class _RankedMetricRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(title, style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
               const SizedBox(height: 2),
               Text(subtitle,
                   style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),

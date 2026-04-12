@@ -132,7 +132,7 @@ class _UnidadesContent extends StatelessWidget {
                       final u = unidades[i];
                       return ListTile(
                         title: Text(u.nome,
-                            style: const TextStyle(fontWeight: FontWeight.w500)),
+                            style: TextStyle(fontWeight: FontWeight.w500, color: context.colors.textPrimary)),
                         subtitle: Text(
                             'Clientes: ${u.clientesCount} • Fat: ${currency.format(u.fatMes)}'),
                         trailing: Row(

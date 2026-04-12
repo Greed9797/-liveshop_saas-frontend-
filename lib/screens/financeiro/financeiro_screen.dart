@@ -7,6 +7,7 @@ import '../../theme/app_spacing.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/theme.dart';
+import '../../widgets/responsive_grid.dart';
 
 class FinanceiroScreen extends ConsumerWidget {
   const FinanceiroScreen({super.key});
@@ -83,13 +84,16 @@ class _OperacionalTab extends ConsumerWidget {
           resumoAsync.when(
             loading: () => const LinearProgressIndicator(),
             error: (_, __) => const SizedBox.shrink(),
-            data: (r) => Row(
+            data: (r) => ResponsiveGrid(
+              mobileColumns: 1,
+              tabletColumns: 3,
+              desktopColumns: 3,
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.md,
               children: [
-                Expanded(child: _QuickMetric('BRUTO', r.fatBruto, context.colors.info)),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(child: _QuickMetric('LÍQUIDO', r.fatLiquido, context.colors.success)),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(child: _QuickMetric('CUSTOS', r.totalCustos, context.colors.error)),
+                _QuickMetric('BRUTO', r.fatBruto, context.colors.info),
+                _QuickMetric('LÍQUIDO', r.fatLiquido, context.colors.success),
+                _QuickMetric('CUSTOS', r.totalCustos, context.colors.error),
               ],
             ),
           ),
@@ -444,13 +448,16 @@ class _ReceiveisTab extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             // 3 KPI cards
-            Row(
+            ResponsiveGrid(
+              mobileColumns: 1,
+              tabletColumns: 3,
+              desktopColumns: 3,
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.md,
               children: [
-                Expanded(child: _KpiReceita(label: 'BRUTO', value: resumo.fatBruto, accentColor: context.colors.info)),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(child: _KpiReceita(label: 'LÍQUIDO', value: resumo.fatLiquido, accentColor: context.colors.success)),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(child: _KpiReceita(label: 'CUSTOS', value: resumo.totalCustos, accentColor: context.colors.error)),
+                _KpiReceita(label: 'BRUTO', value: resumo.fatBruto, accentColor: context.colors.info),
+                _KpiReceita(label: 'LÍQUIDO', value: resumo.fatLiquido, accentColor: context.colors.success),
+                _KpiReceita(label: 'CUSTOS', value: resumo.totalCustos, accentColor: context.colors.error),
               ],
             ),
             const SizedBox(height: AppSpacing.x2l),
