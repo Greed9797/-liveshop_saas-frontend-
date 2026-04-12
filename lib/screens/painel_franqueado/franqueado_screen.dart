@@ -44,19 +44,21 @@ class FranqueadoScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
-            unidadesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text('Erro: $e'),
-                  const SizedBox(height: AppSpacing.md),
-                  ElevatedButton(
-                    onPressed: () => ref.read(franqueadoProvider.notifier).refresh(),
-                    child: const Text('Tentar novamente'),
-                  ),
-                ]),
+            Expanded(
+              child: unidadesAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text('Erro: $e'),
+                    const SizedBox(height: AppSpacing.md),
+                    ElevatedButton(
+                      onPressed: () => ref.read(franqueadoProvider.notifier).refresh(),
+                      child: const Text('Tentar novamente'),
+                    ),
+                  ]),
+                ),
+                data: (unidades) => _UnidadesContent(unidades: unidades),
               ),
-              data: (unidades) => _UnidadesContent(unidades: unidades),
             ),
           ],
         ),
@@ -76,8 +78,7 @@ class _UnidadesContent extends StatelessWidget {
     final pendentes  = unidades.fold(0,   (sum, u) => sum + u.contratosPendentes);
     final currency   = NumberFormat.simpleCurrency(locale: 'pt_BR');
 
-    return Expanded(
-      child: Column(
+    return Column(
         children: [
           Wrap(
             spacing: AppSpacing.md,
@@ -153,7 +154,6 @@ class _UnidadesContent extends StatelessWidget {
                   ),
           ),
         ],
-      ),
     );
   }
 }
