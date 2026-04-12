@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../widgets/app_scaffold.dart';
-import '../../widgets/roleta_widget.dart';
 import '../../providers/financeiro_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
@@ -435,36 +433,25 @@ class _ReceiveisTab extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: Column(
           children: [
-            // ── Roleta visual ────────────────────────────────────────────
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.x3l),
-              decoration: BoxDecoration(
-                color: AppColors.infoPurple, // mode-independent, keep as-is
-                borderRadius: BorderRadius.circular(AppRadius.pill),
+            // ── Recebíveis KPI cards ─────────────────────────────────────
+            Text(
+              'RECEBÍVEIS DO FRANQUEADO',
+              style: AppTypography.labelSmall.copyWith(
+                color: context.colors.textSecondary,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.8,
               ),
-              child: Column(
-                children: [
-                  Text('RECEBÍVEIS DO FRANQUEADO',
-                      style: AppTypography.caption.copyWith(
-                          color: Colors.white,
-                          letterSpacing: 1.2,
-                          fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 28),
-                  RoletaWidget(
-                      value: resumo.fatBruto,
-                      label: 'FAT. BRUTO',
-                      fontSize: 34),
-                  const SizedBox(height: AppSpacing.xl),
-                  RoletaWidget(
-                      value: resumo.fatLiquido,
-                      label: 'FAT. LÍQUIDO',
-                      fontSize: 26),
-                  const SizedBox(height: AppSpacing.xl),
-                  RoletaWidget(
-                      value: resumo.totalCustos, label: 'CUSTOS', fontSize: 20),
-                ],
-              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            // 3 KPI cards
+            Row(
+              children: [
+                _KpiReceita(label: 'BRUTO', value: resumo.fatBruto, accentColor: context.colors.info),
+                const SizedBox(width: AppSpacing.md),
+                _KpiReceita(label: 'LÍQUIDO', value: resumo.fatLiquido, accentColor: context.colors.success),
+                const SizedBox(width: AppSpacing.md),
+                _KpiReceita(label: 'CUSTOS', value: resumo.totalCustos, accentColor: context.colors.error),
+              ],
             ),
             const SizedBox(height: AppSpacing.x2l),
 
@@ -541,9 +528,14 @@ class _QuickMetric extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
+          color: context.colors.cardBackground,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          border: Border(
+            left: BorderSide(color: color, width: 4),
+            top: BorderSide(color: context.colors.divider, width: 1),
+            right: BorderSide(color: context.colors.divider, width: 1),
+            bottom: BorderSide(color: context.colors.divider, width: 1),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,12 +545,16 @@ class _QuickMetric extends StatelessWidget {
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1,
-                    color: color)),
+                    color: context.colors.textSecondary)),
             const SizedBox(height: AppSpacing.xs),
-            Text(
-              'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}',
-              style: AppTypography.bodySmall.copyWith(
-                  fontWeight: FontWeight.w700, color: color),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}',
+                style: AppTypography.bodySmall.copyWith(
+                    fontWeight: FontWeight.w700, color: context.colors.textPrimary),
+              ),
             ),
           ],
         ),
@@ -799,4 +795,58 @@ class _Categoria {
   final IconData icon;
   final String valor;
   const _Categoria(this.label, this.icon, this.valor);
+}
+
+class _KpiReceita extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color accentColor;
+  const _KpiReceita({required this.label, required this.value, required this.accentColor});
+
+  @override
+  Widget build(BuildContext context) {
+    final formatted = 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',').replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: context.colors.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border(
+            left: BorderSide(color: accentColor, width: 4),
+            top: BorderSide(color: context.colors.divider, width: 1),
+            right: BorderSide(color: context.colors.divider, width: 1),
+            bottom: BorderSide(color: context.colors.divider, width: 1),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: AppTypography.labelSmall.copyWith(
+                fontSize: 11,
+                color: context.colors.textSecondary,
+                letterSpacing: 0.8,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                formatted,
+                style: AppTypography.bodyLarge.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: context.colors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

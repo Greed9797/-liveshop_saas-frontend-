@@ -252,10 +252,6 @@ class AppScaffold extends ConsumerWidget {
                 ),
               ],
             ),
-            if (isDesktop) ...[
-              const SizedBox(width: 16),
-              Image.asset('assets/images/logo.png', height: 32),
-            ]
           ],
         ),
       ),
@@ -438,11 +434,12 @@ class _MenuContent extends ConsumerWidget {
                   currentRoute == AppRoutes.cadastroCliente ||
                   currentRoute == AppRoutes.contrato ||
                   currentRoute == AppRoutes.analiseCredito),
-          _MenuItem(
-              icon: Icons.bar_chart_rounded,
-              label: 'Análise de Vendas',
-              route: AppRoutes.analise,
-              isSelected: currentRoute == AppRoutes.analise),
+          // Análise de Vendas foi integrado ao Analytics — ver analytics_dashboard_screen.dart
+          // _MenuItem(
+          //     icon: Icons.bar_chart_rounded,
+          //     label: 'Análise de Vendas',
+          //     route: AppRoutes.analise,
+          //     isSelected: currentRoute == AppRoutes.analise),
           _MenuItem(
               icon: Icons.account_balance_wallet_rounded,
               label: 'Financeiro',

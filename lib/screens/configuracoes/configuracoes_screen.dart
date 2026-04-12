@@ -40,6 +40,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: 4, vsync: this);
+    _logoCtrl.addListener(() => setState(() {}));
   }
 
   @override
@@ -156,32 +157,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
         _field('Meta Diária de GMV (R\$)', _metaCtrl,
             enabled: _isEditingGeral,
             keyboardType: const TextInputType.numberWithOptions(decimal: true)),
-        _field('URL do Logotipo (Opcional)', _logoCtrl,
-            enabled: _isEditingGeral),
-        if (conf.logoUrl != null &&
-            conf.logoUrl!.isNotEmpty &&
-            !_isEditingGeral)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Logo atual:', style: AppTypography.caption),
-                const SizedBox(height: AppSpacing.sm),
-                Container(
-                  height: 60,
-                  decoration: BoxDecoration(
-                      border: Border.all(color: context.colors.textTertiary),
-                      borderRadius: BorderRadius.circular(AppRadius.md)),
-                  child: Image.network(conf.logoUrl!,
-                      errorBuilder: (_, __, ___) => const Padding(
-                            padding: EdgeInsets.all(AppSpacing.sm),
-                            child: Text('Imagem indisponível'),
-                          )),
-                ),
-              ],
-            ),
-          ),
+        _logoUploadArea(),
+        _field('URL do Logotipo', _logoCtrl, enabled: _isEditingGeral),
       ],
     );
   }
@@ -292,6 +269,109 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
     );
   }
 
+  Widget _logoUploadArea() {
+    final url = _logoCtrl.text.trim();
+    final hasUrl = url.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Logotipo', style: AppTypography.caption),
+          const SizedBox(height: AppSpacing.sm),
+          GestureDetector(
+            onTap: _isEditingGeral
+                ? () {
+                    // Focus the URL field below for URL entry
+                  }
+                : null,
+            child: SizedBox(
+              width: 120,
+              height: 120,
+              child: hasUrl
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.network(
+                            url,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              decoration: BoxDecoration(
+                                color: context.colors.background,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: context.colors.divider,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  Icons.broken_image_outlined,
+                                  size: 32,
+                                  color: context.colors.textTertiary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (_isEditingGeral)
+                            Positioned(
+                              bottom: 6,
+                              right: 6,
+                              child: Container(
+                                width: 26,
+                                height: 26,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withAlpha(140),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Icon(
+                                  Icons.edit_rounded,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    )
+                  : Container(
+                      decoration: BoxDecoration(
+                        color: context.colors.background,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: context.colors.divider,
+                          width: 2,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_outlined,
+                            size: 32,
+                            color: context.colors.textTertiary,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Adicionar logo',
+                            style: AppTypography.caption.copyWith(
+                              fontSize: 11,
+                              color: context.colors.textTertiary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPanel({
     required String title,
     required bool isEditing,
@@ -309,7 +389,9 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
             borderRadius: AppRadius.xl,
             borderColor: context.colors.divider,
             child: Padding(
-              padding: const EdgeInsets.all(32),
+              padding: EdgeInsets.all(
+                MediaQuery.sizeOf(context).width < 600 ? AppSpacing.lg : 32,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,7 +399,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(title, style: AppTypography.h3),
+                      Expanded(child: Text(title, style: AppTypography.h3)),
                       if (!isEditing)
                         IconButton(
                             icon: Icon(Icons.edit_rounded,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../providers/analytics_dashboard_provider.dart';
+import '../../providers/analytics_provider.dart';
 import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_breakpoints.dart';
@@ -14,6 +15,7 @@ import '../../theme/app_typography.dart';
 import '../../widgets/analytics_ranking_list.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/charts/gmv_mensal_chart.dart';
+import '../../widgets/charts/heatmap_horarios_chart.dart';
 import '../../widgets/charts/horas_live_chart.dart';
 import '../../widgets/charts/vendas_mensal_chart.dart';
 
@@ -156,6 +158,24 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
 
                       // Ranking (full width)
                       AnalyticsRankingList(items: data.rankingApresentadores),
+                      const SizedBox(height: AppSpacing.x2l),
+                      // Section divider
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Inteligência Comercial',
+                                style: AppTypography.h3.copyWith(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Prime time e heatmap de conversão por horário.',
+                              style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const _IntelComercialSection(),
                     ],
                   ),
                 );
@@ -385,6 +405,47 @@ class _KpiCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────
+// Inteligência Comercial — Heatmap
+// ──────────────────────────────────────────────
+
+class _IntelComercialSection extends ConsumerWidget {
+  const _IntelComercialSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final analyticsAsync = ref.watch(franqueadoAnalyticsResumoProvider);
+
+    return analyticsAsync.when(
+      loading: () => const SizedBox(
+        height: 200,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2l),
+        child: Center(
+          child: Text(
+            'Erro ao carregar heatmap',
+            style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
+          ),
+        ),
+      ),
+      data: (analytics) => Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: context.colors.cardBackground,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppShadows.sm,
+        ),
+        child: HeatmapHorariosChart(
+          dados: analytics.heatmapHorarios,
+          metaDiaria: null,
+        ),
       ),
     );
   }

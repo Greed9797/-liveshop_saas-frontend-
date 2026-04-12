@@ -29,19 +29,21 @@ class ExcelenciaScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Programa de Excelência',
-                          style: AppTypography.h2
-                              .copyWith(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        'Métricas de desempenho e ROI da sua franquia',
-                        style: AppTypography.bodySmall.copyWith(
-                            color: context.colors.textSecondary),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Programa de Excelência',
+                            style: AppTypography.h2
+                                .copyWith(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Métricas de desempenho e ROI da sua franquia',
+                          style: AppTypography.bodySmall.copyWith(
+                              color: context.colors.textSecondary),
+                        ),
+                      ],
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.refresh),

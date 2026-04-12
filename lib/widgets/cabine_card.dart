@@ -115,7 +115,7 @@ class _CabineCardState extends State<CabineCard>
                 width: widget.isSelected ? 2 : 1,
               ),
             ),
-            boxShadow: AppShadows.sm,
+            boxShadow: AppShadows.md,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

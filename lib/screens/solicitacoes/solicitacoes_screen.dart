@@ -466,44 +466,52 @@ class _SolicitacaoCardState extends State<_SolicitacaoCard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                OutlinedButton.icon(
-                  icon: Icon(Icons.close_rounded,
-                      size: 16, color: context.colors.error),
-                  label: Text('Recusar',
-                      style: TextStyle(color: context.colors.error)),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: context.colors.error),
+                Flexible(
+                  child: OutlinedButton.icon(
+                    icon: Icon(Icons.close_rounded,
+                        size: 16, color: context.colors.error),
+                    label: Text('Recusar',
+                        style: TextStyle(color: context.colors.error)),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: context.colors.error),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                    ),
+                    onPressed: _isAprovando
+                        ? null
+                        : () => widget.onRecusar(s.id),
                   ),
-                  onPressed: _isAprovando
-                      ? null
-                      : () => widget.onRecusar(s.id),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                ElevatedButton.icon(
-                  icon: _isAprovando
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.check_rounded,
-                          size: 16, color: Colors.white),
-                  label: const Text('Aprovar',
-                      style: TextStyle(color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: context.colors.success),
-                  onPressed: _isAprovando
-                      ? null
-                      : () async {
-                          setState(() => _isAprovando = true);
-                          await widget.onAprovar(s.id);
-                          if (mounted) {
-                            setState(() => _isAprovando = false);
-                          }
-                        },
+                Flexible(
+                  child: ElevatedButton.icon(
+                    icon: _isAprovando
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.check_rounded,
+                            size: 16, color: Colors.white),
+                    label: const Text('Aprovar',
+                        style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: context.colors.success,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8)),
+                    onPressed: _isAprovando
+                        ? null
+                        : () async {
+                            setState(() => _isAprovando = true);
+                            await widget.onAprovar(s.id);
+                            if (mounted) {
+                              setState(() => _isAprovando = false);
+                            }
+                          },
+                  ),
                 ),
               ],
             ),
