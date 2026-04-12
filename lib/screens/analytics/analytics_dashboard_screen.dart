@@ -280,24 +280,41 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Analytics', style: AppTypography.h2.copyWith(fontSize: 18)),
-              const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: context.colors.divider),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: clienteDropdown,
-                    ),
+                    child: Text('Analytics',
+                        style: AppTypography.h2.copyWith(fontSize: 18),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  mesField,
                   refreshBtn,
                 ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  border: Border.all(color: context.colors.divider),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: clienteDropdown,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: mesAnoCtrl,
+                decoration: InputDecoration(
+                  labelText: 'Mês',
+                  hintText: 'YYYY-MM',
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 8),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm)),
+                ),
+                style: AppTypography.bodySmall,
+                onSubmitted: onMesAnoSubmitted,
+                textInputAction: TextInputAction.done,
               ),
             ],
           );

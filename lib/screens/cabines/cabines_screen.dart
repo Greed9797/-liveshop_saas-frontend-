@@ -494,7 +494,9 @@ class _MainOperationalArea extends StatelessWidget {
                     crossAxisCount: crossAxisCount,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: 0.82,
+                    // Altura fixa — CabineCard (~180px) + SizedBox(8) +
+                    // _OperationalActions (~50px) = ~238px. Margem de folga.
+                    mainAxisExtent: 260,
                   ),
                 ),
         ),
@@ -812,14 +814,15 @@ class _OperationalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
       children: [
-        CabineCard(
-          cabine: cabine,
-          onTap: onTap,
-          isSelected: isSelected,
-          isSelectable:
-              hasSelectedContrato && cabine.status == 'disponivel',
+        Expanded(
+          child: CabineCard(
+            cabine: cabine,
+            onTap: onTap,
+            isSelected: isSelected,
+            isSelectable:
+                hasSelectedContrato && cabine.status == 'disponivel',
+          ),
         ),
         const SizedBox(height: 8),
         _OperationalActions(
