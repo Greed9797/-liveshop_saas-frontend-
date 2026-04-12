@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../providers/financeiro_provider.dart';
 import '../../routes/app_routes.dart';
@@ -350,11 +349,13 @@ class _PorClienteTab extends ConsumerWidget {
                               ),
                               Expanded(
                                 flex: 3,
-                                child: Text(
-                                  'R\$ ${c.total.toStringAsFixed(2).replaceAll('.', ',')}',
-                                  textAlign: TextAlign.right,
-                                  style: AppTypography.labelLarge.copyWith(
-                                      fontWeight: FontWeight.w600),
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: MoneyText(
+                                    value: c.total,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                               Expanded(
@@ -407,11 +408,10 @@ class _PorClienteTab extends ConsumerWidget {
                         style: AppTypography.labelLarge.copyWith(
                             fontWeight: FontWeight.w600,
                             color: context.colors.textSecondary)),
-                    Text(
-                      'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}',
-                      style: AppTypography.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: context.colors.primary),
+                    MoneyText(
+                      value: total,
+                      fontSize: 16,
+                      color: context.colors.primary,
                     ),
                   ],
                 ),
@@ -747,11 +747,10 @@ class _CustoTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'R\$ ${custo.valor.toStringAsFixed(2).replaceAll('.', ',')}',
-            style: AppTypography.labelLarge.copyWith(
-                fontWeight: FontWeight.w600,
-                color: context.colors.error),
+          MoneyText(
+            value: custo.valor,
+            fontSize: 14,
+            color: context.colors.error,
           ),
           const SizedBox(width: AppSpacing.xs),
           IconButton(

@@ -598,7 +598,7 @@ class _KpiSection extends StatelessWidget {
           context.colors.textSecondary, 'prontas para receber'),
       _KpiCardData(
           'GMV Total Hoje',
-          'R\$ ${metrics.gmvTotalHoje.toStringAsFixed(2)}',
+          NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(metrics.gmvTotalHoje),
           context.colors.success,
           'soma do ao vivo'),
       _KpiCardData('Audiência Total', metrics.audienciaTotal.toString(),

@@ -7,6 +7,7 @@ import '../theme/app_shadows.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_typography.dart';
 import '../theme/theme.dart';
+import 'money_text.dart';
 
 class BoletoItem extends StatelessWidget {
   final Boleto boleto;
@@ -74,9 +75,11 @@ class BoletoItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Valor', style: AppTypography.caption),
-                      Text(
-                        _formatCurrency(boleto.valor),
-                        style: AppTypography.h3.copyWith(color: context.colors.primary),
+                      const SizedBox(height: 2),
+                      MoneyText(
+                        value: boleto.valor,
+                        fontSize: 20,
+                        color: context.colors.primary,
                       ),
                     ],
                   ),
@@ -204,14 +207,6 @@ class BoletoItem extends StatelessWidget {
     'outros': 'Outros',
   }[tipo] ?? tipo;
 
-  String _formatCurrency(double v) {
-    final parts = v.toStringAsFixed(2).split('.');
-    final intPart = parts[0].replaceAllMapped(
-      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
-    );
-    return 'R\$ $intPart,${parts[1]}';
-  }
   String _formatDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 }
