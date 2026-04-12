@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../theme/theme.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import 'money_text.dart';
 
 // StateProvider simples para gerenciar a visibilidade globalmente
 final moneyVisibilityProvider = StateProvider<bool>((ref) => false);
@@ -27,7 +27,6 @@ class MoneyCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isVisible = ref.watch(moneyVisibilityProvider);
-    final fmt = NumberFormat.simpleCurrency(locale: 'pt_BR');
 
     return GestureDetector(
       onTap: onTap,
@@ -84,14 +83,20 @@ class MoneyCard extends ConsumerWidget {
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(
-                isVisible ? fmt.format(total) : 'R\$ •••••••',
-                style: AppTypography.heroNumber.copyWith(
-                  color: context.colors.textPrimary,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: isVisible
+                  ? MoneyText(
+                      value: total,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                    )
+                  : Text(
+                      'R\$ •••••••',
+                      style: AppTypography.heroNumber.copyWith(
+                        color: context.colors.textPrimary,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
             const SizedBox(height: 20),
             Divider(color: context.colors.divider, height: 1),
@@ -145,7 +150,6 @@ class _SubValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat.simpleCurrency(locale: 'pt_BR');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -161,14 +165,20 @@ class _SubValue extends StatelessWidget {
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
-          child: Text(
-            isVisible ? fmt.format(value) : 'R\$ •••••',
-            style: AppTypography.bodyLarge.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-            ),
-          ),
+          child: isVisible
+              ? MoneyText(
+                  value: value,
+                  fontSize: 15,
+                  color: color,
+                )
+              : Text(
+                  'R\$ •••••',
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
         ),
       ],
     );

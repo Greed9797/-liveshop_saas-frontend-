@@ -83,12 +83,21 @@ ThemeData _buildTheme(Brightness brightness) {
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryOrange,
         foregroundColor: AppColors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+        elevation: 2,
+        shadowColor: AppColors.primaryOrange.withValues(alpha: 0.4),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
         ),
         textStyle: AppTypography.buttonText,
+        animationDuration: const Duration(milliseconds: 150),
+      ).copyWith(
+        elevation: WidgetStateProperty.resolveWith<double>((states) {
+          if (states.contains(WidgetState.disabled)) return 0;
+          if (states.contains(WidgetState.pressed)) return 1;
+          if (states.contains(WidgetState.hovered)) return 6;
+          return 2;
+        }),
       ),
     ),
 
@@ -96,11 +105,41 @@ ThemeData _buildTheme(Brightness brightness) {
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.primaryOrange,
         side: const BorderSide(color: AppColors.primaryOrange, width: 1.5),
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
         ),
         textStyle: AppTypography.buttonText,
+        animationDuration: const Duration(milliseconds: 150),
+      ).copyWith(
+        backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.hovered)) {
+            return AppColors.primaryOrange.withValues(alpha: 0.06);
+          }
+          return null;
+        }),
+      ),
+    ),
+
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: AppColors.primaryOrange,
+        foregroundColor: AppColors.white,
+        elevation: 2,
+        shadowColor: AppColors.primaryOrange.withValues(alpha: 0.4),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        textStyle: AppTypography.buttonText,
+        animationDuration: const Duration(milliseconds: 150),
+      ).copyWith(
+        elevation: WidgetStateProperty.resolveWith<double>((states) {
+          if (states.contains(WidgetState.disabled)) return 0;
+          if (states.contains(WidgetState.pressed)) return 1;
+          if (states.contains(WidgetState.hovered)) return 6;
+          return 2;
+        }),
       ),
     ),
 

@@ -8,6 +8,7 @@ import '../../theme/app_spacing.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/theme.dart';
+import '../../widgets/money_text.dart';
 import '../../widgets/responsive_grid.dart';
 
 class FinanceiroScreen extends ConsumerWidget {
@@ -529,8 +530,6 @@ class _QuickMetric extends StatelessWidget {
   final double value;
   final Color accentColor;
 
-  static final _currency = NumberFormat.simpleCurrency(locale: 'pt_BR');
-
   const _QuickMetric(this.label, this.value, this.accentColor);
 
   @override
@@ -558,16 +557,7 @@ class _QuickMetric extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            _currency.format(value),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: context.colors.textPrimary,
-            ),
-          ),
+          MoneyText(value: value, fontSize: 22),
         ],
       ),
     );
@@ -813,8 +803,6 @@ class _KpiReceita extends StatelessWidget {
   final double value;
   final Color accentColor;
 
-  static final _currency = NumberFormat.simpleCurrency(locale: 'pt_BR');
-
   const _KpiReceita({required this.label, required this.value, required this.accentColor});
 
   @override
@@ -842,16 +830,7 @@ class _KpiReceita extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            _currency.format(value),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: context.colors.textPrimary,
-            ),
-          ),
+          MoneyText(value: value, fontSize: 22),
         ],
       ),
     );

@@ -53,6 +53,8 @@ class CabineCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onTap,
+        hoverColor: colors.primary.withValues(alpha: 0.04),
+        splashColor: colors.primary.withValues(alpha: 0.08),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
