@@ -126,10 +126,8 @@ class _KpiRow extends StatelessWidget {
         children: cards
             .map((c) => SizedBox(
                   width: cardWidth,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 110),
-                    child: c,
-                  ),
+                  height: 140,
+                  child: c,
                 ))
             .toList(),
       );
