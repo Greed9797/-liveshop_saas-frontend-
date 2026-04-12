@@ -165,14 +165,11 @@ class VendasMensalChart extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(4),
-              topRight: Radius.circular(4),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             backDrawRodData: BackgroundBarChartRodData(
               show: true,
               toY: _maxY(),
-              color: context.colors.divider.withValues(alpha: 0.5),
+              color: context.colors.divider.withValues(alpha: 0.08),
             ),
           ),
         ],

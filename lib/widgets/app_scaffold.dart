@@ -273,10 +273,18 @@ class AppScaffold extends ConsumerWidget {
       child: SafeArea(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24.0),
-              child: Image(
-                  image: AssetImage('assets/images/logo.png'), height: 40),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24.0),
+              child: Text(
+                'livelab',
+                style: TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: context.colors.primary,
+                  letterSpacing: -0.5,
+                ),
+              ),
             ),
             Divider(color: context.colors.divider, height: 1),
             Expanded(
@@ -299,7 +307,7 @@ class AppScaffold extends ConsumerWidget {
     bool isClienteParceiro,
   ) {
     return Container(
-      width: 260,
+      width: 220,
       decoration: BoxDecoration(
         color: context.colors.sidebarBg,
         border: Border(
@@ -308,12 +316,20 @@ class AppScaffold extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          const SafeArea(
+          SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 32.0),
-              child: Image(
-                  image: AssetImage('assets/images/logo.png'), height: 40),
+              padding: const EdgeInsets.symmetric(vertical: 32.0),
+              child: Text(
+                'livelab',
+                style: TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: context.colors.primary,
+                  letterSpacing: -0.5,
+                ),
+              ),
             ),
           ),
           Expanded(
@@ -323,6 +339,41 @@ class AppScaffold extends ConsumerWidget {
             isFranqueadorMaster: isFranqueadorMaster,
             isClienteParceiro: isClienteParceiro,
           )),
+          Consumer(
+            builder: (context, ref, _) {
+              final mode = ref.watch(themeModeProvider);
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      mode == ThemeMode.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                      size: 16,
+                      color: context.colors.textTertiary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      mode == ThemeMode.dark ? 'Modo Claro' : 'Modo Escuro',
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 12,
+                        color: context.colors.textTertiary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Switch.adaptive(
+                      value: mode == ThemeMode.dark,
+                      onChanged: (v) {
+                        ref.read(themeModeProvider.notifier).state =
+                            v ? ThemeMode.dark : ThemeMode.light;
+                      },
+                      activeColor: context.colors.primary,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -345,8 +396,9 @@ class _MenuContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
       children: [
+        _SectionLabel(label: 'GERAL'),
         _MenuItem(
             icon: Icons.home_rounded,
             label: 'Home',
@@ -427,6 +479,7 @@ class _MenuContent extends ConsumerWidget {
               route: AppRoutes.excelencia,
               isSelected: currentRoute == AppRoutes.excelencia),
         ],
+        _SectionLabel(label: 'MAIS'),
         _MenuItem(
             icon: Icons.menu_book_rounded,
             label: 'Manuais',
@@ -444,7 +497,7 @@ class _MenuContent extends ConsumerWidget {
               route: AppRoutes.configuracoes,
               isSelected: currentRoute == AppRoutes.configuracoes),
         ],
-        Divider(color: context.colors.divider, height: 32),
+        _SectionLabel(label: 'CONTA'),
         _MenuItem(
           icon: Icons.logout_rounded,
           label: 'Sair',
@@ -455,6 +508,28 @@ class _MenuContent extends ConsumerWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Outfit',
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: context.colors.textTertiary,
+          letterSpacing: 1.0,
+        ),
+      ),
     );
   }
 }
@@ -492,7 +567,7 @@ class _MenuItem extends StatelessWidget {
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         hoverColor: colors.sidebarHover,
-        leading: Icon(icon, color: color, size: 22),
+        leading: Icon(icon, color: color, size: 20),
         title: Text(
           label,
           style: TextStyle(

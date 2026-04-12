@@ -335,16 +335,11 @@ class HeatmapHorariosChart extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(6),
-              topRight: Radius.circular(6),
-              bottomLeft: Radius.zero,
-              bottomRight: Radius.zero,
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
             backDrawRodData: BackgroundBarChartRodData(
               show: true,
               toY: _calculateMaxY(),
-              color: context.colors.divider.withValues(alpha: 0.5),
+              color: context.colors.divider.withValues(alpha: 0.08),
             ),
           ),
         ],

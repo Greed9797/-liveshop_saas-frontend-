@@ -8,6 +8,11 @@ class AppShadows {
       blurRadius: 3,
       offset: Offset(0, 1),
     ),
+    BoxShadow(
+      color: Color(0x0F000000),
+      blurRadius: 2,
+      offset: Offset(0, 1),
+    ),
   ];
 
   static const List<BoxShadow> md = [
@@ -28,6 +33,11 @@ class AppShadows {
       color: Color(0x14000000),
       blurRadius: 12,
       offset: Offset(0, 4),
+    ),
+    BoxShadow(
+      color: Color(0x0A000000),
+      blurRadius: 6,
+      offset: Offset(0, 2),
     ),
   ];
 

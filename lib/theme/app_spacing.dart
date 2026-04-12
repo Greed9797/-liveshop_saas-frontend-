@@ -15,7 +15,7 @@ class AppSpacing {
 
   // Semantic aliases
   static const double cardPadding = x2l; // 24 — cards principais
-  static const double compactPadding = lg; // 16 — cards menores, list items
+  static const double compactPadding = md; // 12 — cards menores, list items
   static const double screenPadding = x2l; // 24 — todas as telas
   static const double sectionGap = xl; // 20 — entre seções
   static const double cardGap = lg; // 16 — entre cards no grid

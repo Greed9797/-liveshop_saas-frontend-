@@ -198,54 +198,49 @@ class _ActionButtons extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Material(
-            color: context.colors.primary,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () =>
-                  Navigator.pushNamed(context, AppRoutes.cadastroCliente),
-              child: SizedBox(
-                height: 110,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.point_of_sale, size: 38, color: Colors.white),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'VENDER',
-                      style: AppTypography.h3.copyWith(
-                          fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ],
-                ),
+          child: FilledButton.icon(
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.cadastroCliente),
+            icon: const Icon(Icons.point_of_sale_rounded, size: 18),
+            label: const Text('VENDER'),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.colors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: const TextStyle(
+                fontFamily: 'Outfit',
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                letterSpacing: 0.5,
               ),
             ),
           ),
         ),
         const SizedBox(width: AppSpacing.md),
         Expanded(
-          child: Material(
-            color: context.colors.background,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => Navigator.pushNamed(context, AppRoutes.financeiro),
-              child: SizedBox(
-                height: 110,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.account_balance_wallet_rounded,
-                        size: 38, color: context.colors.textSecondary),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'FINANCEIRO',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: context.colors.textPrimary),
-                    ),
-                  ],
-                ),
+          child: OutlinedButton.icon(
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.financeiro),
+            icon: Icon(Icons.account_balance_wallet_rounded,
+                size: 18, color: context.colors.textSecondary),
+            label: Text(
+              'FINANCEIRO',
+              style: TextStyle(color: context.colors.textPrimary),
+            ),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              side: BorderSide(color: context.colors.divider),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: const TextStyle(
+                fontFamily: 'Outfit',
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                letterSpacing: 0.5,
               ),
             ),
           ),

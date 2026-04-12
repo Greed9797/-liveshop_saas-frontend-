@@ -102,9 +102,7 @@ ThemeData _buildTheme(Brightness brightness) {
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: isLight ? const Color(0xFFE5E7EB) : const Color(0xFF333333),
-        ),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -115,7 +113,7 @@ ThemeData _buildTheme(Brightness brightness) {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(
-          color: AppColors.primaryOrange,
+          color: Color(0xFFD7582D),
           width: 1.5,
         ),
       ),
@@ -129,7 +127,7 @@ ThemeData _buildTheme(Brightness brightness) {
       ),
       filled: true,
       fillColor: isLight ? const Color(0xFFFFFFFF) : const Color(0xFF1A1A1A),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     ),
 
     dialogTheme: DialogThemeData(
