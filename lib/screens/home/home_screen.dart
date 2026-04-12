@@ -131,16 +131,19 @@ class _KpiRow extends StatelessWidget {
       );
     }
 
-    return Row(
-      children: [
-        Expanded(child: cards[0]),
-        const SizedBox(width: AppSpacing.cardGap),
-        Expanded(child: cards[1]),
-        const SizedBox(width: AppSpacing.cardGap),
-        Expanded(child: cards[2]),
-        const SizedBox(width: AppSpacing.cardGap),
-        Expanded(child: cards[3]),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: cards[0]),
+          const SizedBox(width: AppSpacing.cardGap),
+          Expanded(child: cards[1]),
+          const SizedBox(width: AppSpacing.cardGap),
+          Expanded(child: cards[2]),
+          const SizedBox(width: AppSpacing.cardGap),
+          Expanded(child: cards[3]),
+        ],
+      ),
     );
   }
 }
@@ -483,7 +486,7 @@ class _CabineMiniTile extends StatelessWidget {
               children: [
                 Text(
                   'Cabine ${cabine.numero}',
-                  style: AppTypography.h3,
+                  style: AppTypography.h3.copyWith(color: context.colors.textPrimary),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Builder(

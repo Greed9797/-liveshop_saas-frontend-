@@ -35,7 +35,7 @@ class VendasMensalChart extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Vendas Mensal', style: AppTypography.h3.copyWith(fontSize: 15)),
+                  Text('Vendas Mensal', style: AppTypography.h3.copyWith(fontSize: 15, color: context.colors.textPrimary)),
                   const SizedBox(height: 2),
                   Text('Número de lives encerradas por mês',
                       style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),

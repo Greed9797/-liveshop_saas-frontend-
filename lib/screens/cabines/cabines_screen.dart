@@ -401,7 +401,7 @@ class _MainOperationalArea extends StatelessWidget {
       > 1500 => 4,
       > 1200 => 3,
       > 760 => 2,
-      _ => 1,
+      _ => 2,
     };
 
     return CustomScrollView(

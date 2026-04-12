@@ -205,7 +205,7 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 600;
+          final isWide = constraints.maxWidth >= 750;
 
           final clienteDropdown = DropdownButtonHideUnderline(
             child: DropdownButton<String?>(

@@ -130,49 +130,56 @@ class _ExcelenciaContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        Wrap(
-          spacing: 14,
-          runSpacing: 14,
-          children: [
-            SizedBox(
-                width: 220,
-                child: MetricCard(
-                  label: 'RETENÇÃO DE CLIENTES',
-                  value: '${data.taxaRetencao}%',
-                  icon: Icons.favorite_border,
-                  iconColor: context.colors.success,
-                  subtitle:
-                      '${data.ativos} ativos / ${data.cancelados} cancelados',
-                )),
-            SizedBox(
-                width: 220,
-                child: MetricCard(
-                  label: 'CRESCIMENTO',
-                  value: '${crescendo ? '+' : ''}${data.crescimentoPct}%',
-                  icon: crescendo ? Icons.trending_up : Icons.trending_down,
-                  iconColor: crescendo ? context.colors.success : context.colors.error,
-                  subtitle: 'vs. mês anterior',
-                )),
-            SizedBox(
-                width: 220,
-                child: MetricCard(
-                  label: 'PRODUTIVIDADE',
-                  value: '${data.ativos} clientes',
-                  icon: Icons.bolt_outlined,
-                  iconColor: context.colors.primary,
-                  subtitle: 'carteira ativa',
-                )),
-            SizedBox(
-                width: 220,
-                child: MetricCard(
-                  label: 'CHURN',
-                  value: '${100 - data.taxaRetencao}%',
-                  icon: Icons.remove_circle_outline,
-                  iconColor: context.colors.error,
-                  subtitle:
-                      '${data.cancelados} cancelamento${data.cancelados == 1 ? '' : 's'}',
-                )),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth = constraints.maxWidth < 480
+                ? (constraints.maxWidth - 14) / 2
+                : 220.0;
+            return Wrap(
+              spacing: 14,
+              runSpacing: 14,
+              children: [
+                SizedBox(
+                    width: cardWidth,
+                    child: MetricCard(
+                      label: 'RETENÇÃO DE CLIENTES',
+                      value: '${data.taxaRetencao}%',
+                      icon: Icons.favorite_border,
+                      iconColor: context.colors.success,
+                      subtitle:
+                          '${data.ativos} ativos / ${data.cancelados} cancelados',
+                    )),
+                SizedBox(
+                    width: cardWidth,
+                    child: MetricCard(
+                      label: 'CRESCIMENTO',
+                      value: '${crescendo ? '+' : ''}${data.crescimentoPct}%',
+                      icon: crescendo ? Icons.trending_up : Icons.trending_down,
+                      iconColor: crescendo ? context.colors.success : context.colors.error,
+                      subtitle: 'vs. mês anterior',
+                    )),
+                SizedBox(
+                    width: cardWidth,
+                    child: MetricCard(
+                      label: 'PRODUTIVIDADE',
+                      value: '${data.ativos} clientes',
+                      icon: Icons.bolt_outlined,
+                      iconColor: context.colors.primary,
+                      subtitle: 'carteira ativa',
+                    )),
+                SizedBox(
+                    width: cardWidth,
+                    child: MetricCard(
+                      label: 'CHURN',
+                      value: '${100 - data.taxaRetencao}%',
+                      icon: Icons.remove_circle_outline,
+                      iconColor: context.colors.error,
+                      subtitle:
+                          '${data.cancelados} cancelamento${data.cancelados == 1 ? '' : 's'}',
+                    )),
+              ],
+            );
+          },
         ),
         const SizedBox(height: AppSpacing.x3l),
         AppCard(

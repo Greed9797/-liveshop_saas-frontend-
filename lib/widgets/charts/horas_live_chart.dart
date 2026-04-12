@@ -30,7 +30,7 @@ class HorasLiveChart extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Horas de Live por Dia', style: AppTypography.h3.copyWith(fontSize: 15)),
+                Text('Horas de Live por Dia', style: AppTypography.h3.copyWith(fontSize: 15, color: context.colors.textPrimary)),
                 const SizedBox(height: 2),
                 Text('Últimos 30 dias do período', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
               ],

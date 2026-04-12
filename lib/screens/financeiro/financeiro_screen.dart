@@ -469,15 +469,15 @@ class _ReceiveisTab extends ConsumerWidget {
                     const SizedBox(height: AppSpacing.lg),
                     _BrutoLiquidoBar(resumo: resumo),
                     const SizedBox(height: AppSpacing.lg),
-                    Row(
+                    Wrap(
+                      spacing: AppSpacing.lg,
+                      runSpacing: AppSpacing.sm,
                       children: [
                         _LegendDot(
                             color: context.colors.info, label: 'Fat. Bruto'),
-                        const SizedBox(width: AppSpacing.lg),
                         _LegendDot(
                             color: context.colors.success,
                             label: 'Fat. Líquido'),
-                        const SizedBox(width: AppSpacing.lg),
                         _LegendDot(color: context.colors.error, label: 'Custos'),
                       ],
                     ),

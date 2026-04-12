@@ -37,7 +37,7 @@ class AuditoriaContractCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     contrato.clienteNome ?? 'Cliente sem nome',
-                    style: AppTypography.h3,
+                    style: AppTypography.h3.copyWith(color: context.colors.textPrimary),
                   ),
                 ),
                 AuditoriaStatusBadge(status: contrato.status),

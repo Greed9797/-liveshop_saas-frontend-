@@ -17,13 +17,13 @@ class AppShadows {
 
   static const List<BoxShadow> md = [
     BoxShadow(
-      color: Color(0x0A000000),
-      blurRadius: 3,
-      offset: Offset(0, 1),
+      color: Color(0x14000000),
+      blurRadius: 8,
+      offset: Offset(0, 2),
     ),
     BoxShadow(
-      color: Color(0x0F000000),
-      blurRadius: 2,
+      color: Color(0x0A000000),
+      blurRadius: 4,
       offset: Offset(0, 1),
     ),
   ];

@@ -31,7 +31,7 @@ class AnalyticsRankingList extends StatelessWidget {
             children: [
               const Icon(Icons.emoji_events_rounded, color: AppColors.medalGold, size: 20),
               const SizedBox(width: 8),
-              Text('Top Apresentadores', style: AppTypography.h3.copyWith(fontSize: 15)),
+              Text('Top Apresentadores', style: AppTypography.h3.copyWith(fontSize: 15, color: context.colors.textPrimary)),
             ],
           ),
           const SizedBox(height: 4),

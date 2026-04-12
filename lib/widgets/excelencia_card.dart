@@ -76,7 +76,7 @@ class _CardContent extends StatelessWidget {
       children: [
         Text(
           'PROGRAMA DE EXCELÊNCIA',
-          style: AppTypography.h3.copyWith(fontSize: 16),
+          style: AppTypography.h3.copyWith(fontSize: 16, color: context.colors.textPrimary),
         ),
         const Divider(height: 24),
         _buildRatingRow(context, 'BASE DE CONTRATOS', _starsContratos()),

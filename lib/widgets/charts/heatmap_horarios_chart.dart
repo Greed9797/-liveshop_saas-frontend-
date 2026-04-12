@@ -43,20 +43,26 @@ class HeatmapHorariosChart extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Prime Time (Faturamento por Hora)',
-                        style: AppTypography.h3.copyWith(fontSize: 16),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Horários com maior volume de GMV gerado hoje',
-                        style: AppTypography.caption
-                            .copyWith(color: context.colors.textSecondary),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Prime Time (Faturamento por Hora)',
+                          style: AppTypography.h3.copyWith(fontSize: 16, color: context.colors.textPrimary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Horários com maior volume de GMV gerado hoje',
+                          style: AppTypography.caption
+                              .copyWith(color: context.colors.textSecondary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
                   if (metaDiaria != null && metaDiaria! > 0)
                     Container(

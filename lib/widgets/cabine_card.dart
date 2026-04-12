@@ -127,7 +127,7 @@ class _CabineCardState extends State<CabineCard>
                   Expanded(
                     child: Text(
                       'Cabine ${widget.cabine.numero.toString().padLeft(2, '0')}',
-                      style: AppTypography.h3.copyWith(fontSize: 16),
+                      style: AppTypography.h3.copyWith(fontSize: 16, color: context.colors.textPrimary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -158,7 +158,7 @@ class _CabineCardState extends State<CabineCard>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.bodyMedium
-                    .copyWith(fontWeight: FontWeight.w600),
+                    .copyWith(fontWeight: FontWeight.w600, color: context.colors.textPrimary),
               ),
               const SizedBox(height: 4),
 
