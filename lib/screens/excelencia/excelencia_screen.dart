@@ -191,13 +191,13 @@ class _ExcelenciaContent extends StatelessWidget {
                   width: 4,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: context.colors.info,
+                    color: context.colors.primary,
                     borderRadius: BorderRadius.circular(AppRadius.xs),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.lg),
                 Icon(Icons.savings_outlined,
-                    color: context.colors.info, size: 40),
+                    color: context.colors.primary, size: 40),
                 const SizedBox(width: AppSpacing.xl),
                 Expanded(
                   child: Column(
@@ -211,9 +211,9 @@ class _ExcelenciaContent extends StatelessWidget {
                       Text(
                         mesesROI > 0
                             ? '${mesesROI.toStringAsFixed(1)} meses'
-                            : '—',
+                            : 'Configure sua taxa de franquia',
                         style: AppTypography.h1.copyWith(
-                            fontSize: 32,
+                            fontSize: mesesROI > 0 ? 32 : 18,
                             color: context.colors.textPrimary,
                             fontWeight: FontWeight.w600),
                       ),

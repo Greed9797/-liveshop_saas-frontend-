@@ -24,11 +24,11 @@ class _ClientPinState extends State<ClientPin>
 
   Color _colorFor(BuildContext context) => switch (widget.status) {
         'ativo' => context.colors.success,
-        'enviado' => context.colors.warning,
+        'enviado' => context.colors.info,
         'em_analise' => context.colors.warning,
-        'negociacao' => context.colors.info,
+        'negociacao' => context.colors.warning,
         'inadimplente' => context.colors.error,
-        'recomendacao' => AppColors.infoPurple,
+        'recomendacao' => context.colors.primary,
         _ => context.colors.textTertiary,
       };
 

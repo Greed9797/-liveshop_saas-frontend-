@@ -90,9 +90,11 @@ class AppScaffold extends ConsumerWidget {
       backgroundColor: context.colors.background,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 800;
+          final width = constraints.maxWidth;
+          final isMobile = width < 800;
+          final isTablet = width >= 800 && width < 1100;
 
-          if (isDesktop) {
+          if (!isMobile) {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -101,6 +103,7 @@ class AppScaffold extends ConsumerWidget {
                   boletosCount,
                   isFranqueadorMaster,
                   isClienteParceiro,
+                  compact: isTablet,
                 ),
                 Expanded(
                   child: Column(
@@ -300,10 +303,11 @@ class AppScaffold extends ConsumerWidget {
     BuildContext context,
     int boletosCount,
     bool isFranqueadorMaster,
-    bool isClienteParceiro,
-  ) {
+    bool isClienteParceiro, {
+    bool compact = false,
+  }) {
     return Container(
-      width: 220,
+      width: compact ? 68 : 220,
       decoration: BoxDecoration(
         color: context.colors.sidebarBg,
         border: Border(
@@ -317,7 +321,7 @@ class AppScaffold extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 32.0),
               child: Text(
-                'livelab',
+                compact ? 'L' : 'livelab',
                 style: TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 20,
@@ -334,10 +338,30 @@ class AppScaffold extends ConsumerWidget {
             boletosCount: boletosCount,
             isFranqueadorMaster: isFranqueadorMaster,
             isClienteParceiro: isClienteParceiro,
+            compact: compact,
           )),
           Consumer(
             builder: (context, ref, _) {
               final mode = ref.watch(themeModeProvider);
+              if (compact) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: IconButton(
+                    icon: Icon(
+                      mode == ThemeMode.dark
+                          ? Icons.light_mode_outlined
+                          : Icons.dark_mode_outlined,
+                      size: 18,
+                      color: context.colors.textTertiary,
+                    ),
+                    tooltip: mode == ThemeMode.dark ? 'Modo claro' : 'Modo escuro',
+                    onPressed: () {
+                      ref.read(themeModeProvider.notifier).state =
+                          mode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+                    },
+                  ),
+                );
+              }
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
@@ -381,12 +405,14 @@ class _MenuContent extends ConsumerWidget {
   final int boletosCount;
   final bool isFranqueadorMaster;
   final bool isClienteParceiro;
+  final bool compact;
 
   const _MenuContent({
     required this.currentRoute,
     required this.boletosCount,
     required this.isFranqueadorMaster,
     required this.isClienteParceiro,
+    this.compact = false,
   });
 
   @override
@@ -394,25 +420,28 @@ class _MenuContent extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.only(top: 8, bottom: 8),
       children: [
-        _SectionLabel(label: 'GERAL'),
+        if (!compact) _SectionLabel(label: 'GERAL'),
         _MenuItem(
             icon: Icons.home_rounded,
             label: 'Home',
             route: isClienteParceiro ? AppRoutes.cliente : AppRoutes.home,
             isSelected: currentRoute == AppRoutes.home ||
-                currentRoute == AppRoutes.cliente),
+                currentRoute == AppRoutes.cliente,
+            compact: compact),
         if (isClienteParceiro) ...[
           _MenuItem(
               icon: Icons.history_rounded,
               label: 'Histórico de Vendas',
               route: AppRoutes.clienteHistorico,
-              isSelected: currentRoute == AppRoutes.clienteHistorico),
+              isSelected: currentRoute == AppRoutes.clienteHistorico,
+              compact: compact),
           _MenuItem(
               icon: Icons.videocam_rounded,
               label: 'Minhas Cabines',
               route: AppRoutes.clienteCabines,
               isSelected: currentRoute == AppRoutes.clienteCabines ||
-                  currentRoute == AppRoutes.clienteCabineDetail),
+                  currentRoute == AppRoutes.clienteCabineDetail,
+              compact: compact),
         ],
         if (!isClienteParceiro) ...[
           _MenuItem(
@@ -420,12 +449,14 @@ class _MenuContent extends ConsumerWidget {
               label: 'Cabines',
               route: AppRoutes.cabines,
               isSelected: currentRoute == AppRoutes.cabines ||
-                  currentRoute == AppRoutes.cabineDetail),
+                  currentRoute == AppRoutes.cabineDetail,
+              compact: compact),
           _MenuItem(
               icon: Icons.event_note_rounded,
               label: 'Solicitações',
               route: AppRoutes.solicitacoes,
-              isSelected: currentRoute == AppRoutes.solicitacoes),
+              isSelected: currentRoute == AppRoutes.solicitacoes,
+              compact: compact),
           _MenuItem(
               icon: Icons.map_rounded,
               label: 'Vendas em Andamento',
@@ -433,24 +464,21 @@ class _MenuContent extends ConsumerWidget {
               isSelected: currentRoute == AppRoutes.vendas ||
                   currentRoute == AppRoutes.cadastroCliente ||
                   currentRoute == AppRoutes.contrato ||
-                  currentRoute == AppRoutes.analiseCredito),
-          // Análise de Vendas foi integrado ao Analytics — ver analytics_dashboard_screen.dart
-          // _MenuItem(
-          //     icon: Icons.bar_chart_rounded,
-          //     label: 'Análise de Vendas',
-          //     route: AppRoutes.analise,
-          //     isSelected: currentRoute == AppRoutes.analise),
+                  currentRoute == AppRoutes.analiseCredito,
+              compact: compact),
           _MenuItem(
               icon: Icons.account_balance_wallet_rounded,
               label: 'Financeiro',
               route: AppRoutes.financeiro,
-              isSelected: currentRoute == AppRoutes.financeiro),
+              isSelected: currentRoute == AppRoutes.financeiro,
+              compact: compact),
           if (isFranqueadorMaster) ...[
             _MenuItem(
               icon: Icons.fact_check_rounded,
               label: 'Auditoria de Contratos',
               route: AppRoutes.auditoriaContratos,
               isSelected: currentRoute == AppRoutes.auditoriaContratos,
+              compact: compact,
             ),
           ],
           _MenuItem(
@@ -458,48 +486,56 @@ class _MenuContent extends ConsumerWidget {
             label: 'Analytics',
             route: AppRoutes.analyticsDashboard,
             isSelected: currentRoute == AppRoutes.analyticsDashboard,
+            compact: compact,
           ),
           _MenuItem(
               icon: Icons.receipt_long_rounded,
               label: 'Meus Boletos',
               route: AppRoutes.boletos,
               isSelected: currentRoute == AppRoutes.boletos,
-              badge: boletosCount > 0 ? '$boletosCount' : null),
+              badge: boletosCount > 0 ? '$boletosCount' : null,
+              compact: compact),
           _MenuItem(
               icon: Icons.people_alt_rounded,
               label: 'Clientes / Leads',
               route: AppRoutes.clientesLeads,
-              isSelected: currentRoute == AppRoutes.clientesLeads),
+              isSelected: currentRoute == AppRoutes.clientesLeads,
+              compact: compact),
           _MenuItem(
               icon: Icons.workspace_premium_rounded,
               label: 'Programa de Excelência',
               route: AppRoutes.excelencia,
-              isSelected: currentRoute == AppRoutes.excelencia),
+              isSelected: currentRoute == AppRoutes.excelencia,
+              compact: compact),
         ],
-        _SectionLabel(label: 'MAIS'),
+        if (!compact) _SectionLabel(label: 'MAIS'),
         _MenuItem(
             icon: Icons.menu_book_rounded,
             label: 'Manuais',
             route: AppRoutes.manuais,
-            isSelected: currentRoute == AppRoutes.manuais),
+            isSelected: currentRoute == AppRoutes.manuais,
+            compact: compact),
         if (!isClienteParceiro) ...[
           _MenuItem(
               icon: Icons.handshake_rounded,
               label: 'Recomendações',
               route: AppRoutes.recomendacoes,
-              isSelected: currentRoute == AppRoutes.recomendacoes),
+              isSelected: currentRoute == AppRoutes.recomendacoes,
+              compact: compact),
           _MenuItem(
               icon: Icons.settings_outlined,
               label: 'Configurações',
               route: AppRoutes.configuracoes,
-              isSelected: currentRoute == AppRoutes.configuracoes),
+              isSelected: currentRoute == AppRoutes.configuracoes,
+              compact: compact),
         ],
-        _SectionLabel(label: 'CONTA'),
+        if (!compact) _SectionLabel(label: 'CONTA'),
         _MenuItem(
           icon: Icons.logout_rounded,
           label: 'Sair',
           route: AppRoutes.login,
           isSelected: false,
+          compact: compact,
           onTap: () {
             ref.read(authProvider.notifier).logout();
           },
@@ -538,6 +574,7 @@ class _MenuItem extends StatelessWidget {
   final bool isSelected;
   final String? badge;
   final VoidCallback? onTap;
+  final bool compact;
 
   const _MenuItem({
     required this.icon,
@@ -546,20 +583,70 @@ class _MenuItem extends StatelessWidget {
     required this.isSelected,
     this.badge,
     this.onTap,
+    this.compact = false,
   });
+
+  void _handleTap(BuildContext context) {
+    if (onTap != null) {
+      onTap!();
+      return;
+    }
+    if (route != null && route != AppRoutes.login) {
+      Navigator.pushReplacementNamed(context, route!);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final color = isSelected ? colors.sidebarActiveText : colors.sidebarInactiveText;
+    final color =
+        isSelected ? colors.sidebarActiveText : colors.sidebarInactiveText;
     final bgColor = isSelected ? colors.sidebarActiveBg : Colors.transparent;
+
+    if (compact) {
+      return Tooltip(
+        message: label,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => _handleTap(context),
+            child: SizedBox(
+              height: 44,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(icon, color: color, size: 20),
+                  if (badge != null)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
-        // No left border accent — pill background is the active indicator
       ),
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -586,15 +673,7 @@ class _MenuItem extends StatelessWidget {
                         fontWeight: FontWeight.bold)),
               )
             : null,
-        onTap: () {
-          if (onTap != null) {
-            onTap!();
-            return;
-          }
-          if (route != null && route != AppRoutes.login) {
-            Navigator.pushReplacementNamed(context, route!);
-          }
-        },
+        onTap: () => _handleTap(context),
       ),
     );
   }

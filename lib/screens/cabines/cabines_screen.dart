@@ -483,7 +483,7 @@ class _MainOperationalArea extends StatelessWidget {
                     crossAxisCount: crossAxisCount,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: 0.78,
+                    childAspectRatio: 0.62,
                   ),
                 ),
         ),
@@ -786,34 +786,35 @@ class _OperationalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          child: CabineCard(
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CabineCard(
             cabine: cabine,
             onTap: onTap,
             isSelected: isSelected,
             isSelectable:
                 hasSelectedContrato && cabine.status == 'disponivel',
           ),
-        ),
-        const SizedBox(height: 8),
-        _OperationalActions(
-          cabine: cabine,
-          onReservar: onReservar,
-          onIniciarLive: onIniciarLive,
-          onEncerrarLive: onEncerrarLive,
-          onLiberar: onLiberar,
-        ),
-        if (!isDesktop) ...[
-          const SizedBox(height: 4),
-          TextButton(
-            onPressed: onTap,
-            child: const Text('Ver dashboard'),
+          const SizedBox(height: 8),
+          _OperationalActions(
+            cabine: cabine,
+            onReservar: onReservar,
+            onIniciarLive: onIniciarLive,
+            onEncerrarLive: onEncerrarLive,
+            onLiberar: onLiberar,
           ),
+          if (!isDesktop) ...[
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: onTap,
+              child: const Text('Ver dashboard'),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

@@ -49,7 +49,7 @@ class RecomendacoesScreen extends ConsumerWidget {
                     ActionButton(
                       label: 'ADICIONAR',
                       icon: Icons.add,
-                      color: AppColors.lilac,
+                      color: context.colors.primary,
                       onPressed: () => _showAddDialog(context, ref),
                     ),
                   ],
@@ -249,9 +249,9 @@ class _RecomendacaoTile extends StatelessWidget {
       contentPadding:
           const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 6),
       leading: CircleAvatar(
-        backgroundColor: AppColors.lilac.withValues(alpha: 0.12),
-        child: const Icon(Icons.diamond_outlined,
-            color: AppColors.lilac, size: 20),
+        backgroundColor: context.colors.primary.withValues(alpha: 0.12),
+        child: Icon(Icons.diamond_outlined,
+            color: context.colors.primary, size: 20),
       ),
       title: Text(
         recomendacao.nomeIndicado,
@@ -269,7 +269,7 @@ class _RecomendacaoTile extends StatelessWidget {
           ? ActionButton(
               label: 'NEGOCIAR',
               icon: Icons.handshake_outlined,
-              color: AppColors.lilac,
+              color: context.colors.primary,
               outlined: true,
               onPressed: onConverter,
             )
@@ -372,8 +372,8 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                 // Header
                 Row(
                   children: [
-                    const Icon(Icons.handshake_outlined,
-                        color: AppColors.lilac),
+                    Icon(Icons.handshake_outlined,
+                        color: context.colors.primary),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text('Negociar com ${widget.recomendacao.nomeIndicado}',
@@ -523,7 +523,7 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                     Expanded(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.lilac),
+                            backgroundColor: context.colors.primary),
                         onPressed: () {
                           if (!_formKey.currentState!.validate()) return;
                           Navigator.pop(context, {

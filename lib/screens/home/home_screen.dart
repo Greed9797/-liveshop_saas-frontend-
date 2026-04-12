@@ -119,17 +119,32 @@ class _KpiRow extends StatelessWidget {
     ];
 
     if (isMobile) {
-      final cardWidth = (width - AppSpacing.screenPadding * 2 - AppSpacing.cardGap) / 2;
-      return Wrap(
-        spacing: AppSpacing.cardGap,
-        runSpacing: AppSpacing.cardGap,
-        children: cards
-            .map((c) => SizedBox(
-                  width: cardWidth,
-                  height: 140,
-                  child: c,
-                ))
-            .toList(),
+      // Agrupar em pares de 2 — IntrinsicHeight garante mesma altura
+      // por linha sem cortar conteúdo
+      return Column(
+        children: [
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: cards[0]),
+                const SizedBox(width: AppSpacing.cardGap),
+                Expanded(child: cards[1]),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.cardGap),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: cards[2]),
+                const SizedBox(width: AppSpacing.cardGap),
+                Expanded(child: cards[3]),
+              ],
+            ),
+          ),
+        ],
       );
     }
 

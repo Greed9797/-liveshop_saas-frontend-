@@ -34,7 +34,7 @@ class StatusBadge extends StatelessWidget {
     'ao_vivo':      {'color': AppColors.success,       'label': 'AO VIVO'},
     'reservada':    {'color': AppColors.warning,       'label': 'RESERVADA'},
     'enviado':      {'color': AppColors.warning,       'label': 'ENVIADO'},
-    'negociacao':   {'color': AppColors.info,          'label': 'NEGOCIAÇÃO'},
+    'negociacao':   {'color': AppColors.warning,       'label': 'NEGOCIAÇÃO'},
     'inadimplente': {'color': AppColors.danger,        'label': 'INADIMPLENTE'},
     'recomendacao': {'color': AppColors.lilac,         'label': 'RECOMENDAÇÃO'},
     'disponivel':   {'color': const Color(0xFF9CA3AF),       'label': 'DISPONÍVEL'},

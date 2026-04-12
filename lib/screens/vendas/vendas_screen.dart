@@ -33,12 +33,12 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
   }
 
   static const _statusOptions = [
-    ('negociacao', 'Negociação', AppColors.info),
-    ('enviado', 'Enviado', AppColors.warning),
+    ('negociacao', 'Negociação', AppColors.warning),
+    ('enviado', 'Enviado', AppColors.info),
     ('em_analise', 'Em Análise', AppColors.warning),
     ('ativo', 'Ativo', AppColors.success),
     ('inadimplente', 'Inadimplente', AppColors.danger),
-    ('recomendacao', 'Recomendação', AppColors.lilac),
+    ('recomendacao', 'Recomendação', AppColors.primary),
   ];
 
   bool _clientePassaFiltro(String status) {
@@ -239,11 +239,11 @@ class _MapLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
-      ('Negociação', AppColors.info),
-      ('Contrato Enviado', AppColors.warning),
+      ('Negociação', AppColors.warning),
+      ('Contrato Enviado', AppColors.info),
       ('Ativo', AppColors.success),
       ('Inadimplente', AppColors.danger),
-      ('Recomendação', AppColors.lilac),
+      ('Recomendação', AppColors.primary),
     ];
     return Card(
       child: Padding(

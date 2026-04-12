@@ -200,8 +200,8 @@ class _ClienteCard extends StatelessWidget {
   }
 
   Color _statusColor(BuildContext context) => switch (cliente.status) {
-        'negociacao' => context.colors.info,
-        'enviado' => context.colors.warning,
+        'negociacao' => context.colors.warning,
+        'enviado' => context.colors.info,
         'ativo' => context.colors.success,
         'inadimplente' => context.colors.error,
         _ => context.colors.textTertiary,
@@ -382,8 +382,8 @@ void _showClienteDetail(BuildContext context, WidgetRef ref, Cliente cliente) {
 }
 
 Color _colorForStatus(BuildContext context, String status) => switch (status) {
-  'negociacao' => context.colors.info,
-  'enviado' => context.colors.warning,
+  'negociacao' => context.colors.warning,
+  'enviado' => context.colors.info,
   'ativo' => context.colors.success,
   'inadimplente' => context.colors.error,
   _ => context.colors.textTertiary,

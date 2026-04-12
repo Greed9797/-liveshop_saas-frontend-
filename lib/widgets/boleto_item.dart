@@ -101,19 +101,20 @@ class BoletoItem extends StatelessWidget {
               ],
             ),
 
-            // Erro Asaas
+            // Erro Asaas — mensagem amigável
             if (boleto.temErroAsaas) ...[
               const SizedBox(height: 8),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: context.colors.error.withValues(alpha: 0.08),
+                  color: context.colors.warning.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Text(
-                  'Falha ao gerar no Asaas: ${boleto.asaasError}',
-                  style: AppTypography.caption.copyWith(color: context.colors.error),
+                  'Link de pagamento indisponível. Entre em contato com o suporte.',
+                  style: AppTypography.caption
+                      .copyWith(color: context.colors.warning),
                 ),
               ),
             ],

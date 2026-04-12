@@ -161,7 +161,7 @@ class VendasMensalChart extends StatelessWidget {
             toY: entry.value.totalVendas.toDouble(),
             width: dados.length > 12 ? 14 : 18,
             gradient: LinearGradient(
-              colors: [context.colors.info, context.colors.info.withValues(alpha: 0.4)],
+              colors: [context.colors.primary, context.colors.primary.withValues(alpha: 0.4)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),

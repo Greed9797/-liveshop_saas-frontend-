@@ -266,8 +266,8 @@ class _CarteiraMapState extends State<_CarteiraMap> {
   }
 
   Color _statusColor(String status, BuildContext context) => switch (status) {
-    'negociacao' => context.colors.info,
-    'enviado' => context.colors.warning,
+    'negociacao' => context.colors.warning,
+    'enviado' => context.colors.info,
     'ativo' => context.colors.success,
     'inadimplente' => context.colors.error,
     _ => context.colors.textTertiary,
