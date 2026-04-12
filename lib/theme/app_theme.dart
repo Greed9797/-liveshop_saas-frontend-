@@ -13,6 +13,7 @@ final ThemeData appTheme = lightTheme;
 ThemeData _buildTheme(Brightness brightness) {
   final isLight = brightness == Brightness.light;
   final ext = isLight ? AppColorsExtension.light() : AppColorsExtension.dark();
+  final onSurface = isLight ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5);
 
   return ThemeData(
     useMaterial3: true,
@@ -24,23 +25,27 @@ ThemeData _buildTheme(Brightness brightness) {
       brightness: brightness,
       primary: AppColors.primaryOrange,
       surface: isLight ? const Color(0xFFFAF8F6) : const Color(0xFF0A0A0A),
-      onSurface: isLight ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5),
+      onSurface: onSurface,
       error: AppColors.dangerRed,
     ),
 
     scaffoldBackgroundColor:
         isLight ? const Color(0xFFFAF8F6) : const Color(0xFF0A0A0A),
 
+    // CRITICAL: AppTypography styles have color:null (stripped in Phase 1).
+    // We MUST apply onSurface color to every text theme entry, otherwise
+    // Text widgets without explicit style.color render invisibly because
+    // the DefaultTextStyle chain has null color all the way up.
     textTheme: GoogleFonts.outfitTextTheme().copyWith(
-      displayLarge:  AppTypography.h1,
-      displayMedium: AppTypography.h2,
-      displaySmall:  AppTypography.h3,
-      bodyLarge:     AppTypography.bodyLarge,
-      bodyMedium:    AppTypography.bodyMedium,
-      bodySmall:     AppTypography.bodySmall,
-      labelLarge:    AppTypography.labelLarge,
-      labelMedium:   AppTypography.caption,
-      labelSmall:    AppTypography.labelSmall,
+      displayLarge:  AppTypography.h1.copyWith(color: onSurface),
+      displayMedium: AppTypography.h2.copyWith(color: onSurface),
+      displaySmall:  AppTypography.h3.copyWith(color: onSurface),
+      bodyLarge:     AppTypography.bodyLarge.copyWith(color: onSurface),
+      bodyMedium:    AppTypography.bodyMedium.copyWith(color: onSurface),
+      bodySmall:     AppTypography.bodySmall.copyWith(color: onSurface),
+      labelLarge:    AppTypography.labelLarge.copyWith(color: onSurface),
+      labelMedium:   AppTypography.caption.copyWith(color: onSurface),
+      labelSmall:    AppTypography.labelSmall.copyWith(color: onSurface),
     ),
 
     appBarTheme: AppBarTheme(

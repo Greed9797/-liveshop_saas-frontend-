@@ -516,49 +516,62 @@ class _HeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      alignment: WrapAlignment.spaceBetween,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      runSpacing: 12,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Painel de Cabines',
-              style: AppTypography.h1.copyWith(fontSize: 24, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Visão operacional da unidade: quem está ao vivo, quem está reservado e o que está rendendo agora.',
-              style: TextStyle(color: context.colors.textSecondary),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-        Wrap(
-          spacing: 12,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxTitleWidth = constraints.maxWidth;
+        return Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
           runSpacing: 12,
           children: [
-            ActionButton(
-              label: selectedContrato == null
-                  ? 'Fila de Ativação'
-                  : 'Contrato selecionado',
-              icon: Icons.playlist_add_check_circle_outlined,
-              outlined: selectedContrato == null,
-              color:
-                  selectedContrato == null ? context.colors.info : context.colors.primary,
-              onPressed: onOpenQueue,
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxTitleWidth),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Painel de Cabines',
+                    style: AppTypography.h1
+                        .copyWith(fontSize: 24, fontWeight: FontWeight.w700),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Visão operacional da unidade: quem está ao vivo, quem está reservado e o que está rendendo agora.',
+                    style: TextStyle(color: context.colors.textSecondary),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-            IconButton(
-              tooltip: 'Atualizar dados',
-              onPressed: onRefresh,
-              icon: const Icon(Icons.refresh),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                ActionButton(
+                  label: selectedContrato == null
+                      ? 'Fila de Ativação'
+                      : 'Contrato selecionado',
+                  icon: Icons.playlist_add_check_circle_outlined,
+                  outlined: selectedContrato == null,
+                  color: selectedContrato == null
+                      ? context.colors.info
+                      : context.colors.primary,
+                  onPressed: onOpenQueue,
+                ),
+                IconButton(
+                  tooltip: 'Atualizar dados',
+                  onPressed: onRefresh,
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 }

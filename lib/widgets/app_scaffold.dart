@@ -609,37 +609,38 @@ class _MenuItem extends StatelessWidget {
     final bgColor = isSelected ? colors.sidebarActiveBg : Colors.transparent;
 
     if (compact) {
-      return Tooltip(
-        message: label,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(8),
-          ),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        child: Material(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
           child: InkWell(
             borderRadius: BorderRadius.circular(8),
             onTap: () => _handleTap(context),
-            child: SizedBox(
-              height: 44,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Icon(icon, color: color, size: 20),
-                  if (badge != null)
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          shape: BoxShape.circle,
+            hoverColor: colors.sidebarHover,
+            child: Tooltip(
+              message: label,
+              child: SizedBox(
+                height: 44,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(icon, color: color, size: 20),
+                    if (badge != null)
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: colors.primary,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
