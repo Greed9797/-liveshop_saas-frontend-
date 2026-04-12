@@ -6,11 +6,6 @@ import '../../providers/excelencia_provider.dart';
 import '../../models/excelencia.dart' show ExcelenciaData;
 import '../../routes/app_routes.dart';
 import '../../theme/theme.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_shadows.dart';
 import '../../widgets/app_card.dart';
 
 /// Programa de excelência com métricas e cálculo de ROI
@@ -25,42 +20,55 @@ class ExcelenciaScreen extends ConsumerWidget {
 
     return AppScaffold(
       currentRoute: AppRoutes.excelencia,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Programa de Excelência',
-                    style: AppTypography.bodyLarge
-                        .copyWith(fontWeight: FontWeight.w500)),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () =>
-                      ref.read(excelenciaProvider.notifier).refresh(),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            excelenciaAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text('Erro: $e'),
-                  const SizedBox(height: AppSpacing.md),
-                  ElevatedButton(
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          padding: EdgeInsets.all(AppSpacing.responsive(constraints.maxWidth)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Programa de Excelência',
+                          style: AppTypography.h2
+                              .copyWith(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Métricas de desempenho e ROI da sua franquia',
+                        style: AppTypography.bodySmall.copyWith(
+                            color: context.colors.textSecondary),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
                     onPressed: () =>
                         ref.read(excelenciaProvider.notifier).refresh(),
-                    child: const Text('Tentar novamente'),
                   ),
-                ]),
+                ],
               ),
-              data: (data) => _ExcelenciaContent(
-                  data: data, taxaFranquia: _taxaFranquia),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.xl),
+              excelenciaAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text('Erro: $e'),
+                    const SizedBox(height: AppSpacing.md),
+                    ElevatedButton(
+                      onPressed: () =>
+                          ref.read(excelenciaProvider.notifier).refresh(),
+                      child: const Text('Tentar novamente'),
+                    ),
+                  ]),
+                ),
+                data: (data) => _ExcelenciaContent(
+                    data: data, taxaFranquia: _taxaFranquia),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -166,13 +174,21 @@ class _ExcelenciaContent extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.x3l),
         AppCard(
-          backgroundColor: AppColors.infoPurple,
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.screenPadding),
             child: Row(
               children: [
-                const Icon(Icons.savings_outlined,
-                    color: AppColors.lilac, size: 40),
+                Container(
+                  width: 4,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: context.colors.info,
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.lg),
+                Icon(Icons.savings_outlined,
+                    color: context.colors.info, size: 40),
                 const SizedBox(width: AppSpacing.xl),
                 Expanded(
                   child: Column(
@@ -180,20 +196,23 @@ class _ExcelenciaContent extends StatelessWidget {
                     children: [
                       Text('RETORNO SOBRE INVESTIMENTO (ROI)',
                           style: AppTypography.caption.copyWith(
-                              color: AppColors.lilac, letterSpacing: 0.8)),
+                              color: context.colors.textSecondary,
+                              letterSpacing: 0.8)),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
-                        '${mesesROI.toStringAsFixed(1)} meses',
+                        mesesROI > 0
+                            ? '${mesesROI.toStringAsFixed(1)} meses'
+                            : '—',
                         style: AppTypography.h1.copyWith(
                             fontSize: 32,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500),
+                            color: context.colors.textPrimary,
+                            fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         'Taxa de franquia R\$ ${taxaFranquia.toStringAsFixed(0)} ÷ Fat. líq. R\$ ${data.fatMesAtual.toStringAsFixed(0)}/mês',
                         style: AppTypography.caption.copyWith(
-                            color: AppColors.lilac.withValues(alpha: 0.8)),
+                            color: context.colors.textTertiary),
                       ),
                     ],
                   ),

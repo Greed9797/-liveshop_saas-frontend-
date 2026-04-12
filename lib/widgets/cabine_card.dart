@@ -51,25 +51,25 @@ class _CabineCardState extends State<CabineCard>
     switch (widget.cabine.status) {
       case 'ao_vivo':
         return (
-          background: context.colors.success.withValues(alpha: 0.08),
+          background: context.colors.cardBackground,
           border: context.colors.success.withValues(alpha: 0.45),
           accent: context.colors.success,
         );
       case 'reservada':
         return (
-          background: context.colors.warning.withValues(alpha: 0.12),
+          background: context.colors.cardBackground,
           border: context.colors.warning.withValues(alpha: 0.45),
           accent: context.colors.warning,
         );
       case 'ativa':
         return (
-          background: context.colors.info.withValues(alpha: 0.10),
+          background: context.colors.cardBackground,
           border: context.colors.info.withValues(alpha: 0.45),
           accent: context.colors.info,
         );
       case 'manutencao':
         return (
-          background: context.colors.error.withValues(alpha: 0.08),
+          background: context.colors.cardBackground,
           border: context.colors.error.withValues(alpha: 0.35),
           accent: context.colors.error,
         );
@@ -98,12 +98,22 @@ class _CabineCardState extends State<CabineCard>
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
-            color: palette.background,
+            color: context.colors.cardBackground,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color:
-                  widget.isSelected ? context.colors.primary : palette.border,
-              width: widget.isSelected ? 2 : 1.2,
+            border: Border(
+              left: BorderSide(color: palette.accent, width: 4),
+              top: BorderSide(
+                color: widget.isSelected ? context.colors.primary : context.colors.divider,
+                width: widget.isSelected ? 2 : 1,
+              ),
+              right: BorderSide(
+                color: widget.isSelected ? context.colors.primary : context.colors.divider,
+                width: widget.isSelected ? 2 : 1,
+              ),
+              bottom: BorderSide(
+                color: widget.isSelected ? context.colors.primary : context.colors.divider,
+                width: widget.isSelected ? 2 : 1,
+              ),
             ),
             boxShadow: AppShadows.sm,
           ),

@@ -120,7 +120,7 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
               builder: (context, constraints) {
                 final isDesktop = constraints.maxWidth >= AppBreakpoints.tablet;
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSpacing.screenPadding),
+                  padding: EdgeInsets.all(AppSpacing.responsive(constraints.maxWidth)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

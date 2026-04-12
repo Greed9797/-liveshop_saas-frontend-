@@ -14,10 +14,16 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_breakpoints.dart';
 import '../../theme/app_radius.dart';
-import '../../theme/app_shadows.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/theme.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/metric_card.dart';
+
+String _formatFaturamento(double value) {
+  if (value >= 1000000) return 'R\$ ${(value / 1000000).toStringAsFixed(1)}M';
+  if (value >= 1000) return 'R\$ ${(value / 1000).toStringAsFixed(1)}k';
+  return 'R\$ ${value.toStringAsFixed(0)}';
+}
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -62,7 +68,7 @@ class _HomeContent extends StatelessWidget {
         return CustomScrollView(
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.all(AppSpacing.screenPadding),
+              padding: EdgeInsets.all(AppSpacing.responsive(constraints.maxWidth)),
               sliver: SliverToBoxAdapter(
                 child: isWideLayout
                     ? _DesktopLayout(dashboard: dashboard)
@@ -76,6 +82,69 @@ class _HomeContent extends StatelessWidget {
   }
 }
 
+// ─── KPI ROW ──────────────────────────────────────────────────────────────────
+
+class _KpiRow extends StatelessWidget {
+  final DashboardData dashboard;
+  const _KpiRow({required this.dashboard});
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final isMobile = width < AppBreakpoints.mobile;
+
+    final cards = [
+      MetricCard(
+        label: 'Faturamento',
+        value: _formatFaturamento(dashboard.fatLiquido),
+      ),
+      MetricCard(
+        label: 'Clientes Ativos',
+        value: '${dashboard.clientesAtivos}',
+        subtitle: '+${dashboard.novosClientes} novos',
+      ),
+      MetricCard(
+        label: 'Lives no Mês',
+        value: '${dashboard.livesMes}',
+        subtitle: '${dashboard.mediaViewers} viewers médio',
+      ),
+      MetricCard(
+        label: 'Contratos em Análise',
+        value: '${dashboard.contratosAnalise}',
+        subtitle: dashboard.boletosVencidos > 0
+            ? '${dashboard.boletosVencidos} boletos vencidos'
+            : null,
+        deltaPositive: dashboard.boletosVencidos > 0 ? false : null,
+      ),
+    ];
+
+    if (isMobile) {
+      return Wrap(
+        spacing: AppSpacing.cardGap,
+        runSpacing: AppSpacing.cardGap,
+        children: cards
+            .map((c) => SizedBox(
+                  width: (width - AppSpacing.screenPadding * 2 - AppSpacing.cardGap) / 2,
+                  child: c,
+                ))
+            .toList(),
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(child: cards[0]),
+        const SizedBox(width: AppSpacing.cardGap),
+        Expanded(child: cards[1]),
+        const SizedBox(width: AppSpacing.cardGap),
+        Expanded(child: cards[2]),
+        const SizedBox(width: AppSpacing.cardGap),
+        Expanded(child: cards[3]),
+      ],
+    );
+  }
+}
+
 // ─── LAYOUT DESKTOP ───────────────────────────────────────────────────────────
 
 class _DesktopLayout extends StatelessWidget {
@@ -84,65 +153,72 @@ class _DesktopLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Coluna esquerda: dinheiro + excelência + ações
-        Expanded(
-          flex: 5,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              MoneyCard(
-                total: dashboard.fatTotal,
-                bruto: dashboard.fatBruto,
-                liquido: dashboard.fatLiquido,
-                onTap: () =>
-                    Navigator.pushNamed(context, AppRoutes.financeiro),
+        _KpiRow(dashboard: dashboard),
+        const SizedBox(height: AppSpacing.cardGap),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Coluna esquerda: dinheiro + excelência + ações
+            Expanded(
+              flex: 5,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MoneyCard(
+                    total: dashboard.fatTotal,
+                    bruto: dashboard.fatBruto,
+                    liquido: dashboard.fatLiquido,
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.financeiro),
+                  ),
+                  const SizedBox(height: AppSpacing.cardGap),
+                  const ExcelenciaCard(),
+                  const SizedBox(height: AppSpacing.cardGap),
+                  const _ActionButtons(),
+                ],
               ),
-              const SizedBox(height: AppSpacing.cardGap),
-              const ExcelenciaCard(),
-              const SizedBox(height: AppSpacing.cardGap),
-              const _ActionButtons(),
-            ],
-          ),
-        ),
-        const SizedBox(width: AppSpacing.cardGap),
-        // Coluna direita: cabines + NPS/chamados + ranking
-        Expanded(
-          flex: 7,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (dashboard.cabines.isNotEmpty)
-                _CabinesMiniGrid(cabines: dashboard.cabines, isLargeScreen: true)
-              else
-                const _CabinesEmptyCard(),
-              const SizedBox(height: AppSpacing.cardGap),
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: NpsGauge(score: 9.8),
+            ),
+            const SizedBox(width: AppSpacing.cardGap),
+            // Coluna direita: cabines + NPS/chamados + ranking
+            Expanded(
+              flex: 7,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (dashboard.cabines.isNotEmpty)
+                    _CabinesMiniGrid(cabines: dashboard.cabines, isLargeScreen: true)
+                  else
+                    const _CabinesEmptyCard(),
+                  const SizedBox(height: AppSpacing.cardGap),
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: NpsGauge(score: 9.8),
+                        ),
+                        const SizedBox(width: AppSpacing.cardGap),
+                        Expanded(
+                          flex: 2,
+                          child: ChamadosCard(count: dashboard.contratosAnalise),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: AppSpacing.cardGap),
-                    Expanded(
-                      flex: 2,
-                      child: ChamadosCard(count: dashboard.contratosAnalise),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: AppSpacing.cardGap),
+                  RankingDestaque(
+                    rankings: dashboard.rankingDia
+                        .take(3)
+                        .map((e) => {'nome': e.nome})
+                        .toList(),
+                  ),
+                ],
               ),
-              const SizedBox(height: AppSpacing.cardGap),
-              RankingDestaque(
-                rankings: dashboard.rankingDia
-                    .take(3)
-                    .map((e) => {'nome': e.nome})
-                    .toList(),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
     );
@@ -159,6 +235,8 @@ class _MobileLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        _KpiRow(dashboard: dashboard),
+        const SizedBox(height: AppSpacing.cardGap),
         MoneyCard(
           total: dashboard.fatTotal,
           bruto: dashboard.fatBruto,
@@ -545,33 +623,35 @@ class _HomeShimmerLoader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.screenPadding),
-      child: Shimmer.fromColors(
-        baseColor: context.colors.divider,
-        highlightColor: context.colors.background,
-        child: Row(
-          children: [
-            Expanded(
-              flex: 5,
-              child: Container(
-                height: 400,
-                decoration: BoxDecoration(
-                    color: context.colors.cardBackground,
-                    borderRadius: BorderRadius.circular(AppRadius.lg)),
+    return LayoutBuilder(
+      builder: (context, constraints) => Padding(
+        padding: EdgeInsets.all(AppSpacing.responsive(constraints.maxWidth)),
+        child: Shimmer.fromColors(
+          baseColor: context.colors.divider,
+          highlightColor: context.colors.background,
+          child: Row(
+            children: [
+              Expanded(
+                flex: 5,
+                child: Container(
+                  height: 400,
+                  decoration: BoxDecoration(
+                      color: context.colors.cardBackground,
+                      borderRadius: BorderRadius.circular(AppRadius.lg)),
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.cardGap),
-            Expanded(
-              flex: 7,
-              child: Container(
-                height: 400,
-                decoration: BoxDecoration(
-                    color: context.colors.cardBackground,
-                    borderRadius: BorderRadius.circular(AppRadius.lg)),
+              const SizedBox(width: AppSpacing.cardGap),
+              Expanded(
+                flex: 7,
+                child: Container(
+                  height: 400,
+                  decoration: BoxDecoration(
+                      color: context.colors.cardBackground,
+                      borderRadius: BorderRadius.circular(AppRadius.lg)),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
