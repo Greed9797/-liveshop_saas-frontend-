@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_colors_extension.dart';
 import '../theme/app_radius.dart';
 
 /// Botão de ação padrão do sistema
@@ -21,7 +22,7 @@ class ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final btnColor = color ?? AppColors.primary;
+    final btnColor = color ?? context.colors.primary;
 
     if (outlined) {
       return OutlinedButton.icon(
@@ -34,8 +35,10 @@ class ActionButton extends StatelessWidget {
             overflow: TextOverflow.ellipsis),
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: btnColor),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md)),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         ),
       );
     }
@@ -52,7 +55,8 @@ class ActionButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: btnColor,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       ),
     );
