@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_colors_extension.dart';
+import '../theme/theme.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -11,10 +10,10 @@ class NpsGauge extends StatelessWidget {
   final double score; // 0 to 10
   const NpsGauge({super.key, required this.score});
 
-  Color get _scoreColor {
-    if (score >= 9) return AppColors.successGreen;
-    if (score >= 7) return AppColors.warningYellow;
-    return AppColors.dangerRed;
+  Color _scoreColor(BuildContext context) {
+    if (score >= 9) return context.colors.success;
+    if (score >= 7) return context.colors.warning;
+    return context.colors.error;
   }
 
   String get _label {
@@ -45,13 +44,13 @@ class NpsGauge extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: _scoreColor.withValues(alpha: 0.12),
+                    color: _scoreColor(context).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     _label,
                     style: AppTypography.caption.copyWith(
-                        color: _scoreColor,
+                        color: _scoreColor(context),
                         fontWeight: FontWeight.w700,
                         fontSize: 10),
                   ),
@@ -65,7 +64,7 @@ class NpsGauge extends StatelessWidget {
                 Text(
                   score.toStringAsFixed(1),
                   style: AppTypography.h1.copyWith(
-                      fontSize: 32, color: _scoreColor),
+                      fontSize: 32, color: _scoreColor(context)),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4, left: 2),
@@ -85,7 +84,7 @@ class NpsGauge extends StatelessWidget {
                 value: score / 10,
                 minHeight: 6,
                 backgroundColor: context.colors.progressBg,
-                valueColor: AlwaysStoppedAnimation<Color>(_scoreColor),
+                valueColor: AlwaysStoppedAnimation<Color>(_scoreColor(context)),
               ),
             ),
             const SizedBox(height: 8),

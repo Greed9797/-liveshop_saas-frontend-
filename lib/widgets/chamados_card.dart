@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_colors_extension.dart';
+import '../theme/theme.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_radius.dart';
@@ -69,7 +68,7 @@ class ChamadosCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             decoration: BoxDecoration(
               color: count > 0
-                  ? AppColors.dangerRed
+                  ? context.colors.error
                   : context.colors.progressBg,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(AppRadius.lg),

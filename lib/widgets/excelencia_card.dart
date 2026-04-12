@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/excelencia_provider.dart';
 import '../models/excelencia.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_colors_extension.dart';
+import '../theme/theme.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -146,8 +145,7 @@ class _CardContent extends StatelessWidget {
             value: value,
             minHeight: 12,
             backgroundColor: context.colors.progressBg,
-            valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.successGreen),
+            valueColor: AlwaysStoppedAnimation<Color>(context.colors.success),
           ),
         ),
       ],

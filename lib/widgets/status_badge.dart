@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_radius.dart';
+import '../theme/theme.dart';
 
 /// Badge colorido por status — translucent background, semantic text color
 class StatusBadge extends StatelessWidget {
@@ -38,15 +37,15 @@ class StatusBadge extends StatelessWidget {
     'negociacao':   {'color': AppColors.info,          'label': 'NEGOCIAÇÃO'},
     'inadimplente': {'color': AppColors.danger,        'label': 'INADIMPLENTE'},
     'recomendacao': {'color': AppColors.lilac,         'label': 'RECOMENDAÇÃO'},
-    'disponivel':   {'color': AppColors.gray400,       'label': 'DISPONÍVEL'},
+    'disponivel':   {'color': const Color(0xFF9CA3AF),       'label': 'DISPONÍVEL'},
     'manutencao':   {'color': AppColors.danger,        'label': 'MANUTENÇÃO'},
     'pendente':     {'color': AppColors.warning,       'label': 'PENDENTE'},
     'aprovada':     {'color': AppColors.success,       'label': 'APROVADA'},
     'recusada':     {'color': AppColors.danger,        'label': 'RECUSADA'},
-    'encerrada':    {'color': AppColors.gray400,       'label': 'ENCERRADA'},
+    'encerrada':    {'color': const Color(0xFF9CA3AF),       'label': 'ENCERRADA'},
     'pago':         {'color': AppColors.success,       'label': 'PAGO'},
     'vencido':      {'color': AppColors.danger,        'label': 'VENCIDO'},
     'suspenso':     {'color': AppColors.danger,        'label': 'SUSPENSO'},
-    'default':      {'color': AppColors.gray400,       'label': 'N/A'},
+    'default':      {'color': const Color(0xFF9CA3AF),       'label': 'N/A'},
   };
 }

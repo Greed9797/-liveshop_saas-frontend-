@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_colors_extension.dart';
+import '../theme/theme.dart';
 import '../theme/app_radius.dart';
 
 /// Botão de ação padrão do sistema
@@ -46,11 +45,11 @@ class ActionButton extends StatelessWidget {
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: icon != null
-          ? Icon(icon, size: 16, color: AppColors.white)
+          ? Icon(icon, size: 16, color: Colors.white)
           : const SizedBox.shrink(),
       label: Text(label,
           style: const TextStyle(
-              color: AppColors.white, fontWeight: FontWeight.w500),
+              color: Colors.white, fontWeight: FontWeight.w500),
           overflow: TextOverflow.ellipsis),
       style: ElevatedButton.styleFrom(
         backgroundColor: btnColor,

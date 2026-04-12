@@ -6,8 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_mode_provider.dart';
 import '../routes/app_routes.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_colors_extension.dart';
+import '../theme/theme.dart';
 import '../theme/app_typography.dart';
 import '../providers/boletos_provider.dart';
 
@@ -36,7 +35,7 @@ class AppScaffold extends ConsumerWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               title: Row(
                 children: [
-                  const Icon(Icons.receipt_long_rounded, color: AppColors.primaryOrange),
+                  Icon(Icons.receipt_long_rounded, color: ctx.colors.primary),
                   const SizedBox(width: 8),
                   const Text('Fatura Disponível'),
                 ],
@@ -53,9 +52,9 @@ class AppScaffold extends ConsumerWidget {
               actions: [
                 if (alert.asaasPixCopiaCola != null)
                   ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.successGreen),
-                    icon: const Icon(Icons.pix_rounded, size: 16, color: AppColors.white),
-                    label: const Text('Copiar PIX', style: TextStyle(color: AppColors.white)),
+                    style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.success),
+                    icon: const Icon(Icons.pix_rounded, size: 16, color: Colors.white),
+                    label: const Text('Copiar PIX', style: TextStyle(color: Colors.white)),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: alert.asaasPixCopiaCola!));
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Código PIX copiado!')));
@@ -177,13 +176,13 @@ class AppScaffold extends ConsumerWidget {
             ],
             CircleAvatar(
               radius: 20,
-              backgroundColor: AppColors.primaryOrange,
+              backgroundColor: context.colors.primary,
               child: Text(
                 displayName.length >= 2
                     ? displayName.substring(0, 2).toUpperCase()
                     : 'LS',
                 style: AppTypography.bodyLarge.copyWith(
-                    color: AppColors.surfaceWhite, fontWeight: FontWeight.bold),
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 12),

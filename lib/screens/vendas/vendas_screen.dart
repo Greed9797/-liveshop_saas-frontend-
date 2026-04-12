@@ -11,7 +11,6 @@ import '../../theme/theme.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_typography.dart';
-import '../../theme/app_colors.dart';
 
 class VendasScreen extends ConsumerStatefulWidget {
   const VendasScreen({super.key});

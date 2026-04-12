@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/cabine.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_colors_extension.dart';
+import '../theme/theme.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -52,27 +51,27 @@ class _CabineCardState extends State<CabineCard>
     switch (widget.cabine.status) {
       case 'ao_vivo':
         return (
-          background: AppColors.successGreen.withValues(alpha: 0.08),
-          border: AppColors.successGreen.withValues(alpha: 0.45),
-          accent: AppColors.successGreen,
+          background: context.colors.success.withValues(alpha: 0.08),
+          border: context.colors.success.withValues(alpha: 0.45),
+          accent: context.colors.success,
         );
       case 'reservada':
         return (
-          background: AppColors.warningYellow.withValues(alpha: 0.12),
-          border: AppColors.warningYellow.withValues(alpha: 0.45),
-          accent: AppColors.warningYellow,
+          background: context.colors.warning.withValues(alpha: 0.12),
+          border: context.colors.warning.withValues(alpha: 0.45),
+          accent: context.colors.warning,
         );
       case 'ativa':
         return (
-          background: AppColors.infoBlue.withValues(alpha: 0.10),
-          border: AppColors.infoBlue.withValues(alpha: 0.45),
-          accent: AppColors.infoBlue,
+          background: context.colors.info.withValues(alpha: 0.10),
+          border: context.colors.info.withValues(alpha: 0.45),
+          accent: context.colors.info,
         );
       case 'manutencao':
         return (
-          background: AppColors.dangerRed.withValues(alpha: 0.08),
-          border: AppColors.dangerRed.withValues(alpha: 0.35),
-          accent: AppColors.dangerRed,
+          background: context.colors.error.withValues(alpha: 0.08),
+          border: context.colors.error.withValues(alpha: 0.35),
+          accent: context.colors.error,
         );
       default:
         return (
@@ -129,8 +128,8 @@ class _CabineCardState extends State<CabineCard>
                       child: Container(
                         width: 10,
                         height: 10,
-                        decoration: const BoxDecoration(
-                          color: AppColors.dangerRed,
+                        decoration: BoxDecoration(
+                          color: context.colors.error,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -203,7 +202,7 @@ class _CabineCardState extends State<CabineCard>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.successGreen, fontWeight: FontWeight.w700),
+                      color: context.colors.success, fontWeight: FontWeight.w700),
                 ),
               ] else ...[
                 Divider(height: 16, color: context.colors.divider),

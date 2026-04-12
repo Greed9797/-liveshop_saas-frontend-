@@ -3,6 +3,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../theme/theme.dart';
 
+
 /// Pin do mapa por status do cliente
 class ClientPin extends StatefulWidget {
   final String status;
@@ -21,14 +22,14 @@ class _ClientPinState extends State<ClientPin>
   late final AnimationController _ctrl;
   late final Animation<double> _pulse;
 
-  Color get _color => switch (widget.status) {
-        'ativo' => AppColors.successGreen,
-        'enviado' => AppColors.warningYellow,
-        'em_analise' => AppColors.warningYellow,
-        'negociacao' => AppColors.infoBlue,
-        'inadimplente' => AppColors.dangerRed,
+  Color _colorFor(BuildContext context) => switch (widget.status) {
+        'ativo' => context.colors.success,
+        'enviado' => context.colors.warning,
+        'em_analise' => context.colors.warning,
+        'negociacao' => context.colors.info,
+        'inadimplente' => context.colors.error,
         'recomendacao' => AppColors.infoPurple,
-        _ => AppColors.gray400,
+        _ => context.colors.textTertiary,
       };
 
   @override
@@ -82,7 +83,7 @@ class _ClientPinState extends State<ClientPin>
           ),
           ScaleTransition(
             scale: _pulse,
-            child: Icon(Icons.location_on_rounded, color: _color, size: 36),
+            child: Icon(Icons.location_on_rounded, color: _colorFor(context), size: 36),
           ),
         ],
       ),
