@@ -27,6 +27,33 @@ class ApiService {
   static const _userKey = 'auth_user';
 
   static const _storage = FlutterSecureStorage();
+  // Fallback em memória para plataformas sem Keychain configurado (macOS debug sem entitlement)
+  static final Map<String, String> _memFallback = {};
+
+  static Future<void> _storageWrite(String key, String value) async {
+    try {
+      await _storage.write(key: key, value: value);
+    } catch (_) {
+      _memFallback[key] = value;
+    }
+  }
+
+  static Future<String?> _storageRead(String key) async {
+    try {
+      final v = await _storage.read(key: key);
+      return v ?? _memFallback[key];
+    } catch (_) {
+      return _memFallback[key];
+    }
+  }
+
+  static Future<void> _storageDelete(String key) async {
+    try {
+      await _storage.delete(key: key);
+    } catch (_) {}
+    _memFallback.remove(key);
+  }
+
   static late final Dio _dio;
   static bool _initialized = false;
   static Future<String?>? _refreshFuture;
@@ -49,7 +76,7 @@ class ApiService {
 
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await _storage.read(key: _tokenKey);
+        final token = await _storageRead(_tokenKey);
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
@@ -102,7 +129,7 @@ class ApiService {
   }
 
   static Future<String?> _performRefresh() async {
-    final refreshToken = await _storage.read(key: _refreshKey);
+    final refreshToken = await _storageRead(_refreshKey);
     if (refreshToken == null || refreshToken.isEmpty) {
       return null;
     }
@@ -124,12 +151,12 @@ class ApiService {
         return null;
       }
 
-      await _storage.write(key: _tokenKey, value: newToken);
+      await _storageWrite(_tokenKey, newToken);
 
       // Persistir novo refresh token (rotação — o antigo foi revogado no servidor)
       final newRefreshToken = response.data?['refresh_token'] as String?;
       if (newRefreshToken != null && newRefreshToken.isNotEmpty) {
-        await _storage.write(key: _refreshKey, value: newRefreshToken);
+        await _storageWrite(_refreshKey, newRefreshToken);
       }
 
       return newToken;
@@ -183,34 +210,34 @@ class ApiService {
   }
 
   static Future<void> saveTokens(String access, String refresh) async {
-    await _storage.write(key: _tokenKey, value: access);
-    await _storage.write(key: _refreshKey, value: refresh);
+    await _storageWrite(_tokenKey, access);
+    await _storageWrite(_refreshKey, refresh);
   }
 
   static Future<void> saveUser(Map<String, dynamic> user) async {
-    await _storage.write(key: _userKey, value: jsonEncode(user));
+    await _storageWrite(_userKey, jsonEncode(user));
   }
 
   static Future<Map<String, dynamic>?> getSavedUser() async {
-    final raw = await _storage.read(key: _userKey);
+    final raw = await _storageRead(_userKey);
     if (raw == null || raw.isEmpty) return null;
 
     try {
       final decoded = jsonDecode(raw);
       return Map<String, dynamic>.from(decoded as Map);
     } catch (_) {
-      await _storage.delete(key: _userKey);
+      await _storageDelete(_userKey);
       return null;
     }
   }
 
   static Future<void> clearTokens() async {
-    await _storage.delete(key: _tokenKey);
-    await _storage.delete(key: _refreshKey);
-    await _storage.delete(key: _userKey);
+    await _storageDelete(_tokenKey);
+    await _storageDelete(_refreshKey);
+    await _storageDelete(_userKey);
   }
 
-  static Future<String?> getAccessToken() => _storage.read(key: _tokenKey);
+  static Future<String?> getAccessToken() => _storageRead(_tokenKey);
 
   /// Tenta renovar o access token usando o refresh token armazenado.
   /// Retorna o novo access token, ou null se o refresh falhar.
@@ -233,7 +260,7 @@ class ApiService {
   /// Uses Dio with ResponseType.stream for Flutter Web compatibility.
   /// The stream closes when the subscription is cancelled (provider disposed).
   static Stream<LiveSnapshot> streamLiveSnapshot(String liveId) async* {
-    final token = await _storage.read(key: _tokenKey);
+    final token = await _storageRead(_tokenKey);
     if (token == null) return;
 
     late Response<ResponseBody> response;
@@ -271,6 +298,54 @@ class ApiService {
           } catch (_) {
             // Ignore malformed frames (heartbeats start with ':', not 'data:')
           }
+        }
+      }
+
+      buffer.clear();
+      buffer.write(pending);
+    }
+  }
+
+  /// SSE das notificações enviadas ao closer de uma cabine.
+  /// Cada frame é uma mensagem JSON com id/type/message/ts.
+  static Stream<Map<String, dynamic>> streamCloserNotifications(
+      String cabineId) async* {
+    final token = await _storageRead(_tokenKey);
+    if (token == null) return;
+
+    late Response<ResponseBody> response;
+    try {
+      response = await _dio.get<ResponseBody>(
+        '/cabines/$cabineId/closer-notifications/stream',
+        options: Options(
+          responseType: ResponseType.stream,
+          headers: {'Authorization': 'Bearer $token'},
+          receiveTimeout: const Duration(hours: 24),
+        ),
+      );
+    } catch (_) {
+      return;
+    }
+
+    final buffer = StringBuffer();
+
+    await for (final chunk
+        in response.data!.stream.map<List<int>>((u) => u).transform(utf8.decoder)) {
+      buffer.write(chunk);
+      String pending = buffer.toString();
+
+      while (pending.contains('\n\n')) {
+        final idx = pending.indexOf('\n\n');
+        final frame = pending.substring(0, idx).trim();
+        pending = pending.substring(idx + 2);
+
+        for (final line in frame.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            final json =
+                jsonDecode(line.substring(6)) as Map<String, dynamic>;
+            yield json;
+          } catch (_) {}
         }
       }
 
