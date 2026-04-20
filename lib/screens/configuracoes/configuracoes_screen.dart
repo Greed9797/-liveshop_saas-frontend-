@@ -461,13 +461,15 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   }
 
   Future<void> _confirmarDeletar(BuildContext context, Cabine cabine) async {
+    final nomeCabine = cabine.nome ?? 'Cabine ${cabine.numero.toString().padLeft(2, '0')}';
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
         title: Text('Deletar Cabine?', style: AppTypography.h3),
         content: Text(
-          'Tem certeza que deseja deletar a Cabine ${cabine.nome ?? 'Cabine ${cabine.numero.toString().padLeft(2, '0')}'}? Esta ação não pode ser desfeita.',
+          'Tem certeza que deseja deletar $nomeCabine? Esta ação não pode ser desfeita.',
           style: AppTypography.bodySmall,
         ),
         actions: [
@@ -484,14 +486,53 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
 
     if (confirmed != true) return;
     if (!context.mounted) return;
+
     try {
       await ref.read(cabinesProvider.notifier).deletar(cabine.id);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Cabine ${cabine.nome ?? cabine.numero.toString().padLeft(2, '0')} deletada com sucesso!')));
+          SnackBar(content: Text('$nomeCabine deletada com sucesso!')));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiService.extractErrorMessage(e))));
+      final msg = ApiService.extractErrorMessage(e);
+
+      // Cabine tem contrato vinculado — oferecer opção de liberar e deletar
+      if (msg.toLowerCase().contains('libere') || msg.toLowerCase().contains('contrato')) {
+        final force = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+            title: Text('Cabine com contrato ativo', style: AppTypography.h3),
+            content: Text(
+              '$nomeCabine está vinculada a um contrato. Ao liberar e deletar, o vínculo será removido e a cabine ficará disponível momentaneamente antes de ser excluída.',
+              style: AppTypography.bodySmall,
+            ),
+            actions: [
+              AppSecondaryButton(label: 'Cancelar', onPressed: () => Navigator.of(dialogContext).pop(false)),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: AppColors.textOnPrimary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md))),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('Liberar e Deletar'),
+              ),
+            ],
+          ),
+        );
+
+        if (force != true || !context.mounted) return;
+        try {
+          await ApiService.patch('/cabines/${cabine.id}/liberar');
+          await ref.read(cabinesProvider.notifier).deletar(cabine.id);
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('$nomeCabine liberada e deletada com sucesso!')));
+        } catch (e2) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiService.extractErrorMessage(e2))));
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      }
     }
   }
 
