@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/theme.dart';
-import '../../../theme/app_radius.dart';
-import '../../../theme/app_spacing.dart';
-import '../../../theme/app_typography.dart';
+import '../../../design_system/design_system.dart';
 
 class ReprovarModal extends StatefulWidget {
   const ReprovarModal({super.key});
@@ -38,15 +35,15 @@ class _ReprovarModalState extends State<ReprovarModal> {
         duration: const Duration(milliseconds: 180),
         padding: EdgeInsets.only(bottom: bottomInset),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.x2l),
+          padding: const EdgeInsets.all(AppSpacing.x6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded,
-                      color: context.colors.error),
+                  const Icon(Icons.warning_amber_rounded,
+                      color: AppColors.danger),
                   const SizedBox(width: 12),
                   Text('Reprovar Operação', style: AppTypography.h3),
                 ],
@@ -61,43 +58,42 @@ class _ReprovarModalState extends State<ReprovarModal> {
                 spacing: 8,
                 runSpacing: 8,
                 children: quickReasons
-                    .map((reason) => ActionChip(
+                    .map((reason) => FilterChip(
                           label: Text(reason),
-                          onPressed: () {
-                            _controller.text = reason;
-                            setState(() {});
+                          selected: _controller.text == reason,
+                          onSelected: (selected) {
+                            if (selected) {
+                              _controller.text = reason;
+                              setState(() {});
+                            }
                           },
                         ))
                     .toList(),
               ),
               const SizedBox(height: 16),
-              TextField(
+              AppTextField(
                 controller: _controller,
-                minLines: 3,
-                maxLines: 5,
+                keyboardType: TextInputType.multiline,
                 onChanged: (_) => setState(() {}),
-                decoration: const InputDecoration(
-                  hintText:
-                      'Descreva a razão da restrição comercial ou cadastral.',
-                ),
+                hint: 'Descreva a razão da restrição comercial ou cadastral.',
               ),
               const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: AppSecondaryButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancelar'),
+                      label: 'Cancelar',
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
+                    child: AppPrimaryButton(
                       onPressed: canSubmit
                           ? () =>
                               Navigator.of(context).pop(_controller.text.trim())
                           : null,
-                      child: const Text('Confirmar Restrição'),
+                      label: 'Confirmar Restrição',
                     ),
                   ),
                 ],

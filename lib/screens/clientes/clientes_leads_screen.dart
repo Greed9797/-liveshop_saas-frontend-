@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../widgets/app_scaffold.dart';
+import 'package:intl/intl.dart';
+import '../../design_system/design_system.dart';
 import '../../widgets/lead_card.dart';
+import '../../widgets/client_avatar.dart';
 import '../../providers/clientes_provider.dart';
 import '../../providers/leads_provider.dart';
 import '../../models/cliente.dart';
-import '../../providers/contratos_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/theme.dart';
+import '../../services/api_service.dart';
+import '../../widgets/responsive_grid.dart';
 
 class ClientesLeadsScreen extends ConsumerStatefulWidget {
   const ClientesLeadsScreen({super.key});
@@ -23,57 +22,92 @@ class _ClientesLeadsState extends ConsumerState<ClientesLeadsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
+    return AppScreenScaffold(
       currentRoute: AppRoutes.clientesLeads,
+      eyebrow: 'Carteira comercial',
+      titleSerif: true,
+      title: 'Clientes & Leads',
+      subtitle: 'Gerencie sua carteira de clientes e leads.',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          color: AppColors.textSecondary,
+          onPressed: () {
+            if (_showLeads) {
+              ref.read(leadsProvider.notifier).refresh();
+            } else {
+              ref.read(clientesProvider.notifier).refresh();
+            }
+          },
+        ),
+      ],
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        padding: const EdgeInsets.all(AppSpacing.x6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              children: [
-                Text(
-                  _showLeads ? 'Leads' : 'Clientes',
-                  style: AppTypography.h2.copyWith(
-                      fontSize: 20, fontWeight: FontWeight.w500),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () {
-                    if (_showLeads) {
-                      ref.read(leadsProvider.notifier).refresh();
-                    } else {
-                      ref.read(clientesProvider.notifier).refresh();
-                    }
-                  },
-                ),
-              ],
+            // KPI strip
+            Consumer(
+              builder: (context, ref, _) {
+                final clientesAsync = ref.watch(clientesProvider);
+                final leadsAsync = ref.watch(leadsProvider);
+                final totalClientes = clientesAsync.valueOrNull?.length ?? 0;
+                final totalLeads = leadsAsync.valueOrNull?.length ?? 0;
+                final conversionRate = totalLeads > 0
+                    ? ((totalClientes / (totalClientes + totalLeads)) * 100).toStringAsFixed(0)
+                    : '0';
+                return ResponsiveGrid(
+                  mobileColumns: 1,
+                  tabletColumns: 3,
+                  desktopColumns: 3,
+                  spacing: AppSpacing.x3,
+                  runSpacing: AppSpacing.x3,
+                  children: [
+                    KpiAccentCard(
+                      label: 'Clientes',
+                      value: '$totalClientes',
+                      sub: 'ativos',
+                      accentTop: true,
+                    ),
+                    KpiAccentCard(
+                      label: 'Leads',
+                      value: '$totalLeads',
+                      sub: 'em qualificação',
+                      valueColor: AppColors.warning,
+                    ),
+                    KpiAccentCard(
+                      label: 'Conversão',
+                      value: '$conversionRate%',
+                      sub: 'lead → cliente',
+                      valueColor: AppColors.success,
+                    ),
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: AppSpacing.md),
-            // Seletores
+            const SizedBox(height: AppSpacing.x5),
+            // Tab selector row
             Row(
               children: [
                 _TabChip(
                   label: 'Clientes',
-                  icon: Icons.people_outlined,
+                  icon: Icons.people_outline,
                   selected: !_showLeads,
                   count: ref.watch(clientesProvider).valueOrNull?.length,
                   onTap: () => setState(() => _showLeads = false),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: AppSpacing.x2),
                 _TabChip(
                   label: 'Leads',
-                  icon: Icons.bolt_rounded,
+                  icon: Icons.trending_up,
                   selected: _showLeads,
                   count: ref.watch(leadsProvider).valueOrNull?.length,
                   onTap: () => setState(() => _showLeads = true),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.lg),
-            // Conteúdo
+            const SizedBox(height: AppSpacing.x4),
+            // Content
             Expanded(
               child: _showLeads ? _LeadsTab() : _ClientesTab(),
             ),
@@ -95,11 +129,14 @@ class _ClientesTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('Erro: $e'),
-          const SizedBox(height: AppSpacing.md),
-          ElevatedButton(
+          Text(
+            ApiService.extractErrorMessage(e),
+            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.x3),
+          AppSecondaryButton(
             onPressed: () => ref.read(clientesProvider.notifier).refresh(),
-            child: const Text('Tentar novamente'),
+            label: 'Tentar novamente',
           ),
         ]),
       ),
@@ -107,10 +144,10 @@ class _ClientesTab extends ConsumerWidget {
           ? Center(
               child: Text('Nenhum cliente cadastrado.',
                   style: AppTypography.bodySmall
-                      .copyWith(color: context.colors.textSecondary)))
+                      .copyWith(color: AppColors.textSecondary)))
           : ListView.separated(
               itemCount: clientes.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.x2),
               itemBuilder: (_, i) => _ClienteCard(
                 cliente: clientes[i],
                 onTap: () => _showClienteDetail(context, ref, clientes[i]),
@@ -125,86 +162,72 @@ class _ClienteCard extends StatelessWidget {
   final VoidCallback? onTap;
   const _ClienteCard({required this.cliente, this.onTap});
 
+  static final _currencyFmt = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 0);
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.compactPadding),
-          child: Row(
-          children: [
-            // Avatar com inicial
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: _statusColor(context).withValues(alpha: 0.15),
-              child: Text(
-                cliente.nome.isNotEmpty ? cliente.nome[0].toUpperCase() : '?',
-                style: TextStyle(
-                    color: _statusColor(context), fontWeight: FontWeight.w700),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(cliente.nome,
-                      style: AppTypography.bodyMedium
-                          .copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 2),
-                  Text(
-                    [
-                      if (cliente.nicho != null) cliente.nicho!,
-                      if (cliente.cidade != null)
-                        '${cliente.cidade}${cliente.estado != null ? '/${cliente.estado}' : ''}',
-                    ].join(' • '),
-                    style: AppTypography.caption
-                        .copyWith(color: context.colors.textSecondary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (cliente.fatAnual > 0)
-                    Text(
-                      'Fat. anual: R\$ ${cliente.fatAnual.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                      style: AppTypography.caption
-                          .copyWith(color: context.colors.textTertiary),
-                    ),
-                ],
-              ),
-            ),
-            // Status chip
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm, vertical: 3),
-              decoration: BoxDecoration(
-                color: _statusColor(context).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: Text(
-                _statusLabel,
-                style: AppTypography.caption.copyWith(
-                  fontSize: 10,
-                  color: _statusColor(context),
-                  fontWeight: FontWeight.w700,
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.x3),
+      onTap: onTap,
+      child: Row(
+        children: [
+          ClientAvatar(
+            initials: cliente.nome.isNotEmpty ? cliente.nome[0].toUpperCase() : '?',
+            tone: _tone,
+            size: 40,
+          ),
+          const SizedBox(width: AppSpacing.x3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(cliente.nome,
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
+                const SizedBox(height: AppSpacing.x1),
+                Text(
+                  [
+                    if (cliente.nicho != null) cliente.nicho!,
+                    if (cliente.cidade != null)
+                      '${cliente.cidade}${cliente.estado != null ? '/${cliente.estado}' : ''}',
+                  ].join(' • '),
+                  style: AppTypography.caption
+                      .copyWith(color: AppColors.textSecondary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
+                if (cliente.fatAnual > 0)
+                  Text(
+                    'Fat. anual: ${_currencyFmt.format(cliente.fatAnual)}',
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.textMuted),
+                  ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+          AppBadge(
+            label: _statusLabel,
+            type: _statusBadgeType,
+          ),
+        ],
       ),
     );
   }
 
-  Color _statusColor(BuildContext context) => switch (cliente.status) {
-        'negociacao' => context.colors.warning,
-        'enviado' => context.colors.info,
-        'ativo' => context.colors.success,
-        'inadimplente' => context.colors.error,
-        _ => context.colors.textTertiary,
+  AppBadgeType get _statusBadgeType => switch (cliente.status) {
+        'negociacao' => AppBadgeType.warning,
+        'enviado' => AppBadgeType.neutral,
+        'ativo' => AppBadgeType.success,
+        'inadimplente' => AppBadgeType.danger,
+        _ => AppBadgeType.neutral,
+      };
+
+  ClientAvatarTone get _tone => switch (cliente.status) {
+        'negociacao' => ClientAvatarTone.warning,
+        'enviado' => ClientAvatarTone.neutral,
+        'ativo' => ClientAvatarTone.success,
+        'inadimplente' => ClientAvatarTone.warning,
+        _ => ClientAvatarTone.neutral,
       };
 
   String get _statusLabel => switch (cliente.status) {
@@ -227,11 +250,14 @@ class _LeadsTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('Erro: $e'),
-          const SizedBox(height: AppSpacing.md),
-          ElevatedButton(
+          Text(
+            ApiService.extractErrorMessage(e),
+            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.x3),
+          AppSecondaryButton(
             onPressed: () => ref.read(leadsProvider.notifier).refresh(),
-            child: const Text('Tentar novamente'),
+            label: 'Tentar novamente',
           ),
         ]),
       ),
@@ -239,11 +265,11 @@ class _LeadsTab extends ConsumerWidget {
           ? Center(
               child: Text('Nenhum lead disponível no momento.',
                   style: AppTypography.bodySmall
-                      .copyWith(color: context.colors.textSecondary)))
+                      .copyWith(color: AppColors.textSecondary)))
           : ListView.separated(
               itemCount: leads.length,
               separatorBuilder: (_, __) =>
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.x2),
               itemBuilder: (_, i) {
                 final lead = leads[i];
                 return LeadCard(
@@ -283,17 +309,18 @@ void _showClienteDetail(BuildContext context, WidgetRef ref, Cliente cliente) {
       minChildSize: 0.3,
       builder: (ctx, scrollCtrl) => SingleChildScrollView(
         controller: scrollCtrl,
-        padding: const EdgeInsets.all(AppSpacing.x2l),
+        padding: const EdgeInsets.all(AppSpacing.x6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Handle
             Center(
               child: Container(
-                width: 40, height: 4,
-                margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: AppSpacing.x4),
                 decoration: BoxDecoration(
-                  color: ctx.colors.textTertiary,
+                  color: AppColors.textMuted,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -306,23 +333,19 @@ void _showClienteDetail(BuildContext context, WidgetRef ref, Cliente cliente) {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm, vertical: 3),
+                      horizontal: AppSpacing.x2, vertical: AppSpacing.x1),
                   decoration: BoxDecoration(
-                    color: _colorForStatus(ctx, cliente.status).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    color: _colorForStatus(cliente.status).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
-                  child: Text(
-                    cliente.status.toUpperCase(),
-                    style: AppTypography.caption.copyWith(
-                      fontSize: 10,
-                      color: _colorForStatus(ctx, cliente.status),
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: AppBadge(
+                    label: cliente.status.toUpperCase(),
+                    type: _badgeTypeForStatus(cliente.status),
                   ),
                 ),
               ],
             ),
-            const Divider(height: 24),
+            const Divider(height: AppSpacing.x6),
 
             // Dados do cliente
             _InfoRow(icon: Icons.phone_outlined,
@@ -342,37 +365,26 @@ void _showClienteDetail(BuildContext context, WidgetRef ref, Cliente cliente) {
                     ? 'R\$ ${cliente.fatAnual.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}'
                     : null),
 
-            const SizedBox(height: AppSpacing.x2l),
+            const SizedBox(height: AppSpacing.x6),
 
             // Ações
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: ctx.colors.primary),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.pushNamed(context, AppRoutes.contrato,
-                      arguments: {'clienteId': cliente.id});
-                },
-                icon: const Icon(Icons.description_outlined,
-                    color: Colors.white, size: 18),
-                label: Text('Gerar Contrato',
-                    style: AppTypography.bodySmall
-                        .copyWith(color: Colors.white)),
-              ),
+            AppPrimaryButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, AppRoutes.contrato,
+                    arguments: {'clienteId': cliente.id});
+              },
+              icon: Icons.description_outlined,
+              label: 'Gerar Contrato',
             ),
-            const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.pushNamed(context, AppRoutes.cadastroCliente);
-                },
-                icon: const Icon(Icons.edit_outlined, size: 18),
-                label: const Text('Editar / Completar Dados'),
-              ),
+            const SizedBox(height: AppSpacing.x2),
+            AppSecondaryButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, AppRoutes.cadastroCliente);
+              },
+              icon: Icons.edit_outlined,
+              label: 'Editar / Completar Dados',
             ),
           ],
         ),
@@ -381,12 +393,20 @@ void _showClienteDetail(BuildContext context, WidgetRef ref, Cliente cliente) {
   );
 }
 
-Color _colorForStatus(BuildContext context, String status) => switch (status) {
-  'negociacao' => context.colors.warning,
-  'enviado' => context.colors.info,
-  'ativo' => context.colors.success,
-  'inadimplente' => context.colors.error,
-  _ => context.colors.textTertiary,
+Color _colorForStatus(String status) => switch (status) {
+  'negociacao' => AppColors.warning,
+  'enviado' => AppColors.info,
+  'ativo' => AppColors.success,
+  'inadimplente' => AppColors.danger,
+  _ => AppColors.textMuted,
+};
+
+AppBadgeType _badgeTypeForStatus(String status) => switch (status) {
+  'negociacao' => AppBadgeType.warning,
+  'enviado' => AppBadgeType.neutral,
+  'ativo' => AppBadgeType.success,
+  'inadimplente' => AppBadgeType.danger,
+  _ => AppBadgeType.neutral,
 };
 
 class _InfoRow extends StatelessWidget {
@@ -398,20 +418,20 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: context.colors.textTertiary),
-          const SizedBox(width: AppSpacing.sm),
+          Icon(icon, size: 16, color: AppColors.textMuted),
+          const SizedBox(width: AppSpacing.x2),
           Text('$label: ',
-              style: AppTypography.labelSmall
-                  .copyWith(color: context.colors.textSecondary, fontWeight: FontWeight.w600)),
+              style: AppTypography.caption
+                  .copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
           Expanded(
             child: value != null
-                ? Text(value!, style: AppTypography.labelSmall.copyWith(color: context.colors.textPrimary))
+                ? Text(value!, style: AppTypography.caption.copyWith(color: AppColors.textPrimary))
                 : Text('Não preenchido',
-                    style: AppTypography.labelSmall.copyWith(
-                        color: context.colors.error, fontStyle: FontStyle.italic)),
+                    style: AppTypography.caption.copyWith(
+                        color: AppColors.textMuted, fontStyle: FontStyle.italic)),
           ),
         ],
       ),
@@ -439,45 +459,45 @@ class _TabChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? context.colors.primary : context.colors.background,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
+      color: selected ? AppColors.primary : AppColors.bgBase,
+      borderRadius: BorderRadius.circular(AppRadius.full),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+              horizontal: AppSpacing.x4, vertical: AppSpacing.x2),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon,
                   size: 16,
-                  color: selected ? Colors.white : context.colors.textSecondary),
-              const SizedBox(width: AppSpacing.xs),
+                  color: selected ? AppColors.textOnPrimary : AppColors.textSecondary),
+              const SizedBox(width: AppSpacing.x1),
               Text(
                 label,
-                style: AppTypography.labelSmall.copyWith(
+                style: AppTypography.caption.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: selected ? Colors.white : context.colors.textPrimary,
+                  color: selected ? AppColors.textOnPrimary : AppColors.textPrimary,
                 ),
               ),
               if (count != null) ...[
-                const SizedBox(width: AppSpacing.xs),
+                const SizedBox(width: AppSpacing.x1),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.x2, vertical: AppSpacing.x1),
                   decoration: BoxDecoration(
                     color: selected
-                        ? Colors.white.withValues(alpha: 0.25)
-                        : context.colors.textTertiary,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ? AppColors.textOnPrimary.withValues(alpha: 0.25)
+                        : AppColors.textMuted,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
                   child: Text(
                     '$count',
                     style: AppTypography.caption.copyWith(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: selected ? Colors.white : context.colors.textSecondary,
+                      color: selected ? AppColors.textOnPrimary : AppColors.textSecondary,
                     ),
                   ),
                 ),

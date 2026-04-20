@@ -6,10 +6,7 @@ import '../../widgets/action_button.dart';
 import '../../widgets/banner_alerta_comercial.dart';
 import '../../providers/contratos_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/theme.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_typography.dart';
+import '../../design_system/design_system.dart';
 import '../auditoria/widgets/assumir_risco_modal.dart';
 
 /// Tela de análise financeira — chama API real e exibe resultado
@@ -93,7 +90,7 @@ class _AnaliseState extends ConsumerState<AnaliseFinanceiraScreen> {
           constraints: const BoxConstraints(maxWidth: 500),
           child: Card(
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.x4l),
+              padding: const EdgeInsets.all(AppSpacing.x10),
               child: switch (_fase) {
                 0 => const _AnalisandoView(),
                 1 => Column(
@@ -101,7 +98,7 @@ class _AnaliseState extends ConsumerState<AnaliseFinanceiraScreen> {
                     children: [
                       if (contratoBanner != null) ...[
                         BannerAlertaComercial(contrato: contratoBanner),
-                        const SizedBox(height: AppSpacing.xl),
+                        const SizedBox(height: AppSpacing.x5),
                       ],
                       _AprovadoView(
                         score: _score,
@@ -118,7 +115,7 @@ class _AnaliseState extends ConsumerState<AnaliseFinanceiraScreen> {
                     children: [
                       if (contratoBanner != null) ...[
                         BannerAlertaComercial(contrato: contratoBanner),
-                        const SizedBox(height: AppSpacing.xl),
+                        const SizedBox(height: AppSpacing.x5),
                       ],
                       _RecusadoView(
                         score: _score,
@@ -229,12 +226,12 @@ class _AnalisandoView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const CircularProgressIndicator(),
-          const SizedBox(height: AppSpacing.x2l),
+          const SizedBox(height: AppSpacing.x6),
           Text('Analisando dados financeiros...',
               style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w500)),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.x2),
           Text('Consultando score de crédito',
-              style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
+              style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
         ],
       );
 }
@@ -249,25 +246,25 @@ class _AprovadoView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.check_circle_rounded,
-              color: context.colors.success, size: 64),
-          const SizedBox(height: AppSpacing.lg),
+              color: AppColors.success, size: 64),
+          const SizedBox(height: AppSpacing.x4),
           Text('APROVADO',
               style: AppTypography.h1.copyWith(
                   fontSize: 24,
-                  color: context.colors.success,
+                  color: AppColors.success,
                   fontWeight: FontWeight.w500)),
           if (score != null) ...[
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
             Text('Score: $score/100',
-                style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
+                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
           ],
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.x2),
           const Text('Cliente aprovado para contrato ativo!'),
-          const SizedBox(height: AppSpacing.x2l),
+          const SizedBox(height: AppSpacing.x6),
           ActionButton(
               label: 'CONTINUAR',
               onPressed: onContinuar,
-              color: context.colors.success),
+              color: AppColors.success),
         ],
       );
 }
@@ -283,44 +280,44 @@ class _RecusadoView extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.warning_rounded, color: context.colors.error, size: 64),
-          const SizedBox(height: AppSpacing.lg),
+          Icon(Icons.warning_rounded, color: AppColors.danger, size: 64),
+          const SizedBox(height: AppSpacing.x4),
           Text('CLIENTE COM ALTO RISCO',
               style: AppTypography.h3.copyWith(
-                  color: context.colors.error,
+                  color: AppColors.danger,
                   fontWeight: FontWeight.w500)),
           if (score != null) ...[
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
             Text('Score: $score/100',
-                style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
+                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
           ],
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.x3),
           Container(
-            padding: const EdgeInsets.all(AppSpacing.compactPadding),
+            padding: const EdgeInsets.all(AppSpacing.x3),
             decoration: BoxDecoration(
-              color: context.colors.error.withValues(alpha: 0.08),
+              color: AppColors.danger.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Text(
               'Você pode negociar pagamento antecipado ou assumir o risco.',
-              style: TextStyle(color: context.colors.error),
+              style: TextStyle(color: AppColors.danger),
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: AppSpacing.x2l),
+          const SizedBox(height: AppSpacing.x6),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ActionButton(
                   label: 'ASSUMIR RISCO',
                   onPressed: onAssumir,
-                  color: context.colors.warning),
-              const SizedBox(width: AppSpacing.md),
+                  color: AppColors.warning),
+              const SizedBox(width: AppSpacing.x3),
               ActionButton(
                   label: 'CANCELAR',
                   onPressed: onCancelar,
                   outlined: true,
-                  color: context.colors.error),
+                  color: AppColors.danger),
             ],
           ),
         ],
@@ -336,12 +333,12 @@ class _ErroView extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.error_outline, color: context.colors.error, size: 48),
-          const SizedBox(height: AppSpacing.md),
+          Icon(Icons.error_outline, color: AppColors.danger, size: 48),
+          const SizedBox(height: AppSpacing.x3),
           Text(mensagem, textAlign: TextAlign.center),
-          const SizedBox(height: AppSpacing.lg),
-          ElevatedButton(
-              onPressed: onTentar, child: const Text('Tentar novamente')),
+          const SizedBox(height: AppSpacing.x4),
+          AppPrimaryButton(
+              onPressed: onTentar, label: 'Tentar novamente'),
         ],
       );
 }

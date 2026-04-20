@@ -1,84 +1,437 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../widgets/app_scaffold.dart';
-import '../../widgets/action_button.dart';
 import '../../providers/manuais_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/theme.dart';
+import '../../design_system/design_system.dart';
+import '../../services/api_service.dart';
 
 /// Lista de manuais e documentos da franqueadora
-class ManuaisScreen extends ConsumerWidget {
+class ManuaisScreen extends ConsumerStatefulWidget {
   const ManuaisScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ManuaisScreen> createState() => _ManuaisScreenState();
+}
+
+class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
+  static const _categories = ['Todos', 'Operação', 'Comercial', 'Equipe', 'Legal', 'Marca'];
+  String _categoria = 'Todos';
+  String _busca = '';
+
+  Future<void> _launchManual(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.scheme != 'https') return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  List<Manual> _filter(List<Manual> manuais) {
+    final q = _busca.trim().toLowerCase();
+    return manuais.where((m) {
+      final matchesCat = _categoria == 'Todos' ||
+          (m.categoria != null &&
+              m.categoria!.toLowerCase() == _categoria.toLowerCase());
+      final matchesBusca = q.isEmpty || m.titulo.toLowerCase().contains(q);
+      return matchesCat && matchesBusca;
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final manuaisAsync = ref.watch(manuaisProvider);
 
-    return AppScaffold(
+    return AppScreenScaffold(
       currentRoute: AppRoutes.manuais,
+      eyebrow: 'Biblioteca da franqueadora',
+      titleSerif: true,
+      title: 'Manuais & Documentos',
+      subtitle: 'Acesse os materiais e documentos da franqueadora.',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          color: AppColors.textSecondary,
+          onPressed: () => ref.read(manuaisProvider.notifier).refresh(),
+        ),
+      ],
       child: RefreshIndicator(
         onRefresh: () => ref.read(manuaisProvider.notifier).refresh(),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.screenPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Manuais e Documentos',
-                  style: AppTypography.h2.copyWith(fontSize: 20, fontWeight: FontWeight.w500)),
-              const SizedBox(height: AppSpacing.lg),
-              Expanded(
-                child: manuaisAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      Text('Erro: $e'),
-                      const SizedBox(height: AppSpacing.md),
-                      ElevatedButton(
-                        onPressed: () => ref.read(manuaisProvider.notifier).refresh(),
-                        child: const Text('Tentar novamente'),
-                      ),
-                    ]),
-                  ),
-                  data: (manuais) => manuais.isEmpty
-                      ? Center(
-                          child: Text('Nenhum documento disponível.',
-                              style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)))
-                      : ListView.separated(
-                          itemCount: manuais.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (_, i) {
-                            final m = manuais[i];
-                            final atualStr =
-                                '${m.atualizadoEm.day.toString().padLeft(2, '0')}/${m.atualizadoEm.month.toString().padLeft(2, '0')}/${m.atualizadoEm.year}';
-                            return ListTile(
-                              leading: Icon(Icons.picture_as_pdf,
-                                  color: context.colors.error, size: 28),
-                              title: Text(m.titulo,
-                                  style: const TextStyle(fontWeight: FontWeight.w500)),
-                              subtitle: Text('Atualizado em: $atualStr'),
-                              trailing: ActionButton(
-                                label: 'VER',
-                                icon: Icons.open_in_new,
-                                outlined: true,
-                                onPressed: () async {
-                                  final uri = Uri.tryParse(m.url);
-                                  if (uri != null && await canLaunchUrl(uri)) {
-                                    await launchUrl(uri,
-                                        mode: LaunchMode.externalApplication);
-                                  }
-                                },
-                              ),
-                            );
-                          },
-                        ),
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.x6),
+          children: [
+            _SearchField(
+              onChanged: (v) => setState(() => _busca = v),
+            ),
+            const SizedBox(height: AppSpacing.x4),
+            SizedBox(
+              height: 36,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _categories.length,
+                separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.x2),
+                itemBuilder: (_, i) => AppChip(
+                  label: _categories[i],
+                  active: _categories[i] == _categoria,
+                  onTap: () => setState(() => _categoria = _categories[i]),
                 ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.x6),
+            manuaisAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.x8),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => _buildErrorCard(e),
+              data: (manuais) {
+                final filtrados = _filter(manuais);
+                if (filtrados.isEmpty) return _buildEmptyCard();
+
+                final destaques = _categoria == 'Todos' && _busca.isEmpty
+                    ? filtrados
+                        .where((m) => m.destaque || filtrados.indexOf(m) < 2)
+                        .take(2)
+                        .toList()
+                    : const <Manual>[];
+                final demais = filtrados.where((m) => !destaques.contains(m)).toList();
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (destaques.isNotEmpty) ...[
+                      const AppSectionHeader(title: '⭐ Essenciais'),
+                      LayoutBuilder(
+                        builder: (ctx, c) {
+                          final twoCols = c.maxWidth >= 640;
+                          if (!twoCols) {
+                            return Column(
+                              children: destaques
+                                  .map((m) => Padding(
+                                        padding: const EdgeInsets.only(bottom: AppSpacing.x3),
+                                        child: _FeaturedManualCard(
+                                          manual: m,
+                                          onOpen: () => _launchManual(m.url),
+                                          onDownload: () => _launchManual(m.url),
+                                        ),
+                                      ))
+                                  .toList(),
+                            );
+                          }
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              for (var i = 0; i < destaques.length; i++) ...[
+                                if (i > 0) const SizedBox(width: AppSpacing.x3),
+                                Expanded(
+                                  child: _FeaturedManualCard(
+                                    manual: destaques[i],
+                                    onOpen: () => _launchManual(destaques[i].url),
+                                    onDownload: () => _launchManual(destaques[i].url),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.x6),
+                    ],
+                    if (demais.isNotEmpty) ...[
+                      const AppSectionHeader(title: 'Todos os documentos'),
+                      ...demais.map((m) => Padding(
+                            padding: const EdgeInsets.only(bottom: AppSpacing.x3),
+                            child: _ManualListCard(
+                              manual: m,
+                              onOpen: () => _launchManual(m.url),
+                              onDownload: () => _launchManual(m.url),
+                            ),
+                          )),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorCard(Object e) => AppCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              ApiService.extractErrorMessage(e),
+              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.x3),
+            AppPrimaryButton(
+              onPressed: () => ref.read(manuaisProvider.notifier).refresh(),
+              label: 'Tentar novamente',
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildEmptyCard() => AppCard(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
+            child: Text(
+              'Nenhum documento corresponde aos filtros atuais.',
+              style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+        ),
+      );
+}
+
+class _SearchField extends StatefulWidget {
+  final ValueChanged<String> onChanged;
+  const _SearchField({required this.onChanged});
+
+  @override
+  State<_SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends State<_SearchField> {
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _ctrl,
+      onChanged: (v) {
+        widget.onChanged(v);
+        setState(() {});
+      },
+      decoration: InputDecoration(
+        hintText: 'Buscar manual...',
+        prefixIcon: const Icon(Icons.search, size: 18),
+        suffixIcon: _ctrl.text.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.clear, size: 16),
+                onPressed: () {
+                  _ctrl.clear();
+                  widget.onChanged('');
+                  setState(() {});
+                },
+              )
+            : null,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x4,
+          vertical: AppSpacing.x3,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: const BorderSide(color: AppColors.borderLight),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: const BorderSide(color: AppColors.borderLight),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: const BorderSide(color: AppColors.primary),
+        ),
+        filled: true,
+        fillColor: AppColors.bgCard,
+      ),
+    );
+  }
+}
+
+// ─── Featured Manual Card ────────────────────────────────────────────────────
+
+class _FeaturedManualCard extends StatelessWidget {
+  final Manual manual;
+  final VoidCallback onOpen;
+  final VoidCallback onDownload;
+
+  const _FeaturedManualCard({
+    required this.manual,
+    required this.onOpen,
+    required this.onDownload,
+  });
+
+  static final _dateFmt = DateFormat('dd/MM/yyyy');
+
+  String _formatUpdated(DateTime? d) =>
+      d == null ? 'Sem data' : 'Atualizado em ${_dateFmt.format(d)}';
+
+  @override
+  Widget build(BuildContext context) {
+    final cat = manual.categoria ?? 'Geral';
+    final pages = manual.paginas;
+    final pagesText = pages != null && pages > 0 ? '$pages páginas' : 'PDF';
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primarySofter, AppColors.bgCard],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        border: Border.all(color: AppColors.primarySoft),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.x5),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x73FF5A1F),
+                  blurRadius: 16,
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.description_outlined,
+                color: Colors.white, size: 24),
+          ),
+          const SizedBox(height: AppSpacing.x4),
+          Text(
+            manual.titulo,
+            style: AppTypography.h3,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppSpacing.x1),
+          Text(
+            '$pagesText · $cat',
+            style: AppTypography.caption.copyWith(color: AppColors.textMuted),
+          ),
+          Text(
+            _formatUpdated(manual.atualizadoEm),
+            style: AppTypography.caption.copyWith(color: AppColors.textMuted),
+          ),
+          const SizedBox(height: AppSpacing.x4),
+          Row(
+            children: [
+              Expanded(
+                child: AppPrimaryButton(label: 'Abrir', onPressed: onOpen),
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              AppGhostButton(
+                label: 'PDF',
+                icon: Icons.download,
+                onPressed: onDownload,
               ),
             ],
           ),
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Manual list card ─────────────────────────────────────────────────────────
+
+class _ManualListCard extends StatelessWidget {
+  final Manual manual;
+  final VoidCallback onOpen;
+  final VoidCallback onDownload;
+
+  const _ManualListCard({
+    required this.manual,
+    required this.onOpen,
+    required this.onDownload,
+  });
+
+  static final _dateFmt = DateFormat('dd/MM/yyyy');
+
+  @override
+  Widget build(BuildContext context) {
+    final cat = manual.categoria;
+    final pages = manual.paginas;
+    final updated = manual.atualizadoEm;
+
+    final meta = <String>[
+      if (cat != null && cat.isNotEmpty) cat,
+      if (pages != null && pages > 0) '$pages p.',
+      if (updated != null) 'Atualizado ${_dateFmt.format(updated)}',
+    ].join(' · ');
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.x3),
+      onTap: onOpen,
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 52,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.dangerBg,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Text(
+              'PDF',
+              style: AppTypography.caption.copyWith(
+                color: AppColors.danger,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+                fontSize: 10,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.x3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  manual.titulo,
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (meta.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    meta,
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.textMuted),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.x2),
+          AppGhostButton(
+            label: 'Ver',
+            icon: Icons.open_in_new,
+            onPressed: onOpen,
+          ),
+          IconButton(
+            icon: const Icon(Icons.download, size: 18),
+            color: AppColors.textSecondary,
+            onPressed: onDownload,
+            tooltip: 'Baixar PDF',
+          ),
+        ],
       ),
     );
   }

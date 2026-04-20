@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../theme/theme.dart';
+import '../design_system/design_system.dart';
 
 /// Widget padronizado para exibição de valores monetários.
 /// - Formata em pt_BR (ponto nos milhares, vírgula nos centavos).
@@ -31,7 +31,7 @@ class MoneyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseColor = color ?? context.colors.textPrimary;
+    final baseColor = color ?? AppColors.textPrimary;
     // Formata sem o símbolo (ex: "27.035,25")
     final formattedNumber = _formatter.format(value).trim();
 

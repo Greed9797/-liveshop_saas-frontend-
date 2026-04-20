@@ -15,10 +15,28 @@ flutter test test/widget_test.dart   # single test file
 flutter build web --dart-define=API_URL=https://api.example.com
 
 # Auto-login for manual testing (backend must be running on :3001)
-flutter run -d chrome --dart-define=E2E_TESTING=true --dart-define=E2E_ROLE=franqueador_master
-flutter run -d chrome --dart-define=E2E_TESTING=true --dart-define=E2E_ROLE=franqueado
-flutter run -d chrome --dart-define=E2E_TESTING=true --dart-define=E2E_ROLE=cliente_parceiro
+# Credentials are NOT hardcoded — pass them via --dart-define at run time.
+# Role-specific vars (use the appropriate set for the chosen role):
+flutter run -d chrome \
+  --dart-define=E2E_TESTING=true \
+  --dart-define=E2E_ROLE=franqueador_master \
+  --dart-define=E2E_EMAIL_MASTER=admin@liveshop.com \
+  --dart-define=E2E_PASSWORD_MASTER=admin123
+
+flutter run -d chrome \
+  --dart-define=E2E_TESTING=true \
+  --dart-define=E2E_ROLE=franqueado \
+  --dart-define=E2E_EMAIL_FRANQUEADO=franqueado@liveshop.com \
+  --dart-define=E2E_PASSWORD_FRANQUEADO=teste123
+
+flutter run -d chrome \
+  --dart-define=E2E_TESTING=true \
+  --dart-define=E2E_ROLE=cliente_parceiro \
+  --dart-define=E2E_EMAIL_CLIENTE=cliente@liveshop.com \
+  --dart-define=E2E_PASSWORD_CLIENTE=teste123
+
 # Role aliases accepted: 'master' → franqueador_master, 'cliente' → cliente_parceiro
+# If credentials are omitted the bootstrap prints an error and skips auto-login.
 ```
 
 ## Architecture

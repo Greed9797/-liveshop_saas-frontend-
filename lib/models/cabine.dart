@@ -11,6 +11,15 @@ class Cabine {
   final int viewerCount;
   final double gmvAtual;
   final DateTime? iniciadoEm;
+  final String? nome;
+  final String? tamanho;
+  final String? descricao;
+  final String? tiktokUsername;
+  final int likesCount;
+  final int commentsCount;
+  final int sharesCount;
+  final int giftsDiamonds;
+  final int totalOrders;
 
   const Cabine({
     required this.id,
@@ -24,6 +33,15 @@ class Cabine {
     this.viewerCount = 0,
     this.gmvAtual = 0,
     this.iniciadoEm,
+    this.nome,
+    this.tamanho,
+    this.descricao,
+    this.tiktokUsername,
+    this.likesCount = 0,
+    this.commentsCount = 0,
+    this.sharesCount = 0,
+    this.giftsDiamonds = 0,
+    this.totalOrders = 0,
   });
 
   factory Cabine.fromJson(Map<String, dynamic> j) => Cabine(
@@ -44,6 +62,15 @@ class Cabine {
         iniciadoEm: j['iniciado_em'] != null
             ? DateTime.parse(j['iniciado_em'] as String)
             : null,
+        nome: j['nome'] as String?,
+        tamanho: j['tamanho'] as String?,
+        descricao: j['descricao'] as String?,
+        tiktokUsername: j['tiktok_username'] as String?,
+        likesCount:    (j['likes_count']    as num? ?? 0).toInt(),
+        commentsCount: (j['comments_count'] as num? ?? 0).toInt(),
+        sharesCount:   (j['shares_count']   as num? ?? 0).toInt(),
+        giftsDiamonds: (j['gifts_diamonds'] as num? ?? 0).toInt(),
+        totalOrders:   (j['total_orders']   as num? ?? 0).toInt(),
       );
 
   Map<String, dynamic> toCardMap() => {

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
-import '../theme/app_spacing.dart';
-import '../theme/theme.dart';
+import '../design_system/design_system.dart';
 
 class RankingDestaque extends StatelessWidget {
   final List<Map<String, dynamic>> rankings;
@@ -14,12 +11,12 @@ class RankingDestaque extends StatelessWidget {
     if (rankings.isEmpty) {
       return Card(
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.x2l),
+          padding: const EdgeInsets.all(AppSpacing.x6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.emoji_events_outlined,
-                  size: 36, color: context.colors.textTertiary),
+                  size: 36, color: AppColors.textMuted),
               const SizedBox(height: 8),
               Text('Sem vendas registradas hoje',
                   style: AppTypography.bodySmall),
@@ -37,20 +34,20 @@ class RankingDestaque extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.x4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.flag_outlined, size: 20, color: context.colors.textTertiary),
+                Icon(Icons.flag_outlined, size: 20, color: AppColors.textMuted),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     'DESTAQUES DO DIA',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: context.colors.textSecondary,
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
                     ),
@@ -59,7 +56,7 @@ class RankingDestaque extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.flag_outlined, size: 20, color: context.colors.textTertiary),
+                Icon(Icons.flag_outlined, size: 20, color: AppColors.textMuted),
               ],
             ),
             const SizedBox(height: 20),
@@ -92,21 +89,27 @@ class RankingDestaque extends StatelessWidget {
             Container(
               width: 56 * scale,
               height: 56 * scale,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isEmpty ? context.colors.background : null,
+                color: isEmpty
+                    ? AppColors.bgBase
+                    : medalColor.withValues(alpha: 0.18),
                 border: Border.all(color: medalColor, width: 2),
-                image: isEmpty
-                    ? null
-                    : const DecorationImage(
-                        image: NetworkImage('https://i.pravatar.cc/150'),
-                        fit: BoxFit.cover,
-                      ),
               ),
               child: isEmpty
                   ? Icon(Icons.person_outline,
-                      size: 22 * scale, color: context.colors.textTertiary)
-                  : null,
+                      size: 22 * scale, color: AppColors.textMuted)
+                  : Text(
+                      nome.trim().isNotEmpty
+                          ? nome.trim()[0].toUpperCase()
+                          : '?',
+                      style: AppTypography.h3.copyWith(
+                        color: medalColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20 * scale,
+                      ),
+                    ),
             ),
             Positioned(
               bottom: -4,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/api_service.dart';
 
@@ -5,9 +6,16 @@ import '../../services/api_service.dart';
 
 class CabineLiveAtual {
   final String liveId;
+  final String? contratoId;
+  final String? tiktokUsername;
   final int viewerCount;
+  final int totalViewers;
   final double gmvAtual;
   final int totalOrders;
+  final int likesCount;
+  final int commentsCount;
+  final int sharesCount;
+  final int giftsDiamonds;
   final int duracaoMinutos;
   final String clienteNome;
   final String apresentadorNome;
@@ -16,9 +24,16 @@ class CabineLiveAtual {
 
   CabineLiveAtual({
     required this.liveId,
+    this.contratoId,
+    this.tiktokUsername,
     required this.viewerCount,
+    this.totalViewers = 0,
     required this.gmvAtual,
     required this.totalOrders,
+    this.likesCount = 0,
+    this.commentsCount = 0,
+    this.sharesCount = 0,
+    this.giftsDiamonds = 0,
     required this.duracaoMinutos,
     required this.clienteNome,
     required this.apresentadorNome,
@@ -29,14 +44,21 @@ class CabineLiveAtual {
   factory CabineLiveAtual.fromJson(Map<String, dynamic> json) {
     return CabineLiveAtual(
       liveId: json['live_id'] as String,
-      viewerCount: json['viewer_count'] ?? 0,
-      gmvAtual: (json['gmv_atual'] ?? 0).toDouble(),
-      totalOrders: json['total_orders'] ?? 0,
-      duracaoMinutos: json['duracao_minutos'] ?? 0,
-      clienteNome: json['cliente_nome'] ?? '',
-      apresentadorNome: json['apresentador_nome'] ?? '',
-      iniciadoEm: DateTime.parse(json['iniciado_em']),
-      topProduto: json['top_produto'],
+      contratoId: json['contrato_id'] as String?,
+      tiktokUsername: json['tiktok_username'] as String?,
+      viewerCount: (json['viewer_count'] as num? ?? 0).toInt(),
+      totalViewers: (json['total_viewers'] as num? ?? 0).toInt(),
+      gmvAtual: (json['gmv_atual'] as num? ?? 0).toDouble(),
+      totalOrders: (json['total_orders'] as num? ?? 0).toInt(),
+      likesCount: (json['likes_count'] as num? ?? 0).toInt(),
+      commentsCount: (json['comments_count'] as num? ?? 0).toInt(),
+      sharesCount: (json['shares_count'] as num? ?? 0).toInt(),
+      giftsDiamonds: (json['gifts_diamonds'] as num? ?? 0).toInt(),
+      duracaoMinutos: (json['duracao_minutos'] as num? ?? 0).toInt(),
+      clienteNome: (json['cliente_nome'] ?? '') as String,
+      apresentadorNome: (json['apresentador_nome'] ?? '') as String,
+      iniciadoEm: DateTime.parse(json['iniciado_em'] as String),
+      topProduto: json['top_produto'] as Map<String, dynamic>?,
     );
   }
 }
@@ -84,12 +106,26 @@ class CabineDetailState {
 
 class CabineDetailNotifier
     extends FamilyAsyncNotifier<CabineDetailState, String> {
+  Timer? _pollTimer;
+
   @override
   Future<CabineDetailState> build(String arg) async {
+    ref.onDispose(() => _pollTimer?.cancel());
+
     final historico = await _fetchHistorico(arg);
     final liveAtual = await _fetchLiveAtual(arg);
 
+    _restartPollingIfLive(liveAtual != null);
+
     return CabineDetailState(liveAtual: liveAtual, historico: historico);
+  }
+
+  void _restartPollingIfLive(bool hasLive) {
+    _pollTimer?.cancel();
+    if (!hasLive) return;
+    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      refreshLiveOnly();
+    });
   }
 
   Future<CabineHistorico> _fetchHistorico(String cabineId) async {
@@ -101,8 +137,11 @@ class CabineDetailNotifier
   Future<CabineLiveAtual?> _fetchLiveAtual(String cabineId) async {
     try {
       final response = await ApiService.get('/cabines/$cabineId/live-atual');
-      return CabineLiveAtual.fromJson(response.data);
-    } catch (e) {
+      final data = response.data as Map<String, dynamic>;
+      // Novo contrato: backend retorna { live_ativa: false } quando não há live
+      if (data['live_ativa'] == false) return null;
+      return CabineLiveAtual.fromJson(data);
+    } catch (_) {
       return null;
     }
   }
@@ -123,6 +162,7 @@ class CabineDetailNotifier
           clearLive: liveAtual == null,
         ),
       );
+      _restartPollingIfLive(liveAtual != null);
     } catch (_) {
       // Mantemos o último estado estável se o refresh parcial falhar.
     }

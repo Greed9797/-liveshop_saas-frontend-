@@ -1,10 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/cliente.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class ClientesNotifier extends AsyncNotifier<List<Cliente>> {
   @override
-  Future<List<Cliente>> build() => _fetch();
+  Future<List<Cliente>> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    return _fetch();
+  }
 
   Future<List<Cliente>> _fetch() async {
     final resp = await ApiService.get('/clientes');

@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/analytics_dashboard.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_radius.dart';
-import '../theme/app_shadows.dart';
-import '../theme/app_typography.dart';
-import '../theme/theme.dart';
+import '../design_system/design_system.dart';
 
 class AnalyticsRankingList extends StatelessWidget {
   final List<RankingApresentador> items;
@@ -17,13 +13,7 @@ class AnalyticsRankingList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: context.colors.cardBackground,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: AppShadows.md,
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -31,11 +21,11 @@ class AnalyticsRankingList extends StatelessWidget {
             children: [
               const Icon(Icons.emoji_events_rounded, color: AppColors.medalGold, size: 20),
               const SizedBox(width: 8),
-              Text('Top Apresentadores', style: AppTypography.h3.copyWith(fontSize: 15, color: context.colors.textPrimary)),
+              Text('Top Apresentadores', style: AppTypography.h3.copyWith(fontSize: 15, color: AppColors.textPrimary)),
             ],
           ),
           const SizedBox(height: 4),
-          Text('Ranking por GMV no período', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+          Text('Ranking por GMV no período', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: 16),
           if (items.isEmpty)
             _buildEmptyState(context)
@@ -54,7 +44,7 @@ class AnalyticsRankingList extends StatelessWidget {
       1 => AppColors.medalGold,
       2 => AppColors.medalSilver,
       3 => AppColors.medalBronze,
-      _ => context.colors.textTertiary,
+      _ => AppColors.textMuted,
     };
 
     return Container(
@@ -66,7 +56,7 @@ class AnalyticsRankingList extends StatelessWidget {
       decoration: BoxDecoration(
         color: isTopThree
             ? medalColor.withValues(alpha: 0.07)
-            : context.colors.background,
+            : AppColors.bgBase,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: isTopThree
             ? Border.all(color: medalColor.withValues(alpha: 0.3))
@@ -105,13 +95,13 @@ class AnalyticsRankingList extends StatelessWidget {
           // Avatar com iniciais
           CircleAvatar(
             radius: isTopThree ? 18 : 14,
-            backgroundColor: context.colors.primary.withValues(alpha: 0.15),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.15),
             child: Text(
               item.apresentadorNome.length >= 2
                   ? item.apresentadorNome.substring(0, 2).toUpperCase()
                   : item.apresentadorNome.substring(0, 1).toUpperCase(),
               style: AppTypography.caption.copyWith(
-                color: context.colors.primary,
+                color: AppColors.primary,
                 fontWeight: FontWeight.bold,
                 fontSize: isTopThree ? 12 : 10,
               ),
@@ -128,14 +118,14 @@ class AnalyticsRankingList extends StatelessWidget {
                   item.apresentadorNome,
                   style: AppTypography.bodySmall.copyWith(
                     fontWeight: isTopThree ? FontWeight.w700 : FontWeight.w500,
-                    color: context.colors.textPrimary,
+                    color: AppColors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   '${item.totalLives} live${item.totalLives != 1 ? 's' : ''}',
-                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
+                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -146,7 +136,7 @@ class AnalyticsRankingList extends StatelessWidget {
             _currency.format(item.gmvTotal),
             style: AppTypography.bodySmall.copyWith(
               fontWeight: FontWeight.w700,
-              color: isTopThree ? medalColor : context.colors.textSecondary,
+              color: isTopThree ? medalColor : AppColors.textSecondary,
             ),
           ),
         ],
@@ -160,10 +150,10 @@ class AnalyticsRankingList extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.people_outline_rounded, size: 40, color: context.colors.textTertiary),
+            Icon(Icons.people_outline_rounded, size: 40, color: AppColors.textMuted),
             const SizedBox(height: 8),
             Text('Nenhum apresentador no período',
-                style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
+                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
           ],
         ),
       ),

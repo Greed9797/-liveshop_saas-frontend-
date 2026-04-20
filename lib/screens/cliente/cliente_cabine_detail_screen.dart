@@ -4,16 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../design_system/design_system.dart';
 import '../../models/live_request.dart';
 import '../../providers/cliente_cabine_detail_provider.dart';
 import '../../providers/live_requests_provider.dart';
 import '../../providers/live_stream_provider.dart';
 import '../../services/api_service.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/theme.dart';
-import '../../widgets/app_card.dart';
 import '../../widgets/status_badge.dart';
 
 class ClienteCabineDetailScreen extends ConsumerStatefulWidget {
@@ -96,10 +92,10 @@ class _ClienteCabineDetailScreenState
         ref.watch(clienteCabineDetailProvider(widget.cabineId));
 
     return Scaffold(
-      backgroundColor: context.colors.background,
+      backgroundColor: AppColors.bgBase,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showSolicitarLiveSheet(context),
-        backgroundColor: context.colors.primary,
+        backgroundColor: AppColors.primary,
         icon: const Icon(Icons.calendar_today_rounded,
             color: Colors.white),
         label: const Text(
@@ -113,8 +109,8 @@ class _ClienteCabineDetailScreenState
           'Cabine ${widget.cabineNumero.toString().padLeft(2, '0')}',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: context.colors.cardBackground,
-        foregroundColor: context.colors.textPrimary,
+        backgroundColor: AppColors.bgCard,
+        foregroundColor: AppColors.textPrimary,
         elevation: 1,
         actions: [
           IconButton(
@@ -127,9 +123,9 @@ class _ClienteCabineDetailScreenState
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: context.colors.primary,
-          unselectedLabelColor: context.colors.textSecondary,
-          indicatorColor: context.colors.primary,
+          labelColor: AppColors.primary,
+          unselectedLabelColor: AppColors.textSecondary,
+          indicatorColor: AppColors.primary,
           tabs: const [
             Tab(text: 'Live', icon: Icon(Icons.live_tv_outlined)),
             Tab(text: 'Histórico', icon: Icon(Icons.history_outlined)),
@@ -140,16 +136,16 @@ class _ClienteCabineDetailScreenState
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.screenPadding),
+            padding: const EdgeInsets.all(AppSpacing.x6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.error_outline,
-                    size: 48, color: context.colors.error),
-                const SizedBox(height: AppSpacing.md),
+                    size: 48, color: AppColors.danger),
+                const SizedBox(height: AppSpacing.x3),
                 Text('Erro ao carregar dados: $error',
                     textAlign: TextAlign.center),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: AppSpacing.x2),
                 TextButton(
                   onPressed: () => ref
                       .read(clienteCabineDetailProvider(widget.cabineId)
@@ -208,25 +204,25 @@ class _LiveTab extends ConsumerWidget {
     if (live == null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.screenPadding),
+          padding: const EdgeInsets.all(AppSpacing.x6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.videocam_off_outlined,
-                  size: 64, color: context.colors.textTertiary),
-              const SizedBox(height: AppSpacing.lg),
+                  size: 64, color: AppColors.textMuted),
+              const SizedBox(height: AppSpacing.x4),
               Text(
                 'Nenhuma live em andamento',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: context.colors.textSecondary),
+                    color: AppColors.textSecondary),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.x2),
               Text(
                 'Quando sua cabine estiver ao vivo, as métricas\naparecerão aqui em tempo real.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: context.colors.textTertiary),
+                style: TextStyle(color: AppColors.textMuted),
               ),
             ],
           ),
@@ -235,13 +231,13 @@ class _LiveTab extends ConsumerWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.screenPadding),
+      padding: const EdgeInsets.all(AppSpacing.x6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Card AO VIVO
           AppCard(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.all(AppSpacing.x4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -251,9 +247,9 @@ class _LiveTab extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: context.colors.error,
+                        color: AppColors.danger,
                         borderRadius:
-                            BorderRadius.circular(AppRadius.pill),
+                            BorderRadius.circular(AppRadius.full),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -269,13 +265,13 @@ class _LiveTab extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: AppSpacing.x2),
                     if (live.apresentadorNome != null)
                       Expanded(
                         child: Text(
                           live.apresentadorNome!,
                           style: AppTypography.bodySmall
-                              .copyWith(color: context.colors.textSecondary),
+                              .copyWith(color: AppColors.textSecondary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -283,11 +279,11 @@ class _LiveTab extends ConsumerWidget {
                     Text(
                       '${live.duracaoMinutos}min',
                       style: AppTypography.caption
-                          .copyWith(color: context.colors.textSecondary),
+                          .copyWith(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.x4),
                 // Métricas em grid 2x2
                 _MetricGrid(
                   items: [
@@ -295,49 +291,49 @@ class _LiveTab extends ConsumerWidget {
                       icon: Icons.remove_red_eye_outlined,
                       label: 'Espectadores',
                       value: '$viewerCount',
-                      color: context.colors.info,
+                      color: AppColors.info,
                     ),
                     _MetricItem(
                       icon: Icons.attach_money_rounded,
                       label: 'GMV',
                       value: currency.format(gmvAtual),
-                      color: context.colors.success,
+                      color: AppColors.success,
                     ),
                     _MetricItem(
                       icon: Icons.shopping_bag_outlined,
                       label: 'Pedidos',
                       value: '$totalOrders',
-                      color: context.colors.primary,
+                      color: AppColors.primary,
                     ),
                     _MetricItem(
                       icon: Icons.favorite_outline_rounded,
                       label: 'Curtidas',
                       value: '$likesCount',
-                      color: context.colors.error,
+                      color: AppColors.danger,
                     ),
                   ],
                 ),
                 if (commentsCount > 0) ...[
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.x2),
                   Row(
                     children: [
                       Icon(Icons.chat_bubble_outline,
-                          size: 14, color: context.colors.textTertiary),
+                          size: 14, color: AppColors.textMuted),
                       const SizedBox(width: 4),
                       Text(
                         '$commentsCount comentários',
                         style: AppTypography.caption
-                            .copyWith(color: context.colors.textSecondary),
+                            .copyWith(color: AppColors.textSecondary),
                       ),
                     ],
                   ),
                 ],
                 if (live.topProduto != null) ...[
-                  const Divider(height: AppSpacing.x2l),
+                  const Divider(height: AppSpacing.x6),
                   Row(
                     children: [
                       Icon(Icons.star_outline_rounded,
-                          size: 16, color: context.colors.warning),
+                          size: 16, color: AppColors.warning),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -370,13 +366,13 @@ class _MetricGrid extends StatelessWidget {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: AppSpacing.sm,
-      mainAxisSpacing: AppSpacing.sm,
+      crossAxisSpacing: AppSpacing.x2,
+      mainAxisSpacing: AppSpacing.x2,
       childAspectRatio: 2.4,
       children: items
           .map((item) => Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                    horizontal: AppSpacing.x3, vertical: AppSpacing.x2),
                 decoration: BoxDecoration(
                   color: item.color.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(AppRadius.md),
@@ -384,7 +380,7 @@ class _MetricGrid extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(item.icon, size: 18, color: item.color),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: AppSpacing.x2),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,14 +390,14 @@ class _MetricGrid extends StatelessWidget {
                             item.value,
                             style: AppTypography.bodyMedium.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: context.colors.textPrimary),
+                                color: AppColors.textPrimary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             item.label,
                             style: AppTypography.caption
-                                .copyWith(color: context.colors.textSecondary),
+                                .copyWith(color: AppColors.textSecondary),
                           ),
                         ],
                       ),
@@ -448,17 +444,17 @@ class _HistoricoTab extends StatelessWidget {
     if (lives.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.screenPadding),
+          padding: const EdgeInsets.all(AppSpacing.x6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.history_outlined,
-                  size: 64, color: context.colors.textTertiary),
-              const SizedBox(height: AppSpacing.lg),
+                  size: 64, color: AppColors.textMuted),
+              const SizedBox(height: AppSpacing.x4),
               Text(
                 'Nenhuma live registrada nesta cabine',
                 style:
-                    TextStyle(color: context.colors.textSecondary, fontSize: 15),
+                    TextStyle(color: AppColors.textSecondary, fontSize: 15),
               ),
             ],
           ),
@@ -467,10 +463,10 @@ class _HistoricoTab extends StatelessWidget {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(AppSpacing.screenPadding),
+      padding: const EdgeInsets.all(AppSpacing.x6),
       itemCount: lives.length,
       separatorBuilder: (_, __) =>
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.x2),
       itemBuilder: (_, i) => _LiveHistoricoCard(
         live: lives[i],
         currency: currency,
@@ -500,7 +496,7 @@ class _LiveHistoricoCard extends StatelessWidget {
     } catch (_) {}
 
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.x4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -518,29 +514,29 @@ class _LiveHistoricoCard extends StatelessWidget {
               StatusBadge(status: live.status),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.x2),
           Row(
             children: [
               Icon(Icons.timer_outlined,
-                  size: 14, color: context.colors.textTertiary),
+                  size: 14, color: AppColors.textMuted),
               const SizedBox(width: 4),
               Text(
                 '${live.duracaoMin} min',
                 style: AppTypography.caption
-                    .copyWith(color: context.colors.textSecondary),
+                    .copyWith(color: AppColors.textSecondary),
               ),
             ],
           ),
-          const Divider(height: AppSpacing.x2l),
+          const Divider(height: AppSpacing.x6),
           Row(
             children: [
               _StatColumn(
                 value: currency.format(live.fatGerado),
                 label: 'faturamento',
-                color: context.colors.success,
+                color: AppColors.success,
               ),
               if (live.comissaoCalculada > 0) ...[
-                const SizedBox(width: AppSpacing.x2l),
+                const SizedBox(width: AppSpacing.x6),
                 _StatColumn(
                   value: currency.format(live.comissaoCalculada),
                   label: 'sua comissão',
@@ -579,7 +575,7 @@ class _StatColumn extends StatelessWidget {
         Text(
           label,
           style: AppTypography.caption
-              .copyWith(color: context.colors.textSecondary),
+              .copyWith(color: AppColors.textSecondary),
         ),
       ],
     );
@@ -727,7 +723,7 @@ class _SolicitarLiveSheetState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Solicitação enviada! Aguarde aprovação do franqueador.'),
-          backgroundColor: context.colors.success,
+          backgroundColor: AppColors.success,
         ),
       );
       // Reset form
@@ -742,7 +738,7 @@ class _SolicitarLiveSheetState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
-          backgroundColor: context.colors.error,
+          backgroundColor: AppColors.danger,
         ),
       );
     } finally {
@@ -756,7 +752,7 @@ class _SolicitarLiveSheetState
 
     return Container(
       decoration: BoxDecoration(
-        color: context.colors.cardBackground,
+        color: AppColors.bgCard,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: EdgeInsets.only(
@@ -764,8 +760,8 @@ class _SolicitarLiveSheetState
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
-            AppSpacing.screenPadding, AppSpacing.lg,
-            AppSpacing.screenPadding, AppSpacing.x3l),
+            AppSpacing.x6, AppSpacing.x4,
+            AppSpacing.x6, AppSpacing.x8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -776,19 +772,19 @@ class _SolicitarLiveSheetState
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: context.colors.divider,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  color: AppColors.borderLight,
+                  borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.x4),
 
             Text(
               'Solicitar Live',
               style: AppTypography.h3
                   .copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: AppSpacing.x2l),
+            const SizedBox(height: AppSpacing.x6),
 
             // ── Data ──
             _PickerRow(
@@ -799,7 +795,7 @@ class _SolicitarLiveSheetState
               placeholder: _selectedDate == null,
               onTap: _pickDate,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
 
             // ── Hora início ──
             _PickerRow(
@@ -810,7 +806,7 @@ class _SolicitarLiveSheetState
               placeholder: _horaInicio == null,
               onTap: _pickHoraInicio,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
 
             // ── Hora fim ──
             _PickerRow(
@@ -821,7 +817,7 @@ class _SolicitarLiveSheetState
               placeholder: _horaFim == null,
               onTap: _pickHoraFim,
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.x3),
 
             // ── Observação ──
             TextField(
@@ -832,30 +828,30 @@ class _SolicitarLiveSheetState
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 filled: true,
-                fillColor: context.colors.background,
+                fillColor: AppColors.bgBase,
               ),
               maxLines: 2,
               textCapitalization: TextCapitalization.sentences,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
 
             // ── Erro de validação ──
             if (_formError != null)
               Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                padding: const EdgeInsets.only(bottom: AppSpacing.x2),
                 child: Text(
                   _formError!,
                   style: AppTypography.caption
-                      .copyWith(color: context.colors.error),
+                      .copyWith(color: AppColors.danger),
                 ),
               ),
 
             // ── Botão enviar ──
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: context.colors.primary,
+                backgroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.md),
+                    vertical: AppSpacing.x3),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
@@ -879,29 +875,29 @@ class _SolicitarLiveSheetState
             ),
 
             // ── Histórico de solicitações desta cabine ──
-            const SizedBox(height: AppSpacing.x3l),
+            const SizedBox(height: AppSpacing.x8),
             const Divider(),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.x3),
             Text(
               'Minhas Solicitações',
               style: AppTypography.bodyMedium
                   .copyWith(fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.x3),
             requestsAsync.when(
               loading: () => const Center(
                   child: CircularProgressIndicator()),
               error: (_, __) => Text(
                 'Não foi possível carregar as solicitações.',
-                style: TextStyle(color: context.colors.textTertiary),
+                style: TextStyle(color: AppColors.textMuted),
               ),
               data: (requests) => requests.isEmpty
                   ? Padding(
                       padding:
-                          const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                          const EdgeInsets.symmetric(vertical: AppSpacing.x4),
                       child: Text(
                         'Nenhuma solicitação ainda.',
-                        style: TextStyle(color: context.colors.textTertiary),
+                        style: TextStyle(color: AppColors.textMuted),
                         textAlign: TextAlign.center,
                       ),
                     )
@@ -939,22 +935,22 @@ class _PickerRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md, vertical: AppSpacing.md),
+            horizontal: AppSpacing.x3, vertical: AppSpacing.x3),
         decoration: BoxDecoration(
-          border: Border.all(color: context.colors.divider),
+          border: Border.all(color: AppColors.borderLight),
           borderRadius: BorderRadius.circular(AppRadius.md),
-          color: context.colors.background,
+          color: AppColors.bgBase,
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: context.colors.primary),
-            const SizedBox(width: AppSpacing.sm),
+            Icon(icon, size: 18, color: AppColors.primary),
+            const SizedBox(width: AppSpacing.x2),
             Text(
               label,
               style: AppTypography.bodySmall.copyWith(
                 color: placeholder
-                    ? context.colors.textTertiary
-                    : context.colors.textPrimary,
+                    ? AppColors.textMuted
+                    : AppColors.textPrimary,
               ),
             ),
           ],
@@ -984,12 +980,12 @@ class _LiveRequestTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
+      margin: const EdgeInsets.only(bottom: AppSpacing.x2),
+      padding: const EdgeInsets.all(AppSpacing.x3),
       decoration: BoxDecoration(
-        color: context.colors.background,
+        color: AppColors.bgBase,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: context.colors.background),
+        border: Border.all(color: AppColors.bgBase),
       ),
       child: Row(
         children: [
@@ -1008,7 +1004,7 @@ class _LiveRequestTile extends StatelessWidget {
                   Text(
                     request.motivoRecusa!,
                     style: AppTypography.caption
-                        .copyWith(color: context.colors.error),
+                        .copyWith(color: AppColors.danger),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1016,7 +1012,7 @@ class _LiveRequestTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: AppSpacing.x2),
           StatusBadge(status: request.status),
         ],
       ),

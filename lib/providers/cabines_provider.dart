@@ -81,6 +81,23 @@ class CabinesNotifier extends AsyncNotifier<List<Cabine>> {
         data: {'fat_gerado': fatGerado});
     await refresh();
   }
+
+  Future<void> atualizarCabine(String cabineId, Map<String, dynamic> data) async {
+    await ApiService.patch('/cabines/$cabineId', data: data);
+    await refresh();
+  }
+
+  Future<void> criar(Map<String, dynamic> payload) async {
+    await ApiService.post('/cabines', data: payload);
+  }
+
+  Future<void> deletar(String id) async {
+    await ApiService.delete('/cabines/$id');
+    state = state.whenData(
+      (cabines) => cabines.where((c) => c.id != id).toList(),
+    );
+    _invalidateOperationalProviders();
+  }
 }
 
 final cabinesProvider =

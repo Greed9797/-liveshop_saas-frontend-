@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/theme.dart';
-import '../../../theme/app_radius.dart';
-import '../../../theme/app_typography.dart';
+import '../../../design_system/design_system.dart';
 
 class AuditoriaStatusBadge extends StatelessWidget {
   final String status;
@@ -11,19 +9,19 @@ class AuditoriaStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'em_analise' => ('Em Análise', context.colors.warning),
-      'pendencia_comercial' => ('Pendência', context.colors.warning),
-      'reprovado' => ('Restrição', context.colors.error),
-      'ativo' || 'aprovado' => ('Aprovado', context.colors.success),
-      'arquivado' => ('Arquivado', context.colors.textSecondary),
-      _ => (status, context.colors.textSecondary),
+      'em_analise' => ('Em Análise', AppColors.warning),
+      'pendencia_comercial' => ('Pendência', AppColors.warning),
+      'reprovado' => ('Restrição', AppColors.danger),
+      'ativo' || 'aprovado' => ('Aprovado', AppColors.success),
+      'arquivado' => ('Arquivado', AppColors.textSecondary),
+      _ => (status, AppColors.textSecondary),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Text(
         label,

@@ -1,25 +1,14 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors_extension.dart';
-import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
+import '../design_system/design_system.dart' hide AppCard;
 import 'app_card.dart';
 
-/// Premium KPI metric card — label / number / optional trend
+/// Premium KPI metric card — redesigned per Figma instructions
 class MetricCard extends StatelessWidget {
   final String label;
   final String value;
-
-  /// Optional delta text, e.g. "+12%" or "-3 pts"
   final String? delta;
-
-  /// When true the delta is rendered in success color; false = error color.
-  /// Null hides the delta row entirely (same as omitting [delta]).
   final bool? deltaPositive;
-
-  /// Legacy subtitle field kept for backward compatibility.
   final String? subtitle;
-
-  // Legacy params kept for call-site compatibility (not rendered in new layout)
   final IconData? icon;
   final Color? iconColor;
 
@@ -36,70 +25,78 @@ class MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.lg), // 16 px
+      padding: const EdgeInsets.all(AppSpacing.x5),
+      boxShadow: AppShadows.sm,
+      borderColor: Colors.transparent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Label ────────────────────────────────────────────────
-          Text(
-            label.toUpperCase(),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.labelSmall.copyWith(
-              fontSize: 10,
-              color: colors.textSecondary,
-              letterSpacing: 0.6,
-              fontWeight: FontWeight.w500,
-              height: 1.2,
-            ),
+          Row(
+            children: [
+              if (icon != null)
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: AppColors.bgMuted,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 18,
+                    color: iconColor ?? AppColors.primary,
+                  ),
+                ),
+              if (icon != null) const SizedBox(width: AppSpacing.x3),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 6),
-
-          // ── Value ────────────────────────────────────────────────
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              maxLines: 1,
-              style: AppTypography.heroNumber.copyWith(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: colors.textPrimary,
+          const SizedBox(height: AppSpacing.x4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    style: AppTypography.h2.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
               ),
-            ),
+              if (delta != null || subtitle != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    delta ?? subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.caption.copyWith(
+                      color: delta != null
+                          ? ((deltaPositive ?? true) ? AppColors.success : AppColors.danger)
+                          : AppColors.textMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+            ],
           ),
-
-          // ── Delta / trend ────────────────────────────────────────
-          if (delta != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              delta!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption.copyWith(
-                fontSize: 10,
-                color: (deltaPositive ?? true) ? colors.success : colors.error,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ] else if (subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption.copyWith(
-                fontSize: 10,
-                color: colors.textSecondary,
-              ),
-            ),
-          ],
         ],
       ),
     );

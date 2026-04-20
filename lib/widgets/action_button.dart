@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/theme.dart';
-import '../theme/app_radius.dart';
+import '../design_system/design_system.dart';
 
 /// Botão de ação padrão do sistema — com profundidade 3D (elevation,
 /// sombra colorida, hover states).
@@ -22,7 +21,7 @@ class ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final btnColor = color ?? context.colors.primary;
+    final btnColor = color ?? AppColors.primary;
 
     if (outlined) {
       return OutlinedButton.icon(

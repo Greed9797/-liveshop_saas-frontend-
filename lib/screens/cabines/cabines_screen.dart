@@ -8,17 +8,14 @@ import '../../models/franqueado_analytics_resumo.dart';
 import '../../providers/cabines/cabine_detail_provider.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/cabines_provider.dart';
+import '../../providers/contratos_provider.dart';
+import '../../providers/live_stream_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/theme.dart';
-import '../../widgets/action_button.dart';
-import '../../widgets/app_scaffold.dart';
+import '../../design_system/design_system.dart';
 import '../../widgets/cabine_card.dart';
 import '../../widgets/responsive_grid.dart';
+import '../../widgets/reservar_cabine_modal.dart';
 import '../../widgets/status_badge.dart';
 
 class CabinesScreen extends ConsumerStatefulWidget {
@@ -110,7 +107,7 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: context.colors.cardBackground,
+      backgroundColor: AppColors.bgCard,
       builder: (_) => const _FilaAtivacaoBottomSheet(),
     );
 
@@ -120,16 +117,7 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
 
   Future<void> _reservarCabine(Cabine cabine, {required bool isDesktop}) async {
     if (_selectedContratoId == null) {
-      if (isDesktop) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Selecione um contrato na fila de ativação antes de reservar uma cabine.'),
-          ),
-        );
-      } else {
-        await _openFilaAtivacaoSheet();
-      }
+      await showReservarCabineModal(context: context, cabine: cabine);
       return;
     }
 
@@ -201,22 +189,21 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Encerrar Live'),
-        content: TextField(
+        content: AppTextField(
           controller: fatCtrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            labelText: 'Faturamento gerado (R\$)',
-            prefixText: 'R\$ ',
-          ),
+          hint: r'Faturamento gerado (R$)',
+          prefixIcon: Icons.attach_money,
         ),
         actions: [
-          TextButton(
+          AppSecondaryButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            label: 'Cancelar',
           ),
-          ElevatedButton(
+          const SizedBox(width: AppSpacing.x2),
+          AppPrimaryButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Encerrar'),
+            label: 'Encerrar',
           ),
         ],
       ),
@@ -244,6 +231,73 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
     }
   }
 
+  Future<void> _showTiktokDialog(Cabine cabine) async {
+    if (cabine.contratoId == null) return;
+    final ctrl = TextEditingController(
+        text: cabine.tiktokUsername ?? '');
+    await showDialog<void>(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setDlg) {
+          bool saving = false;
+          return AlertDialog(
+            title: Text(
+                'TikTok — Cabine ${cabine.numero.toString().padLeft(2, '0')}'),
+            content: TextField(
+              controller: ctrl,
+              autofocus: true,
+              decoration: const InputDecoration(
+                prefixText: '@',
+                hintText: 'username',
+                labelText: 'Username do apresentador no TikTok',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: saving
+                    ? null
+                    : () async {
+                        setDlg(() => saving = true);
+                        final username = ctrl.text
+                            .trim()
+                            .replaceAll('@', '');
+                        try {
+                          await ref
+                              .read(contratosProvider.notifier)
+                              .setTiktokUsername(
+                                  cabine.contratoId!, username);
+                          ref.invalidate(cabinesProvider);
+                          if (ctx.mounted) Navigator.pop(ctx);
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(
+                                      ApiService.extractErrorMessage(e))),
+                            );
+                          }
+                          setDlg(() => saving = false);
+                        }
+                      },
+                child: saving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Salvar'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    ctrl.dispose();
+  }
+
   void _handleCabineTap(Cabine cabine, {required bool isDesktop}) {
     if (isDesktop) {
       setState(() => _selectedCabineId = cabine.id);
@@ -257,13 +311,27 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
     );
   }
 
+  /// Duplo-clique (desktop) ou toque (mobile já navega via _handleCabineTap) →
+  /// abre o detalhe da cabine direto.
+  void _handleCabineDoubleTap(Cabine cabine) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.cabineDetail,
+      arguments: cabine,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cabinesAsync = ref.watch(cabinesProvider);
     final filaAsync = ref.watch(filaAtivacaoProvider);
 
-    return AppScaffold(
+    return AppScreenScaffold(
       currentRoute: AppRoutes.cabines,
+      title: 'Painel de Cabines',
+      eyebrow: 'Operação ao Vivo',
+      titleSerif: true,
+      subtitle: 'Visão operacional da unidade: ao vivo, reservadas e rendimento.',
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
@@ -276,11 +344,11 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
                 children: [
                   Text(
                       'Erro ao carregar cabines: ${ApiService.extractErrorMessage(error)}'),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
+                  const SizedBox(height: AppSpacing.x3),
+                  AppSecondaryButton(
                     onPressed: () =>
                         ref.read(cabinesProvider.notifier).refresh(),
-                    child: const Text('Tentar novamente'),
+                    label: 'Tentar novamente',
                   ),
                 ],
               ),
@@ -312,11 +380,13 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
                     : () => setState(() => _selectedContratoId = null),
                 onCabineTap: (cabine) =>
                     _handleCabineTap(cabine, isDesktop: isDesktop),
+                onCabineDoubleTap: _handleCabineDoubleTap,
                 onReservar: (cabine) =>
                     _reservarCabine(cabine, isDesktop: isDesktop),
                 onIniciarLive: _iniciarLive,
                 onEncerrarLive: _encerrarLive,
                 onLiberar: _liberarCabine,
+                onEditTiktokUsername: _showTiktokDialog,
               );
 
               if (!isDesktop) return mainArea;
@@ -325,7 +395,7 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(child: mainArea),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: AppSpacing.x4),
                   SizedBox(
                     width: 380,
                     child: _SidebarContent(
@@ -370,10 +440,12 @@ class _MainOperationalArea extends StatelessWidget {
   final ValueChanged<String> onFilterChanged;
   final VoidCallback? onClearSelectedContrato;
   final ValueChanged<Cabine> onCabineTap;
+  final ValueChanged<Cabine> onCabineDoubleTap;
   final ValueChanged<Cabine> onReservar;
   final ValueChanged<Cabine> onIniciarLive;
   final ValueChanged<Cabine> onEncerrarLive;
   final ValueChanged<Cabine> onLiberar;
+  final ValueChanged<Cabine> onEditTiktokUsername;
 
   const _MainOperationalArea({
     required this.metrics,
@@ -389,10 +461,12 @@ class _MainOperationalArea extends StatelessWidget {
     required this.onFilterChanged,
     required this.onClearSelectedContrato,
     required this.onCabineTap,
+    required this.onCabineDoubleTap,
     required this.onReservar,
     required this.onIniciarLive,
     required this.onEncerrarLive,
     required this.onLiberar,
+    required this.onEditTiktokUsername,
   });
 
   @override
@@ -419,7 +493,7 @@ class _MainOperationalArea extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x6, AppSpacing.x6, 0),
           sliver: SliverToBoxAdapter(
             child: _HeaderSection(
               onOpenQueue: onOpenQueue,
@@ -429,17 +503,18 @@ class _MainOperationalArea extends StatelessWidget {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x4, AppSpacing.x6, 0),
           sliver: SliverToBoxAdapter(
             child: _KpiSection(metrics: metrics),
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x4, AppSpacing.x6, 0),
           sliver: SliverToBoxAdapter(
             child: _ToolbarSection(
               controller: searchController,
               currentFilter: statusFilter,
+              metrics: metrics,
               onSearchChanged: onSearchChanged,
               onFilterChanged: onFilterChanged,
             ),
@@ -447,7 +522,7 @@ class _MainOperationalArea extends StatelessWidget {
         ),
         if (!isDesktop && selectedContrato != null)
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x4, AppSpacing.x6, 0),
             sliver: SliverToBoxAdapter(
               child: _SelectedContractBanner(
                 contrato: selectedContrato!,
@@ -456,7 +531,7 @@ class _MainOperationalArea extends StatelessWidget {
             ),
           ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x3, AppSpacing.x6, AppSpacing.x4),
           sliver: cabines.isEmpty
               ? const SliverFillRemaining(
                   hasScrollBody: false,
@@ -472,6 +547,7 @@ class _MainOperationalArea extends StatelessWidget {
                         isDesktop: isDesktop,
                         hasSelectedContrato: selectedContrato != null,
                         onTap: () => onCabineTap(cabine),
+                        onDoubleTap: () => onCabineDoubleTap(cabine),
                         onReservar: cabine.status == 'disponivel'
                             ? () => onReservar(cabine)
                             : null,
@@ -486,17 +562,20 @@ class _MainOperationalArea extends StatelessWidget {
                                 cabine.status == 'ativa')
                             ? () => onLiberar(cabine)
                             : null,
+                        onEditTiktokUsername: cabine.contratoId == null
+                            ? null
+                            : () => onEditTiktokUsername(cabine),
                       );
                     },
                     childCount: cabines.length,
                   ),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    // Altura fixa — CabineCard (~180px) + SizedBox(8) +
-                    // _OperationalActions (~50px) = ~238px. Margem de folga.
-                    mainAxisExtent: 260,
+                    crossAxisSpacing: AppSpacing.x3,
+                    mainAxisSpacing: AppSpacing.x3,
+                    // Altura fixa — CabineCard (inclui TikTok row + engajamento ao vivo)
+                    // + SizedBox(8) + _OperationalActions (~50px) ≈ 290px.
+                    mainAxisExtent: 295,
                   ),
                 ),
         ),
@@ -518,62 +597,27 @@ class _HeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxTitleWidth = constraints.maxWidth;
-        return Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          runSpacing: 12,
-          children: [
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxTitleWidth),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Painel de Cabines',
-                    style: AppTypography.h1
-                        .copyWith(fontSize: 24, fontWeight: FontWeight.w700),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Visão operacional da unidade: quem está ao vivo, quem está reservado e o que está rendendo agora.',
-                    style: TextStyle(color: context.colors.textSecondary),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+    return Wrap(
+      spacing: AppSpacing.x3,
+      runSpacing: AppSpacing.x3,
+      children: [
+        selectedContrato == null
+            ? AppSecondaryButton(
+                label: 'Fila de Ativação',
+                icon: Icons.playlist_add_check_circle_outlined,
+                onPressed: onOpenQueue,
+              )
+            : AppPrimaryButton(
+                label: 'Contrato selecionado',
+                icon: Icons.playlist_add_check_circle_outlined,
+                onPressed: onOpenQueue,
               ),
-            ),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                ActionButton(
-                  label: selectedContrato == null
-                      ? 'Fila de Ativação'
-                      : 'Contrato selecionado',
-                  icon: Icons.playlist_add_check_circle_outlined,
-                  outlined: selectedContrato == null,
-                  color: selectedContrato == null
-                      ? context.colors.info
-                      : context.colors.primary,
-                  onPressed: onOpenQueue,
-                ),
-                IconButton(
-                  tooltip: 'Atualizar dados',
-                  onPressed: onRefresh,
-                  icon: const Icon(Icons.refresh),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
+        IconButton(
+          tooltip: 'Atualizar dados',
+          onPressed: onRefresh,
+          icon: const Icon(Icons.refresh),
+        ),
+      ],
     );
   }
 }
@@ -585,67 +629,139 @@ class _KpiSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      _KpiCardData('Total', metrics.total.toString(), context.colors.textPrimary,
-          'cabines mapeadas'),
-      _KpiCardData('Ao vivo', metrics.aoVivo.toString(), context.colors.success,
-          'sessões em andamento'),
-      _KpiCardData('Reservadas', metrics.reservadas.toString(),
-          context.colors.warning, 'aguardando ativação'),
-      _KpiCardData('Ativas', metrics.ativas.toString(), context.colors.info,
-          'cabines com contrato vigente'),
-      _KpiCardData('Livres', metrics.disponiveis.toString(),
-          context.colors.textSecondary, 'prontas para receber'),
-      _KpiCardData(
-          'GMV Total Hoje',
-          NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(metrics.gmvTotalHoje),
-          context.colors.success,
-          'soma do ao vivo'),
-      _KpiCardData('Audiência Total', metrics.audienciaTotal.toString(),
-          context.colors.primary, 'público simultâneo'),
-    ];
+    final gmvLabel = NumberFormat.currency(
+      locale: 'pt_BR',
+      symbol: 'R\$',
+    ).format(metrics.gmvTotalHoje);
 
-    return ResponsiveGrid(
-      mobileColumns: 2,
-      tabletColumns: 4,
-      desktopColumns: 7,
-      spacing: 12,
-      runSpacing: 12,
-      children: items
-          .map(
-            (item) => Container(
-              padding: const EdgeInsets.all(AppSpacing.compactPadding),
-              decoration: BoxDecoration(
-                color: context.colors.cardBackground,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                border: Border.all(color: context.colors.divider),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.label,
-                      style: TextStyle(color: context.colors.textSecondary)),
-                  const SizedBox(height: 8),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      item.value,
-                      style: AppTypography.h1.copyWith(fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                          color: item.color),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(item.helper,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
-                ],
+    return Column(
+      children: [
+        // 4 KPIs operacionais
+        ResponsiveGrid(
+          mobileColumns: 2,
+          tabletColumns: 4,
+          desktopColumns: 4,
+          spacing: AppSpacing.x3,
+          runSpacing: AppSpacing.x3,
+          children: [
+            KpiAccentCard(
+              label: 'Cabines mapeadas',
+              value: metrics.total.toString(),
+              sub: 'Total alocado na unidade',
+              accentTop: true,
+            ),
+            KpiAccentCard(
+              label: 'Ao vivo',
+              value: metrics.aoVivo.toString(),
+              sub: 'sessões em andamento',
+              valueColor: AppColors.success,
+            ),
+            KpiAccentCard(
+              label: 'Reservadas',
+              value: metrics.reservadas.toString(),
+              sub: 'aguardando ativação',
+              valueColor: AppColors.warning,
+            ),
+            KpiAccentCard(
+              label: 'Livres',
+              value: metrics.disponiveis.toString(),
+              sub: 'prontas para receber',
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.x3),
+        // 2 KPIs destacados (GMV + Audiência)
+        ResponsiveGrid(
+          mobileColumns: 1,
+          tabletColumns: 2,
+          desktopColumns: 2,
+          spacing: AppSpacing.x3,
+          runSpacing: AppSpacing.x3,
+          children: [
+            _FeaturedKpiCard(
+              label: 'GMV total hoje',
+              value: gmvLabel,
+              sub: 'soma do que está no ar · atualizando agora',
+              valueColor: AppColors.primary,
+              gradient: true,
+            ),
+            _FeaturedKpiCard(
+              label: 'Audiência simultânea',
+              value: metrics.audienciaTotal.toString(),
+              sub:
+                  'espectadores conectados · ${metrics.aoVivo} live${metrics.aoVivo == 1 ? '' : 's'}',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _FeaturedKpiCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final String sub;
+  final Color? valueColor;
+  final bool gradient;
+
+  const _FeaturedKpiCard({
+    required this.label,
+    required this.value,
+    required this.sub,
+    this.valueColor,
+    this.gradient = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.x5),
+      decoration: BoxDecoration(
+        gradient: gradient
+            ? const LinearGradient(
+                colors: [AppColors.primarySofter, AppColors.bgCard],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        color: gradient ? null : AppColors.bgCard,
+        border: Border.all(color: AppColors.borderLight),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.x2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: AppTypography.h1.copyWith(
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -1,
+                color: valueColor ?? AppColors.textPrimary,
               ),
             ),
-          )
-          .toList(),
+          ),
+          const SizedBox(height: AppSpacing.x1),
+          Text(
+            sub,
+            style: AppTypography.caption.copyWith(color: AppColors.textMuted),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -653,55 +769,59 @@ class _KpiSection extends StatelessWidget {
 class _ToolbarSection extends StatelessWidget {
   final TextEditingController controller;
   final String currentFilter;
+  final _CabinesMetrics metrics;
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<String> onFilterChanged;
 
   const _ToolbarSection({
     required this.controller,
     required this.currentFilter,
+    required this.metrics,
     required this.onSearchChanged,
     required this.onFilterChanged,
   });
 
+  int _countFor(String status) => switch (status) {
+        'ao_vivo' => metrics.aoVivo,
+        'reservada' => metrics.reservadas,
+        'ativa' => metrics.ativas,
+        'disponivel' => metrics.disponiveis,
+        'manutencao' => metrics.manutencao,
+        _ => metrics.total,
+      };
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: controller,
-          onChanged: onSearchChanged,
-          decoration: InputDecoration(
-            hintText:
+    return AppCard(
+      shadow: const [],
+      padding: const EdgeInsets.all(AppSpacing.x3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppTextField(
+            controller: controller,
+            onChanged: onSearchChanged,
+            hint:
                 'Buscar por cliente, apresentador, contrato ou número da cabine',
-            prefixIcon: const Icon(Icons.search),
-            filled: true,
-            fillColor: context.colors.cardBackground,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide(color: context.colors.divider),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide(color: context.colors.divider),
-            ),
+            prefixIcon: Icons.search,
           ),
-        ),
-        const SizedBox(height: 14),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _CabinesScreenState._statusFilters
-              .map(
-                (filter) => ChoiceChip(
-                  label: Text(_statusLabel(filter)),
-                  selected: currentFilter == filter,
-                  onSelected: (_) => onFilterChanged(filter),
-                ),
-              )
-              .toList(),
-        ),
-      ],
+          const SizedBox(height: AppSpacing.x3),
+          Wrap(
+            spacing: AppSpacing.x2,
+            runSpacing: AppSpacing.x2,
+            children: _CabinesScreenState._statusFilters
+                .map(
+                  (filter) => _ChipWithCount(
+                    label: _statusLabel(filter),
+                    count: _countFor(filter),
+                    active: currentFilter == filter,
+                    onTap: () => onFilterChanged(filter),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -723,6 +843,63 @@ class _ToolbarSection extends StatelessWidget {
   }
 }
 
+class _ChipWithCount extends StatelessWidget {
+  final String label;
+  final int count;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _ChipWithCount({
+    required this.label,
+    required this.count,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: active ? AppColors.primary : AppColors.bgCard,
+      borderRadius: BorderRadius.circular(AppRadius.full),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.x3,
+            vertical: AppSpacing.x2,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: AppTypography.caption.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: active
+                      ? AppColors.textOnPrimary
+                      : AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '$count',
+                style: AppTypography.caption.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: active
+                      ? AppColors.textOnPrimary.withValues(alpha: 0.75)
+                      : AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SelectedContractBanner extends StatelessWidget {
   final FilaAtivacaoItem contrato;
   final VoidCallback? onClear;
@@ -732,35 +909,35 @@ class _SelectedContractBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.compactPadding),
+      padding: const EdgeInsets.all(AppSpacing.x3),
       decoration: BoxDecoration(
-        color: context.colors.primaryLightBg,
+        color: AppColors.bgGradientStart,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border:
-            Border.all(color: context.colors.primary.withValues(alpha: 0.25)),
+            Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
-          Icon(Icons.link_rounded, color: context.colors.primary),
-          const SizedBox(width: 12),
+          Icon(Icons.link_rounded, color: AppColors.primary),
+          const SizedBox(width: AppSpacing.x3),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Contrato selecionado para ativação',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary),
+                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.x1),
                 Text('${contrato.clienteNome} • ${contrato.localizacao}',
-                    style: TextStyle(color: context.colors.textSecondary)),
+                    style: TextStyle(color: AppColors.textSecondary)),
               ],
             ),
           ),
           if (onClear != null)
-            TextButton(
-              onPressed: onClear,
-              child: const Text('Limpar'),
+            AppSecondaryButton(
+              onPressed: onClear!,
+              label: 'Limpar',
             ),
         ],
       ),
@@ -774,10 +951,12 @@ class _OperationalCard extends StatelessWidget {
   final bool isDesktop;
   final bool hasSelectedContrato;
   final VoidCallback onTap;
+  final VoidCallback? onDoubleTap;
   final VoidCallback? onReservar;
   final VoidCallback? onIniciarLive;
   final VoidCallback? onEncerrarLive;
   final VoidCallback? onLiberar;
+  final VoidCallback? onEditTiktokUsername;
 
   const _OperationalCard({
     required this.cabine,
@@ -785,10 +964,12 @@ class _OperationalCard extends StatelessWidget {
     required this.isDesktop,
     required this.hasSelectedContrato,
     required this.onTap,
+    this.onDoubleTap,
     this.onReservar,
     this.onIniciarLive,
     this.onEncerrarLive,
     this.onLiberar,
+    this.onEditTiktokUsername,
   });
 
   String _trendLabel() {
@@ -819,12 +1000,14 @@ class _OperationalCard extends StatelessWidget {
           child: CabineCard(
             cabine: cabine,
             onTap: onTap,
+            onDoubleTap: onDoubleTap,
             isSelected: isSelected,
             isSelectable:
                 hasSelectedContrato && cabine.status == 'disponivel',
+            onEditTiktokUsername: onEditTiktokUsername,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.x2),
         _OperationalActions(
           cabine: cabine,
           onReservar: onReservar,
@@ -855,12 +1038,10 @@ class _OperationalActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (cabine.status == 'ao_vivo') {
-      return ActionButton(
+      return AppDangerButton(
         label: 'ENCERRAR LIVE',
         icon: Icons.stop_circle_rounded,
-        outlined: false,
-        color: context.colors.error,
-        onPressed: onEncerrarLive,
+        onPressed: onEncerrarLive ?? () {},
       );
     }
 
@@ -871,21 +1052,16 @@ class _OperationalActions extends StatelessWidget {
           return Row(
             children: [
               Expanded(
-                child: ActionButton(
+                child: AppPrimaryButton(
                   label: isNarrow ? 'INICIAR' : 'INICIAR LIVE',
                   icon: Icons.play_arrow_rounded,
-                  onPressed: onIniciarLive,
+                  onPressed: onIniciarLive ?? () {},
                 ),
               ),
-              const SizedBox(width: 6),
-              TextButton(
-                onPressed: onLiberar,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: const Size(0, 36),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: const Text('Liberar', style: TextStyle(fontSize: 12)),
+              const SizedBox(width: AppSpacing.x2),
+              AppSecondaryButton(
+                onPressed: onLiberar ?? () {},
+                label: 'Liberar',
               ),
             ],
           );
@@ -894,20 +1070,17 @@ class _OperationalActions extends StatelessWidget {
     }
 
     if (cabine.status == 'disponivel') {
-      return ActionButton(
-        label: 'VINCULAR CONTRATO',
+      return AppGhostButton(
+        label: 'VINCULAR',
         icon: Icons.link_rounded,
-        outlined: true,
-        color: context.colors.info,
-        onPressed: onReservar,
+        onPressed: onReservar ?? () {},
       );
     }
 
-    return ActionButton(
+    return AppSecondaryButton(
       label: 'MANUTENÇÃO',
-      outlined: true,
-      color: context.colors.textTertiary,
-      onPressed: null,
+      icon: Icons.build_circle_outlined,
+      onPressed: () {},
     );
   }
 }
@@ -936,13 +1109,9 @@ class _SidebarContent extends ConsumerWidget {
         ? AsyncValue<CabineDetailState>.data(CabineDetailState())
         : ref.watch(cabineDetailProvider(cabine.id));
 
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colors.cardBackground,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: context.colors.divider),
-      ),
-      padding: const EdgeInsets.all(20),
+    return AppCard(
+      borderColor: AppColors.borderLight,
+      padding: const EdgeInsets.all(AppSpacing.x5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -950,12 +1119,12 @@ class _SidebarContent extends ConsumerWidget {
             'Trilho Operacional',
             style: AppTypography.h3.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             'Da fila de ativação ao raio-X da cabine, sem sair do painel.',
-            style: TextStyle(color: context.colors.textSecondary),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.x5),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -966,14 +1135,14 @@ class _SidebarContent extends ConsumerWidget {
                     detailAsync: detailAsync,
                     onOpenAnalyticalDetail: onOpenAnalyticalDetail,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.x4),
                   _QueuePanel(
                     filaAsync: filaAsync,
                     selectedContrato: selectedContrato,
                     onContratoSelected: onContratoSelected,
                     onClearContrato: onClearContrato,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.x4),
                   _MiniAnalyticsPanel(detailAsync: detailAsync),
                 ],
               ),
@@ -985,7 +1154,7 @@ class _SidebarContent extends ConsumerWidget {
   }
 }
 
-class _SelectedCabinePanel extends StatelessWidget {
+class _SelectedCabinePanel extends ConsumerWidget {
   final Cabine? cabine;
   final AsyncValue<CabineDetailState> detailAsync;
   final VoidCallback? onOpenAnalyticalDetail;
@@ -997,13 +1166,42 @@ class _SelectedCabinePanel extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // SSE do live_snapshots — dados em tempo real (flush a cada 10s no backend)
+    final live = detailAsync.valueOrNull?.liveAtual;
+    final sse = live != null
+        ? ref.watch(liveStreamProvider(live.liveId)).valueOrNull
+        : null;
+
+    // Fallback: quando /live-atual falhar, usar dados do card da cabine (já
+    // vindos do /cabines com engajamento completo). Garante que sidebar
+    // sempre mostra números quando cabine está AO VIVO no grid.
+    final isAoVivo = cabine?.status == 'ao_vivo';
+
+    final viewers  = sse?.viewerCount   ?? live?.viewerCount
+        ?? (isAoVivo ? cabine?.viewerCount : null) ?? 0;
+    final gmv      = sse?.gmv           ?? live?.gmvAtual
+        ?? (isAoVivo ? cabine?.gmvAtual : null) ?? 0.0;
+    final likes    = sse?.likesCount    ?? live?.likesCount
+        ?? (isAoVivo ? cabine?.likesCount : null) ?? 0;
+    final comments = sse?.commentsCount ?? live?.commentsCount
+        ?? (isAoVivo ? cabine?.commentsCount : null) ?? 0;
+    final shares   = sse?.sharesCount   ?? live?.sharesCount
+        ?? (isAoVivo ? cabine?.sharesCount : null) ?? 0;
+    final gifts    = sse?.giftsDiamonds ?? live?.giftsDiamonds
+        ?? (isAoVivo ? cabine?.giftsDiamonds : null) ?? 0;
+    final orders   = sse?.totalOrders   ?? live?.totalOrders
+        ?? (isAoVivo ? cabine?.totalOrders : null) ?? 0;
+
     return _SidebarCard(
       title: 'Cabine Selecionada',
       child: cabine == null
           ? const Text(
               'Selecione uma cabine no grid para inspecionar a operação desta unidade.')
-          : Column(
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: AppBreakpoints.desktop),
+                child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -1017,7 +1215,7 @@ class _SelectedCabinePanel extends StatelessWidget {
                     StatusBadge(status: cabine!.status),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.x3),
                 _InfoLine(
                     label: 'Cliente',
                     value: cabine!.clienteNome ?? 'Sem vínculo ativo'),
@@ -1036,32 +1234,81 @@ class _SelectedCabinePanel extends StatelessWidget {
                   ),
                   error: (_, __) => const Text(
                       'Não foi possível carregar os indicadores detalhados desta cabine.'),
-                  data: (detail) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _InfoLine(
-                        label: 'GMV atual',
-                        value: detail.liveAtual == null
-                            ? 'Sem live agora'
-                            : 'R\$ ${detail.liveAtual!.gmvAtual.toStringAsFixed(2)}',
-                      ),
-                      _InfoLine(
-                        label: 'Audiência',
-                        value: detail.liveAtual == null
-                            ? '0 espectadores'
-                            : '${detail.liveAtual!.viewerCount} espectadores',
-                      ),
-                    ],
-                  ),
+                  data: (detail) {
+                    // Mostra dados ao vivo sempre que a cabine está ao_vivo no grid
+                    // (mesmo que /live-atual tenha falhado — fallback usa dados do card)
+                    if (detail.liveAtual == null && !isAoVivo) {
+                      return const _InfoLine(label: 'GMV atual', value: 'Sem live agora');
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _InfoLine(
+                          label: 'GMV atual',
+                          value: 'R\$ ${gmv.toStringAsFixed(2)}',
+                        ),
+                        _InfoLine(
+                          label: 'Audiência',
+                          value: '$viewers espectadores',
+                        ),
+                        _InfoLine(
+                          label: 'Pedidos',
+                          value: '$orders',
+                        ),
+                        const SizedBox(height: AppSpacing.x2),
+                        // Engajamento ao vivo — atualiza via SSE
+                        Wrap(
+                          spacing: AppSpacing.x3,
+                          runSpacing: AppSpacing.x2,
+                          children: [
+                            _EngajamentoChip(
+                              icon: Icons.favorite,
+                              color: AppColors.danger,
+                              value: likes,
+                              label: 'curtidas',
+                            ),
+                            _EngajamentoChip(
+                              icon: Icons.chat_bubble_outline,
+                              color: AppColors.info,
+                              value: comments,
+                              label: 'comentários',
+                            ),
+                            _EngajamentoChip(
+                              icon: Icons.share,
+                              color: AppColors.primary,
+                              value: shares,
+                              label: 'shares',
+                            ),
+                            _EngajamentoChip(
+                              icon: Icons.card_giftcard,
+                              color: AppColors.warning,
+                              value: gifts,
+                              label: '💎',
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 12),
-                ActionButton(
-                  label: 'VER ANALÍTICO COMPLETO',
+                const SizedBox(height: AppSpacing.x3),
+                if (cabine!.status == 'ao_vivo') ...[
+                  AppSecondaryButton(
+                    label: 'Ver Analytics Completo',
+                    icon: Icons.analytics_outlined,
+                    fullWidth: true,
+                    onPressed: () => Navigator.of(context).pushNamed(AppRoutes.analyticsDashboard),
+                  ),
+                  const SizedBox(height: AppSpacing.x2),
+                ],
+                AppSecondaryButton(
+                  label: 'Ver Analítico',
                   icon: Icons.analytics_outlined,
-                  outlined: true,
-                  onPressed: onOpenAnalyticalDetail,
+                  onPressed: onOpenAnalyticalDetail ?? () {},
                 ),
               ],
+            ),
+              ),
             ),
     );
   }
@@ -1090,12 +1337,12 @@ class _QueuePanel extends StatelessWidget {
           if (selectedContrato != null) ...[
             _SelectedContractBanner(
                 contrato: selectedContrato!, onClear: onClearContrato),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.x3),
           ],
           filaAsync.when(
             loading: () => const Center(
                 child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.x4),
               child: CircularProgressIndicator(),
             )),
             error: (error, _) => Text(ApiService.extractErrorMessage(error)),
@@ -1109,22 +1356,22 @@ class _QueuePanel extends StatelessWidget {
                 children: fila.take(4).map((item) {
                   final isSelected = selectedContrato?.id == item.id;
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.x3),
                     child: InkWell(
                       onTap: () => onContratoSelected(item),
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       child: Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(AppSpacing.x3),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                           color: isSelected
-                              ? context.colors.primaryLightBg
-                              : context.colors.background,
+                              ? AppColors.bgGradientStart
+                              : AppColors.bgBase,
                           border: Border.all(
                             color: isSelected
-                                ? context.colors.primary
+                                ? AppColors.primary
                                     .withValues(alpha: 0.35)
-                                : context.colors.divider,
+                                : AppColors.borderLight,
                           ),
                         ),
                         child: Column(
@@ -1132,15 +1379,15 @@ class _QueuePanel extends StatelessWidget {
                           children: [
                             Text(item.clienteNome,
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
-                            const SizedBox(height: 4),
+                                    fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                            const SizedBox(height: AppSpacing.x1),
                             Text(item.localizacao,
                                 style: TextStyle(
-                                    color: context.colors.textSecondary)),
-                            const SizedBox(height: 8),
+                                    color: AppColors.textSecondary)),
+                            const SizedBox(height: AppSpacing.x2),
                             Text(
                               'Contrato ${item.id.substring(0, 8)} • Fixo R\$ ${item.valorFixo.toStringAsFixed(2)}',
-                              style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
+                              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -1181,7 +1428,7 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
         child: analyticsAsync.when(
           loading: () => const Padding(
             key: ValueKey('analytics-loading'),
-            padding: EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.x4),
             child: Center(child: CircularProgressIndicator()),
           ),
           error: (error, _) => Text(
@@ -1202,13 +1449,13 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _AnalyticsSummaryRow(resumo: analytics.resumoHoje),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.x4),
                 Text('Top Closers da unidade',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
-                const SizedBox(height: 8),
+                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                const SizedBox(height: AppSpacing.x2),
                 if (analytics.rankingClosers.isEmpty)
                   Text('Nenhum closer com histórico suficiente ainda.',
-                      style: TextStyle(color: context.colors.textSecondary))
+                      style: TextStyle(color: AppColors.textSecondary))
                 else
                   ...analytics.rankingClosers
                       .take(3)
@@ -1217,7 +1464,7 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                       .entries
                       .map(
                         (entry) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.only(bottom: AppSpacing.x2),
                           child: _RankedMetricRow(
                             rank: entry.key,
                             title: entry.value.apresentadorNome,
@@ -1227,58 +1474,58 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                           ),
                         ),
                       ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.x4),
                 Text('Top Parceiros por volume',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
-                const SizedBox(height: 8),
+                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                const SizedBox(height: AppSpacing.x2),
                 if (analytics.rankingClientes.isEmpty)
                   Text('Nenhum parceiro com volume relevante ainda.',
-                      style: TextStyle(color: context.colors.textSecondary))
+                      style: TextStyle(color: AppColors.textSecondary))
                 else
                   ...analytics.rankingClientes.take(3).map(
                         (cliente) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.only(bottom: AppSpacing.x2),
                           child: _MetricRankRow(
                             title: cliente.clienteNome,
                             value: _currency.format(cliente.gmvTotal),
                           ),
                         ),
                       ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.x4),
                 Text('Prime time da franquia',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
-                const SizedBox(height: 8),
+                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                const SizedBox(height: AppSpacing.x2),
                 if (analytics.heatmapHorarios.isEmpty)
                   Text(
                       'Ainda não há dados suficientes para mapear o melhor horário da unidade.',
-                      style: TextStyle(color: context.colors.textSecondary))
+                      style: TextStyle(color: AppColors.textSecondary))
                 else
                   ...heatmapTop.take(3).map(
                         (horario) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.only(bottom: AppSpacing.x2),
                           child: _MetricRankRow(
                             title: _formatHourBucket(horario.hora),
                             value: _currency.format(horario.gmvTotal),
                           ),
                         ),
                       ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.x4),
                 Text('Raio-X da cabine selecionada',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
-                const SizedBox(height: 8),
+                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                const SizedBox(height: AppSpacing.x2),
                 if (historico == null)
                   Text(
                       'Selecione uma cabine no grid para ver os clientes e horários fortes desta unidade.',
-                      style: TextStyle(color: context.colors.textSecondary))
+                      style: TextStyle(color: AppColors.textSecondary))
                 else ...[
                   if (cabineTopClientes.isEmpty)
                     Text(
                         'Sem histórico de clientes para esta cabine ainda.',
-                        style: TextStyle(color: context.colors.textSecondary))
+                        style: TextStyle(color: AppColors.textSecondary))
                   else
                     ...cabineTopClientes.map(
                       (cliente) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.x2),
                         child: _MetricRankRow(
                           title: cliente['nome'] as String,
                           value: _currency
@@ -1286,14 +1533,14 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.x3),
                   if (cabineMelhoresHorarios.isEmpty)
                     const Text(
                         'Ainda não há amostra suficiente para sugerir janelas ideais desta cabine.')
                   else
                     ...cabineMelhoresHorarios.map(
                       (horario) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.x2),
                         child: _MetricRankRow(
                           title: horario['hora'] as String,
                           value:
@@ -1321,9 +1568,9 @@ class _SidebarCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.compactPadding),
+      padding: const EdgeInsets.all(AppSpacing.x3),
       decoration: BoxDecoration(
-        color: context.colors.background,
+        color: AppColors.bgBase,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
@@ -1331,7 +1578,7 @@ class _SidebarCard extends StatelessWidget {
         children: [
           Text(title,
               style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.x3),
           child,
         ],
       ),
@@ -1348,7 +1595,7 @@ class _InfoLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: AppSpacing.x2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1356,13 +1603,13 @@ class _InfoLine extends StatelessWidget {
             width: 94,
             child: Text(
               '$label:',
-              style: TextStyle(color: context.colors.textSecondary),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.textPrimary),
+              style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
             ),
           ),
         ],
@@ -1386,11 +1633,11 @@ class _MetricRankRow extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.textPrimary),
+            style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           ),
         ),
-        const SizedBox(width: 8),
-        Flexible(child: Text(value, style: TextStyle(color: context.colors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis)),
+        const SizedBox(width: AppSpacing.x2),
+        Flexible(child: Text(value, style: TextStyle(color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis)),
       ],
     );
   }
@@ -1427,31 +1674,31 @@ class _RankedMetricRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2, vertical: AppSpacing.x1),
           decoration: BoxDecoration(
             color: rankColor.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AppRadius.pill),
+            borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           child: Text(
             rankLabel,
-            style: AppTypography.labelSmall.copyWith(
+            style: AppTypography.caption.copyWith(
                 color: rankColor, fontWeight: FontWeight.w700),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppSpacing.x3),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
-              const SizedBox(height: 2),
+              Text(title, style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              const SizedBox(height: AppSpacing.x1),
               Text(subtitle,
-                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        Text(value, style: TextStyle(color: context.colors.textSecondary)),
+        const SizedBox(width: AppSpacing.x2),
+        Text(value, style: TextStyle(color: AppColors.textSecondary)),
       ],
     );
   }
@@ -1471,36 +1718,35 @@ class _AnalyticsSummaryRow extends StatelessWidget {
       (
         'GMV hoje',
         _currency.format(resumo.gmvTotalHoje),
-        context.colors.success
+        AppColors.success
       ),
-      ('Audiência', '${resumo.audienciaTotalAoVivo}', context.colors.primary),
-      ('Lives hoje', '${resumo.totalLivesHoje}', context.colors.info),
+      ('Audiência', '${resumo.audienciaTotalAoVivo}', AppColors.primary),
+      ('Lives hoje', '${resumo.totalLivesHoje}', AppColors.info),
     ];
 
     return Row(
       children: cards
           .map(
             (item) => Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                margin: EdgeInsets.only(right: item == cards.last ? 0 : 8),
-                decoration: BoxDecoration(
-                  color: context.colors.cardBackground,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: context.colors.divider),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.$1,
-                        style: AppTypography.labelSmall.copyWith(color: context.colors.textSecondary)),
-                    const SizedBox(height: 6),
-                    Text(
-                      item.$2,
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700, color: item.$3),
-                    ),
-                  ],
+              child: Padding(
+                padding: EdgeInsets.only(right: item == cards.last ? 0 : AppSpacing.x2),
+                child: AppCard(
+                  shadow: const [],
+                  borderColor: AppColors.borderLight,
+                  padding: const EdgeInsets.all(AppSpacing.x3),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.$1,
+                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                      const SizedBox(height: AppSpacing.x1),
+                      Text(
+                        item.$2,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700, color: item.$3),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1516,32 +1762,29 @@ class _CabinesEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
+      child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
-        decoration: BoxDecoration(
-          color: context.colors.cardBackground,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: context.colors.divider),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.video_camera_front_outlined,
-                size: 42, color: context.colors.textTertiary),
-            const SizedBox(height: 12),
-            Text(
-              'Nenhuma cabine cadastrada nesta unidade.',
-              style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Quando a infraestrutura estiver configurada, as cabines aparecerão aqui com estado operacional em tempo real.',
-              style: AppTypography.bodySmall.copyWith(color: context.colors.textTertiary),
-              textAlign: TextAlign.center,
-            ),
-          ],
+        child: AppCard(
+          padding: const EdgeInsets.all(AppSpacing.x6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.video_camera_front_outlined,
+                  size: 42, color: AppColors.textMuted),
+              const SizedBox(height: AppSpacing.x3),
+              Text(
+                'Ainda não existem cabines para essa unidade.',
+                style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.x6),
+              AppSecondaryButton(
+                label: 'Abrir chamada',
+                onPressed: () {},
+                icon: Icons.support_agent_rounded,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1557,7 +1800,7 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.x5, AppSpacing.x2, AppSpacing.x5, AppSpacing.x5),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1566,12 +1809,12 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
               'Fila de Ativação',
               style: AppTypography.h2.copyWith(fontSize: 20, fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.x1),
             Text(
               'Selecione um contrato ativo e depois toque em uma cabine disponível.',
-              style: TextStyle(color: context.colors.textSecondary),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.x4),
             Flexible(
               child: filaAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -1589,37 +1832,31 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
                   return ListView.separated(
                     shrinkWrap: true,
                     itemCount: fila.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.x3),
                     itemBuilder: (context, index) {
                       final item = fila[index];
-                      return InkWell(
+                      return AppCard(
                         onTap: () => Navigator.pop(context, item),
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        child: Container(
-                          padding: const EdgeInsets.all(AppSpacing.compactPadding),
-                          decoration: BoxDecoration(
-                            color: context.colors.cardBackground,
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
-                            border: Border.all(color: context.colors.divider),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(item.clienteNome,
-                                  style: AppTypography.bodyMedium.copyWith(
-                                      fontWeight: FontWeight.w700)),
-                              const SizedBox(height: 4),
-                              Text(item.localizacao,
-                                  style: TextStyle(
-                                      color: context.colors.textSecondary)),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Contrato ${item.id.substring(0, 8)} • Fixo R\$ ${item.valorFixo.toStringAsFixed(2)} • Comissão ${item.comissaoPct.toStringAsFixed(0)}%',
-                                style: AppTypography.caption.copyWith(
-                                    color: context.colors.textSecondary),
-                              ),
-                            ],
-                          ),
+                        shadow: const [],
+                        borderColor: AppColors.borderLight,
+                        padding: const EdgeInsets.all(AppSpacing.x3),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item.clienteNome,
+                                style: AppTypography.bodyMedium.copyWith(
+                                    fontWeight: FontWeight.w700)),
+                            const SizedBox(height: AppSpacing.x1),
+                            Text(item.localizacao,
+                                style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.textSecondary)),
+                            const SizedBox(height: AppSpacing.x2),
+                            Text(
+                              'Contrato ${item.id.substring(0, 8)} • Fixo R\$ ${item.valorFixo.toStringAsFixed(2)} • Comissão ${item.comissaoPct.toStringAsFixed(0)}%',
+                              style: AppTypography.caption.copyWith(
+                                  color: AppColors.textSecondary),
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -1651,6 +1888,7 @@ class _CabinesMetrics {
   final int reservadas;
   final int ativas;
   final int disponiveis;
+  final int manutencao;
   final double gmvTotalHoje;
   final int audienciaTotal;
 
@@ -1660,6 +1898,7 @@ class _CabinesMetrics {
     required this.reservadas,
     required this.ativas,
     required this.disponiveis,
+    required this.manutencao,
     required this.gmvTotalHoje,
     required this.audienciaTotal,
   });
@@ -1671,8 +1910,58 @@ class _CabinesMetrics {
       reservadas: cabines.where((c) => c.status == 'reservada').length,
       ativas: cabines.where((c) => c.status == 'ativa').length,
       disponiveis: cabines.where((c) => c.status == 'disponivel').length,
+      manutencao: cabines.where((c) => c.status == 'manutencao').length,
       gmvTotalHoje: cabines.fold(0.0, (sum, c) => sum + c.gmvAtual),
       audienciaTotal: cabines.fold(0, (sum, c) => sum + c.viewerCount),
+    );
+  }
+}
+
+class _EngajamentoChip extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final int value;
+  final String label;
+
+  const _EngajamentoChip({
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x2, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            '$value',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

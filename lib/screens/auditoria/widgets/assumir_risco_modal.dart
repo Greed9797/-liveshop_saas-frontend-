@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../design_system/design_system.dart';
 import '../../../models/contrato.dart';
 import '../../../providers/contratos_provider.dart';
-import '../../../theme/theme.dart';
-import '../../../theme/app_radius.dart';
-import '../../../theme/app_spacing.dart';
-import '../../../theme/app_typography.dart';
 
 class AssumirRiscoModal extends ConsumerStatefulWidget {
   final Contrato contrato;
@@ -22,7 +19,6 @@ class _AssumirRiscoModalState extends ConsumerState<AssumirRiscoModal> {
   final _senhaCtrl = TextEditingController();
 
   bool _loading = false;
-  bool _obscure = true;
 
   bool get _canSubmit {
     return _confirmacaoCtrl.text.trim().toUpperCase() == 'CONCORDO' &&
@@ -95,15 +91,15 @@ class _AssumirRiscoModalState extends ConsumerState<AssumirRiscoModal> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.x2l),
+            padding: const EdgeInsets.all(AppSpacing.x6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded,
-                        color: context.colors.primary),
+                    const Icon(Icons.warning_amber_rounded,
+                        color: AppColors.primary),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text('Assumir Risco da Operação',
@@ -114,68 +110,53 @@ class _AssumirRiscoModalState extends ConsumerState<AssumirRiscoModal> {
                 const SizedBox(height: 16),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  padding: const EdgeInsets.all(AppSpacing.x4),
                   decoration: BoxDecoration(
-                    color: context.colors.primaryLightBg,
+                    color: AppColors.bgGradientStart,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: context.colors.primary),
+                    border: Border.all(color: AppColors.primary),
                   ),
                   child: Text(
                     'Ao assumir esta operação, os valores de inadimplência poderão ser descontados integralmente dos seus repasses futuros, conforme as regras comerciais da franqueadora.',
                     style: AppTypography.bodySmall
-                        .copyWith(color: context.colors.textPrimary),
+                        .copyWith(color: AppColors.textPrimary),
                   ),
                 ),
                 const SizedBox(height: 20),
                 Text('Para continuar, digite a palavra CONCORDO:',
                     style: AppTypography.bodySmall),
                 const SizedBox(height: 8),
-                TextField(
+                AppTextField(
                   controller: _confirmacaoCtrl,
-                  textCapitalization: TextCapitalization.characters,
+                  hint: 'Digite CONCORDO',
                   onChanged: (_) => setState(() {}),
-                  decoration:
-                      const InputDecoration(hintText: 'Digite CONCORDO'),
                 ),
                 const SizedBox(height: 16),
                 Text('Confirme sua senha:', style: AppTypography.bodySmall),
                 const SizedBox(height: 8),
-                TextField(
+                AppTextField(
                   controller: _senhaCtrl,
-                  obscureText: _obscure,
+                  obscureText: true,
                   onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: 'Sua senha',
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                          _obscure ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setState(() => _obscure = !_obscure),
-                    ),
-                  ),
+                  hint: 'Sua senha',
                 ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: AppSecondaryButton(
                         onPressed: _loading
                             ? null
                             : () => Navigator.of(context).pop(false),
-                        child: const Text('Cancelar'),
+                        label: 'Cancelar',
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
+                      child: AppPrimaryButton(
                         onPressed: _canSubmit ? _submit : null,
-                        child: _loading
-                            ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text('Ativar e Assumir Risco'),
+                        isLoading: _loading,
+                        label: 'Ativar e Assumir Risco',
                       ),
                     ),
                   ],

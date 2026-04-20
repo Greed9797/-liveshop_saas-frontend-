@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import '../theme/app_breakpoints.dart';
+import '../design_system/design_system.dart';
 
 /// Responsive layout helper.
 ///

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../models/live_snapshot.dart';
@@ -17,10 +18,9 @@ class ApiException implements Exception {
 
 /// Serviço HTTP centralizado com interceptors de JWT e refresh automático
 class ApiService {
-  // Em produção: flutter build web --dart-define=API_URL=https://seu-app.onrender.com/v1
-  static const baseUrl = String.fromEnvironment(
+  static const _configuredBaseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'http://127.0.0.1:3001/v1',
+    defaultValue: '',
   );
   static const _tokenKey = 'access_token';
   static const _refreshKey = 'refresh_token';
@@ -67,6 +67,8 @@ class ApiService {
     if (_initialized) return;
     _initialized = true;
 
+    final baseUrl = _resolveBaseUrl();
+
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 15),
@@ -112,6 +114,28 @@ class ApiService {
     ));
   }
 
+  static String _resolveBaseUrl() {
+    if (_configuredBaseUrl.isEmpty) {
+      throw const ApiException(
+        'API_URL não configurada. Use --dart-define=API_URL=https://api.seu-dominio.com/v1',
+      );
+    }
+
+    final uri = Uri.tryParse(_configuredBaseUrl);
+    if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
+      throw const ApiException('API_URL inválida. Informe uma URL absoluta HTTPS.');
+    }
+
+    if (uri.scheme != 'https') {
+      final message = kReleaseMode
+          ? 'Build de produção requer API_URL com HTTPS.'
+          : 'API_URL deve usar HTTPS para evitar tráfego inseguro.';
+      throw ApiException(message);
+    }
+
+    return _configuredBaseUrl;
+  }
+
   static bool _isAuthRoute(String path) {
     return path.endsWith('/auth/login') ||
         path.endsWith('/auth/refresh') ||
@@ -135,6 +159,7 @@ class ApiService {
     }
 
     try {
+      final baseUrl = _resolveBaseUrl();
       final refreshDio = Dio(BaseOptions(
         baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 15),
@@ -179,8 +204,14 @@ class ApiService {
         }
       }
 
-      if (error.response?.statusCode == 401) {
+      final statusCode = error.response?.statusCode;
+
+      if (statusCode == 401) {
         return 'Sessão expirada. Faça login novamente.';
+      }
+
+      if (statusCode != null && statusCode >= 500) {
+        return 'O servidor está indisponível no momento. Tente novamente em instantes.';
       }
 
       switch (error.type) {
@@ -197,7 +228,7 @@ class ApiService {
       }
     }
 
-    return error.toString().replaceFirst('Exception: ', '');
+    return 'Não foi possível concluir a operação agora.';
   }
 
   static Future<Response<T>> _runRequest<T>(

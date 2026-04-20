@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors_extension.dart';
-import '../theme/app_typography.dart';
+import '../design_system/design_system.dart';
 
 class EmptyStateWidget extends StatelessWidget {
   final String message;
@@ -13,7 +12,7 @@ class EmptyStateWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.inbox_outlined,
-              size: 64, color: context.colors.textTertiary),
+              size: 64, color: AppColors.textMuted),
           const SizedBox(height: 16),
           Text(message, style: AppTypography.bodySmall),
         ],

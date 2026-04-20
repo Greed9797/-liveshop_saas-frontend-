@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_radius.dart';
-import '../../../theme/app_spacing.dart';
-import '../../../theme/app_typography.dart';
+import '../../../design_system/design_system.dart';
 
 class PendenciaModal extends StatefulWidget {
   const PendenciaModal({super.key});
@@ -31,7 +29,7 @@ class _PendenciaModalState extends State<PendenciaModal> {
         duration: const Duration(milliseconds: 180),
         padding: EdgeInsets.only(bottom: bottomInset),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.x2l),
+          padding: const EdgeInsets.all(AppSpacing.x6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,33 +41,29 @@ class _PendenciaModalState extends State<PendenciaModal> {
                 style: AppTypography.bodySmall,
               ),
               const SizedBox(height: 16),
-              TextField(
+              AppTextField(
                 controller: _controller,
-                minLines: 3,
-                maxLines: 5,
+                keyboardType: TextInputType.multiline,
                 onChanged: (_) => setState(() {}),
-                decoration: const InputDecoration(
-                  hintText:
-                      'Ex: Comprovante de endereço ilegível. Favor reenviar.',
-                ),
+                hint: 'Ex: Comprovante de endereço ilegível. Favor reenviar.',
               ),
               const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: AppSecondaryButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancelar'),
+                      label: 'Cancelar',
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
+                    child: AppPrimaryButton(
                       onPressed: canSubmit
                           ? () =>
                               Navigator.of(context).pop(_controller.text.trim())
                           : null,
-                      child: const Text('Salvar Pendência'),
+                      label: 'Salvar Pendência',
                     ),
                   ),
                 ],

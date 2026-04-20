@@ -7,11 +7,7 @@ import '../../widgets/client_pin.dart';
 import '../../routes/app_routes.dart';
 import '../../providers/clientes_provider.dart';
 import '../../models/cliente.dart';
-import '../../theme/theme.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
+import '../../design_system/design_system.dart';
 
 class CarteiraClientesScreen extends ConsumerWidget {
   const CarteiraClientesScreen({super.key});
@@ -29,10 +25,10 @@ class CarteiraClientesScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Erro ao carregar clientes: $e'),
-              const SizedBox(height: AppSpacing.md),
-              ElevatedButton(
+              const SizedBox(height: AppSpacing.x3),
+              AppPrimaryButton(
                 onPressed: () => ref.read(clientesProvider.notifier).refresh(),
-                child: const Text('Tentar novamente'),
+                label: 'Tentar novamente',
               ),
             ],
           ),
@@ -115,20 +111,20 @@ class _CarteiraMapState extends State<_CarteiraMap> {
         ),
         // Header com filtro
         Positioned(
-          top: AppSpacing.lg,
-          left: AppSpacing.lg,
-          right: AppSpacing.lg,
+          top: AppSpacing.x4,
+          left: AppSpacing.x4,
+          right: AppSpacing.x4,
           child: Row(
             children: [
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4, vertical: AppSpacing.x2),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.people_alt_rounded,
-                          size: 18, color: context.colors.primary),
-                      const SizedBox(width: AppSpacing.sm),
+                          size: 18, color: AppColors.primary),
+                      const SizedBox(width: AppSpacing.x2),
                       Text(
                         'Carteira de Clientes',
                         style: AppTypography.bodyLarge.copyWith(
@@ -137,15 +133,15 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm, vertical: 2),
+                            horizontal: AppSpacing.x2, vertical: 2),
                         decoration: BoxDecoration(
-                          color: context.colors.primaryLightBg,
+                          color: AppColors.bgGradientStart,
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Text(
                           '$total',
                           style: AppTypography.caption.copyWith(
-                              color: context.colors.primary,
+                              color: AppColors.primary,
                               fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -153,10 +149,10 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: AppSpacing.x3),
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _filtroStatus,
@@ -179,25 +175,25 @@ class _CarteiraMapState extends State<_CarteiraMap> {
         // Lista de clientes sem coordenadas
         if (semCoord.isNotEmpty)
           Positioned(
-            bottom: AppSpacing.x2l,
-            left: AppSpacing.lg,
+            bottom: AppSpacing.x6,
+            left: AppSpacing.x4,
             child: Card(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 280, maxHeight: 200),
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(AppSpacing.x3),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'Sem localização (${semCoord.length})',
-                        style: AppTypography.labelSmall.copyWith(
+                        style: AppTypography.caption.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: context.colors.textSecondary,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: AppSpacing.x1),
                       Flexible(
                         child: ListView.builder(
                           shrinkWrap: true,
@@ -209,8 +205,8 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                               child: Row(
                                 children: [
                                   Icon(Icons.person_outline,
-                                      size: 14, color: _statusColor(c.status, context)),
-                                  const SizedBox(width: AppSpacing.xs),
+                                      size: 14, color: _statusColor(c.status)),
+                                  const SizedBox(width: AppSpacing.x1),
                                   Expanded(
                                     child: Text(
                                       c.nome,
@@ -222,7 +218,7 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                                     c.status.toUpperCase(),
                                     style: AppTypography.caption.copyWith(
                                       fontSize: 9,
-                                      color: _statusColor(c.status, context),
+                                      color: _statusColor(c.status),
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -240,22 +236,22 @@ class _CarteiraMapState extends State<_CarteiraMap> {
           ),
         // Legenda
         Positioned(
-          bottom: AppSpacing.x2l,
-          right: AppSpacing.lg,
+          bottom: AppSpacing.x6,
+          right: AppSpacing.x4,
           child: Card(
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.x3),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _LegendItem(color: context.colors.info, label: 'Negociação'),
-                  const SizedBox(height: AppSpacing.xs),
-                  _LegendItem(color: context.colors.warning, label: 'Enviado'),
-                  const SizedBox(height: AppSpacing.xs),
-                  _LegendItem(color: context.colors.success, label: 'Ativo'),
-                  const SizedBox(height: AppSpacing.xs),
-                  _LegendItem(color: context.colors.error, label: 'Inadimplente'),
+                  _LegendItem(color: AppColors.info, label: 'Negociação'),
+                  const SizedBox(height: AppSpacing.x1),
+                  _LegendItem(color: AppColors.warning, label: 'Enviado'),
+                  const SizedBox(height: AppSpacing.x1),
+                  _LegendItem(color: AppColors.success, label: 'Ativo'),
+                  const SizedBox(height: AppSpacing.x1),
+                  _LegendItem(color: AppColors.danger, label: 'Inadimplente'),
                 ],
               ),
             ),
@@ -265,12 +261,12 @@ class _CarteiraMapState extends State<_CarteiraMap> {
     );
   }
 
-  Color _statusColor(String status, BuildContext context) => switch (status) {
-    'negociacao' => context.colors.warning,
-    'enviado' => context.colors.info,
-    'ativo' => context.colors.success,
-    'inadimplente' => context.colors.error,
-    _ => context.colors.textTertiary,
+  Color _statusColor(String status) => switch (status) {
+    'negociacao' => AppColors.warning,
+    'enviado' => AppColors.info,
+    'ativo' => AppColors.success,
+    'inadimplente' => AppColors.danger,
+    _ => AppColors.textMuted,
   };
 }
 
@@ -285,8 +281,8 @@ class _LegendItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(Icons.location_on, color: color, size: 16),
-        const SizedBox(width: AppSpacing.xs),
-        Text(label, style: AppTypography.labelSmall),
+        const SizedBox(width: AppSpacing.x1),
+        Text(label, style: AppTypography.caption),
       ],
     );
   }

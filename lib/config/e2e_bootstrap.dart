@@ -10,9 +10,18 @@ class _E2ECredential {
 }
 
 const Map<String, _E2ECredential> _credentialsByRole = {
-  'franqueador_master': _E2ECredential('admin@liveshop.com', 'admin123'),
-  'franqueado': _E2ECredential('franqueado@liveshop.com', 'teste123'),
-  'cliente_parceiro': _E2ECredential('cliente@liveshop.com', 'teste123'),
+  'franqueador_master': _E2ECredential(
+    String.fromEnvironment('E2E_EMAIL_MASTER', defaultValue: ''),
+    String.fromEnvironment('E2E_PASSWORD_MASTER', defaultValue: ''),
+  ),
+  'franqueado': _E2ECredential(
+    String.fromEnvironment('E2E_EMAIL_FRANQUEADO', defaultValue: ''),
+    String.fromEnvironment('E2E_PASSWORD_FRANQUEADO', defaultValue: ''),
+  ),
+  'cliente_parceiro': _E2ECredential(
+    String.fromEnvironment('E2E_EMAIL_CLIENTE', defaultValue: ''),
+    String.fromEnvironment('E2E_PASSWORD_CLIENTE', defaultValue: ''),
+  ),
 };
 
 String _normalizeRole(String role) {
@@ -35,6 +44,14 @@ Future<void> bootstrapE2EAuth(
 
   if (credential == null) {
     print('[E2E] Role not configured: $role');
+    return;
+  }
+
+  if (credential.email.isEmpty || credential.password.isEmpty) {
+    print(
+      '[E2E] Credentials not provided for role $normalizedRole. '
+      'Pass --dart-define=E2E_EMAIL_<ROLE>=... and --dart-define=E2E_PASSWORD_<ROLE>=...',
+    );
     return;
   }
 

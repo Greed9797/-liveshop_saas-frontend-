@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class Unidade {
   final String id;
@@ -30,7 +31,13 @@ class Unidade {
 
 class FranqueadoNotifier extends AsyncNotifier<List<Unidade>> {
   @override
-  Future<List<Unidade>> build() => _fetch();
+  Future<List<Unidade>> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    return _fetch();
+  }
 
   Future<List<Unidade>> _fetch() async {
     final resp = await ApiService.get<List<dynamic>>('/franqueado/unidades');

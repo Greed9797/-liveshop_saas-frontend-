@@ -14,6 +14,9 @@ class Cliente {
   final String? cidade;
   final String? estado;
   final String? siga;
+  // Horas do contrato ativo (null = sem contrato com horas)
+  final double? horasContratadas;
+  final double? horasRestantes;
 
   const Cliente({
     required this.id,
@@ -30,6 +33,8 @@ class Cliente {
     this.cidade,
     this.estado,
     this.siga,
+    this.horasContratadas,
+    this.horasRestantes,
   });
 
   factory Cliente.fromJson(Map<String, dynamic> j) => Cliente(
@@ -47,5 +52,11 @@ class Cliente {
     cidade:   j['cidade'] as String?,
     estado:   j['estado'] as String?,
     siga:     j['siga'] as String?,
+    horasContratadas: j['horas_contratadas'] == null
+        ? null
+        : double.tryParse(j['horas_contratadas'].toString()),
+    horasRestantes: j['horas_restantes'] == null
+        ? null
+        : double.tryParse(j['horas_restantes'].toString()),
   );
 }

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
-import '../theme/theme.dart';
+import '../design_system/design_system.dart';
 
 
 /// Pin do mapa por status do cliente
@@ -22,14 +20,14 @@ class _ClientPinState extends State<ClientPin>
   late final AnimationController _ctrl;
   late final Animation<double> _pulse;
 
-  Color _colorFor(BuildContext context) => switch (widget.status) {
-        'ativo' => context.colors.success,
-        'enviado' => context.colors.info,
-        'em_analise' => context.colors.warning,
-        'negociacao' => context.colors.warning,
-        'inadimplente' => context.colors.error,
-        'recomendacao' => context.colors.primary,
-        _ => context.colors.textTertiary,
+  Color _colorFor() => switch (widget.status) {
+        'ativo' => AppColors.success,
+        'enviado' => AppColors.info,
+        'em_analise' => AppColors.warning,
+        'negociacao' => AppColors.warning,
+        'inadimplente' => AppColors.danger,
+        'recomendacao' => AppColors.primary,
+        _ => AppColors.textMuted,
       };
 
   @override
@@ -62,11 +60,11 @@ class _ClientPinState extends State<ClientPin>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: context.colors.cardBackground,
+              color: AppColors.bgCard,
               borderRadius: BorderRadius.circular(6),
               boxShadow: [
                 BoxShadow(
-                    color: context.colors.textPrimary.withValues(alpha: 0.16),
+                    color: AppColors.textPrimary.withValues(alpha: 0.16),
                     blurRadius: 6,
                     offset: const Offset(0, 2))
               ],
@@ -76,14 +74,14 @@ class _ClientPinState extends State<ClientPin>
               style: AppTypography.caption.copyWith(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: context.colors.textPrimary),
+                  color: AppColors.textPrimary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           ScaleTransition(
             scale: _pulse,
-            child: Icon(Icons.location_on_rounded, color: _colorFor(context), size: 36),
+            child: Icon(Icons.location_on_rounded, color: _colorFor(), size: 36),
           ),
         ],
       ),

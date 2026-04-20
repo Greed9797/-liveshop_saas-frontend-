@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/analytics_dashboard.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 // ─────────────────────────────────────────
 // Filtros (estado síncrono)
@@ -44,6 +45,10 @@ class AnalyticsDashboardNotifier
     extends AsyncNotifier<AnalyticsDashboardData> {
   @override
   Future<AnalyticsDashboardData> build() {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
     // ref.watch garante re-fetch automático quando os filtros mudam
     final filtros = ref.watch(dashboardFiltrosProvider);
     return _fetch(filtros);

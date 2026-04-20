@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class Recomendacao {
   final String id;
@@ -30,7 +31,13 @@ class Recomendacao {
 
 class RecomendacoesNotifier extends AsyncNotifier<List<Recomendacao>> {
   @override
-  Future<List<Recomendacao>> build() => _fetch();
+  Future<List<Recomendacao>> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    return _fetch();
+  }
 
   Future<List<Recomendacao>> _fetch() async {
     final resp = await ApiService.get('/recomendacoes');

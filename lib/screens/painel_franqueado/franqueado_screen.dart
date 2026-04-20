@@ -6,9 +6,7 @@ import '../../widgets/status_badge.dart';
 import '../../widgets/metric_card.dart';
 import '../../providers/franqueado_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/theme.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
+import '../../design_system/design_system.dart';
 
 /// Painel master do franqueador — visão de todas as unidades
 class FranqueadoScreen extends ConsumerWidget {
@@ -21,7 +19,7 @@ class FranqueadoScreen extends ConsumerWidget {
     return AppScaffold(
       currentRoute: AppRoutes.franqueado,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        padding: const EdgeInsets.all(AppSpacing.x6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -34,7 +32,7 @@ class FranqueadoScreen extends ConsumerWidget {
                     Text('Painel do Franqueador',
                         style: AppTypography.h2.copyWith(fontWeight: FontWeight.w500)),
                     Text('Visão geral de todas as unidades',
-                        style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
+                        style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
                   ],
                 ),
                 IconButton(
@@ -43,17 +41,17 @@ class FranqueadoScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.x5),
             Expanded(
               child: unidadesAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Text('Erro: $e'),
-                    const SizedBox(height: AppSpacing.md),
-                    ElevatedButton(
+                    const SizedBox(height: AppSpacing.x3),
+                    AppPrimaryButton(
                       onPressed: () => ref.read(franqueadoProvider.notifier).refresh(),
-                      child: const Text('Tentar novamente'),
+                      label: 'Tentar novamente',
                     ),
                   ]),
                 ),
@@ -81,8 +79,8 @@ class _UnidadesContent extends StatelessWidget {
     return Column(
         children: [
           Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.md,
+            spacing: AppSpacing.x3,
+            runSpacing: AppSpacing.x3,
             children: [
               SizedBox(
                 width: 220,
@@ -90,7 +88,7 @@ class _UnidadesContent extends StatelessWidget {
                   label: 'UNIDADES ATIVAS',
                   value: '$ativas',
                   icon: Icons.store_outlined,
-                  iconColor: context.colors.success,
+                  iconColor: AppColors.success,
                 ),
               ),
               SizedBox(
@@ -99,7 +97,7 @@ class _UnidadesContent extends StatelessWidget {
                   label: 'FAT. CONSOLIDADO',
                   value: currency.format(fatTotal),
                   icon: Icons.attach_money,
-                  iconColor: context.colors.primary,
+                  iconColor: AppColors.primary,
                 ),
               ),
               SizedBox(
@@ -108,12 +106,12 @@ class _UnidadesContent extends StatelessWidget {
                   label: 'CONTRATOS PENDENTES',
                   value: '$pendentes',
                   icon: Icons.pending_outlined,
-                  iconColor: context.colors.warning,
+                  iconColor: AppColors.warning,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.x5),
           Align(
             alignment: Alignment.centerLeft,
             child: Text('Unidades Franqueadas',
@@ -124,7 +122,7 @@ class _UnidadesContent extends StatelessWidget {
             child: unidades.isEmpty
                 ? Center(
                     child: Text('Nenhuma unidade encontrada.',
-                        style: TextStyle(color: context.colors.textSecondary)))
+                        style: TextStyle(color: AppColors.textSecondary)))
                 : ListView.separated(
                     itemCount: unidades.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),
@@ -132,20 +130,20 @@ class _UnidadesContent extends StatelessWidget {
                       final u = unidades[i];
                       return ListTile(
                         title: Text(u.nome,
-                            style: TextStyle(fontWeight: FontWeight.w500, color: context.colors.textPrimary)),
+                            style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
                         subtitle: Text(
                             'Clientes: ${u.clientesCount} • Fat: ${currency.format(u.fatMes)}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (u.contratosPendentes > 0)
-                              Chip(
-                                label: Text('${u.contratosPendentes} pendentes',
-                                    style: AppTypography.caption.copyWith(fontSize: 11)),
-                                backgroundColor: context.colors.warning.withValues(alpha: 0.15),
-                                labelStyle: TextStyle(color: context.colors.warning),
+                            if (u.contratosPendentes > 0) ...[
+                              AppBadge(
+                                label: '${u.contratosPendentes} pendentes',
+                                type: AppBadgeType.warning,
+                                showDot: false,
                               ),
-                            const SizedBox(width: AppSpacing.sm),
+                              const SizedBox(width: AppSpacing.x2),
+                            ],
                             StatusBadge(status: u.status),
                           ],
                         ),

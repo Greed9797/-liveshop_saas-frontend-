@@ -2,13 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../widgets/app_scaffold.dart';
-import '../../widgets/action_button.dart';
 import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/theme.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_typography.dart';
+import '../../design_system/design_system.dart';
+import '../../utils/doc_validators.dart';
 
 class CadastroClienteScreen extends ConsumerStatefulWidget {
   const CadastroClienteScreen({super.key});
@@ -19,6 +16,7 @@ class CadastroClienteScreen extends ConsumerStatefulWidget {
 
 class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
   final _pageCtrl = PageController();
+  final _docFormKey = GlobalKey<FormState>();
   int _step = 0;
   bool _loading = false;
 
@@ -83,18 +81,31 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
         _lng = (data['lng'] as num?)?.toDouble();
       });
     } catch (_) {
-      // Falha silenciosa
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nao foi possivel consultar o CEP agora.')),
+      );
     } finally {
       if (mounted) setState(() => _geocodingLoading = false);
     }
   }
 
   void _nextStep() {
-    if (_step == 0 && (_nomeCtrl.text.isEmpty || _celularCtrl.text.isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nome e celular são obrigatórios')),
-      );
-      return;
+    if (_step == 0) {
+      if (_nomeCtrl.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nome é obrigatório')),
+        );
+        return;
+      }
+      final phoneDigits = _celularCtrl.text.replaceAll(RegExp(r'\D'), '');
+      if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Celular inválido — informe 10 ou 11 dígitos')),
+        );
+        return;
+      }
+      if (!(_docFormKey.currentState?.validate() ?? true)) return;
     }
     if (_step < 3) {
       setState(() => _step++);
@@ -143,9 +154,10 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Erro: $e')));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -159,15 +171,15 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.x3l),
-            child: Card(
+            padding: const EdgeInsets.all(AppSpacing.x8),
+            child: AppCard(
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.x3l),
+                padding: const EdgeInsets.all(AppSpacing.x8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _StepIndicator(current: _step),
-                    const SizedBox(height: AppSpacing.x2l),
+                    const SizedBox(height: AppSpacing.x6),
                     SizedBox(
                       height: 360,
                       child: PageView(
@@ -181,7 +193,7 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.x2l),
+                    const SizedBox(height: AppSpacing.x6),
                     _buildNavButtons(),
                   ],
                 ),
@@ -199,7 +211,7 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
           children: [
             Text('Dados Pessoais',
                 style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.x4),
             _field('Nome Completo *', _nomeCtrl),
             _field('Celular (WhatsApp) *', _celularCtrl,
                 type: TextInputType.phone),
@@ -215,7 +227,7 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
           children: [
             Text('Dados Comerciais',
                 style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.x4),
             _field('Razão Social', _razaoCtrl),
             _field('Faturamento Anual R\$', _fatCtrl,
                 type: TextInputType.number),
@@ -230,26 +242,20 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
           children: [
             Text('Localização',
                 style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSpacing.lg),
-            TextField(
+            const SizedBox(height: AppSpacing.x4),
+            AppTextField(
               controller: _cepCtrl,
               keyboardType: TextInputType.number,
               onChanged: _onCepChanged,
-              decoration: InputDecoration(
-                labelText: 'CEP *',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                suffixIcon: _geocodingLoading
-                    ? const Padding(
-                        padding: EdgeInsets.all(AppSpacing.md),
-                        child: SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2)))
-                    : const Icon(Icons.location_on_outlined),
-              ),
+              hint: 'CEP *',
+              suffixIcon: _geocodingLoading
+                  ? const Padding(
+                      padding: EdgeInsets.all(AppSpacing.x3),
+                      child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2)))
+                  : const Icon(Icons.location_on_outlined),
             ),
             const SizedBox(height: 14),
             Row(
@@ -264,11 +270,11 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
                 padding: const EdgeInsets.only(top: 4),
                 child: Row(children: [
                   Icon(Icons.check_circle_outline,
-                      color: context.colors.success, size: 14),
-                  const SizedBox(width: AppSpacing.xs),
+                      color: AppColors.success, size: 14),
+                  const SizedBox(width: AppSpacing.x1),
                   Text(
                       'Geolocalizado (${_lat!.toStringAsFixed(4)}, ${_lng!.toStringAsFixed(4)})',
-                      style: AppTypography.labelSmall.copyWith(color: context.colors.success)),
+                      style: AppTypography.caption.copyWith(color: AppColors.success)),
                 ]),
               ),
           ],
@@ -281,33 +287,33 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
           children: [
             Text('Qualificação',
                 style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.x4),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: context.colors.textTertiary),
+                border: Border.all(color: AppColors.textMuted),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: SwitchListTile(
                 title: const Text('Já vende no TikTok Live?'),
                 subtitle: Text(
                   _jaVendeTikTok ? 'Sim — informe o handle abaixo' : 'Não',
-                  style: AppTypography.caption.copyWith(color: context.colors.textTertiary),
+                  style: AppTypography.caption.copyWith(color: AppColors.textMuted),
                 ),
                 value: _jaVendeTikTok,
-                activeColor: context.colors.primary,
+                activeThumbColor: AppColors.primary,
                 onChanged: (v) => setState(() => _jaVendeTikTok = v),
               ),
             ),
             if (_jaVendeTikTok) ...[
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.x3),
               _field('@ Handle no TikTok (opcional)', _sigaCtrl),
             ],
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.x4),
             const Divider(),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.x3),
             Text('Revisão',
                 style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
             _reviewRow('Nome', _nomeCtrl.text),
             _reviewRow('Celular', _celularCtrl.text),
             if (_emailCtrl.text.isNotEmpty)
@@ -329,41 +335,50 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
           SizedBox(
               width: 80,
               child: Text(label,
-                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary))),
+                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary))),
           Expanded(child: Text(value, style: AppTypography.caption)),
         ]),
       );
 
   Widget _buildNavButtons() {
     if (_loading) return const Center(child: CircularProgressIndicator());
-    return Row(
+    return Wrap(
+      spacing: AppSpacing.x3,
+      runSpacing: AppSpacing.x2,
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         if (_step > 0)
-          TextButton.icon(
+          AppSecondaryButton(
             onPressed: _prevStep,
-            icon: const Icon(Icons.arrow_back_ios, size: 14),
-            label: const Text('Voltar'),
-          ),
-        const Spacer(),
-        if (_step < 3)
-          ActionButton(
-              label: 'PRÓXIMO',
-              icon: Icons.arrow_forward_ios,
-              onPressed: _nextStep)
-        else ...[
-          ActionButton(
-            label: 'GERAR CONTRATO',
-            icon: Icons.description_outlined,
-            onPressed: () => _salvar(gerarContrato: true),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          ActionButton(
-            label: 'RASCUNHO',
-            icon: Icons.save_outlined,
-            outlined: true,
-            onPressed: () => _salvar(gerarContrato: false),
-          ),
-        ],
+            icon: Icons.arrow_back_ios,
+            label: 'Voltar',
+          )
+        else
+          const SizedBox.shrink(),
+        Wrap(
+          spacing: AppSpacing.x3,
+          runSpacing: AppSpacing.x2,
+          children: [
+            if (_step < 3)
+              AppPrimaryButton(
+                  label: 'PRÓXIMO',
+                  icon: Icons.arrow_forward_ios,
+                  onPressed: _nextStep)
+            else ...[
+              AppPrimaryButton(
+                label: 'GERAR CONTRATO',
+                icon: Icons.description_outlined,
+                onPressed: () => _salvar(gerarContrato: true),
+              ),
+              AppSecondaryButton(
+                label: 'RASCUNHO',
+                icon: Icons.save_outlined,
+                onPressed: () => _salvar(gerarContrato: false),
+              ),
+            ],
+          ],
+        ),
       ],
     );
   }
@@ -394,39 +409,34 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
   }
 
   Widget _docField() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: TextField(
-        controller: _docCtrl,
-        keyboardType: TextInputType.number,
-        onChanged: (value) {
-          final digits = value.replaceAll(RegExp(r'\D'), '');
-          final newType = digits.length <= 11 ? 'cpf' : 'cnpj';
-          final masked = _applyDocMask(digits);
-          if (masked != _docCtrl.text) {
-            _docCtrl.value = TextEditingValue(
-              text: masked,
-              selection: TextSelection.collapsed(offset: masked.length),
-            );
-          }
-          if (newType != _docType) setState(() => _docType = newType);
-        },
-        decoration: InputDecoration(
-          labelText: 'CPF / CNPJ',
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md)),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    return Form(
+      key: _docFormKey,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: AppTextField(
+          controller: _docCtrl,
+          keyboardType: TextInputType.number,
+          inputFormatters: [cnpjInputFormatter],
+          validator: validateCpfOrCnpj,
+          onChanged: (value) {
+            final digits = value.replaceAll(RegExp(r'\D'), '');
+            final newType = digits.length <= 11 ? 'cpf' : 'cnpj';
+            final masked = _applyDocMask(digits);
+            if (masked != _docCtrl.text) {
+              _docCtrl.value = TextEditingValue(
+                text: masked,
+                selection: TextSelection.collapsed(offset: masked.length),
+              );
+            }
+            if (newType != _docType) setState(() => _docType = newType);
+          },
+          hint: 'CPF / CNPJ',
           suffixIcon: Padding(
             padding: const EdgeInsets.all(8),
-            child: Chip(
-              label: Text(_docType.toUpperCase(),
-                  style: AppTypography.caption.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: context.colors.textPrimary)),
-              backgroundColor: context.colors.divider,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              padding: EdgeInsets.zero,
+            child: AppBadge(
+              label: _docType.toUpperCase(),
+              type: AppBadgeType.neutral,
+              showDot: false,
             ),
           ),
         ),
@@ -438,15 +448,10 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
           {TextInputType? type}) =>
       Padding(
         padding: const EdgeInsets.only(bottom: 14),
-        child: TextField(
+        child: AppTextField(
           controller: ctrl,
           keyboardType: type,
-          decoration: InputDecoration(
-            labelText: label,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          ),
+          hint: label,
         ),
       );
 }
@@ -479,10 +484,10 @@ class _StepIndicator extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: done
-                          ? context.colors.success
+                          ? AppColors.success
                           : active
-                              ? context.colors.primary
-                              : context.colors.divider,
+                              ? AppColors.primary
+                              : AppColors.borderLight,
                     ),
                     child: Center(
                       child: done
@@ -490,23 +495,23 @@ class _StepIndicator extends StatelessWidget {
                               size: 14, color: Colors.white)
                           : Text('${i + 1}',
                               style: AppTypography.caption.copyWith(
-                                  color: active ? Colors.white : context.colors.textSecondary,
+                                  color: active ? Colors.white : AppColors.textSecondary,
                                   fontWeight: FontWeight.w700)),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: AppSpacing.x1),
                   Text(_labels[i],
                       style: AppTypography.caption.copyWith(
                           fontSize: 9,
-                          color: active ? context.colors.primary : context.colors.textTertiary)),
+                          color: active ? AppColors.primary : AppColors.textMuted)),
                 ],
               ),
               if (i < _labels.length - 1)
                 Expanded(
                     child: Container(
                         height: 1,
-                        color: done ? context.colors.success : context.colors.textTertiary,
-                        margin: const EdgeInsets.only(bottom: AppSpacing.lg))),
+                        color: done ? AppColors.success : AppColors.textMuted,
+                        margin: const EdgeInsets.only(bottom: AppSpacing.x4))),
             ],
           ),
         );

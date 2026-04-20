@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/franqueado_analytics_resumo.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_shadows.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/theme.dart';
+import '../../design_system/design_system.dart';
 
 class HeatmapHorariosChart extends StatelessWidget {
   final List<HeatmapHorarioAnalytics> dados;
@@ -26,16 +23,12 @@ class HeatmapHorariosChart extends StatelessWidget {
 
     final maxY = _calculateMaxY();
 
-    return RepaintBoundary(
-      child: Container(
-        height: 300,
+    return SizedBox(
+      height: 300,
+      child: AppCard(
         padding: const EdgeInsets.fromLTRB(16, 32, 24, 16),
-        decoration: BoxDecoration(
-          color: context.colors.cardBackground,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          boxShadow: AppShadows.md,
-        ),
-        child: Column(
+        child: RepaintBoundary(
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
@@ -49,7 +42,7 @@ class HeatmapHorariosChart extends StatelessWidget {
                       children: [
                         Text(
                           'Prime Time (Faturamento por Hora)',
-                          style: AppTypography.h3.copyWith(fontSize: 16, color: context.colors.textPrimary),
+                          style: AppTypography.h3.copyWith(fontSize: 16, color: AppColors.textPrimary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -57,7 +50,7 @@ class HeatmapHorariosChart extends StatelessWidget {
                         Text(
                           'Horários com maior volume de GMV gerado hoje',
                           style: AppTypography.caption
-                              .copyWith(color: context.colors.textSecondary),
+                              .copyWith(color: AppColors.textSecondary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -69,18 +62,18 @@ class HeatmapHorariosChart extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: context.colors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.flag_rounded,
-                              size: 14, color: context.colors.primary),
+                          const Icon(Icons.flag_rounded,
+                              size: 14, color: AppColors.primary),
                           const SizedBox(width: 6),
                           Text(
                             'Meta: ${NumberFormat.compactCurrency(locale: 'pt_BR', symbol: 'R\$').format(metaDiaria)}',
                             style: AppTypography.caption.copyWith(
-                              color: context.colors.primary,
+                              color: AppColors.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -108,41 +101,37 @@ class HeatmapHorariosChart extends StatelessWidget {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 300,
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: context.colors.cardBackground,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: context.colors.cardBorder),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.bar_chart_rounded,
-            size: 48,
-            color: context.colors.textSecondary.withValues(alpha: 0.3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Aguardando as primeiras lives',
-            style:
-                AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Seu mapa de calor de vendas aparecerá aqui.',
-            style: AppTypography.bodySmall
-                .copyWith(color: context.colors.textSecondary),
-          ),
-        ],
+      child: AppCard(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.bar_chart_rounded,
+              size: 48,
+              color: AppColors.textSecondary.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: AppSpacing.x4),
+            Text(
+              'Aguardando as primeiras lives',
+              style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: AppSpacing.x2),
+            Text(
+              'Seu mapa de calor de vendas aparecerá aqui.',
+              style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -168,7 +157,7 @@ class HeatmapHorariosChart extends StatelessWidget {
     return BarTouchData(
       enabled: true,
       touchTooltipData: BarTouchTooltipData(
-        getTooltipColor: (_) => context.colors.tooltipBg,
+        getTooltipColor: (_) => const Color(0xFF1A1A1A),
         tooltipPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         tooltipMargin: 8,
@@ -186,8 +175,8 @@ class HeatmapHorariosChart extends StatelessWidget {
 
           return BarTooltipItem(
             '$valorFormatado\n',
-            TextStyle(
-              color: context.colors.tooltipText,
+            const TextStyle(
+              color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),
@@ -196,7 +185,7 @@ class HeatmapHorariosChart extends StatelessWidget {
                 text:
                     '${dado.totalLives} live${dado.totalLives > 1 ? 's' : ''}',
                 style: TextStyle(
-                  color: context.colors.tooltipText.withValues(alpha: 0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   fontWeight: FontWeight.normal,
                   fontSize: 12,
                 ),
@@ -206,8 +195,8 @@ class HeatmapHorariosChart extends StatelessWidget {
                   text: metaText,
                   style: TextStyle(
                     color: (dado.gmvTotal >= metaDiaria!)
-                        ? context.colors.success
-                        : context.colors.primary,
+                        ? AppColors.success
+                        : AppColors.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 11,
                   ),
@@ -233,7 +222,7 @@ class HeatmapHorariosChart extends StatelessWidget {
                 child: Text(
                   '${hora}h',
                   style: AppTypography.caption
-                      .copyWith(color: context.colors.textSecondary),
+                      .copyWith(color: AppColors.textSecondary),
                 ),
               );
             }
@@ -255,7 +244,7 @@ class HeatmapHorariosChart extends StatelessWidget {
                 NumberFormat.compactCurrency(locale: 'pt_BR', symbol: 'R\$')
                     .format(value),
                 style: AppTypography.caption.copyWith(
-                  color: context.colors.textSecondary.withValues(alpha: 0.6),
+                  color: AppColors.textSecondary.withValues(alpha: 0.6),
                   fontSize: 10,
                 ),
                 textAlign: TextAlign.right,
@@ -277,8 +266,8 @@ class HeatmapHorariosChart extends StatelessWidget {
       drawVerticalLine: false,
       horizontalInterval: _calculateMaxY() / 4 > 0 ? _calculateMaxY() / 4 : 250,
       getDrawingHorizontalLine: (value) {
-        return FlLine(
-          color: context.colors.divider,
+        return const FlLine(
+          color: AppColors.borderLight,
           strokeWidth: 1,
           dashArray: [4, 4],
         );
@@ -288,22 +277,22 @@ class HeatmapHorariosChart extends StatelessWidget {
 
   ExtraLinesData _buildExtraLines(double maxY, BuildContext context) {
     if (metaDiaria == null || metaDiaria! <= 0) {
-      return ExtraLinesData(horizontalLines: []);
+      return const ExtraLinesData(horizontalLines: []);
     }
 
     return ExtraLinesData(
       horizontalLines: [
         HorizontalLine(
           y: metaDiaria!,
-          color: context.colors.success.withValues(alpha: 0.8),
+          color: AppColors.success.withValues(alpha: 0.8),
           strokeWidth: 2,
           dashArray: [6, 4],
           label: HorizontalLineLabel(
             show: true,
             alignment: Alignment.topRight,
             padding: const EdgeInsets.only(right: 4, bottom: 4),
-            style: TextStyle(
-              color: context.colors.success,
+            style: const TextStyle(
+              color: AppColors.success,
               fontWeight: FontWeight.bold,
               fontSize: 10,
             ),
@@ -331,12 +320,12 @@ class HeatmapHorariosChart extends StatelessWidget {
             gradient: LinearGradient(
               colors: bateuMeta
                   ? [
-                      context.colors.success,
-                      context.colors.success.withValues(alpha: 0.4),
+                      AppColors.success,
+                      AppColors.success.withValues(alpha: 0.4),
                     ]
                   : [
-                      context.colors.primary,
-                      context.colors.primary.withValues(alpha: 0.4),
+                      AppColors.primary,
+                      AppColors.primary.withValues(alpha: 0.4),
                     ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -345,7 +334,7 @@ class HeatmapHorariosChart extends StatelessWidget {
             backDrawRodData: BackgroundBarChartRodData(
               show: true,
               toY: _calculateMaxY(),
-              color: context.colors.divider.withValues(alpha: 0.08),
+              color: AppColors.borderLight.withValues(alpha: 0.08),
             ),
           ),
         ],

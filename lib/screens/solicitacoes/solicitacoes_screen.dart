@@ -2,16 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../design_system/design_system.dart';
 import '../../providers/solicitacoes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/theme.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/app_scaffold.dart';
-import '../../widgets/status_badge.dart';
+import '../../widgets/solicitacao_card.dart';
 
 class SolicitacoesScreen extends ConsumerStatefulWidget {
   const SolicitacoesScreen({super.key});
@@ -42,9 +37,9 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
       await ref.read(solicitacoesProvider.notifier).aprovar(id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Live aprovada com sucesso!'),
-          backgroundColor: context.colors.success,
+        const SnackBar(
+          content: Text('Live aprovada com sucesso!'),
+          backgroundColor: AppColors.success,
         ),
       );
     } on ApiException catch (e) {
@@ -52,7 +47,7 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
-          backgroundColor: context.colors.error,
+          backgroundColor: AppColors.danger,
           duration: const Duration(seconds: 5),
         ),
       );
@@ -80,7 +75,7 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(e.message),
-                backgroundColor: context.colors.error,
+                backgroundColor: AppColors.danger,
               ),
             );
           }
@@ -92,32 +87,141 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
   @override
   Widget build(BuildContext context) {
     final solicitacoesAsync = ref.watch(solicitacoesProvider);
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     final pendentesCount = solicitacoesAsync.valueOrNull
             ?.where((s) => s.status == 'pendente')
             .length ??
         0;
 
-    return AppScaffold(
+    final aprovadasHoje = solicitacoesAsync.valueOrNull
+            ?.where((s) =>
+                s.status == 'aprovada' && s.dataSolicitada == today)
+            .length ??
+        0;
+
+    final recusadasCount = solicitacoesAsync.valueOrNull
+            ?.where((s) => s.status == 'recusada')
+            .length ??
+        0;
+
+    return AppScreenScaffold(
       currentRoute: AppRoutes.solicitacoes,
+      title: 'Solicitações de Live',
+      eyebrow: 'Agendamentos',
+      titleSerif: true,
+      subtitle: 'Aprove ou recuse solicitações dos clientes.',
       child: Column(
         children: [
+          // ── KPI Strip ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x4, AppSpacing.x4, AppSpacing.x4, 0),
+            child: LayoutBuilder(
+              builder: (ctx, constraints) {
+                final isNarrow = constraints.maxWidth < 600;
+                if (isNarrow) {
+                  return Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: KpiAccentCard(
+                              label: 'Aguardando você',
+                              value: '$pendentesCount',
+                              sub: 'solicitações pendentes',
+                              accentTop: true,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.x3),
+                          Expanded(
+                            child: KpiAccentCard(
+                              label: 'Aprovadas hoje',
+                              value: '$aprovadasHoje',
+                              sub: 'neste dia',
+                              valueColor: AppColors.success,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.x3),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: KpiAccentCard(
+                              label: 'Recusadas',
+                              value: '$recusadasCount',
+                              sub: 'total',
+                              valueColor: AppColors.danger,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.x3),
+                          const Expanded(child: SizedBox()),
+                        ],
+                      ),
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(
+                      child: KpiAccentCard(
+                        label: 'Aguardando você',
+                        value: '$pendentesCount',
+                        sub: 'solicitações pendentes',
+                        accentTop: true,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(
+                      child: KpiAccentCard(
+                        label: 'Aprovadas hoje',
+                        value: '$aprovadasHoje',
+                        sub: 'neste dia',
+                        valueColor: AppColors.success,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(
+                      child: KpiAccentCard(
+                        label: 'Recusadas',
+                        value: '$recusadasCount',
+                        sub: 'total',
+                        valueColor: AppColors.danger,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    const Expanded(child: KpiAccentCard(
+                      label: 'Tempo médio',
+                      value: '—',
+                      sub: 'para resposta',
+                    )),
+                  ],
+                );
+              },
+            ),
+          ),
+
           // ── Barra de abas ──
           Material(
-            color: context.colors.cardBackground,
+            color: AppColors.bgCard,
             elevation: 1,
             child: TabBar(
               controller: _tabController,
-              labelColor: context.colors.primary,
-              unselectedLabelColor: context.colors.textSecondary,
-              indicatorColor: context.colors.primary,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.primary,
               tabs: [
                 Tab(
+                  icon: const Icon(Icons.pending_actions_outlined, size: 18),
                   text: pendentesCount > 0
                       ? 'Pendentes ($pendentesCount)'
                       : 'Pendentes',
                 ),
-                const Tab(text: 'Todas'),
+                const Tab(
+                  icon: Icon(Icons.list_alt_outlined, size: 18),
+                  text: 'Todas',
+                ),
               ],
             ),
           ),
@@ -130,21 +234,21 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
               error: (error, _) => Center(
                 child: Padding(
                   padding:
-                      const EdgeInsets.all(AppSpacing.screenPadding),
+                      const EdgeInsets.all(AppSpacing.x6),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 48, color: context.colors.error),
-                      const SizedBox(height: AppSpacing.md),
-                      Text('Erro: $error',
+                      const Icon(Icons.error_outline,
+                          size: 48, color: AppColors.danger),
+                      const SizedBox(height: AppSpacing.x3),
+                      Text(ApiService.extractErrorMessage(error),
                           textAlign: TextAlign.center),
-                      const SizedBox(height: AppSpacing.sm),
-                      TextButton(
+                      const SizedBox(height: AppSpacing.x2),
+                      AppSecondaryButton(
                         onPressed: () => ref
                             .read(solicitacoesProvider.notifier)
                             .refresh(),
-                        child: const Text('Tentar novamente'),
+                        label: 'Tentar novamente',
                       ),
                     ],
                   ),
@@ -208,44 +312,36 @@ class _RecusarDialog extends StatelessWidget {
     return AlertDialog(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg)),
-      title: Row(
+      title: const Row(
         children: [
-          Icon(Icons.block_rounded, color: context.colors.error, size: 20),
-          const SizedBox(width: 8),
-          const Text('Motivo da recusa'),
+          Icon(Icons.block_rounded, color: AppColors.danger, size: 20),
+          SizedBox(width: AppSpacing.x2),
+          Text('Motivo da recusa'),
         ],
       ),
-      content: TextField(
+      content: AppTextField(
         controller: ctrl,
-        decoration: const InputDecoration(
-          hintText: 'Explique o motivo da recusa...',
-          border: OutlineInputBorder(),
-        ),
-        maxLines: 3,
-        autofocus: true,
-        textCapitalization: TextCapitalization.sentences,
+        hint: 'Explique o motivo da recusa...',
+        keyboardType: TextInputType.multiline,
       ),
       actions: [
-        TextButton(
+        AppSecondaryButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          label: 'Cancelar',
         ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-              backgroundColor: context.colors.error),
+        const SizedBox(width: AppSpacing.x2),
+        AppPrimaryButton(
+          label: 'Confirmar',
           onPressed: () {
             final motivo = ctrl.text.trim();
             if (motivo.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('O motivo é obrigatório')),
+                const SnackBar(content: Text('O motivo é obrigatório')),
               );
               return;
             }
             onConfirmar(motivo);
           },
-          child: const Text('Confirmar',
-              style: TextStyle(color: Colors.white)),
         ),
       ],
     );
@@ -275,6 +371,16 @@ class _SolicitacoesLista extends StatelessWidget {
     required this.onRefresh,
   });
 
+  static final _dateDisplay = DateFormat('dd/MM/yyyy');
+
+  String _formatDate(String raw) {
+    try {
+      return _dateDisplay.format(DateFormat('yyyy-MM-dd').parse(raw));
+    } catch (_) {
+      return raw;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
@@ -282,12 +388,12 @@ class _SolicitacoesLista extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(emptyIcon, size: 64, color: context.colors.textTertiary),
-            const SizedBox(height: AppSpacing.lg),
+            Icon(emptyIcon, size: 64, color: AppColors.textMuted),
+            const SizedBox(height: AppSpacing.x4),
             Text(
               emptyMessage,
               style: AppTypography.bodyMedium
-                  .copyWith(color: context.colors.textSecondary),
+                  .copyWith(color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -296,233 +402,25 @@ class _SolicitacoesLista extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: onRefresh,
-      color: context.colors.primary,
+      color: AppColors.primary,
       child: ListView.separated(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        padding: const EdgeInsets.all(AppSpacing.x4),
         itemCount: items.length,
-        separatorBuilder: (_, __) =>
-            const SizedBox(height: AppSpacing.sm),
-        itemBuilder: (_, i) => _SolicitacaoCard(
-          item: items[i],
-          showActions: showActions,
-          onAprovar: onAprovar,
-          onRecusar: onRecusar,
-        ),
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────
-// Card de solicitação
-// ──────────────────────────────────────────────────────────────
-
-class _SolicitacaoCard extends StatefulWidget {
-  final SolicitacaoFranqueador item;
-  final bool showActions;
-  final Future<void> Function(String) onAprovar;
-  final void Function(String) onRecusar;
-
-  const _SolicitacaoCard({
-    required this.item,
-    required this.showActions,
-    required this.onAprovar,
-    required this.onRecusar,
-  });
-
-  @override
-  State<_SolicitacaoCard> createState() => _SolicitacaoCardState();
-}
-
-class _SolicitacaoCardState extends State<_SolicitacaoCard> {
-  bool _isAprovando = false;
-
-  static final _dateDisplay = DateFormat('dd/MM/yyyy');
-
-  String _formatDate(String raw) {
-    try {
-      return _dateDisplay
-          .format(DateFormat('yyyy-MM-dd').parse(raw));
-    } catch (_) {
-      return raw;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = widget.item;
-    return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Cabeçalho: cabine + cliente + badge ──
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
-                decoration: BoxDecoration(
-                  color: context.colors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Text(
-                  'Cabine ${s.cabineNumero.toString().padLeft(2, '0')}',
-                  style: AppTypography.caption.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: context.colors.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  s.clienteNome,
-                  style: AppTypography.bodySmall
-                      .copyWith(fontWeight: FontWeight.w600),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              StatusBadge(status: s.status),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-
-          // ── Data e horário ──
-          Row(
-            children: [
-              Icon(Icons.calendar_today_outlined,
-                  size: 14, color: context.colors.textTertiary),
-              const SizedBox(width: 4),
-              Text(
-                _formatDate(s.dataSolicitada),
-                style: AppTypography.caption
-                    .copyWith(color: context.colors.textSecondary),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Icon(Icons.access_time_rounded,
-                  size: 14, color: context.colors.textTertiary),
-              const SizedBox(width: 4),
-              Text(
-                '${s.horaInicioDisplay} – ${s.horaFimDisplay}',
-                style: AppTypography.caption
-                    .copyWith(color: context.colors.textSecondary),
-              ),
-            ],
-          ),
-
-          // ── Observação (condicional) ──
-          if (s.observacao != null && s.observacao!.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.chat_bubble_outline,
-                    size: 13, color: context.colors.textTertiary),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    s.observacao!,
-                    style: AppTypography.caption
-                        .copyWith(color: context.colors.textSecondary),
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          // ── Motivo de recusa (condicional) ──
-          if (s.status == 'recusada' &&
-              s.motivoRecusa != null &&
-              s.motivoRecusa!.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: context.colors.error.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.block_rounded,
-                      size: 13, color: context.colors.error),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      s.motivoRecusa!,
-                      style: AppTypography.caption
-                          .copyWith(color: context.colors.error),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          // ── Ações (apenas em pendentes) ──
-          if (widget.showActions) ...[
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: Icon(Icons.close_rounded,
-                        size: 14, color: context.colors.error),
-                    label: Text('Recusar',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            color: context.colors.error, fontSize: 12)),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: context.colors.error),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 6),
-                      minimumSize: const Size(0, 36),
-                    ),
-                    onPressed: _isAprovando
-                        ? null
-                        : () => widget.onRecusar(s.id),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: _isAprovando
-                        ? const SizedBox(
-                            width: 12,
-                            height: 12,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.check_rounded,
-                            size: 14, color: Colors.white),
-                    label: const Text('Aprovar',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: Colors.white, fontSize: 12)),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: context.colors.success,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 6),
-                        minimumSize: const Size(0, 36)),
-                    onPressed: _isAprovando
-                        ? null
-                        : () async {
-                            setState(() => _isAprovando = true);
-                            await widget.onAprovar(s.id);
-                            if (mounted) {
-                              setState(() => _isAprovando = false);
-                            }
-                          },
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
+        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.x3),
+        itemBuilder: (ctx, i) {
+          final req = items[i];
+          return SolicitacaoCard(
+            cabineNumero: req.cabineNumero.toString().padLeft(2, '0'),
+            clienteNome: req.clienteNome,
+            data: _formatDate(req.dataSolicitada),
+            hora: '${req.horaInicioDisplay} – ${req.horaFimDisplay}',
+            duracao: req.observacao ?? '',
+            solicitadoPor: req.solicitanteNome,
+            status: req.status,
+            onApprove: showActions ? () => onAprovar(req.id) : () {},
+            onReject: showActions ? () => onRecusar(req.id) : () {},
+          );
+        },
       ),
     );
   }

@@ -3,10 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../design_system/design_system.dart';
 import '../../providers/contratos_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/theme.dart';
-import '../../theme/app_typography.dart';
 import '../../widgets/app_scaffold.dart';
 import 'widgets/auditoria_contract_card.dart';
 import 'widgets/auditoria_tabs.dart';
@@ -32,7 +31,7 @@ class _AnaliseCreditoScreenState extends ConsumerState<AnaliseCreditoScreen>
     messenger.showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? context.colors.error : null,
+        backgroundColor: isError ? AppColors.danger : null,
       ),
     );
   }
@@ -246,8 +245,8 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.fact_check_outlined,
-              size: 48, color: context.colors.textSecondary),
+          const Icon(Icons.fact_check_outlined,
+              size: 48, color: AppColors.textSecondary),
           const SizedBox(height: 12),
           Text('Nenhum contrato nesta fila', style: AppTypography.h3),
           const SizedBox(height: 6),
@@ -274,16 +273,15 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.cloud_off_rounded,
-              size: 48, color: context.colors.textSecondary),
+          const Icon(Icons.cloud_off_rounded,
+              size: 48, color: AppColors.textSecondary),
           const SizedBox(height: 12),
           Text('Ops, algo deu errado', style: AppTypography.h3),
           const SizedBox(height: 8),
           Text(message,
               style: AppTypography.bodySmall, textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          ElevatedButton(
-              onPressed: onRetry, child: const Text('Tentar novamente')),
+          AppPrimaryButton(onPressed: onRetry, label: 'Tentar novamente'),
         ],
       ),
     );

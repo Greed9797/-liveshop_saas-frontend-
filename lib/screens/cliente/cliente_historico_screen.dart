@@ -2,14 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../design_system/design_system.dart';
 import '../../providers/cliente_historico_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/theme.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../widgets/app_card.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/metric_card.dart';
 
@@ -57,7 +52,7 @@ class _ClienteHistoricoScreenState
     return AppScaffold(
       currentRoute: AppRoutes.clienteHistorico,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        padding: const EdgeInsets.all(AppSpacing.x6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -68,7 +63,7 @@ class _ClienteHistoricoScreenState
               onPrev: () => _mudarMes(-1),
               onNext: () => _mudarMes(1),
             ),
-            const SizedBox(height: AppSpacing.x2l),
+            const SizedBox(height: AppSpacing.x6),
             historicoAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(
@@ -76,7 +71,7 @@ class _ClienteHistoricoScreenState
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Erro: $error'),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: AppSpacing.x3),
                     ElevatedButton(
                       onPressed: () => ref
                           .read(clienteHistoricoProvider.notifier)
@@ -157,8 +152,8 @@ class _HistoricoContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.md,
+          spacing: AppSpacing.x3,
+          runSpacing: AppSpacing.x3,
           children: [
             SizedBox(
               width: 200,
@@ -166,7 +161,7 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'FATURAMENTO',
                 value: currency.format(data.resumo.totalFaturamento),
                 icon: Icons.attach_money,
-                iconColor: context.colors.success,
+                iconColor: AppColors.success,
               ),
             ),
             SizedBox(
@@ -175,7 +170,7 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'ITENS VENDIDOS',
                 value: '${data.resumo.totalVendas}',
                 icon: Icons.shopping_bag_outlined,
-                iconColor: context.colors.primary,
+                iconColor: AppColors.primary,
               ),
             ),
             SizedBox(
@@ -184,19 +179,19 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'TOTAL DE LIVES',
                 value: '${data.resumo.totalLives}',
                 icon: Icons.live_tv_outlined,
-                iconColor: context.colors.info,
+                iconColor: AppColors.info,
               ),
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.x3l),
+        const SizedBox(height: AppSpacing.x8),
         if (data.lives.isEmpty)
           Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.x3l),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.x8),
               child: Text(
                 'Nenhuma live encontrada neste período.',
-                style: TextStyle(color: context.colors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
           )
@@ -206,7 +201,7 @@ class _HistoricoContent extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: data.lives.length,
             separatorBuilder: (_, __) =>
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.x3),
             itemBuilder: (_, i) =>
                 _LiveCard(live: data.lives[i], currency: currency, dateFormat: dateFormat),
           ),
@@ -233,7 +228,7 @@ class _LiveCard extends StatelessWidget {
     final isEncerrada = live.status == 'encerrada';
 
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.x4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -248,38 +243,38 @@ class _LiveCard extends StatelessWidget {
               _StatusBadge(encerrada: isEncerrada),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.x2),
           Row(
             children: [
               Icon(Icons.videocam_outlined,
-                  size: 16, color: context.colors.textSecondary),
+                  size: 16, color: AppColors.textSecondary),
               const SizedBox(width: 4),
               Text(
                 'Cabine ${live.cabineNumero.toString().padLeft(2, '0')}',
-                style: TextStyle(color: context.colors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
               if (live.streamerNome != null) ...[
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: AppSpacing.x3),
                 Icon(Icons.person_outline,
-                    size: 16, color: context.colors.textSecondary),
+                    size: 16, color: AppColors.textSecondary),
                 const SizedBox(width: 4),
                 Text(
                   live.streamerNome!,
-                  style: TextStyle(color: context.colors.textSecondary),
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               ],
               const Spacer(),
               Icon(Icons.timer_outlined,
-                  size: 16, color: context.colors.textSecondary),
+                  size: 16, color: AppColors.textSecondary),
               const SizedBox(width: 4),
               Text(
                 '${live.duracaoMin} min',
                 style: AppTypography.caption
-                    .copyWith(color: context.colors.textSecondary, fontWeight: FontWeight.bold),
+                    .copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          const Divider(height: AppSpacing.x2l),
+          const Divider(height: AppSpacing.x6),
           Row(
             children: [
               Column(
@@ -289,17 +284,17 @@ class _LiveCard extends StatelessWidget {
                     currency.format(live.totalFaturamento),
                     style: AppTypography.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: context.colors.success,
+                      color: AppColors.success,
                     ),
                   ),
                   Text(
                     'faturamento',
                     style: AppTypography.caption
-                        .copyWith(color: context.colors.textSecondary),
+                        .copyWith(color: AppColors.textSecondary),
                   ),
                 ],
               ),
-              const SizedBox(width: AppSpacing.x3l),
+              const SizedBox(width: AppSpacing.x8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -311,12 +306,12 @@ class _LiveCard extends StatelessWidget {
                   Text(
                     'vendidos',
                     style: AppTypography.caption
-                        .copyWith(color: context.colors.textSecondary),
+                        .copyWith(color: AppColors.textSecondary),
                   ),
                 ],
               ),
               if (live.comissao > 0) ...[
-                const SizedBox(width: AppSpacing.x3l),
+                const SizedBox(width: AppSpacing.x8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -330,7 +325,7 @@ class _LiveCard extends StatelessWidget {
                     Text(
                       'sua comissão',
                       style: AppTypography.caption
-                          .copyWith(color: context.colors.textSecondary),
+                          .copyWith(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -352,17 +347,17 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+          horizontal: AppSpacing.x2, vertical: AppSpacing.x1),
       decoration: BoxDecoration(
         color: encerrada
-            ? context.colors.background
-            : context.colors.success.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+            ? AppColors.bgBase
+            : AppColors.success.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Text(
         encerrada ? 'Encerrada' : 'Em andamento',
         style: AppTypography.caption.copyWith(
-          color: encerrada ? context.colors.textSecondary : context.colors.success,
+          color: encerrada ? AppColors.textSecondary : AppColors.success,
           fontWeight: FontWeight.w600,
         ),
       ),

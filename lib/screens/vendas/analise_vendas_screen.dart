@@ -4,11 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/configuracoes_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/theme.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_shadows.dart';
+import '../../design_system/design_system.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/charts/heatmap_horarios_chart.dart';
 
@@ -32,7 +28,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
       currentRoute: AppRoutes.analise,
       child: analyticsAsync.when(
         loading: () => Center(
-            child: CircularProgressIndicator(color: context.colors.primary)),
+            child: CircularProgressIndicator(color: AppColors.primary)),
         error: (err, _) => _buildError(context, err.toString()),
         data: (analytics) => _buildDashboard(context, analytics, metaReal),
       ),
@@ -45,7 +41,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.error_outline_rounded,
-              color: context.colors.error, size: 48),
+              color: AppColors.danger, size: 48),
           const SizedBox(height: 16),
           Text(
             'Erro ao carregar o dashboard de vendas.',
@@ -56,16 +52,13 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
           Text(
             error,
             style: AppTypography.bodySmall
-                .copyWith(color: context.colors.textSecondary),
+                .copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
+          AppPrimaryButton(
             onPressed: () => ref.invalidate(franqueadoAnalyticsResumoProvider),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: context.colors.primary),
-            child: const Text('Tentar novamente',
-                style: TextStyle(color: Colors.white)),
+            label: 'Tentar novamente',
           )
         ],
       ),
@@ -77,7 +70,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.screenPadding, AppSpacing.x3l, AppSpacing.screenPadding, AppSpacing.lg),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x8, AppSpacing.x6, AppSpacing.x4),
           sliver: SliverToBoxAdapter(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -90,7 +83,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
                     Text(
                       'Visão estratégica e heatmap de conversão operacional.',
                       style: AppTypography.bodySmall
-                          .copyWith(color: context.colors.textSecondary),
+                          .copyWith(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -99,10 +92,10 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
                   children: [
                     Text('Exibir Meta',
                         style: AppTypography.caption
-                            .copyWith(color: context.colors.textSecondary)),
+                            .copyWith(color: AppColors.textSecondary)),
                     Switch(
                       value: _mostrarMeta,
-                      activeColor: context.colors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (val) {
                         setState(() {
                           _mostrarMeta = val;
@@ -112,7 +105,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
                     const SizedBox(width: 8),
                     IconButton(
                       icon: Icon(Icons.refresh_rounded,
-                          color: context.colors.textSecondary),
+                          color: AppColors.textSecondary),
                       tooltip: 'Atualizar',
                       onPressed: () =>
                           ref.invalidate(franqueadoAnalyticsResumoProvider),
@@ -124,14 +117,14 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x6, vertical: AppSpacing.x2),
           sliver: SliverToBoxAdapter(
             child: LayoutBuilder(builder: (context, constraints) {
               // Largura do painel de controle
               return Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: context.colors.cardBackground,
+                  color: AppColors.bgCard,
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                   boxShadow: AppShadows.md,
                 ),
@@ -146,12 +139,12 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
 
         // Futuramente outros relatórios da franquia entrarão aqui abaixo...
         SliverPadding(
-            padding: const EdgeInsets.all(AppSpacing.screenPadding),
+            padding: const EdgeInsets.all(AppSpacing.x6),
             sliver: SliverToBoxAdapter(
               child: Text(
                 'Mais relatórios de Inteligência de Negócio em breve...',
                 style: AppTypography.caption.copyWith(
-                    color: context.colors.textSecondary,
+                    color: AppColors.textSecondary,
                     fontStyle: FontStyle.italic),
                 textAlign: TextAlign.center,
               ),

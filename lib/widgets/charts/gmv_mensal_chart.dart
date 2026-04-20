@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/analytics_dashboard.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_shadows.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/theme.dart';
+import '../../design_system/design_system.dart';
 
 class GmvMensalChart extends StatelessWidget {
   final List<FaturamentoMensal> dados;
@@ -19,16 +16,12 @@ class GmvMensalChart extends StatelessWidget {
 
     final maxY = _maxY();
 
-    return RepaintBoundary(
-      child: Container(
-        height: 300,
+    return SizedBox(
+      height: 300,
+      child: AppCard(
         padding: const EdgeInsets.fromLTRB(16, 24, 24, 16),
-        decoration: BoxDecoration(
-          color: context.colors.cardBackground,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          boxShadow: AppShadows.md,
-        ),
-        child: Column(
+        child: RepaintBoundary(
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
@@ -36,9 +29,9 @@ class GmvMensalChart extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Faturamento Mensal (GMV)', style: AppTypography.h3.copyWith(fontSize: 15, color: context.colors.textPrimary)),
+                  Text('Faturamento Mensal (GMV)', style: AppTypography.h3.copyWith(fontSize: 15, color: AppColors.textPrimary)),
                   const SizedBox(height: 2),
-                  Text('Últimos 12 meses', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+                  Text('Últimos 12 meses', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -59,6 +52,7 @@ class GmvMensalChart extends StatelessWidget {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -73,18 +67,18 @@ class GmvMensalChart extends StatelessWidget {
     return BarTouchData(
       enabled: true,
       touchTooltipData: BarTouchTooltipData(
-        getTooltipColor: (_) => context.colors.tooltipBg,
+        getTooltipColor: (_) => const Color(0xFF1A1A1A),
         tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         tooltipRoundedRadius: 8,
         getTooltipItem: (group, _, rod, __) {
           final dado = dados[group.x];
           return BarTooltipItem(
             NumberFormat.simpleCurrency(locale: 'pt_BR').format(dado.gmv),
-            TextStyle(color: context.colors.tooltipText, fontWeight: FontWeight.bold, fontSize: 13),
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
             children: [
               TextSpan(
                 text: '\n${dado.mes}',
-                style: TextStyle(color: context.colors.tooltipText.withValues(alpha: 0.7), fontSize: 11),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
               ),
             ],
           );
@@ -108,7 +102,7 @@ class GmvMensalChart extends StatelessWidget {
               padding: const EdgeInsets.only(top: 6),
               child: Text(
                 shortMonths[month - 1],
-                style: AppTypography.caption.copyWith(color: context.colors.textSecondary, fontSize: 10),
+                style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 10),
               ),
             );
           },
@@ -125,7 +119,7 @@ class GmvMensalChart extends StatelessWidget {
               child: Text(
                 NumberFormat.compactCurrency(locale: 'pt_BR', symbol: 'R\$').format(value),
                 style: AppTypography.caption.copyWith(
-                  color: context.colors.textSecondary.withValues(alpha: 0.6),
+                  color: AppColors.textSecondary.withValues(alpha: 0.6),
                   fontSize: 10,
                 ),
                 textAlign: TextAlign.right,
@@ -145,8 +139,8 @@ class GmvMensalChart extends StatelessWidget {
       show: true,
       drawVerticalLine: false,
       horizontalInterval: maxY / 4 > 0 ? maxY / 4 : 250,
-      getDrawingHorizontalLine: (_) => FlLine(
-        color: context.colors.divider,
+      getDrawingHorizontalLine: (_) => const FlLine(
+        color: AppColors.borderLight,
         strokeWidth: 1,
         dashArray: [4, 4],
       ),
@@ -162,7 +156,7 @@ class GmvMensalChart extends StatelessWidget {
             toY: entry.value.gmv,
             width: dados.length > 12 ? 14 : 18,
             gradient: LinearGradient(
-              colors: [context.colors.primary, context.colors.primary.withValues(alpha: 0.4)],
+              colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.4)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -170,7 +164,7 @@ class GmvMensalChart extends StatelessWidget {
             backDrawRodData: BackgroundBarChartRodData(
               show: true,
               toY: _maxY(),
-              color: context.colors.divider.withValues(alpha: 0.08),
+              color: AppColors.borderLight.withValues(alpha: 0.08),
             ),
           ),
         ],
@@ -179,21 +173,18 @@ class GmvMensalChart extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 300,
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: context.colors.cardBackground,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: context.colors.cardBorder),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.bar_chart_rounded, size: 48, color: context.colors.textSecondary.withValues(alpha: 0.3)),
-          const SizedBox(height: 12),
-          Text('Sem dados de faturamento', style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
-        ],
+      child: AppCard(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bar_chart_rounded, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.3)),
+            const SizedBox(height: AppSpacing.x3),
+            Text('Sem dados de faturamento', style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+          ],
+        ),
       ),
     );
   }

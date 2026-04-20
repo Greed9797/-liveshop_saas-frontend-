@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/theme.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_shadows.dart';
+import '../../design_system/design_system.dart' hide AppCard;
 import '../../widgets/app_card.dart';
 
 /// Tela de login — ponto de entrada do sistema
@@ -53,7 +50,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final route = AppRoutes.routeForRole(user.papel);
       Navigator.pushReplacementNamed(context, route);
     }
-    // Erro do backend exibido pelo bloco inline via authState.error
   }
 
   @override
@@ -63,96 +59,98 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authError = _localError ?? authState.error;
 
     return Scaffold(
-      backgroundColor: context.colors.background,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: AppCard(
-            boxShadow: AppShadows.xl,
-            padding: const EdgeInsets.all(AppSpacing.x4l),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 120,
-                  child: Image.asset('assets/images/logo.png'),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Text('Livelab',
-                    style: AppTypography.h2.copyWith(fontWeight: FontWeight.w500)),
-                const SizedBox(height: AppSpacing.xs),
-                Text('Gestão de Franquias',
-                    style: AppTypography.labelLarge.copyWith(color: context.colors.textSecondary)),
-                const SizedBox(height: AppSpacing.x3l),
-                TextField(
-                  controller: _emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md)),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                TextField(
-                  controller: _senhaCtrl,
-                  obscureText: _obscure,
-                  decoration: InputDecoration(
-                    labelText: 'Senha',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                          _obscure ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setState(() => _obscure = !_obscure),
-                    ),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md)),
-                  ),
-                  onSubmitted: (_) => _login(),
-                ),
-                const SizedBox(height: AppSpacing.x2l),
-                if (authError != null) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      color: context.colors.error.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      border: Border.all(
-                        color: context.colors.error.withValues(alpha: 0.25),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: const Color(0xFFEAEAEA)),
+            gradient: const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [Color(0xFFF1EFEE), Color(0xFFFCD1BE)],
+            ),
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.x6),
+                child: AppCard(
+                  boxShadow: AppShadows.lg,
+                  borderColor: Colors.transparent,
+                  backgroundColor: Colors.white,
+                  borderRadius: AppRadius.xl,
+                  padding: const EdgeInsets.all(AppSpacing.x10),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: SizedBox(
+                          width: 230,
+                          child: Image.asset('assets/images/logo.png'),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      authError,
-                      style: TextStyle(color: context.colors.error),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                ],
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: context.colors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md)),
-                    ),
-                    child: isLoading
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                color: context.colors.cardBackground, strokeWidth: 2))
-                        : Text('ENTRAR',
-                            style: TextStyle(
-                                color: context.colors.cardBackground,
-                                fontWeight: FontWeight.w500)),
+                      const SizedBox(height: AppSpacing.x3),
+                      Text(
+                        'Gestão de Franquias',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodyLarge.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.x8),
+                      AppTextField(
+                        controller: _emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        hint: 'E-mail',
+                        prefixIcon: PhosphorIcons.envelopeSimple(),
+                      ),
+                      const SizedBox(height: AppSpacing.x4),
+                      AppTextField(
+                        controller: _senhaCtrl,
+                        obscureText: _obscure,
+                        hint: 'Senha',
+                        prefixIcon: PhosphorIcons.lockKey(),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscure
+                                ? PhosphorIcons.eyeSlash()
+                                : PhosphorIcons.eye(),
+                            color: AppColors.textMuted,
+                          ),
+                          onPressed: () => setState(() => _obscure = !_obscure),
+                        ),
+                        onSubmitted: (_) => _login(),
+                      ),
+                      if (authError != null) ...[
+                        const SizedBox(height: AppSpacing.x4),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(AppSpacing.x3),
+                          decoration: BoxDecoration(
+                            color: AppColors.danger.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: Text(
+                            authError,
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodySmall.copyWith(color: AppColors.danger),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.x8),
+                      AppPrimaryButton(
+                        onPressed: isLoading ? () {} : _login,
+                        isLoading: isLoading,
+                        label: 'Entrar',
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),

@@ -1,10 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/boleto_alerta.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class BillingAlertNotifier extends AsyncNotifier<BoletoAlerta?> {
   @override
-  Future<BoletoAlerta?> build() => _fetch();
+  Future<BoletoAlerta?> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    return _fetch();
+  }
 
   Future<BoletoAlerta?> _fetch() async {
     try {

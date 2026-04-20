@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 // ──────────────────────────────────────────────────────────────
 // Model
@@ -60,7 +61,13 @@ class SolicitacaoFranqueador {
 class SolicitacoesNotifier
     extends AsyncNotifier<List<SolicitacaoFranqueador>> {
   @override
-  Future<List<SolicitacaoFranqueador>> build() => _fetch();
+  Future<List<SolicitacaoFranqueador>> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    return _fetch();
+  }
 
   Future<List<SolicitacaoFranqueador>> _fetch() async {
     final resp =

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../widgets/app_scaffold.dart';
@@ -10,12 +11,7 @@ import '../../widgets/ranking_destaque.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../models/dashboard.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_breakpoints.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/theme.dart';
+import '../../design_system/design_system.dart' hide AppCard;
 import '../../widgets/app_card.dart';
 import '../../widgets/metric_card.dart';
 
@@ -42,9 +38,9 @@ class HomeScreen extends ConsumerWidget {
             children: [
               Text('Erro ao carregar dashboard: $e'),
               const SizedBox(height: 12),
-              ElevatedButton(
+              AppSecondaryButton(
                 onPressed: () => ref.read(dashboardProvider.notifier).refresh(),
-                child: const Text('Tentar novamente'),
+                label: 'Tentar novamente',
               ),
             ],
           ),
@@ -64,15 +60,32 @@ class _HomeContent extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWideLayout = constraints.maxWidth >= AppBreakpoints.tablet;
+        final responsivePadding = constraints.maxWidth >= AppBreakpoints.desktop
+            ? AppSpacing.x8
+            : constraints.maxWidth >= AppBreakpoints.tablet
+                ? AppSpacing.x6
+                : AppSpacing.x4;
 
         return CustomScrollView(
           slivers: [
             SliverPadding(
-              padding: EdgeInsets.all(AppSpacing.responsive(constraints.maxWidth)),
+              padding: EdgeInsets.all(responsivePadding),
               sliver: SliverToBoxAdapter(
-                child: isWideLayout
-                    ? _DesktopLayout(dashboard: dashboard)
-                    : _MobileLayout(dashboard: dashboard),
+                child: Container(
+                  padding: const EdgeInsets.all(AppSpacing.x6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: const Color(0xFFEAEAEA)),
+                    gradient: const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [Color(0xFFF1EFEE), Color(0xFFFCD7C5)],
+                    ),
+                  ),
+                  child: isWideLayout
+                      ? _DesktopLayout(dashboard: dashboard)
+                      : _MobileLayout(dashboard: dashboard),
+                ),
               ),
             ),
           ],
@@ -95,22 +108,27 @@ class _KpiRow extends StatelessWidget {
 
     final cards = [
       MetricCard(
-        label: 'Faturamento',
+        label: 'Faturamento Total',
         value: _formatFaturamento(dashboard.fatLiquido),
+        icon: PhosphorIcons.currencyCircleDollar(),
+        subtitle: '+ ${dashboard.novosClientes} novos',
       ),
       MetricCard(
         label: 'Clientes Ativos',
         value: '${dashboard.clientesAtivos}',
+        icon: PhosphorIcons.usersThree(),
         subtitle: '+${dashboard.novosClientes} novos',
       ),
       MetricCard(
         label: 'Lives no Mês',
         value: '${dashboard.livesMes}',
+        icon: PhosphorIcons.broadcast(),
         subtitle: '${dashboard.mediaViewers} viewers médio',
       ),
       MetricCard(
         label: 'Contratos em Análise',
         value: '${dashboard.contratosAnalise}',
+        icon: PhosphorIcons.fileText(),
         subtitle: dashboard.boletosVencidos > 0
             ? '${dashboard.boletosVencidos} boletos vencidos'
             : null,
@@ -128,18 +146,18 @@ class _KpiRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(child: cards[0]),
-                const SizedBox(width: AppSpacing.cardGap),
+                const SizedBox(width: AppSpacing.x4),
                 Expanded(child: cards[1]),
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.cardGap),
+          const SizedBox(height: AppSpacing.x4),
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(child: cards[2]),
-                const SizedBox(width: AppSpacing.cardGap),
+                const SizedBox(width: AppSpacing.x4),
                 Expanded(child: cards[3]),
               ],
             ),
@@ -153,11 +171,11 @@ class _KpiRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: cards[0]),
-          const SizedBox(width: AppSpacing.cardGap),
+          const SizedBox(width: AppSpacing.x4),
           Expanded(child: cards[1]),
-          const SizedBox(width: AppSpacing.cardGap),
+          const SizedBox(width: AppSpacing.x4),
           Expanded(child: cards[2]),
-          const SizedBox(width: AppSpacing.cardGap),
+          const SizedBox(width: AppSpacing.x4),
           Expanded(child: cards[3]),
         ],
       ),
@@ -177,7 +195,7 @@ class _DesktopLayout extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _KpiRow(dashboard: dashboard),
-        const SizedBox(height: AppSpacing.cardGap),
+        const SizedBox(height: AppSpacing.x4),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -194,14 +212,14 @@ class _DesktopLayout extends StatelessWidget {
                     onTap: () =>
                         Navigator.pushNamed(context, AppRoutes.financeiro),
                   ),
-                  const SizedBox(height: AppSpacing.cardGap),
+                  const SizedBox(height: AppSpacing.x4),
                   const ExcelenciaCard(),
-                  const SizedBox(height: AppSpacing.cardGap),
+                  const SizedBox(height: AppSpacing.x4),
                   const _ActionButtons(),
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.cardGap),
+            const SizedBox(width: AppSpacing.x4),
             // Coluna direita: cabines + NPS/chamados + ranking
             Expanded(
               flex: 7,
@@ -212,15 +230,15 @@ class _DesktopLayout extends StatelessWidget {
                     _CabinesMiniGrid(cabines: dashboard.cabines, isLargeScreen: true)
                   else
                     const _CabinesEmptyCard(),
-                  const SizedBox(height: AppSpacing.cardGap),
+                  const SizedBox(height: AppSpacing.x4),
                   IntrinsicHeight(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
+                        const Expanded(
                           child: NpsGauge(score: 9.8),
                         ),
-                        const SizedBox(width: AppSpacing.cardGap),
+                        const SizedBox(width: AppSpacing.x4),
                         Expanded(
                           flex: 2,
                           child: ChamadosCard(count: dashboard.contratosAnalise),
@@ -228,7 +246,7 @@ class _DesktopLayout extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.cardGap),
+                  const SizedBox(height: AppSpacing.x4),
                   RankingDestaque(
                     rankings: dashboard.rankingDia
                         .take(3)
@@ -256,30 +274,30 @@ class _MobileLayout extends StatelessWidget {
     return Column(
       children: [
         _KpiRow(dashboard: dashboard),
-        const SizedBox(height: AppSpacing.cardGap),
+        const SizedBox(height: AppSpacing.x4),
         MoneyCard(
           total: dashboard.fatTotal,
           bruto: dashboard.fatBruto,
           liquido: dashboard.fatLiquido,
           onTap: () => Navigator.pushNamed(context, AppRoutes.financeiro),
         ),
-        const SizedBox(height: AppSpacing.cardGap),
+        const SizedBox(height: AppSpacing.x4),
         if (dashboard.cabines.isNotEmpty)
           _CabinesMiniGrid(cabines: dashboard.cabines, isLargeScreen: false)
         else
           const _CabinesEmptyCard(),
-        const SizedBox(height: AppSpacing.cardGap),
+        const SizedBox(height: AppSpacing.x4),
         const _ActionButtons(),
-        const SizedBox(height: AppSpacing.cardGap),
+        const SizedBox(height: AppSpacing.x4),
         RankingDestaque(
           rankings: dashboard.rankingDia
               .take(3)
               .map((e) => {'nome': e.nome})
               .toList(),
         ),
-        const SizedBox(height: AppSpacing.cardGap),
+        const SizedBox(height: AppSpacing.x4),
         const NpsGauge(score: 9.8),
-        const SizedBox(height: AppSpacing.cardGap),
+        const SizedBox(height: AppSpacing.x4),
         const ExcelenciaCard(),
       ],
     );
@@ -296,51 +314,19 @@ class _ActionButtons extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: FilledButton.icon(
+          child: AppPrimaryButton(
             onPressed: () =>
                 Navigator.pushNamed(context, AppRoutes.cadastroCliente),
-            icon: const Icon(Icons.point_of_sale_rounded, size: 18),
-            label: const Text('VENDER'),
-            style: FilledButton.styleFrom(
-              backgroundColor: context.colors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              textStyle: const TextStyle(
-                fontFamily: 'Outfit',
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                letterSpacing: 0.5,
-              ),
-            ),
+            icon: PhosphorIcons.shoppingCart(),
+            label: 'VENDER',
           ),
         ),
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: AppSpacing.x3),
         Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRoutes.financeiro),
-            icon: Icon(Icons.account_balance_wallet_rounded,
-                size: 18, color: context.colors.textSecondary),
-            label: Text(
-              'FINANCEIRO',
-              style: TextStyle(color: context.colors.textPrimary),
-            ),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              side: BorderSide(color: context.colors.divider),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              textStyle: const TextStyle(
-                fontFamily: 'Outfit',
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                letterSpacing: 0.5,
-              ),
-            ),
+          child: AppSecondaryButton(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.financeiro),
+            icon: PhosphorIcons.wallet(),
+            label: 'FINANCEIRO',
           ),
         ),
       ],
@@ -356,13 +342,13 @@ class _CabinesEmptyCard extends StatelessWidget {
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: context.colors.background,
+        color: AppColors.bgBase,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colors.divider),
+        border: Border.all(color: AppColors.borderLight),
       ),
       child: Center(
         child: Text('Nenhuma cabine configurada',
-            style: AppTypography.labelLarge.copyWith(color: context.colors.textTertiary)),
+            style: AppTypography.label.copyWith(color: AppColors.textMuted)),
       ),
     );
   }
@@ -376,58 +362,68 @@ class _CabinesMiniGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.compactPadding),
+      padding: const EdgeInsets.all(AppSpacing.x4),
+      borderColor: Colors.transparent,
+      boxShadow: AppShadows.sm,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Icon(PhosphorIcons.videoCamera(), size: 18, color: AppColors.textSecondary),
+              const SizedBox(width: AppSpacing.x2),
               Text(
-                'CABINES',
-                style: AppTypography.labelSmall.copyWith(
-                  color: context.colors.textSecondary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
+                'Cabines',
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.x2),
               _LiveBadge(
                   liveCount:
                       cabines.where((c) => c.status == 'ao_vivo').length),
               const Spacer(),
-              GestureDetector(
-                onTap: () => Navigator.pushNamed(context, AppRoutes.cabines),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Ver tudo',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: context.colors.primary,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Icon(Icons.chevron_right,
-                        color: context.colors.primary, size: 16),
-                  ],
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.x4),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: isLargeScreen ? 5 : 4,
-              crossAxisSpacing: AppSpacing.xs,
-              mainAxisSpacing: AppSpacing.xs,
-              childAspectRatio: 1.5,
+              crossAxisSpacing: AppSpacing.x2,
+              mainAxisSpacing: AppSpacing.x2,
+              childAspectRatio: 1.15,
             ),
             itemCount: cabines.length,
             itemBuilder: (_, i) => _CabineMiniTile(cabine: cabines[i]),
+          ),
+          const SizedBox(height: AppSpacing.x4),
+          InkWell(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            onTap: () => Navigator.pushNamed(context, AppRoutes.cabines),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
+              decoration: BoxDecoration(
+                color: AppColors.bgMuted,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Ver tudo',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x2),
+                  Icon(PhosphorIcons.arrowRight(), size: 16, color: AppColors.textMuted),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -443,12 +439,12 @@ class _LiveBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     if (liveCount == 0) return const SizedBox.shrink();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2, vertical: 2),
       decoration: BoxDecoration(
-        color: context.colors.success.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        color: AppColors.success.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppRadius.full),
         border:
-            Border.all(color: context.colors.success.withValues(alpha: 0.4)),
+            Border.all(color: AppColors.success.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -456,15 +452,15 @@ class _LiveBadge extends StatelessWidget {
           Container(
             width: 6,
             height: 6,
-            decoration: BoxDecoration(
-                color: context.colors.success, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+                color: AppColors.success, shape: BoxShape.circle),
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: AppSpacing.x1),
           Text(
             '$liveCount AO VIVO',
             style: AppTypography.caption.copyWith(
                 fontSize: 9,
-                color: context.colors.success,
+                color: AppColors.success,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.5),
           ),
@@ -494,7 +490,7 @@ class _CabineMiniTile extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) => Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.x4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -503,43 +499,41 @@ class _CabineMiniTile extends StatelessWidget {
               children: [
                 Text(
                   'Cabine ${cabine.numero}',
-                  style: AppTypography.h3.copyWith(color: context.colors.textPrimary),
+                  style: AppTypography.h3.copyWith(color: AppColors.textPrimary),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Builder(
-                  builder: (ctx) => Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm, vertical: 2),
-                    decoration: BoxDecoration(
+                const SizedBox(width: AppSpacing.x2),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.x2, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: cabine.status == 'ao_vivo'
+                        ? AppColors.success.withValues(alpha: 0.15)
+                        : AppColors.borderLight,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                  ),
+                  child: Text(
+                    statusLabel,
+                    style: AppTypography.caption.copyWith(
+                      fontWeight: FontWeight.w700,
                       color: cabine.status == 'ao_vivo'
-                          ? ctx.colors.success.withValues(alpha: 0.15)
-                          : ctx.colors.divider,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    child: Text(
-                      statusLabel,
-                      style: AppTypography.caption.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: cabine.status == 'ao_vivo'
-                            ? ctx.colors.success
-                            : ctx.colors.textSecondary,
-                      ),
+                          ? AppColors.success
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            _DetailRow(icon: Icons.person_outline,
+            const SizedBox(height: AppSpacing.x3),
+            _DetailRow(icon: PhosphorIcons.user(),
                 label: 'Cliente', value: cabine.clienteNome ?? '—'),
-            _DetailRow(icon: Icons.attach_money,
+            _DetailRow(icon: PhosphorIcons.currencyDollar(),
                 label: 'GMV', value: 'R\$ ${cabine.gmvAtual.toStringAsFixed(2)}'),
-            _DetailRow(icon: Icons.visibility_outlined,
+            _DetailRow(icon: PhosphorIcons.eye(),
                 label: 'Viewers', value: '${cabine.viewerCount}'),
             if (cabine.duracaoMin > 0)
-              _DetailRow(icon: Icons.timer_outlined,
+              _DetailRow(icon: PhosphorIcons.timer(),
                   label: 'Duração', value: '${cabine.duracaoMin} min'),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.x3),
             SizedBox(
               width: double.infinity,
               child: TextButton(
@@ -559,13 +553,15 @@ class _CabineMiniTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Heatmap: intensidade laranja por status (mais ativo = mais escuro)
+    final isEmpty = cabine.status == 'disponivel' && cabine.clienteNome == null;
+
     final (Color bgColor, Color textColor) = switch (cabine.status) {
-      'ao_vivo'    => (context.colors.primary, Colors.white),
-      'reservada'  => (AppColors.orange200, Colors.white),
-      'ativa'      => (AppColors.orange100, context.colors.primaryHover),
-      'disponivel' => (context.colors.primaryLightBg, AppColors.orange200),
-      'manutencao' => (context.colors.divider, context.colors.textSecondary),
-      _            => (context.colors.background, context.colors.textTertiary),
+      'ao_vivo'    => (AppColors.primary, Colors.white),
+      'reservada'  => (AppColors.bgMuted, AppColors.textMuted),
+      'ativa'      => (AppColors.bgGradientStart, AppColors.primaryHover),
+      'disponivel' => (AppColors.bgMuted, AppColors.textMuted),
+      'manutencao' => (AppColors.borderLight, AppColors.textSecondary),
+      _            => (AppColors.bgMuted, AppColors.textMuted),
     };
 
     final showName = cabine.clienteNome != null &&
@@ -573,19 +569,28 @@ class _CabineMiniTile extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => _showDetails(context),
-      child: Container(
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(AppRadius.xs),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '${cabine.numero}',
-              style: AppTypography.bodySmall.copyWith(
-                  color: textColor, fontWeight: FontWeight.w700),
-            ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+            if (isEmpty)
+              Text(
+                '+',
+                style: AppTypography.h3.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w400,
+                ),
+              )
+            else
+              Text(
+                'Cabine ${cabine.numero.toString().padLeft(2, '0')}',
+                style: AppTypography.bodySmall.copyWith(
+                    color: textColor, fontWeight: FontWeight.w500),
+              ),
             if (showName)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -620,15 +625,15 @@ class _DetailRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: context.colors.textTertiary),
-          const SizedBox(width: AppSpacing.sm),
+          Icon(icon, size: 16, color: AppColors.textMuted),
+          const SizedBox(width: AppSpacing.x2),
           Text('$label: ',
-              style: AppTypography.labelSmall
-                  .copyWith(color: context.colors.textSecondary, fontWeight: FontWeight.w600)),
+              style: AppTypography.caption
+                  .copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
           Expanded(
             child: Text(value,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.labelSmall.copyWith(color: context.colors.textPrimary)),
+                style: AppTypography.caption.copyWith(color: AppColors.textPrimary)),
           ),
         ],
       ),
@@ -644,37 +649,44 @@ class _HomeShimmerLoader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, constraints) => Padding(
-        padding: EdgeInsets.all(AppSpacing.responsive(constraints.maxWidth)),
-        child: Shimmer.fromColors(
-          baseColor: context.colors.divider,
-          highlightColor: context.colors.background,
-          child: Row(
-            children: [
-              Expanded(
-                flex: 5,
-                child: Container(
-                  height: 400,
-                  decoration: BoxDecoration(
-                      color: context.colors.cardBackground,
-                      borderRadius: BorderRadius.circular(AppRadius.lg)),
+      builder: (context, constraints) {
+        final responsivePadding = constraints.maxWidth >= AppBreakpoints.desktop
+            ? AppSpacing.x8
+            : constraints.maxWidth >= AppBreakpoints.tablet
+                ? AppSpacing.x6
+                : AppSpacing.x4;
+
+        return Padding(
+          padding: EdgeInsets.all(responsivePadding),
+          child: Shimmer.fromColors(
+            baseColor: AppColors.borderLight,
+            highlightColor: AppColors.bgBase,
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: Container(
+                    height: 400,
+                    decoration: BoxDecoration(
+                        color: AppColors.bgCard,
+                        borderRadius: BorderRadius.circular(AppRadius.lg)),
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.cardGap),
-              Expanded(
-                flex: 7,
-                child: Container(
-                  height: 400,
-                  decoration: BoxDecoration(
-                      color: context.colors.cardBackground,
-                      borderRadius: BorderRadius.circular(AppRadius.lg)),
+                const SizedBox(width: AppSpacing.x4),
+                Expanded(
+                  flex: 7,
+                  child: Container(
+                    height: 400,
+                    decoration: BoxDecoration(
+                        color: AppColors.bgCard,
+                        borderRadius: BorderRadius.circular(AppRadius.lg)),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
-

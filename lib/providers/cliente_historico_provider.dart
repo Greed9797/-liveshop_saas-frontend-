@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class LiveHistorico {
   final String id;
@@ -77,7 +78,13 @@ class ClienteHistoricoData {
 
 class ClienteHistoricoNotifier extends AsyncNotifier<ClienteHistoricoData> {
   @override
-  Future<ClienteHistoricoData> build() => _fetch();
+  Future<ClienteHistoricoData> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    return _fetch();
+  }
 
   Future<ClienteHistoricoData> _fetch({int? mes, int? ano}) async {
     final params = <String, dynamic>{};
