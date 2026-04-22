@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 const _clienteLivePolling = Duration(seconds: 30);
 const _clienteIdlePolling = Duration(minutes: 10);
@@ -207,6 +208,12 @@ class ClienteDashboardNotifier extends AsyncNotifier<ClienteDashboard> {
 
   @override
   Future<ClienteDashboard> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      _timer?.cancel();
+      _timer = null;
+      throw Exception('Não autenticado');
+    }
     final data = await _fetch();
 
     _configurePolling(data);

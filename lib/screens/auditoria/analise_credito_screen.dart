@@ -3,10 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../design_system/design_system.dart';
 import '../../providers/contratos_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_typography.dart';
 import '../../widgets/app_scaffold.dart';
 import 'widgets/auditoria_contract_card.dart';
 import 'widgets/auditoria_tabs.dart';
@@ -282,8 +281,7 @@ class _ErrorState extends StatelessWidget {
           Text(message,
               style: AppTypography.bodySmall, textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          ElevatedButton(
-              onPressed: onRetry, child: const Text('Tentar novamente')),
+          AppPrimaryButton(onPressed: onRetry, label: 'Tentar novamente'),
         ],
       ),
     );

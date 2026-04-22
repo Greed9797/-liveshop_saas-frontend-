@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../widgets/app_scaffold.dart';
-import '../../widgets/action_button.dart';
+import 'package:intl/intl.dart';
 import '../../providers/recomendacoes_provider.dart';
 import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/app_radius.dart';
-import '../../widgets/app_card.dart';
+import '../../services/api_service.dart';
+import '../../design_system/design_system.dart';
+import '../../widgets/responsive_grid.dart';
 
 class RecomendacoesScreen extends ConsumerWidget {
   const RecomendacoesScreen({super.key});
@@ -18,94 +15,155 @@ class RecomendacoesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final recsAsync = ref.watch(recomendacoesProvider);
 
-    return AppScaffold(
+    return AppScreenScaffold(
       currentRoute: AppRoutes.recomendacoes,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.screenPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      eyebrow: 'Programa de indicações',
+      titleSerif: true,
+      title: 'Recomendações',
+      subtitle: 'Gerencie indicações de potenciais clientes.',
+      actions: [
+        AppPrimaryButton(
+          label: 'ADICIONAR',
+          icon: Icons.add,
+          onPressed: () => _showAddDialog(context, ref),
+        ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.x6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // KPI strip
+            Consumer(
+              builder: (context, ref, _) {
+                final recsAsync = ref.watch(recomendacoesProvider);
+                final recs = recsAsync.valueOrNull ?? [];
+                final total = recs.length;
+                final convertidas = recs.where((r) => r.status == 'convertido').length;
+                final ganhos = recs.where((r) => r.status == 'convertido').length * 500.0; // placeholder per indication
+                final fmt = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 0);
+                return ResponsiveGrid(
+                  mobileColumns: 1,
+                  tabletColumns: 3,
+                  desktopColumns: 3,
+                  spacing: AppSpacing.x3,
+                  runSpacing: AppSpacing.x3,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Recomendações', style: AppTypography.h2),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Gerencie indicações de potenciais clientes',
-                            style: AppTypography.caption
-                                .copyWith(color: AppColors.gray500),
-                          ),
-                        ],
-                      ),
+                    KpiAccentCard(
+                      label: 'Indicações',
+                      value: '$total',
+                      sub: 'total',
+                      accentTop: true,
                     ),
-                    ActionButton(
-                      label: 'ADICIONAR',
-                      icon: Icons.add,
-                      color: AppColors.lilac,
-                      onPressed: () => _showAddDialog(context, ref),
+                    KpiAccentCard(
+                      label: 'Convertidas',
+                      value: '$convertidas',
+                      sub: 'finalizadas',
+                      valueColor: AppColors.success,
+                    ),
+                    KpiAccentCard(
+                      label: 'Ganhos',
+                      value: fmt.format(ganhos),
+                      sub: 'acumulados',
+                      valueColor: AppColors.primary,
                     ),
                   ],
-                ),
-                const SizedBox(height: AppSpacing.x2l),
-                Expanded(
-                  child: recsAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(
-                      child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Erro: $e'),
-                            const SizedBox(height: AppSpacing.md),
-                            ElevatedButton(
-                              onPressed: () => ref
-                                  .read(recomendacoesProvider.notifier)
-                                  .refresh(),
-                              child: const Text('Tentar novamente'),
-                            ),
-                          ]),
-                    ),
-                    data: (recs) => recs.isEmpty
-                        ? Center(
-                            child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.diamond_outlined,
-                                  size: 48, color: AppColors.gray200),
-                              const SizedBox(height: 12),
-                              Text('Nenhuma recomendação ainda.',
-                                  style: AppTypography.bodySmall
-                                      .copyWith(color: AppColors.gray500)),
-                            ],
-                          ))
-                        : AppCard(
-                            padding: EdgeInsets.zero,
-                            child: ListView.separated(
-                              itemCount: recs.length,
-                              separatorBuilder: (_, __) =>
-                                  const Divider(height: 1, indent: 56),
-                              itemBuilder: (_, i) {
-                                final r = recs[i];
-                                return _RecomendacaoTile(
-                                  recomendacao: r,
-                                  onConverter: () =>
-                                      _converter(context, ref, r),
-                                );
-                              },
-                            ),
-                          ),
-                  ),
-                ),
-              ],
+                );
+              },
             ),
-          ),
+            const SizedBox(height: AppSpacing.x5),
+            const AppSectionHeader(
+              title: 'Indicações',
+              subtitle: 'Todas as recomendações recebidas.',
+            ),
+            Expanded(
+              child: recsAsync.when(
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(
+                  child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(ApiService.extractErrorMessage(e)),
+                        const SizedBox(height: AppSpacing.x3),
+                        AppSecondaryButton(
+                          onPressed: () => ref
+                              .read(recomendacoesProvider.notifier)
+                              .refresh(),
+                          label: 'Tentar novamente',
+                        ),
+                      ]),
+                ),
+                data: (recs) => recs.isEmpty
+                    ? Center(
+                        child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.diamond_outlined,
+                              size: 48, color: AppColors.borderLight),
+                          const SizedBox(height: AppSpacing.x3),
+                          Text('Nenhuma recomendação ainda.',
+                              style: AppTypography.bodySmall
+                                  .copyWith(color: AppColors.textSecondary)),
+                        ],
+                      ))
+                    : AppTable(
+                        columns: const [
+                          AppTableColumn(label: 'INDICAÇÃO', align: 'left'),
+                          AppTableColumn(label: 'STATUS', align: 'center'),
+                          AppTableColumn(label: 'GANHO', align: 'right'),
+                        ],
+                        rows: recs.map((r) => AppTableRow(
+                          cells: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 34, height: 34,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primarySofter,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.handshake_outlined,
+                                      color: AppColors.primary, size: 18),
+                                ),
+                                const SizedBox(width: AppSpacing.x3),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(r.nomeIndicado,
+                                      style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                                    Text('Indicado por: ${r.recomendante}',
+                                      style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            AppBadge(
+                              label: r.status == 'convertido' ? 'Convertida' : 'Pendente',
+                              type: r.status == 'convertido' ? AppBadgeType.success : AppBadgeType.warning,
+                              showDot: false,
+                            ),
+                            r.status == 'convertido'
+                                ? Text(
+                                    '+R\$ ${NumberFormat.currency(locale: 'pt_BR', symbol: '').format(500.0)}',
+                                    style: AppTypography.bodyMedium.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                    ),
+                                  )
+                                : Text('—', style: AppTypography.bodyMedium.copyWith(color: AppColors.textMuted)),
+                          ],
+                          onTap: r.status == 'pendente'
+                              ? () => _converter(context, ref, r)
+                              : null,
+                        )).toList(),
+                        hoverHighlight: true,
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -127,10 +185,9 @@ class RecomendacoesScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(
+              AppTextField(
                 controller: indicadoCtrl,
-                decoration: const InputDecoration(
-                    labelText: 'Nome do Potencial Cliente'),
+                hint: 'Nome do Potencial Cliente',
                 validator: (v) {
                   if (v == null || v.trim().length < 3) {
                     return 'Nome deve ter pelo menos 3 caracteres';
@@ -141,11 +198,10 @@ class RecomendacoesScreen extends ConsumerWidget {
                   return null;
                 },
               ),
-              const SizedBox(height: AppSpacing.md),
-              TextFormField(
+              const SizedBox(height: AppSpacing.x3),
+              AppTextField(
                 controller: recomendanteCtrl,
-                decoration: const InputDecoration(
-                    labelText: 'Quem está recomendando'),
+                hint: 'Quem está recomendando',
                 validator: (v) {
                   if (v == null || v.trim().length < 3) {
                     return 'Nome deve ter pelo menos 3 caracteres';
@@ -161,7 +217,7 @@ class RecomendacoesScreen extends ConsumerWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
-          ElevatedButton(
+          AppPrimaryButton(
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
               Navigator.pop(context);
@@ -173,14 +229,13 @@ class RecomendacoesScreen extends ConsumerWidget {
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Erro ao salvar: $e')),
+                    SnackBar(
+                        content: Text(ApiService.extractErrorMessage(e))),
                   );
                 }
               }
             },
-            child: Text('SALVAR',
-                style:
-                    AppTypography.bodyMedium.copyWith(color: AppColors.white)),
+            label: 'SALVAR',
           ),
         ],
       ),
@@ -205,21 +260,26 @@ class RecomendacoesScreen extends ConsumerWidget {
 
       final altoRisco = resp['alto_risco'] == true;
       final score = resp['score'] as int? ?? 0;
+      final clienteId = resp['cliente_id'] as String?;
 
       ref.invalidate(clientesProvider);
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(altoRisco
-            ? 'Cliente convertido (Score: $score — alto risco). Acompanhe em Clientes/Leads.'
-            : 'Cliente convertido com sucesso! (Score: $score)'),
-        backgroundColor: altoRisco ? AppColors.dangerRed : AppColors.successGreen,
+            ? 'Cliente convertido (Score: $score — alto risco). Iniciando contrato...'
+            : 'Cliente convertido com sucesso! (Score: $score). Iniciando contrato...'),
+        backgroundColor: altoRisco ? AppColors.danger : AppColors.success,
       ));
 
-      Navigator.pushNamed(context, AppRoutes.clientesLeads);
+      Navigator.pushNamed(
+        context,
+        AppRoutes.contrato,
+        arguments: {'clienteId': clienteId},
+      );
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao converter: $e')),
+          SnackBar(content: Text(ApiService.extractErrorMessage(e))),
         );
       }
     }
@@ -241,11 +301,11 @@ class _RecomendacaoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding:
-          const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 6),
+          const EdgeInsets.symmetric(horizontal: AppSpacing.x4, vertical: AppSpacing.x2),
       leading: CircleAvatar(
-        backgroundColor: AppColors.lilac.withValues(alpha: 0.12),
+        backgroundColor: AppColors.primary.withValues(alpha: 0.12),
         child: const Icon(Icons.diamond_outlined,
-            color: AppColors.lilac, size: 20),
+            color: AppColors.primary, size: 20),
       ),
       title: Text(
         recomendacao.nomeIndicado,
@@ -255,34 +315,21 @@ class _RecomendacaoTile extends StatelessWidget {
       ),
       subtitle: Text(
         'Indicado por: ${recomendacao.recomendante}',
-        style: AppTypography.caption.copyWith(color: AppColors.gray500),
+        style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
       trailing: recomendacao.status == 'pendente'
-          ? ActionButton(
+          ? AppSecondaryButton(
               label: 'NEGOCIAR',
               icon: Icons.handshake_outlined,
-              color: AppColors.lilac,
-              outlined: true,
               onPressed: onConverter,
             )
-          : Chip(
-              label: Text(
-                recomendacao.status.toUpperCase(),
-                style: AppTypography.caption.copyWith(
-                  color: recomendacao.status == 'convertido'
-                      ? AppColors.successGreen
-                      : AppColors.gray500,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 10,
-                ),
-              ),
-              backgroundColor: recomendacao.status == 'convertido'
-                  ? AppColors.successGreen.withValues(alpha: 0.12)
-                  : AppColors.gray100,
-              side: BorderSide.none,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+          : AppBadge(
+              label: recomendacao.status.toUpperCase(),
+              type: recomendacao.status == 'convertido'
+                  ? AppBadgeType.success
+                  : AppBadgeType.neutral,
             ),
     );
   }
@@ -319,13 +366,13 @@ class _NegociarDialogState extends State<_NegociarDialog> {
     return 'ALTO RISCO';
   }
 
-  Color get _riscoColor {
+  Color _riscoColor() {
     int score = 0;
     if (_highFat) score += 50;
     if (_hasCnpj) score += 20;
-    if (score >= 60) return AppColors.successGreen;
-    if (score >= 20) return AppColors.warningYellow;
-    return AppColors.dangerRed;
+    if (score >= 60) return AppColors.success;
+    if (score >= 20) return AppColors.warning;
+    return AppColors.danger;
   }
 
   void _updateRisco() {
@@ -349,41 +396,40 @@ class _NegociarDialogState extends State<_NegociarDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final riscoColor = _riscoColor();
     return Dialog(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.x2l),
+          padding: const EdgeInsets.all(AppSpacing.x6),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
                 Row(
                   children: [
                     const Icon(Icons.handshake_outlined,
-                        color: AppColors.lilac),
-                    const SizedBox(width: 12),
+                        color: AppColors.primary),
+                    const SizedBox(width: AppSpacing.x3),
                     Expanded(
                       child: Text('Negociar com ${widget.recomendacao.nomeIndicado}',
                           style: AppTypography.h3),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.x4),
 
-                // Indicador de risco
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(AppSpacing.x3),
                   decoration: BoxDecoration(
-                    color: _riscoColor.withValues(alpha: 0.1),
+                    color: riscoColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: _riscoColor.withValues(alpha: 0.4)),
+                    border: Border.all(color: riscoColor.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     children: [
@@ -391,14 +437,14 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                         _riscoLabel == 'ALTO RISCO'
                             ? Icons.warning_amber_rounded
                             : Icons.shield_outlined,
-                        color: _riscoColor,
+                        color: riscoColor,
                         size: 20,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.x2),
                       Text(
                         _riscoLabel,
-                        style: AppTypography.labelSmall.copyWith(
-                          color: _riscoColor,
+                        style: AppTypography.caption.copyWith(
+                          color: riscoColor,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -406,117 +452,84 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                       Text(
                         'Preencha para melhorar o score',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.gray400, fontSize: 10),
+                            .copyWith(color: AppColors.textMuted),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.x4),
 
-                // Campos
-                TextFormField(
+                AppTextField(
                   controller: _celularCtrl,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Celular (WhatsApp) *',
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
+                  hint: 'Celular (WhatsApp) *',
                   validator: (v) =>
                       (v == null || v.trim().isEmpty) ? 'Obrigatório' : null,
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: AppSpacing.x3),
+                AppTextField(
                   controller: _cnpjCtrl,
                   keyboardType: TextInputType.number,
                   onChanged: (_) => _updateRisco(),
-                  decoration: InputDecoration(
-                    labelText: 'CNPJ',
-                    border: const OutlineInputBorder(),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    suffixIcon: _hasCnpj
-                        ? const Icon(Icons.check_circle,
-                            color: AppColors.successGreen, size: 18)
-                        : null,
-                  ),
+                  hint: 'CNPJ',
+                  suffixIcon: _hasCnpj
+                      ? const Icon(Icons.check_circle,
+                          color: AppColors.success, size: 18)
+                      : null,
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: AppSpacing.x3),
+                AppTextField(
                   controller: _fatCtrl,
                   keyboardType: TextInputType.number,
                   onChanged: (_) => _updateRisco(),
-                  decoration: InputDecoration(
-                    labelText: 'Faturamento Anual R\$',
-                    border: const OutlineInputBorder(),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    suffixIcon: _highFat
-                        ? const Icon(Icons.check_circle,
-                            color: AppColors.successGreen, size: 18)
-                        : null,
-                  ),
+                  hint: 'Faturamento Anual R\$',
+                  suffixIcon: _highFat
+                      ? const Icon(Icons.check_circle,
+                          color: AppColors.success, size: 18)
+                      : null,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.x3),
                 Row(
                   children: [
                     Expanded(
                       flex: 2,
-                      child: TextFormField(
+                      child: AppTextField(
                         controller: _cepCtrl,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'CEP',
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
-                        ),
+                        hint: 'CEP',
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.x2),
                     Expanded(
                       flex: 2,
-                      child: TextFormField(
+                      child: AppTextField(
                         controller: _cidadeCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Cidade',
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
-                        ),
+                        hint: 'Cidade',
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.x2),
                     Expanded(
-                      child: TextFormField(
+                      child: AppTextField(
                         controller: _estadoCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'UF',
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
-                        ),
+                        hint: 'UF',
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.x2l),
+                const SizedBox(height: AppSpacing.x6),
 
-                // Ações
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: AppSecondaryButton(
+                        label: 'Cancelar',
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancelar'),
+                        fullWidth: true,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.x3),
                     Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.lilac),
+                      child: AppPrimaryButton(
                         onPressed: () {
                           if (!_formKey.currentState!.validate()) return;
                           Navigator.pop(context, {
@@ -535,11 +548,8 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                               'estado': _estadoCtrl.text.trim(),
                           });
                         },
-                        icon: const Icon(Icons.send_rounded,
-                            size: 16, color: AppColors.white),
-                        label: Text('Converter para Lead',
-                            style: AppTypography.bodySmall
-                                .copyWith(color: AppColors.white)),
+                        icon: Icons.send_rounded,
+                        label: 'Converter para Lead',
                       ),
                     ),
                   ],

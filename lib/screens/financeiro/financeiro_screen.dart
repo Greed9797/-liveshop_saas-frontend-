@@ -1,51 +1,89 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../widgets/app_scaffold.dart';
-import '../../widgets/roleta_widget.dart';
 import '../../providers/financeiro_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_typography.dart';
+import '../../design_system/design_system.dart';
+import '../../services/api_service.dart';
+import '../../widgets/money_text.dart';
+import '../../widgets/responsive_grid.dart';
+import '../../widgets/client_avatar.dart';
 
-class FinanceiroScreen extends ConsumerWidget {
+class FinanceiroScreen extends ConsumerStatefulWidget {
   const FinanceiroScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return AppScaffold(
+  ConsumerState<FinanceiroScreen> createState() => _FinanceiroScreenState();
+}
+
+class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final selectedPeriod = ref.watch(financeiroPeriodoProvider);
+
+    return AppScreenScaffold(
       currentRoute: AppRoutes.financeiro,
+      title: 'Financeiro',
+      eyebrow: 'Consolidado da franquia',
+      titleSerif: true,
+      subtitle: 'Faturamento, custos e fluxo de caixa do período selecionado.',
       child: DefaultTabController(
         length: 3,
         child: Column(
           children: [
-            Container(
-              color: AppColors.white,
-              child: const TabBar(
-                labelColor: AppColors.primaryOrange,
-                unselectedLabelColor: AppColors.gray500,
-                indicatorColor: AppColors.primaryOrange,
-                tabs: [
-                  Tab(
-                      icon:
-                          Icon(Icons.account_balance_wallet_outlined, size: 18),
-                      text: 'Operacional'),
-                  Tab(
-                      icon: Icon(Icons.table_chart_outlined, size: 18),
-                      text: 'Por Cliente'),
-                  Tab(
-                      icon: Icon(Icons.donut_large_outlined, size: 18),
-                      text: 'Recebíveis'),
+            Material(
+              color: AppColors.bgCard,
+              elevation: 0,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: AppSpacing.x5,
+                      right: AppSpacing.x5,
+                      top: AppSpacing.x3,
+                    ),
+                    child: Row(
+                      children: [
+                        AppSegmentedControl<String>(
+                          segments: const ['mes', 'trimestre', 'ano'],
+                          selected: selectedPeriod,
+                          labelOf: (s) => {
+                                'mes': 'Mês',
+                                'trimestre': 'Trimestre',
+                                'ano': '12 meses',
+                              }[s] ??
+                              s,
+                          onChanged: (s) => ref
+                              .read(financeiroPeriodoProvider.notifier)
+                              .state = s,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const TabBar(
+                    labelColor: AppColors.primary,
+                    unselectedLabelColor: AppColors.textSecondary,
+                    indicatorColor: AppColors.primary,
+                    tabs: [
+                      Tab(
+                          icon: Icon(Icons.account_balance_wallet_outlined, size: 18),
+                          text: 'Operacional'),
+                      Tab(
+                          icon: Icon(Icons.table_chart_outlined, size: 18),
+                          text: 'Por Cliente'),
+                      Tab(
+                          icon: Icon(Icons.donut_large_outlined, size: 18),
+                          text: 'Recebíveis'),
+                    ],
+                  ),
                 ],
               ),
             ),
-            const Expanded(
+            Expanded(
               child: TabBarView(
                 children: [
-                  _OperacionalTab(),
+                  _OperacionalTab(selectedPeriod: selectedPeriod),
                   _PorClienteTab(),
-                  _ReceiveisTab(),
+                  const _ReceiveisTab(),
                 ],
               ),
             ),
@@ -59,7 +97,8 @@ class FinanceiroScreen extends ConsumerWidget {
 // ─── ABA A: OPERACIONAL (Custos + Fluxo de Caixa) ────────────────────────────
 
 class _OperacionalTab extends ConsumerWidget {
-  const _OperacionalTab();
+  final String selectedPeriod;
+  const _OperacionalTab({required this.selectedPeriod});
 
   static const _categorias = [
     _Categoria('Aluguel', Icons.home_outlined, 'aluguel'),
@@ -75,70 +114,79 @@ class _OperacionalTab extends ConsumerWidget {
     final custosAsync = ref.watch(custosProvider);
     final fluxoAsync = ref.watch(fluxoCaixaProvider);
 
+    final chips = _categorias
+        .map((cat) => ActionChip(
+              avatar: Icon(cat.icon, size: 14),
+              label: Text(cat.label),
+              onPressed: () =>
+                  _showAdicionarCustoComCategoria(context, ref, cat),
+            ))
+        .toList();
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      padding: const EdgeInsets.all(AppSpacing.x5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Resumo rápido ──────────────────────────────────────────────
+          // ── Resumo rápido — KpiFinCard strip ────────────────────────────
           resumoAsync.when(
             loading: () => const LinearProgressIndicator(),
             error: (_, __) => const SizedBox.shrink(),
-            data: (r) => Row(
-              children: [
-                _QuickMetric('BRUTO', r.fatBruto, AppColors.infoBlue),
-                const SizedBox(width: AppSpacing.md),
-                _QuickMetric('LÍQUIDO', r.fatLiquido, AppColors.successGreen),
-                const SizedBox(width: AppSpacing.md),
-                _QuickMetric('CUSTOS', r.totalCustos, AppColors.dangerRed),
-              ],
-            ),
+            data: (r) {
+              final bruto = _formatBRL(r.fatBruto);
+              final liquido = _formatBRL(r.fatLiquido);
+              final custos = _formatBRL(r.totalCustos);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.x5),
+                child: ResponsiveGrid(
+                  mobileColumns: 1,
+                  tabletColumns: 3,
+                  desktopColumns: 3,
+                  spacing: AppSpacing.x3,
+                  runSpacing: AppSpacing.x3,
+                  children: [
+                    KpiFinCard(label: 'Faturamento Bruto', prefix: 'R\$', value: bruto, tone: KpiFinTone.info, sub: 'no mês'),
+                    KpiFinCard(label: 'Faturamento Líquido', prefix: 'R\$', value: liquido, tone: KpiFinTone.success, sub: 'após custos'),
+                    KpiFinCard(label: 'Custos Operacionais', prefix: 'R\$', value: custos, tone: KpiFinTone.danger, sub: 'total do mês'),
+                  ],
+                ),
+              );
+            },
           ),
-          const SizedBox(height: AppSpacing.x2l),
 
           // ── Fluxo de Caixa ─────────────────────────────────────────────
-          Text('Fluxo de Caixa — Mês Atual',
-              style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: AppSpacing.md),
+          AppSectionHeader(title: 'Fluxo de Caixa — Mês Atual'),
+
           fluxoAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, __) => Text('Erro ao carregar fluxo de caixa',
-                style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
-            data: (fluxo) => _FluxoCaixaBar(fluxo: fluxo),
+                style: AppTypography.bodySmall
+                    .copyWith(color: AppColors.textSecondary)),
+            data: (fluxo) => _FluxBar(
+              entradas: fluxo.totalEntradas,
+              saidas: fluxo.totalSaidas,
+              saldo: fluxo.saldo,
+            ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: AppSpacing.x6),
 
           // ── Cadastrar custo ────────────────────────────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Custos do Mês',
-                  style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
-              TextButton.icon(
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Adicionar'),
-                onPressed: () => _showAdicionarCusto(context, ref),
-              ),
-            ],
+          AppSectionHeader(
+            title: 'Custos do Mês',
+            trailing: AppPrimaryButton(
+              icon: Icons.add,
+              label: 'Adicionar',
+              onPressed: () => _showAdicionarCusto(context, ref),
+            ),
           ),
-          const SizedBox(height: AppSpacing.sm),
 
           // Botões de categoria rápida
           Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: _categorias
-                .map((cat) => ActionChip(
-                      avatar: Icon(cat.icon,
-                          size: 16, color: AppColors.primaryOrange),
-                      label:
-                          Text(cat.label, style: AppTypography.caption),
-                      onPressed: () =>
-                          _showAdicionarCustoComCategoria(context, ref, cat),
-                    ))
-                .toList(),
+            spacing: AppSpacing.x2,
+            runSpacing: AppSpacing.x2,
+            children: chips,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.x4),
 
           // Lista de custos cadastrados
           custosAsync.when(
@@ -147,9 +195,9 @@ class _OperacionalTab extends ConsumerWidget {
             data: (custos) => custos.isEmpty
                 ? Center(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2l),
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x6),
                       child: Text('Nenhum custo cadastrado este mês.',
-                          style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                          style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
                     ),
                   )
                 : Column(
@@ -182,20 +230,18 @@ class _OperacionalTab extends ConsumerWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
+              AppTextField(
                 controller: descCtrl,
-                decoration: const InputDecoration(labelText: 'Descrição'),
+                hint: 'Descrição',
               ),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
+              const SizedBox(height: AppSpacing.x3),
+              AppTextField(
                 controller: valorCtrl,
-                autofocus: true,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                    labelText: 'Valor (R\$)', prefixText: 'R\$ '),
+                hint: 'R\$ Valor',
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.x3),
               DropdownButtonFormField<String>(
                 initialValue: tipo,
                 decoration: const InputDecoration(labelText: 'Categoria'),
@@ -215,9 +261,7 @@ class _OperacionalTab extends ConsumerWidget {
               onPressed: () => Navigator.pop(ctx),
               child: const Text('Cancelar'),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryOrange),
+            AppPrimaryButton(
               onPressed: () async {
                 final valorStr = valorCtrl.text.replaceAll(',', '.');
                 if (descCtrl.text.isEmpty || valorStr.isEmpty) return;
@@ -236,12 +280,11 @@ class _OperacionalTab extends ConsumerWidget {
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Erro ao salvar: $e')));
+                        SnackBar(content: Text(ApiService.extractErrorMessage(e))));
                   }
                 }
               },
-              child:
-                  Text('SALVAR', style: AppTypography.bodySmall.copyWith(color: AppColors.white)),
+              label: 'SALVAR',
             ),
           ],
         ),
@@ -263,155 +306,79 @@ class _PorClienteTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('Erro: $e'),
-          const SizedBox(height: AppSpacing.md),
-          ElevatedButton(
+          Text(ApiService.extractErrorMessage(e), style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+          const SizedBox(height: AppSpacing.x3),
+          AppPrimaryButton(
             onPressed: () =>
                 ref.read(faturamentoPorClienteProvider.notifier).refresh(),
-            child: const Text('Tentar novamente'),
+            label: 'Tentar novamente',
           ),
         ]),
       ),
       data: (clientes) {
         final total = clientes.fold(0.0, (s, c) => s + c.total);
 
-        return Column(
-          children: [
-            // Header da tabela
-            Container(
-              color: AppColors.surfaceGray,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: 10),
-              child: Row(
+        if (clientes.isEmpty) {
+          return Center(
+            child: Text('Nenhum faturamento registrado este mês.',
+                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+          );
+        }
+
+        final tableRows = clientes.map((c) {
+          final pct = total > 0 ? (c.total / total * 100) : 0.0;
+          return AppTableRow(
+            cells: [
+              Row(
                 children: [
-                  Expanded(
-                      flex: 5,
-                      child: Text('CLIENTE',
-                          style: AppTypography.labelSmall.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.gray500))),
-                  Expanded(
-                      flex: 3,
-                      child: Text('NICHO',
-                          style: AppTypography.labelSmall.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.gray500))),
-                  Expanded(
-                      flex: 3,
-                      child: Text('FATURAMENTO',
-                          textAlign: TextAlign.right,
-                          style: AppTypography.labelSmall.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.gray500))),
-                  Expanded(
-                      flex: 3,
-                      child: Text('PARTICIPAÇÃO',
-                          textAlign: TextAlign.right,
-                          style: AppTypography.labelSmall.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.gray500))),
+                  ClientAvatar(initials: c.nome.isNotEmpty ? c.nome[0] : '?', size: 36, tone: ClientAvatarTone.success),
+                  const SizedBox(width: 8),
+                  Text(c.nome, style: AppTypography.label.copyWith(fontWeight: FontWeight.w500)),
                 ],
               ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: clientes.isEmpty
-                  ? Center(
-                      child: Text('Nenhum faturamento registrado este mês.',
-                          style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)))
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                      itemCount: clientes.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (_, i) {
-                        final c = clientes[i];
-                        final pct = total > 0 ? (c.total / total * 100) : 0.0;
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 5,
-                                child: Text(c.nome,
-                                    style: AppTypography.labelLarge.copyWith(
-                                        fontWeight: FontWeight.w500)),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  c.nicho ?? '—',
-                                  style: AppTypography.caption.copyWith(
-                                      color: AppColors.gray500),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  'R\$ ${c.total.toStringAsFixed(2).replaceAll('.', ',')}',
-                                  textAlign: TextAlign.right,
-                                  style: AppTypography.labelLarge.copyWith(
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      '${pct.toStringAsFixed(1)}%',
-                                      textAlign: TextAlign.right,
-                                      style: AppTypography.labelSmall.copyWith(
-                                          color: AppColors.primaryOrange,
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                                    const SizedBox(height: 3),
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(AppRadius.xs),
-                                      child: LinearProgressIndicator(
-                                        value: pct / 100,
-                                        minHeight: 4,
-                                        backgroundColor: AppColors.surfaceGray,
-                                        valueColor:
-                                            const AlwaysStoppedAnimation(
-                                                AppColors.primaryOrange),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+              Text(c.nicho ?? '—', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+              MoneyText(value: c.total, fontSize: 14, fontWeight: FontWeight.w600),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text('${pct.toStringAsFixed(1)}%', style: AppTypography.caption.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                  const SizedBox(width: 6),
+                  SizedBox(
+                    width: 48,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: LinearProgressIndicator(
+                        value: pct / 100,
+                        minHeight: 4,
+                        backgroundColor: AppColors.bgBase,
+                        valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                      ),
                     ),
-            ),
-            // Total
-            if (clientes.isNotEmpty)
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
-                decoration: const BoxDecoration(
-                  color: AppColors.surfaceGray,
-                  border:
-                      Border(top: BorderSide(color: AppColors.surfaceDivider)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text('TOTAL DO MÊS: ',
-                        style: AppTypography.labelLarge.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.gray500)),
-                    Text(
-                      'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}',
-                      style: AppTypography.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primaryOrange),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-          ],
+            ],
+            onTap: () {
+              // navigate to client detail — hook for future
+            },
+          );
+        }).toList();
+
+        final formattedTotal = 'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}';
+
+        return Padding(
+          padding: const EdgeInsets.all(AppSpacing.x5),
+          child: AppTable(
+            columns: const [
+              AppTableColumn(label: 'CLIENTE', align: 'left'),
+              AppTableColumn(label: 'NICHO', align: 'left'),
+              AppTableColumn(label: 'FATURAMENTO', align: 'right'),
+              AppTableColumn(label: 'PARTICIPAÇÃO', align: 'right'),
+            ],
+            rows: tableRows,
+            footer: Text('Total: $formattedTotal', style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+            hoverHighlight: true,
+          ),
         );
       },
     );
@@ -431,93 +398,106 @@ class _ReceiveisTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, __) => const Center(child: Text('Erro ao carregar')),
       data: (resumo) => SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        padding: const EdgeInsets.all(AppSpacing.x6),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Roleta visual ────────────────────────────────────────────
+            // Eyebrow + micro-título (peach gradient através do scaffold)
+            Row(
+              children: [
+                Container(
+                  width: 18,
+                  height: 1,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'RECEBÍVEIS DO FRANQUEADO',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.x4),
+            // 3 KPI cards com tipografia unificada (usando KpiFinCard)
+            ResponsiveGrid(
+              mobileColumns: 1,
+              tabletColumns: 3,
+              desktopColumns: 3,
+              spacing: AppSpacing.x3,
+              runSpacing: AppSpacing.x3,
+              children: [
+                KpiFinCard(
+                  label: 'Bruto',
+                  value: _formatBRL(resumo.fatBruto),
+                  tone: KpiFinTone.info,
+                  sub: 'faturamento total',
+                ),
+                KpiFinCard(
+                  label: 'Líquido',
+                  value: _formatBRL(resumo.fatLiquido),
+                  tone: KpiFinTone.success,
+                  sub: 'após custos',
+                ),
+                KpiFinCard(
+                  label: 'Custos',
+                  value: _formatBRL(resumo.totalCustos),
+                  tone: KpiFinTone.danger,
+                  sub: 'operacionais',
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.x6),
+
+            // ── Card Bruto × Líquido × Custos com gradiente suave ─────────
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.x3l),
               decoration: BoxDecoration(
-                color: AppColors.infoPurple,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
+                gradient: const LinearGradient(
+                  colors: [AppColors.primarySofter, AppColors.bgCard],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(color: AppColors.primarySoft),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
+              padding: const EdgeInsets.all(AppSpacing.x5),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('RECEBÍVEIS DO FRANQUEADO',
-                      style: AppTypography.caption.copyWith(
-                          color: AppColors.white,
-                          letterSpacing: 1.2,
-                          fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 28),
-                  RoletaWidget(
-                      value: resumo.fatBruto,
-                      label: 'FAT. BRUTO',
-                      fontSize: 34),
-                  const SizedBox(height: AppSpacing.xl),
-                  RoletaWidget(
-                      value: resumo.fatLiquido,
-                      label: 'FAT. LÍQUIDO',
-                      fontSize: 26),
-                  const SizedBox(height: AppSpacing.xl),
-                  RoletaWidget(
-                      value: resumo.totalCustos, label: 'CUSTOS', fontSize: 20),
+                  Text('Bruto × Líquido × Custos',
+                      style: AppTypography.h3),
+                  const SizedBox(height: AppSpacing.x1),
+                  Text(
+                    'Comparativo do período selecionado.',
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: AppSpacing.x5),
+                  _BrutoLiquidoBar(resumo: resumo),
+                  const SizedBox(height: AppSpacing.x4),
+                  const Wrap(
+                    spacing: AppSpacing.x4,
+                    runSpacing: AppSpacing.x2,
+                    children: [
+                      _LegendDot(color: AppColors.info, label: 'Fat. Bruto'),
+                      _LegendDot(
+                          color: AppColors.success, label: 'Fat. Líquido'),
+                      _LegendDot(color: AppColors.danger, label: 'Custos'),
+                    ],
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.x2l),
-
-            // ── Comparação BRUTO vs LÍQUIDO ──────────────────────────────
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('BRUTO vs LÍQUIDO',
-                        style: AppTypography.labelLarge.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5)),
-                    const SizedBox(height: AppSpacing.lg),
-                    _BrutoLiquidoBar(resumo: resumo),
-                    const SizedBox(height: AppSpacing.lg),
-                    const Row(
-                      children: [
-                        _LegendDot(
-                            color: AppColors.infoBlue, label: 'Fat. Bruto'),
-                        SizedBox(width: AppSpacing.lg),
-                        _LegendDot(
-                            color: AppColors.successGreen,
-                            label: 'Fat. Líquido'),
-                        SizedBox(width: AppSpacing.lg),
-                        _LegendDot(color: AppColors.dangerRed, label: 'Custos'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.x5),
 
             // ── Botão Meus Boletos ────────────────────────────────────────
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.receipt_long_rounded,
-                    color: AppColors.primaryOrange),
-                label: Text('VER MEUS BOLETOS',
-                    style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.primaryOrange,
-                        fontWeight: FontWeight.w700)),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.primaryOrange),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.lg)),
-                ),
-                onPressed: () =>
-                    Navigator.pushNamed(context, AppRoutes.boletos),
-              ),
+            AppPrimaryButton(
+              icon: Icons.receipt_long_rounded,
+              label: 'VER MEUS BOLETOS',
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.boletos),
             ),
           ],
         ),
@@ -528,133 +508,129 @@ class _ReceiveisTab extends ConsumerWidget {
 
 // ─── WIDGETS AUXILIARES ───────────────────────────────────────────────────────
 
-class _QuickMetric extends StatelessWidget {
-  final String label;
-  final double value;
-  final Color color;
-  const _QuickMetric(this.label, this.value, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: AppTypography.caption.copyWith(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                    color: color)),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}',
-              style: AppTypography.bodySmall.copyWith(
-                  fontWeight: FontWeight.w700, color: color),
-            ),
-          ],
-        ),
-      ),
-    );
+String _formatBRL(double v) {
+  if (v >= 1000) {
+    return '${(v / 1000).toStringAsFixed(1)}k';
   }
+  return v.toStringAsFixed(2).replaceAll('.', ',');
 }
 
-class _FluxoCaixaBar extends StatelessWidget {
-  final FluxoCaixa fluxo;
-  const _FluxoCaixaBar({required this.fluxo});
+class _FluxBar extends StatelessWidget {
+  final double entradas;
+  final double saidas;
+  final double saldo;
+
+  const _FluxBar({required this.entradas, required this.saidas, required this.saldo});
 
   String _fmt(double v) => 'R\$ ${v.toStringAsFixed(2).replaceAll('.', ',')}';
 
   @override
   Widget build(BuildContext context) {
-    final total = fluxo.totalEntradas + fluxo.totalSaidas;
-    final pctEntradas = total > 0 ? fluxo.totalEntradas / total : 0.5;
+    final total = entradas + saidas;
+    final pctEntradas = total > 0 ? entradas / total : 0.5;
 
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.compactPadding),
+      padding: const EdgeInsets.all(AppSpacing.x3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceGray,
+        color: AppColors.bgBase,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('ENTRADAS',
                         style: AppTypography.caption.copyWith(
-                            fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.successGreen,
+                            color: AppColors.success,
                             letterSpacing: 0.8)),
-                    const SizedBox(height: 2),
-                    Text(_fmt(fluxo.totalEntradas),
-                        style: AppTypography.bodyLarge.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.successGreen)),
+                    const SizedBox(height: AppSpacing.x1),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(_fmt(entradas),
+                          style: AppTypography.bodyLarge.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.success)),
+                    ),
                   ],
                 ),
               ),
+              const SizedBox(width: AppSpacing.x2),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.x3, vertical: AppSpacing.x1),
                 decoration: BoxDecoration(
-                  color: fluxo.saldo >= 0
-                      ? AppColors.successGreen.withValues(alpha: 0.1)
-                      : AppColors.dangerRed.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  color: saldo >= 0
+                      ? AppColors.success.withValues(alpha: 0.1)
+                      : AppColors.danger.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Text(
-                  '${fluxo.saldo >= 0 ? '+' : ''}${_fmt(fluxo.saldo)}',
+                  '${saldo >= 0 ? '+' : ''}${_fmt(saldo)}',
                   style: AppTypography.caption.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: fluxo.saldo >= 0
-                          ? AppColors.successGreen
-                          : AppColors.dangerRed),
+                      color:
+                          saldo >= 0 ? AppColors.success : AppColors.danger),
                 ),
               ),
+              const SizedBox(width: AppSpacing.x2),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('SAÍDAS',
                         style: AppTypography.caption.copyWith(
-                            fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.dangerRed,
+                            color: AppColors.danger,
                             letterSpacing: 0.8)),
-                    const SizedBox(height: 2),
-                    Text(_fmt(fluxo.totalSaidas),
-                        style: AppTypography.bodyLarge.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.dangerRed)),
+                    const SizedBox(height: AppSpacing.x1),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(_fmt(saidas),
+                          style: AppTypography.bodyLarge.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.danger)),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
+          const SizedBox(height: AppSpacing.x3),
+          Container(
+            height: 8,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: AppColors.bgMuted,
+            ),
             child: Row(
               children: [
-                Expanded(
+                Flexible(
                   flex: (pctEntradas * 100).round().clamp(1, 99),
-                  child: Container(height: 12, color: AppColors.successGreen),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(4)),
+                      gradient: LinearGradient(colors: [AppColors.success, AppColors.success]),
+                    ),
+                  ),
                 ),
-                Expanded(
+                Flexible(
                   flex: ((1 - pctEntradas) * 100).round().clamp(1, 99),
-                  child: Container(height: 12, color: AppColors.dangerRed),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(4)),
+                      color: AppColors.danger,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -665,6 +641,8 @@ class _FluxoCaixaBar extends StatelessWidget {
   }
 }
 
+// ─── ABA C: RECEBÍVEIS
+
 class _BrutoLiquidoBar extends StatelessWidget {
   final FinanceiroResumo resumo;
   const _BrutoLiquidoBar({required this.resumo});
@@ -674,40 +652,40 @@ class _BrutoLiquidoBar extends StatelessWidget {
     final max = (resumo.fatBruto > 0 ? resumo.fatBruto : 1).toDouble();
     return Column(
       children: [
-        _buildBar('Bruto', resumo.fatBruto.toDouble(), max, AppColors.infoBlue),
-        const SizedBox(height: AppSpacing.sm),
-        _buildBar('Líquido', resumo.fatLiquido.toDouble(), max,
-            AppColors.successGreen),
-        const SizedBox(height: AppSpacing.sm),
-        _buildBar(
-            'Custos', resumo.totalCustos.toDouble(), max, AppColors.dangerRed),
+        _buildBar(context, 'Bruto', resumo.fatBruto.toDouble(), max, AppColors.info),
+        const SizedBox(height: AppSpacing.x2),
+        _buildBar(context, 'Líquido', resumo.fatLiquido.toDouble(), max,
+            AppColors.success),
+        const SizedBox(height: AppSpacing.x2),
+        _buildBar(context,
+            'Custos', resumo.totalCustos.toDouble(), max, AppColors.danger),
       ],
     );
   }
 
-  Widget _buildBar(String label, double value, double max, Color color) {
+  Widget _buildBar(BuildContext context, String label, double value, double max, Color color) {
     final pct = (value / max).clamp(0.0, 1.0);
     return Row(
       children: [
         SizedBox(
             width: 60,
             child: Text(label,
-                style: AppTypography.labelSmall.copyWith(color: AppColors.gray500))),
+                style: AppTypography.caption.copyWith(color: AppColors.textSecondary))),
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: LinearProgressIndicator(
               value: pct,
               minHeight: 14,
-              backgroundColor: AppColors.surfaceGray,
+              backgroundColor: AppColors.bgBase,
               valueColor: AlwaysStoppedAnimation(color),
             ),
           ),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: AppSpacing.x2),
         Text(
           'R\$ ${value.toStringAsFixed(0)}',
-          style: AppTypography.labelSmall.copyWith(
+          style: AppTypography.caption.copyWith(
               fontWeight: FontWeight.w600, color: color),
         ),
       ],
@@ -732,33 +710,27 @@ class _CustoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: AppColors.primaryOrangeLight,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        child: const Icon(Icons.receipt_outlined,
-            color: AppColors.primaryOrange, size: 18),
+      leading: ClientAvatar(
+        initials: custo.descricao.isNotEmpty ? custo.descricao[0] : '?',
+        size: 36,
+        tone: ClientAvatarTone.neutral,
       ),
       title: Text(custo.descricao,
-          style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w500)),
+          style: AppTypography.label.copyWith(fontWeight: FontWeight.w500)),
       subtitle: Text(_tipoLabel[custo.tipo] ?? custo.tipo,
-          style: AppTypography.labelSmall.copyWith(color: AppColors.gray500)),
+          style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'R\$ ${custo.valor.toStringAsFixed(2).replaceAll('.', ',')}',
-            style: AppTypography.labelLarge.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.dangerRed),
+          MoneyText(
+            value: custo.valor,
+            fontSize: 14,
+            color: AppColors.danger,
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: AppSpacing.x1),
           IconButton(
             icon:
-                const Icon(Icons.delete_outline, size: 18, color: AppColors.gray400),
+                const Icon(Icons.delete_outline, size: 18, color: AppColors.textMuted),
             onPressed: () async {
               await ref.read(custosProvider.notifier).deletar(custo.id);
               ref.invalidate(financeiroProvider);
@@ -784,8 +756,8 @@ class _LegendDot extends StatelessWidget {
             width: 10,
             height: 10,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: AppSpacing.xs),
-        Text(label, style: AppTypography.labelSmall.copyWith(color: AppColors.gray500)),
+        const SizedBox(width: AppSpacing.x1),
+        Text(label, style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
       ],
     );
   }
@@ -799,3 +771,4 @@ class _Categoria {
   final String valor;
   const _Categoria(this.label, this.icon, this.valor);
 }
+

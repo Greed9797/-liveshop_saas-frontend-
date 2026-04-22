@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
-import '../theme/app_radius.dart';
-import '../theme/app_spacing.dart';
+import '../design_system/design_system.dart';
 
 /// NPS Gauge — layout horizontal compacto que se adapta ao espaço disponível.
 /// Substitui o termômetro vertical que quebrava em containers estreitos.
@@ -10,10 +7,10 @@ class NpsGauge extends StatelessWidget {
   final double score; // 0 to 10
   const NpsGauge({super.key, required this.score});
 
-  Color get _scoreColor {
-    if (score >= 9) return AppColors.successGreen;
-    if (score >= 7) return AppColors.warningYellow;
-    return AppColors.dangerRed;
+  Color _scoreColor() {
+    if (score >= 9) return AppColors.success;
+    if (score >= 7) return AppColors.warning;
+    return AppColors.danger;
   }
 
   String get _label {
@@ -27,7 +24,7 @@ class NpsGauge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.x4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -35,8 +32,8 @@ class NpsGauge extends StatelessWidget {
             Row(
               children: [
                 Text('NPS',
-                    style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.gray500,
+                    style: AppTypography.caption.copyWith(
+                        color: AppColors.textSecondary,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.2)),
                 const Spacer(),
@@ -44,13 +41,13 @@ class NpsGauge extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: _scoreColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    color: _scoreColor().withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
                   child: Text(
                     _label,
                     style: AppTypography.caption.copyWith(
-                        color: _scoreColor,
+                        color: _scoreColor(),
                         fontWeight: FontWeight.w700,
                         fontSize: 10),
                   ),
@@ -64,14 +61,14 @@ class NpsGauge extends StatelessWidget {
                 Text(
                   score.toStringAsFixed(1),
                   style: AppTypography.h1.copyWith(
-                      fontSize: 32, color: _scoreColor),
+                      fontSize: 32, color: _scoreColor()),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4, left: 2),
                   child: Text(
                     '/10',
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.gray400),
+                        .copyWith(color: AppColors.textMuted),
                   ),
                 ),
               ],
@@ -79,12 +76,12 @@ class NpsGauge extends StatelessWidget {
             const SizedBox(height: 10),
             // Barra de progresso horizontal
             ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.xs),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: LinearProgressIndicator(
                 value: score / 10,
                 minHeight: 6,
-                backgroundColor: AppColors.gray200,
-                valueColor: AlwaysStoppedAnimation<Color>(_scoreColor),
+                backgroundColor: AppColors.bgMuted,
+                valueColor: AlwaysStoppedAnimation<Color>(_scoreColor()),
               ),
             ),
             const SizedBox(height: 8),
@@ -94,13 +91,13 @@ class NpsGauge extends StatelessWidget {
               children: [
                 Text('0',
                     style: AppTypography.caption
-                        .copyWith(fontSize: 9, color: AppColors.gray400)),
+                        .copyWith(fontSize: 9, color: AppColors.textMuted)),
                 Text('5',
                     style: AppTypography.caption
-                        .copyWith(fontSize: 9, color: AppColors.gray400)),
+                        .copyWith(fontSize: 9, color: AppColors.textMuted)),
                 Text('10',
                     style: AppTypography.caption
-                        .copyWith(fontSize: 9, color: AppColors.gray400)),
+                        .copyWith(fontSize: 9, color: AppColors.textMuted)),
               ],
             ),
           ],

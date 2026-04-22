@@ -26,6 +26,11 @@ class Contrato {
   final String? reprovacaoMotivo;
   final int? tempoEmEsperaHoras;
   final double? excelenciaWeight;
+  // Pacote / horas
+  final String? pacoteId;
+  final double horasContratadas;
+  final double horasConsumidas;
+  double get horasRestantes => horasContratadas - horasConsumidas;
 
   const Contrato({
     required this.id,
@@ -54,6 +59,9 @@ class Contrato {
     this.reprovacaoMotivo,
     this.tempoEmEsperaHoras,
     this.excelenciaWeight,
+    this.pacoteId,
+    this.horasContratadas = 0,
+    this.horasConsumidas = 0,
   });
 
   factory Contrato.fromJson(Map<String, dynamic> j) => Contrato(
@@ -105,5 +113,10 @@ class Contrato {
             ((j['tempo_em_espera_horas'] ?? j['tempo_espera']) as num?)
                 ?.toInt(),
         excelenciaWeight: ((j['excelencia_weight']) as num?)?.toDouble(),
+        pacoteId: j['pacote_id'] as String?,
+        horasContratadas:
+            (j['horas_contratadas'] as num? ?? 0).toDouble(),
+        horasConsumidas:
+            (j['horas_consumidas'] as num? ?? 0).toDouble(),
       );
 }

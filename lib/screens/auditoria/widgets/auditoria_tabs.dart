@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_colors.dart';
-import '../../../theme/app_typography.dart';
+import '../../../design_system/design_system.dart';
 
 class AuditoriaTabs extends StatelessWidget {
   final String current;
@@ -30,14 +29,13 @@ class AuditoriaTabs extends StatelessWidget {
           label: Text(item.$2),
           selected: isActive,
           onSelected: (_) => onChanged(item.$1),
-          selectedColor: AppColors.primaryOrange,
-          backgroundColor: AppColors.surfaceWhite,
+          selectedColor: AppColors.primary,
+          backgroundColor: AppColors.bgCard,
           side: BorderSide(
-            color:
-                isActive ? AppColors.primaryOrange : AppColors.surfaceDivider,
+            color: isActive ? AppColors.primary : AppColors.borderLight,
           ),
           labelStyle: AppTypography.bodySmall.copyWith(
-            color: isActive ? AppColors.white : AppColors.textPrimary,
+            color: isActive ? AppColors.bgCard : AppColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         );

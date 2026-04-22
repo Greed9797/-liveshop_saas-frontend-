@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../widgets/app_scaffold.dart';
-import '../../widgets/metric_card.dart';
 import '../../providers/excelencia_provider.dart';
 import '../../models/excelencia.dart' show ExcelenciaData;
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_shadows.dart';
-import '../../widgets/app_card.dart';
+import '../../services/api_service.dart';
+import '../../design_system/design_system.dart';
 
-/// Programa de excelência com métricas e cálculo de ROI
 class ExcelenciaScreen extends ConsumerWidget {
   const ExcelenciaScreen({super.key});
 
@@ -22,44 +15,39 @@ class ExcelenciaScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final excelenciaAsync = ref.watch(excelenciaProvider);
 
-    return AppScaffold(
+    return AppScreenScaffold(
       currentRoute: AppRoutes.excelencia,
+      title: 'Programa de Excelência',
+      eyebrow: 'ROI & saúde da franquia',
+      titleSerif: true,
+      subtitle:
+          'Um diagnóstico vivo da sua operação. O que está funcionando, o que precisa de atenção e quanto tempo até o payback.',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: 'Atualizar',
+          onPressed: () => ref.read(excelenciaProvider.notifier).refresh(),
+          color: AppColors.textSecondary,
+        ),
+      ],
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Programa de Excelência',
-                    style: AppTypography.bodyLarge
-                        .copyWith(fontWeight: FontWeight.w500)),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () =>
-                      ref.read(excelenciaProvider.notifier).refresh(),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            excelenciaAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text('Erro: $e'),
-                  const SizedBox(height: AppSpacing.md),
-                  ElevatedButton(
-                    onPressed: () =>
-                        ref.read(excelenciaProvider.notifier).refresh(),
-                    child: const Text('Tentar novamente'),
-                  ),
-                ]),
+        padding: const EdgeInsets.all(AppSpacing.x6),
+        child: excelenciaAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Text(
+                ApiService.extractErrorMessage(e),
+                style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
               ),
-              data: (data) => _ExcelenciaContent(
-                  data: data, taxaFranquia: _taxaFranquia),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.x3),
+              AppSecondaryButton(
+                onPressed: () => ref.read(excelenciaProvider.notifier).refresh(),
+                label: 'Tentar novamente',
+              ),
+            ]),
+          ),
+          data: (data) => _ExcelenciaContent(data: data, taxaFranquia: _taxaFranquia),
         ),
       ),
     );
@@ -73,135 +61,498 @@ class _ExcelenciaContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mesesROI =
-        data.fatMesAtual > 0 ? taxaFranquia / data.fatMesAtual : 0.0;
+    final mesesROI = data.fatMesAtual > 0 ? taxaFranquia / data.fatMesAtual : 0.0;
     final crescendo = data.crescimentoPct >= 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Score bar
+        _ScoreHeroCard(score: data.score),
+        const SizedBox(height: AppSpacing.x6),
+        const AppSectionHeader(
+          title: 'Métricas Operacionais',
+          subtitle: 'Retenção, crescimento, produtividade e churn.',
+        ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth >= AppBreakpoints.tablet;
+            return isDesktop
+                ? Row(children: [
+                    Expanded(child: MetricCardRebrand(icon: Icons.favorite_border, label: 'RETENÇÃO', value: '${data.taxaRetencao}%', toneColor: AppColors.success, sub: '${data.ativos} ativos', target: 'Meta: 90%')),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(child: MetricCardRebrand(icon: Icons.trending_up, label: 'CRESCIMENTO', value: '${crescendo ? '+' : ''}${data.crescimentoPct}%', toneColor: crescendo ? AppColors.success : AppColors.danger, sub: 'vs. mês anterior')),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(child: MetricCardRebrand(icon: Icons.bolt_outlined, label: 'PRODUTIVIDADE', value: '${data.ativos}', toneColor: AppColors.primary, sub: 'carteira ativa')),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(child: MetricCardRebrand(icon: Icons.remove_circle_outline, label: 'CHURN', value: '${100 - data.taxaRetencao}%', toneColor: AppColors.danger, sub: '${data.cancelados} cancelamentos')),
+                  ])
+                : Column(children: [
+                    MetricCardRebrand(icon: Icons.favorite_border, label: 'RETENÇÃO', value: '${data.taxaRetencao}%', toneColor: AppColors.success, sub: '${data.ativos} ativos', target: 'Meta: 90%'),
+                    const SizedBox(height: AppSpacing.x3),
+                    MetricCardRebrand(icon: Icons.trending_up, label: 'CRESCIMENTO', value: '${crescendo ? '+' : ''}${data.crescimentoPct}%', toneColor: crescendo ? AppColors.success : AppColors.danger, sub: 'vs. mês anterior'),
+                    const SizedBox(height: AppSpacing.x3),
+                    MetricCardRebrand(icon: Icons.bolt_outlined, label: 'PRODUTIVIDADE', value: '${data.ativos}', toneColor: AppColors.primary, sub: 'carteira ativa'),
+                    const SizedBox(height: AppSpacing.x3),
+                    MetricCardRebrand(icon: Icons.remove_circle_outline, label: 'CHURN', value: '${100 - data.taxaRetencao}%', toneColor: AppColors.danger, sub: '${data.cancelados} cancelamentos'),
+                  ]);
+          },
+        ),
+        const SizedBox(height: AppSpacing.x6),
         AppCard(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.compactPadding),
+            padding: const EdgeInsets.all(AppSpacing.x5),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text('Score de Excelência',
-                        style: AppTypography.bodyMedium
-                            .copyWith(fontWeight: FontWeight.w500)),
-                    Text('${data.score}/100',
-                        style: AppTypography.bodyLarge.copyWith(
-                            fontWeight: FontWeight.w700)),
+                    Container(
+                      width: 4,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'RETORNO SOBRE INVESTIMENTO (ROI)',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textMuted,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            mesesROI > 0
+                                ? 'Payback em ${mesesROI.toStringAsFixed(1)} meses'
+                                : 'Configure sua taxa de franquia',
+                            style: AppTypography.h3,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Taxa R\$ ${taxaFranquia.toStringAsFixed(0)} ÷ faturamento líquido R\$ ${data.fatMesAtual.toStringAsFixed(0)}/mês',
+                            style: AppTypography.caption
+                                .copyWith(color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    AppPrimaryButton(
+                      label: 'Configurar agora',
+                      onPressed: () {},
+                    ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.xs),
-                  child: LinearProgressIndicator(
-                    value: data.score / 100,
-                    minHeight: 10,
-                    backgroundColor: AppColors.gray200,
-                    valueColor: AlwaysStoppedAnimation(
-                      data.score >= 80
-                          ? AppColors.success
-                          : data.score >= 50
-                              ? AppColors.warning
-                              : AppColors.danger,
-                    ),
-                  ),
+                const SizedBox(height: AppSpacing.x5),
+                const Divider(height: 1, color: AppColors.borderLight),
+                const SizedBox(height: AppSpacing.x4),
+                LayoutBuilder(
+                  builder: (ctx, c) {
+                    final wide = c.maxWidth >= 640;
+                    final boxes = [
+                      const _RoiBox(
+                        label: 'Investimento inicial',
+                        value: 'R\$ 29.000',
+                        sub: 'Taxa de franquia',
+                      ),
+                      _RoiBox(
+                        label: 'Payback estimado',
+                        value: mesesROI > 0
+                            ? '${mesesROI.toStringAsFixed(1)}m'
+                            : '—',
+                        sub: mesesROI > 0
+                            ? 'meses até o retorno'
+                            : 'Aguardando configuração',
+                        dimmed: mesesROI <= 0,
+                      ),
+                      _RoiBox(
+                        label: 'Break-even',
+                        value: data.fatMesAtual > 0
+                            ? 'R\$ ${(taxaFranquia / 12).toStringAsFixed(0)}'
+                            : '—',
+                        sub: data.fatMesAtual > 0
+                            ? 'receita mensal alvo'
+                            : 'Depende do faturamento líquido',
+                        dimmed: data.fatMesAtual <= 0,
+                      ),
+                    ];
+                    if (!wide) {
+                      return Column(
+                        children: [
+                          for (var i = 0; i < boxes.length; i++) ...[
+                            if (i > 0) const SizedBox(height: AppSpacing.x3),
+                            boxes[i],
+                          ],
+                        ],
+                      );
+                    }
+                    return IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (var i = 0; i < boxes.length; i++) ...[
+                            if (i > 0) const SizedBox(width: AppSpacing.x3),
+                            Expanded(child: boxes[i]),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 14),
-        Wrap(
-          spacing: 14,
-          runSpacing: 14,
-          children: [
-            SizedBox(
-                width: 220,
-                child: MetricCard(
-                  label: 'RETENÇÃO DE CLIENTES',
-                  value: '${data.taxaRetencao}%',
-                  icon: Icons.favorite_border,
-                  iconColor: AppColors.success,
-                  subtitle:
-                      '${data.ativos} ativos / ${data.cancelados} cancelados',
-                )),
-            SizedBox(
-                width: 220,
-                child: MetricCard(
-                  label: 'CRESCIMENTO',
-                  value: '${crescendo ? '+' : ''}${data.crescimentoPct}%',
-                  icon: crescendo ? Icons.trending_up : Icons.trending_down,
-                  iconColor: crescendo ? AppColors.success : AppColors.danger,
-                  subtitle: 'vs. mês anterior',
-                )),
-            SizedBox(
-                width: 220,
-                child: MetricCard(
-                  label: 'PRODUTIVIDADE',
-                  value: '${data.ativos} clientes',
-                  icon: Icons.bolt_outlined,
-                  iconColor: AppColors.primary,
-                  subtitle: 'carteira ativa',
-                )),
-            SizedBox(
-                width: 220,
-                child: MetricCard(
-                  label: 'CHURN',
-                  value: '${100 - data.taxaRetencao}%',
-                  icon: Icons.remove_circle_outline,
-                  iconColor: AppColors.danger,
-                  subtitle:
-                      '${data.cancelados} cancelamento${data.cancelados == 1 ? '' : 's'}',
-                )),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.x3l),
+        const SizedBox(height: AppSpacing.x6),
         AppCard(
-          backgroundColor: AppColors.infoPurple,
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.screenPadding),
-            child: Row(
+            padding: const EdgeInsets.all(AppSpacing.x5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.savings_outlined,
-                    color: AppColors.lilac, size: 40),
-                const SizedBox(width: AppSpacing.xl),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('RETORNO SOBRE INVESTIMENTO (ROI)',
-                          style: AppTypography.caption.copyWith(
-                              color: AppColors.lilac, letterSpacing: 0.8)),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        '${mesesROI.toStringAsFixed(1)} meses',
-                        style: AppTypography.h1.copyWith(
-                            fontSize: 32,
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        'Taxa de franquia R\$ ${taxaFranquia.toStringAsFixed(0)} ÷ Fat. líq. R\$ ${data.fatMesAtual.toStringAsFixed(0)}/mês',
-                        style: AppTypography.caption.copyWith(
-                            color: AppColors.lilac.withValues(alpha: 0.8)),
-                      ),
-                    ],
-                  ),
+                Row(
+                  children: [
+                    const Icon(Icons.auto_awesome,
+                        color: AppColors.primary, size: 20),
+                    const SizedBox(width: AppSpacing.x2),
+                    Text('Próximas ações sugeridas',
+                        style: AppTypography.h3),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Prioridades para subir 10 pontos no score este mês',
+                  style: AppTypography.caption
+                      .copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: AppSpacing.x4),
+                const _ActionItem(
+                  number: 1,
+                  text: 'Ativar 3 cabines ociosas',
+                  desc:
+                      'Você tem cabines livres. Ativar metade adiciona ~R\$ 15k ao GMV projetado.',
+                  gain: '+6 pts',
+                ),
+                const _ActionItem(
+                  number: 2,
+                  text: 'Configurar taxa de franquia',
+                  desc:
+                      'Sem isso o payback e ROI ficam indisponíveis no dashboard.',
+                  gain: '+2 pts',
+                ),
+                const _ActionItem(
+                  number: 3,
+                  text: 'Captar 3 novos clientes no nicho âncora',
+                  desc:
+                      'Seu cliente âncora converte 100% — replique o perfil.',
+                  gain: '+2 pts',
                 ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─── Score hero ───────────────────────────────────────────────────────────────
+
+class _ScoreHeroCard extends StatelessWidget {
+  final int score;
+  const _ScoreHeroCard({required this.score});
+
+  @override
+  Widget build(BuildContext context) {
+    final int diff = 48 - score;
+    final String diffText = diff > 0
+        ? '$diff pontos abaixo do alvo da rede (48)'
+        : diff < 0
+            ? '${diff.abs()} pontos acima do alvo da rede (48)'
+            : 'no alvo da rede (48)';
+
+    return AppCard(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.x5),
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            Positioned(
+              right: -60,
+              top: -60,
+              child: Container(
+                width: 220,
+                height: 220,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.primarySofter,
+                      AppColors.primarySofter.withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Score de Excelência',
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.textMuted,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 1.2,
+                              )),
+                          const SizedBox(height: AppSpacing.x1),
+                          Text.rich(
+                            TextSpan(children: [
+                              TextSpan(
+                                text: '$score',
+                                style: AppTypography.h1.copyWith(
+                                  fontSize: 56,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -2,
+                                  height: 1,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '/100',
+                                style: AppTypography.h3.copyWith(
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ]),
+                          ),
+                          const SizedBox(height: AppSpacing.x2),
+                          Row(
+                            children: [
+                              AppBadge(
+                                label: score >= 80
+                                    ? 'Excelência'
+                                    : score >= 50
+                                        ? 'Operando'
+                                        : 'Em construção',
+                                type: score >= 80
+                                    ? AppBadgeType.success
+                                    : score >= 50
+                                        ? AppBadgeType.neutral
+                                        : AppBadgeType.warning,
+                                showDot: true,
+                              ),
+                              const SizedBox(width: AppSpacing.x2),
+                              Flexible(
+                                child: Text(
+                                  diffText,
+                                  style: AppTypography.caption.copyWith(
+                                    color: AppColors.textMuted,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x4),
+                    ScoreRing(score: score, size: 130),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.x4),
+                Container(
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: AppColors.bgMuted,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                  ),
+                  child: FractionallySizedBox(
+                    widthFactor: (score.clamp(0, 100)) / 100,
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.primary, AppColors.primaryLight],
+                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.x2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('0 · iniciante',
+                        style: AppTypography.caption
+                            .copyWith(color: AppColors.textMuted)),
+                    Text('50 · operando',
+                        style: AppTypography.caption
+                            .copyWith(color: AppColors.textMuted)),
+                    Text('80 · excelência',
+                        style: AppTypography.caption
+                            .copyWith(color: AppColors.textMuted)),
+                    Text('100 · benchmark',
+                        style: AppTypography.caption
+                            .copyWith(color: AppColors.textMuted)),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── RoiBox ──────────────────────────────────────────────────────────────────
+
+class _RoiBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final String sub;
+  final bool dimmed;
+
+  const _RoiBox({
+    required this.label,
+    required this.value,
+    required this.sub,
+    this.dimmed = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: dimmed ? 0.7 : 1.0,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.x4, vertical: AppSpacing.x4),
+        decoration: BoxDecoration(
+          color: dimmed ? AppColors.bgMuted : AppColors.primarySofter,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label.toUpperCase(),
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 1.2,
+                fontSize: 10,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: AppTypography.h3.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              sub,
+              style: AppTypography.caption
+                  .copyWith(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionItem extends StatelessWidget {
+  final int number;
+  final String text;
+  final String desc;
+  final String gain;
+
+  const _ActionItem({
+    required this.number,
+    required this.text,
+    required this.desc,
+    required this.gain,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x3),
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.hairline, width: 1),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.primarySofter,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              '$number',
+              style: AppTypography.caption.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.x3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  text,
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  desc,
+                  style: AppTypography.caption
+                      .copyWith(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.x3),
+          AppBadge(label: gain, type: AppBadgeType.success),
+          const SizedBox(width: AppSpacing.x2),
+          AppGhostButton(
+            label: 'Abrir',
+            icon: Icons.arrow_forward,
+            onPressed: () {},
+          ),
+        ],
+      ),
     );
   }
 }

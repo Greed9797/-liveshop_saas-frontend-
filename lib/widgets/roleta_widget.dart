@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import '../design_system/design_system.dart';
 
 /// Animação de "roleta" ao trocar valores de faturamento
 class RoletaWidget extends StatefulWidget {
@@ -13,7 +13,7 @@ class RoletaWidget extends StatefulWidget {
     required this.value,
     required this.label,
     this.fontSize = 32,
-    this.textColor = AppColors.white,
+    this.textColor = Colors.white,
   });
 
   @override
@@ -59,12 +59,12 @@ class _RoletaWidgetState extends State<RoletaWidget> {
         ),
         const SizedBox(height: 4),
         AnimatedSwitcher(
-          duration: const Duration(milliseconds: 600),
+          duration: const Duration(milliseconds: 280),
           transitionBuilder: (child, anim) => SlideTransition(
             position: Tween<Offset>(
-              begin: const Offset(0, 0.5),
+              begin: const Offset(0, 0.3),
               end: Offset.zero,
-            ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+            ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
             child: FadeTransition(opacity: anim, child: child),
           ),
           child: Text(

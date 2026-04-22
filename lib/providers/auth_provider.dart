@@ -2,18 +2,51 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 
+const _sensitiveAuthWindow = Duration(minutes: 5);
+
 class AuthState {
   final User? user;
   final bool isLoading;
   final String? error;
+  final DateTime? lastSensitiveAuthAt;
 
-  const AuthState({this.user, this.isLoading = false, this.error});
+  const AuthState({
+    this.user,
+    this.isLoading = false,
+    this.error,
+    this.lastSensitiveAuthAt,
+  });
+
   bool get isAuthenticated => user != null;
+
+  bool get hasRecentSensitiveAuth {
+    final lastAuth = lastSensitiveAuthAt;
+    if (lastAuth == null) return false;
+    return DateTime.now().difference(lastAuth) <= _sensitiveAuthWindow;
+  }
 }
 
 class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() => const AuthState();
+
+  Future<void> _persistSession(
+    Map<String, dynamic> data, {
+    DateTime? lastSensitiveAuthAt,
+  }) async {
+    await ApiService.saveTokens(
+      data['access_token'] as String,
+      data['refresh_token'] as String,
+    );
+
+    final userJson = Map<String, dynamic>.from(data['user'] as Map);
+    await ApiService.saveUser(userJson);
+
+    state = AuthState(
+      user: User.fromJson(userJson),
+      lastSensitiveAuthAt: lastSensitiveAuthAt,
+    );
+  }
 
   Future<void> restoreSession() async {
     try {
@@ -45,15 +78,10 @@ class AuthNotifier extends Notifier<AuthState> {
         'email': email,
         'senha': senha,
       });
-      final data = resp.data as Map<String, dynamic>;
-      await ApiService.saveTokens(
-        data['access_token'] as String,
-        data['refresh_token'] as String,
+      await _persistSession(
+        resp.data as Map<String, dynamic>,
+        lastSensitiveAuthAt: DateTime.now(),
       );
-      final userJson = Map<String, dynamic>.from(data['user'] as Map);
-      await ApiService.saveUser(userJson);
-      final user = User.fromJson(userJson);
-      state = AuthState(user: user);
       return true;
     } catch (e) {
       state = AuthState(error: ApiService.extractErrorMessage(e));
@@ -61,15 +89,52 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  Future<bool> reauthenticate(String senhaAtual) async {
+    final currentUser = state.user;
+    if (currentUser == null) {
+      state = const AuthState(error: 'Sessão inválida. Faça login novamente.');
+      return false;
+    }
+
+    try {
+      final resp = await ApiService.post('/auth/login', data: {
+        'email': currentUser.email,
+        'senha': senhaAtual,
+      });
+
+      final data = resp.data as Map<String, dynamic>;
+      final userJson = Map<String, dynamic>.from(data['user'] as Map);
+      final reauthUser = User.fromJson(userJson);
+
+      if (reauthUser.id != currentUser.id ||
+          reauthUser.tenantId != currentUser.tenantId) {
+        throw const ApiException(
+          'Falha ao confirmar a identidade da sessão atual.',
+        );
+      }
+
+      await _persistSession(data, lastSensitiveAuthAt: DateTime.now());
+      return true;
+    } catch (e) {
+      state = AuthState(
+        user: currentUser,
+        error: ApiService.extractErrorMessage(e),
+        lastSensitiveAuthAt: state.lastSensitiveAuthAt,
+      );
+      return false;
+    }
+  }
+
   Future<void> logout() async {
-    // Limpa o estado local imediatamente — não depende do backend.
-    await ApiService.clearTokens();
-    state = const AuthState();
+    // Revogar sessão no servidor ANTES de limpar tokens locais.
+    // Garante que o refresh_token seja invalidado mesmo se a limpeza local falhar.
     try {
       await ApiService.post('/auth/logout');
     } catch (_) {
-      // Ignora falhas de rede — sessão local já foi encerrada.
+      // Ignora falhas de rede — limpa tokens localmente de qualquer forma.
     }
+    await ApiService.clearTokens();
+    state = const AuthState();
   }
 
   Future<void> expireSession([

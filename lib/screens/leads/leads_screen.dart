@@ -4,9 +4,7 @@ import '../../widgets/app_scaffold.dart';
 import '../../widgets/lead_card.dart';
 import '../../providers/leads_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/app_colors.dart';
+import '../../design_system/design_system.dart';
 
 /// Painel de leads disponíveis da franqueadora
 class LeadsScreen extends ConsumerWidget {
@@ -19,7 +17,7 @@ class LeadsScreen extends ConsumerWidget {
     return AppScaffold(
       currentRoute: AppRoutes.leads,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        padding: const EdgeInsets.all(AppSpacing.x6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -34,40 +32,40 @@ class LeadsScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: AppSpacing.x1),
             leadsAsync.when(
               loading: () => Text('Carregando...',
-                  style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
               error: (e, __) => Text(
                 e.toString(),
-                style: AppTypography.bodySmall.copyWith(color: AppColors.gray500),
+                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
               ),
               data: (leads) => Text(
                   '${leads.length} leads disponíveis para você',
-                  style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.x4),
             Expanded(
               child: leadsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Text('Erro: $e'),
-                    const SizedBox(height: AppSpacing.md),
-                    ElevatedButton(
+                    const SizedBox(height: AppSpacing.x3),
+                    AppPrimaryButton(
                       onPressed: () =>
                           ref.read(leadsProvider.notifier).refresh(),
-                      child: const Text('Tentar novamente'),
+                      label: 'Tentar novamente',
                     ),
                   ]),
                 ),
                 data: (leads) => leads.isEmpty
                     ? Center(
                         child: Text('Nenhum lead disponível no momento.',
-                            style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)))
+                            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)))
                     : ListView.separated(
                         itemCount: leads.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+                        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.x2),
                         itemBuilder: (_, i) {
                           final lead = leads[i];
                           return LeadCard(

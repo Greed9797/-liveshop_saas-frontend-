@@ -1,10 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/configuracoes.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class ConfiguracoesNotifier extends AsyncNotifier<ConfiguracoesFranquia> {
   @override
-  Future<ConfiguracoesFranquia> build() => _fetch();
+  Future<ConfiguracoesFranquia> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    return _fetch();
+  }
 
   Future<ConfiguracoesFranquia> _fetch() async {
     final resp = await ApiService.get('/configuracoes');

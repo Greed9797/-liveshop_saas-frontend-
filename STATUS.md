@@ -1,5 +1,50 @@
 # STATUS
 
+## Atualizacao Desta Sessao
+- Foi aplicado um rebranding visual no frontend com base na pasta local `rebrainding/`.
+- O `STATUS.md` e a pasta `rebrainding/` agora sao as fontes principais para continuar este trabalho em outra sessao.
+- `flutter analyze` esta sem erros de compilacao; restam apenas warnings/info pre-existentes do projeto.
+
+### Escopo principal do rebranding
+- Tela de login redesenhada para refletir o material exportado em `rebrainding/`.
+- Home redesenhada com fundo gradiente, cards de metricas revisados e bloco de cabines atualizado.
+- Sidebar simplificada, sem secoes, com logo e nova ordem visual dos itens.
+- Design system alinhado com os tokens da pasta `rebrainding/`.
+- Pasta `rebrainding/` excluida do analyzer para ser tratada apenas como referencia.
+
+### Pastas mexidas nesta sessao
+- `lib/screens/auth/`
+- `lib/screens/home/`
+- `lib/widgets/`
+- `lib/theme/`
+- raiz do projeto:
+  - `analysis_options.yaml`
+  - `pubspec.yaml`
+  - `pubspec.lock`
+
+### Arquivos alterados nesta sessao
+- `analysis_options.yaml`
+- `pubspec.yaml`
+- `pubspec.lock`
+- `lib/screens/auth/login_screen.dart`
+- `lib/screens/home/home_screen.dart`
+- `lib/widgets/app_scaffold.dart`
+- `lib/widgets/metric_card.dart`
+- `lib/widgets/money_card.dart`
+- `lib/theme/app_colors.dart`
+- `lib/theme/app_colors_extension.dart`
+- `lib/theme/app_radius.dart`
+- `lib/theme/app_shadows.dart`
+- `lib/theme/app_spacing.dart`
+- `lib/theme/app_theme.dart`
+- `lib/theme/app_typography.dart`
+
+### Referencias usadas
+- `rebrainding/README.md`
+- `rebrainding/Frame 1 (1).png`
+- `rebrainding/Frame 2.png`
+- arquivos de tokens/componentes dentro de `rebrainding/`
+
 ## Resumo
 - Frontend Flutter funcional localmente.
 - `flutter analyze` nao retorna erros; apenas infos de deprecacao e pequenos ajustes cosméticos.
@@ -180,8 +225,13 @@ Mensagem sugerida:
 
 ## Validacao Atual
 - `flutter analyze` sem erros, apenas infos.
+- Nesta sessao, o analyzer tambem foi configurado para ignorar `rebrainding/**`.
 - Recomendado apos commits:
   - smoke test login franqueado
   - smoke test login cliente parceiro
   - navegar para `Home`, `Análise de Vendas`, `Cabines`
   - validar detalhe da cabine com SSE quando houver live ativa
+
+## Notas de Continuidade
+- Para continuar o trabalho de UI, leia primeiro este arquivo e depois consulte a pasta `rebrainding/`.
+- O arquivo `PROMPT_CONTINUACAO.md` deste repositorio aponta para este `STATUS.md` como guia completo.

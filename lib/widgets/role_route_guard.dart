@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
-import '../routes/app_routes.dart';
 
 class RoleRouteGuard extends ConsumerStatefulWidget {
   final Set<String> allowedRoles;
@@ -25,13 +24,21 @@ class RoleRouteGuard extends ConsumerStatefulWidget {
 class _RoleRouteGuardState extends ConsumerState<RoleRouteGuard> {
   bool _redirectScheduled = false;
 
+  // Rota inicial correta por papel — evita cadeia de redirecionamentos
+  // entre rotas protegidas que causa spinner infinito em Flutter Web.
+  static String _homeForRole(String papel) => switch (papel) {
+        'cliente_parceiro' => '/cliente',
+        'apresentador' => '/cabines',
+        _ => '/login',
+      };
+
   void _scheduleRedirect(String route) {
     if (_redirectScheduled) return;
     _redirectScheduled = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed(route);
+        Navigator.of(context).pushNamedAndRemoveUntil(route, (_) => false);
       }
     });
   }
@@ -57,8 +64,9 @@ class _RoleRouteGuardState extends ConsumerState<RoleRouteGuard> {
     }
 
     if (!widget.allowedRoles.contains(user.papel)) {
-      final roleRoute = AppRoutes.routeForRole(user.papel);
-      _scheduleRedirect(roleRoute);
+      // Redireciona direto para a home do papel atual — sem encadear
+      // redirects entre rotas protegidas que quebra em Flutter Web.
+      _scheduleRedirect(_homeForRole(user.papel));
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );

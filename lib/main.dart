@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'providers/auth_provider.dart';
-import 'theme/app_theme.dart';
+import 'providers/theme_mode_provider.dart';
+import 'design_system/design_system.dart';
 import 'routes/app_navigator.dart';
 import 'routes/app_routes.dart';
 import 'services/api_service.dart';
@@ -32,7 +32,8 @@ void main() async {
 
   await container.read(authProvider.notifier).restoreSession();
 
-  if (!kReleaseMode && isE2ETesting) {
+  if (isE2ETesting) {
+    WidgetsBinding.instance.ensureSemantics();
     await bootstrapE2EAuth(container, role: e2eRole);
   }
 
@@ -62,7 +63,9 @@ class LiveShopApp extends ConsumerWidget {
       navigatorKey: appNavigatorKey,
       title: 'Livelab SaaS',
       debugShowCheckedModeBanner: false,
-      theme: appTheme,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ref.watch(themeModeProvider),
       initialRoute: authState.isAuthenticated
           ? AppRoutes.routeForRole(authState.user?.papel)
           : AppRoutes.login,

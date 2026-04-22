@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/contrato.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 import 'dashboard_provider.dart';
 import 'clientes_provider.dart';
 import 'cabines_provider.dart';
@@ -29,13 +30,30 @@ class ContratosNotifier extends Notifier<void> {
     required String clienteId,
     required double valorFixo,
     required double comissaoPct,
+    String? pacoteId,
+  }) async {
+    final result = await criarComDetalhes(
+      clienteId: clienteId,
+      valorFixo: valorFixo,
+      comissaoPct: comissaoPct,
+      pacoteId: pacoteId,
+    );
+    return result['id'] as String;
+  }
+
+  Future<Map<String, dynamic>> criarComDetalhes({
+    required String clienteId,
+    required double valorFixo,
+    required double comissaoPct,
+    String? pacoteId,
   }) async {
     final resp = await ApiService.post('/contratos', data: {
       'cliente_id': clienteId,
       'valor_fixo': valorFixo,
       'comissao_pct': comissaoPct,
+      if (pacoteId != null) 'pacote_id': pacoteId,
     });
-    return (resp.data as Map<String, dynamic>)['id'] as String;
+    return resp.data as Map<String, dynamic>;
   }
 
   // Legado — mantido para compatibilidade
@@ -115,6 +133,12 @@ class ContratosNotifier extends Notifier<void> {
     await ApiService.patch('/contratos/$id/sinalizar-risco');
     _invalidateRelacionados();
   }
+
+  Future<void> setTiktokUsername(String contratoId, String? username) async {
+    await ApiService.patch('/contratos/$contratoId/tiktok-username', data: {
+      'tiktok_username': username,
+    });
+  }
 }
 
 final contratosProvider =
@@ -125,6 +149,10 @@ final auditoriaAbaProvider = StateProvider<String>((ref) => 'all');
 
 final analiseCreditoProvider =
     FutureProvider.family<List<Contrato>, String>((ref, aba) async {
+  final authState = ref.watch(authProvider);
+  if (!authState.isAuthenticated) {
+    throw Exception('Não autenticado');
+  }
   final resp = await ApiService.get('/analise-credito', params: {'aba': aba});
   final data = resp.data;
   final items = data is Map<String, dynamic>

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_radius.dart';
+import '../design_system/app_components.dart';
 
-/// Badge colorido por status
+/// Badge colorido por status encapsulando a nova semântica da identidade visual
 class StatusBadge extends StatelessWidget {
   final String status;
   const StatusBadge({super.key, required this.status});
@@ -10,40 +9,34 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final config = _configs[status] ?? _configs['default']!;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: config['color'] as Color,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      child: Text(
-        config['label'] as String,
-        style: const TextStyle(
-          color: AppColors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
+    final type = config['type'] as AppBadgeType;
+    return AppBadge(
+      label: config['label'] as String,
+      type: type,
+      showDot: true,
     );
   }
 
   static final _configs = <String, Map<String, Object>>{
-    'ativo': {'color': AppColors.success, 'label': 'ATIVO'},
-    'inativo': {'color': AppColors.gray400, 'label': 'INATIVO'},
-    'ativa': {'color': AppColors.info, 'label': 'ATIVA'},
-    'ao_vivo': {'color': AppColors.success, 'label': 'AO VIVO'},
-    'reservada': {'color': AppColors.warning, 'label': 'RESERVADA'},
-    'enviado': {'color': AppColors.warning, 'label': 'ENVIADO'},
-    'em_analise': {'color': AppColors.warning, 'label': 'EM ANÁLISE'},
-    'negociacao': {'color': AppColors.info, 'label': 'NEGOCIAÇÃO'},
-    'inadimplente': {'color': AppColors.danger, 'label': 'INADIMPLENTE'},
-    'recomendacao': {'color': AppColors.lilac, 'label': 'RECOMENDAÇÃO'},
-    'disponivel': {'color': AppColors.gray400, 'label': 'DISPONÍVEL'},
-    'manutencao': {'color': AppColors.danger, 'label': 'MANUTENÇÃO'},
-    'pendente': {'color': AppColors.warning, 'label': 'PENDENTE'},
-    'pago': {'color': AppColors.success, 'label': 'PAGO'},
-    'vencido': {'color': AppColors.danger, 'label': 'VENCIDO'},
-    'suspenso': {'color': AppColors.danger, 'label': 'SUSPENSO'},
-    'default': {'color': AppColors.gray400, 'label': 'N/A'},
+    'ativo':        {'type': AppBadgeType.success,       'label': 'ATIVO'},
+    'inativo':      {'type': AppBadgeType.neutral,       'label': 'INATIVO'},
+    'ativa':        {'type': AppBadgeType.success,       'label': 'ATIVA'},
+    'ao_vivo':      {'type': AppBadgeType.success,       'label': 'AO VIVO'},
+    'reservada':    {'type': AppBadgeType.warning,       'label': 'RESERVADA'},
+    'enviado':      {'type': AppBadgeType.warning,       'label': 'ENVIADO'},
+    'em_analise':   {'type': AppBadgeType.warning,       'label': 'EM ANÁLISE'},
+    'negociacao':   {'type': AppBadgeType.warning,       'label': 'NEGOCIAÇÃO'},
+    'inadimplente': {'type': AppBadgeType.danger,        'label': 'INADIMPLENTE'},
+    'recomendacao': {'type': AppBadgeType.neutral,       'label': 'RECOMENDAÇÃO'},
+    'disponivel':   {'type': AppBadgeType.neutral,       'label': 'DISPONÍVEL'},
+    'manutencao':   {'type': AppBadgeType.danger,        'label': 'MANUTENÇÃO'},
+    'pendente':     {'type': AppBadgeType.warning,       'label': 'PENDENTE'},
+    'aprovada':     {'type': AppBadgeType.success,       'label': 'APROVADA'},
+    'recusada':     {'type': AppBadgeType.danger,        'label': 'RECUSADA'},
+    'encerrada':    {'type': AppBadgeType.neutral,       'label': 'ENCERRADA'},
+    'pago':         {'type': AppBadgeType.success,       'label': 'PAGO'},
+    'vencido':      {'type': AppBadgeType.danger,        'label': 'VENCIDO'},
+    'suspenso':     {'type': AppBadgeType.danger,        'label': 'SUSPENSO'},
+    'default':      {'type': AppBadgeType.neutral,       'label': 'N/A'},
   };
 }

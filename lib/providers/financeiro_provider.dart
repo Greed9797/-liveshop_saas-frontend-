@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 // ─── MODELS ──────────────────────────────────────────────────────────────────
 
@@ -94,16 +95,52 @@ class ClienteFaturamento {
       );
 }
 
+// ─── PERIODO (compartilhado entre todos os providers financeiros) ────────────
+
+/// Período selecionado no header do painel financeiro.
+/// Valores: 'mes' | 'trimestre' | 'ano' (12 meses).
+final financeiroPeriodoProvider = StateProvider<String>((ref) => 'mes');
+
+/// Converte um período em intervalo `[inicio, fim]` no formato YYYY-MM.
+/// Retorna os meses que o backend deve usar (o backend tolera listas).
+({String inicio, String fim}) _periodRange(String periodo, DateTime now) {
+  String fmt(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}';
+  final fim = fmt(now);
+  switch (periodo) {
+    case 'trimestre':
+      return (inicio: fmt(DateTime(now.year, now.month - 2)), fim: fim);
+    case 'ano':
+      return (inicio: fmt(DateTime(now.year, now.month - 11)), fim: fim);
+    case 'mes':
+    default:
+      return (inicio: fim, fim: fim);
+  }
+}
+
 // ─── RESUMO PROVIDER ─────────────────────────────────────────────────────────
 
 class FinanceiroNotifier extends AsyncNotifier<FinanceiroResumo> {
   @override
-  Future<FinanceiroResumo> build() => _fetch();
+  Future<FinanceiroResumo> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    final periodo = ref.watch(financeiroPeriodoProvider);
+    return _fetch(periodo: periodo);
+  }
 
-  Future<FinanceiroResumo> _fetch({int? mes, int? ano}) async {
+  Future<FinanceiroResumo> _fetch({int? mes, int? ano, String? periodo}) async {
     final params = <String, dynamic>{};
     if (mes != null) params['mes'] = mes;
     if (ano != null) params['ano'] = ano;
+    if (periodo != null && periodo != 'mes') {
+      final range = _periodRange(periodo, DateTime.now());
+      params['inicio'] = range.inicio;
+      params['fim'] = range.fim;
+      params['periodo'] = periodo;
+    }
     final resp = await ApiService.get('/financeiro/resumo',
         params: params.isEmpty ? null : params);
     return FinanceiroResumo.fromJson(resp.data as Map<String, dynamic>);
@@ -135,13 +172,28 @@ final financeiroProvider =
 
 class CustosNotifier extends AsyncNotifier<List<CustoCadastrado>> {
   @override
-  Future<List<CustoCadastrado>> build() => _fetch();
+  Future<List<CustoCadastrado>> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    final periodo = ref.watch(financeiroPeriodoProvider);
+    return _fetch(periodo: periodo);
+  }
 
-  Future<List<CustoCadastrado>> _fetch() async {
-    final mes =
-        '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}';
-    final resp =
-        await ApiService.get('/financeiro/custos', params: {'mes': mes});
+  Future<List<CustoCadastrado>> _fetch({String periodo = 'mes'}) async {
+    final now = DateTime.now();
+    final params = <String, dynamic>{};
+    if (periodo == 'mes') {
+      params['mes'] =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    } else {
+      final range = _periodRange(periodo, now);
+      params['inicio'] = range.inicio;
+      params['fim'] = range.fim;
+      params['periodo'] = periodo;
+    }
+    final resp = await ApiService.get('/financeiro/custos', params: params);
     return (resp.data as List)
         .map((e) => CustoCadastrado.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -174,12 +226,26 @@ final custosProvider =
 
 class FluxoCaixaNotifier extends AsyncNotifier<FluxoCaixa> {
   @override
-  Future<FluxoCaixa> build() => _fetch();
+  Future<FluxoCaixa> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    final periodo = ref.watch(financeiroPeriodoProvider);
+    return _fetch(periodo: periodo);
+  }
 
-  Future<FluxoCaixa> _fetch() async {
+  Future<FluxoCaixa> _fetch({String periodo = 'mes'}) async {
     final now = DateTime.now();
-    final resp = await ApiService.get('/financeiro/fluxo-caixa',
-        params: {'mes': now.month, 'ano': now.year});
+    final params = <String, dynamic>{'mes': now.month, 'ano': now.year};
+    if (periodo != 'mes') {
+      final range = _periodRange(periodo, now);
+      params['inicio'] = range.inicio;
+      params['fim'] = range.fim;
+      params['periodo'] = periodo;
+    }
+    final resp =
+        await ApiService.get('/financeiro/fluxo-caixa', params: params);
     return FluxoCaixa.fromJson(resp.data as Map<String, dynamic>);
   }
 
@@ -198,13 +264,28 @@ final fluxoCaixaProvider =
 class FaturamentoPorClienteNotifier
     extends AsyncNotifier<List<ClienteFaturamento>> {
   @override
-  Future<List<ClienteFaturamento>> build() => _fetch();
+  Future<List<ClienteFaturamento>> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    final periodo = ref.watch(financeiroPeriodoProvider);
+    return _fetch(periodo: periodo);
+  }
 
-  Future<List<ClienteFaturamento>> _fetch() async {
+  Future<List<ClienteFaturamento>> _fetch({String periodo = 'mes'}) async {
+    final now = DateTime.now();
     final mes =
-        '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}';
-    final resp = await ApiService.get('/financeiro/faturamento',
-        params: {'periodo': mes});
+        '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    final params = <String, dynamic>{'periodo': mes};
+    if (periodo != 'mes') {
+      final range = _periodRange(periodo, now);
+      params['inicio'] = range.inicio;
+      params['fim'] = range.fim;
+      params['janela'] = periodo;
+    }
+    final resp =
+        await ApiService.get('/financeiro/faturamento', params: params);
     final data = resp.data as Map<String, dynamic>;
     return ((data['por_cliente'] as List?) ?? [])
         .map((e) =>

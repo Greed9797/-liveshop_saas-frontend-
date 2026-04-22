@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
+import '../design_system/design_system.dart';
+
 
 /// Pin do mapa por status do cliente
 class ClientPin extends StatefulWidget {
@@ -20,14 +20,14 @@ class _ClientPinState extends State<ClientPin>
   late final AnimationController _ctrl;
   late final Animation<double> _pulse;
 
-  Color get _color => switch (widget.status) {
-        'ativo' => AppColors.successGreen,
-        'enviado' => AppColors.warningYellow,
-        'em_analise' => AppColors.warningYellow,
-        'negociacao' => AppColors.infoBlue,
-        'inadimplente' => AppColors.dangerRed,
-        'recomendacao' => AppColors.infoPurple,
-        _ => AppColors.gray400,
+  Color _colorFor() => switch (widget.status) {
+        'ativo' => AppColors.success,
+        'enviado' => AppColors.info,
+        'em_analise' => AppColors.warning,
+        'negociacao' => AppColors.warning,
+        'inadimplente' => AppColors.danger,
+        'recomendacao' => AppColors.primary,
+        _ => AppColors.textMuted,
       };
 
   @override
@@ -60,11 +60,13 @@ class _ClientPinState extends State<ClientPin>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.surfaceWhite,
+              color: AppColors.bgCard,
               borderRadius: BorderRadius.circular(6),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                    color: Colors.black26, blurRadius: 6, offset: Offset(0, 2))
+                    color: AppColors.textPrimary.withValues(alpha: 0.16),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2))
               ],
             ),
             child: Text(
@@ -79,7 +81,7 @@ class _ClientPinState extends State<ClientPin>
           ),
           ScaleTransition(
             scale: _pulse,
-            child: Icon(Icons.location_on_rounded, color: _color, size: 36),
+            child: Icon(Icons.location_on_rounded, color: _colorFor(), size: 36),
           ),
         ],
       ),

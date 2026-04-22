@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/excelencia_provider.dart';
 import '../models/excelencia.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
-import '../theme/app_radius.dart';
-import '../theme/app_spacing.dart';
+import '../design_system/design_system.dart';
 
 class ExcelenciaCard extends ConsumerWidget {
   const ExcelenciaCard({super.key});
@@ -14,9 +11,10 @@ class ExcelenciaCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final excelenciaAsync = ref.watch(excelenciaProvider);
 
-    return Card(
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: Padding(
-        padding: EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.x4),
         child: excelenciaAsync.when(
           loading: () => const SizedBox(
             height: 180,
@@ -28,12 +26,12 @@ class ExcelenciaCard extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Erro ao carregar métricas',
-                    style: AppTypography.labelSmall
-                        .copyWith(color: AppColors.gray500)),
-                TextButton(
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.textSecondary)),
+                AppSecondaryButton(
                   onPressed: () =>
                       ref.read(excelenciaProvider.notifier).refresh(),
-                  child: const Text('Tentar novamente'),
+                  label: 'Tentar novamente',
                 ),
               ],
             ),
@@ -76,43 +74,47 @@ class _CardContent extends StatelessWidget {
       children: [
         Text(
           'PROGRAMA DE EXCELÊNCIA',
-          style: AppTypography.h3.copyWith(fontSize: 16),
+          style: AppTypography.h3.copyWith(fontSize: 16, color: AppColors.textPrimary),
         ),
         const Divider(height: 24),
-        _buildRatingRow('BASE DE CONTRATOS', _starsContratos()),
-        _buildRatingRow('PRODUTIVIDADE', _starsProdutividade()),
-        _buildRatingRow('CHURN', _starsChurn()),
+        _buildRatingRow(context, 'BASE DE CONTRATOS', _starsContratos()),
+        _buildRatingRow(context, 'PRODUTIVIDADE', _starsProdutividade()),
+        _buildRatingRow(context, 'CHURN', _starsChurn()),
         const SizedBox(height: 20),
         _buildProgressBar(
+          context,
           'ÍNDICE DE FIDELIDADE',
           (data.taxaRetencao / 100).clamp(0.0, 1.0),
           '${data.taxaRetencao}%',
+          AppColors.success,
         ),
         const SizedBox(height: 12),
         _buildProgressBar(
+          context,
           'SCORE DE EXCELÊNCIA',
           (data.score / 100).clamp(0.0, 1.0),
           '${data.score}/100',
+          AppColors.primary,
         ),
       ],
     );
   }
 
-  Widget _buildRatingRow(String label, int stars) {
+  Widget _buildRatingRow(BuildContext context, String label, int stars) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: AppTypography.labelSmall.copyWith(
-                  fontWeight: FontWeight.bold, color: AppColors.gray500)),
+              style: AppTypography.caption.copyWith(
+                  fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
           Row(
             children: List.generate(5, (index) {
               return Icon(
                 index < stars ? Icons.star : Icons.star_border,
                 size: 16,
-                color: index < stars ? AppColors.primary : AppColors.gray200,
+                color: index < stars ? AppColors.primary : AppColors.bgMuted,
               );
             }),
           ),
@@ -121,7 +123,8 @@ class _CardContent extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressBar(String label, double value, String percentage) {
+  Widget _buildProgressBar(BuildContext context, String label, double value,
+      String percentage, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -129,24 +132,17 @@ class _CardContent extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label,
-                style: AppTypography.labelSmall.copyWith(
-                    fontWeight: FontWeight.bold, color: AppColors.gray500)),
+                style: AppTypography.caption.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary)),
             Text(percentage,
-                style: AppTypography.labelSmall.copyWith(
-                    fontWeight: FontWeight.bold, color: AppColors.gray700)),
+                style: AppTypography.caption.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary)),
           ],
         ),
         const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.xs),
-          child: LinearProgressIndicator(
-            value: value,
-            minHeight: 12,
-            backgroundColor: AppColors.gray200,
-            valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.successGreen),
-          ),
-        ),
+        AppProgressBar(value: value),
       ],
     );
   }

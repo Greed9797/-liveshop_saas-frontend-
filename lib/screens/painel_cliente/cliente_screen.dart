@@ -4,13 +4,9 @@ import 'package:intl/intl.dart';
 
 import '../../providers/cliente_dashboard_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/app_radius.dart';
-import '../../theme/app_shadows.dart';
-import '../../widgets/app_card.dart';
+import '../../design_system/design_system.dart' hide AppCard;
 import '../../widgets/app_scaffold.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/metric_card.dart';
 
 class ClienteScreen extends ConsumerWidget {
@@ -23,7 +19,7 @@ class ClienteScreen extends ConsumerWidget {
     return AppScaffold(
       currentRoute: AppRoutes.cliente,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        padding: const EdgeInsets.all(AppSpacing.x6),
         child: dashAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => Center(
@@ -31,11 +27,11 @@ class ClienteScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('Erro: $error'),
-                const SizedBox(height: AppSpacing.md),
-                ElevatedButton(
+                const SizedBox(height: AppSpacing.x3),
+                AppPrimaryButton(
                   onPressed: () =>
                       ref.read(clienteDashboardProvider.notifier).refresh(),
-                  child: const Text('Tentar novamente'),
+                  label: 'Tentar novamente',
                 ),
               ],
             ),
@@ -77,36 +73,36 @@ class _ClienteContent extends StatelessWidget {
       children: [
         Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 28,
-              backgroundColor: AppColors.primaryOrange,
-              child: Icon(Icons.store, color: AppColors.white, size: 28),
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.store, color: Colors.white, size: 28),
             ),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: AppSpacing.x3),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Minha Loja', style: AppTypography.h3.copyWith(fontWeight: FontWeight.w500)),
-                Text('Visão Geral do Parceiro', style: AppTypography.labelLarge.copyWith(color: AppColors.gray500)),
+                Text('Visão Geral do Parceiro', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
               ],
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.x2l),
+        const SizedBox(height: AppSpacing.x6),
         _ProximaReservaCard(
           reserva: dashboard.proximaReserva,
           subtitleBuilder: _reservationSubtitle,
         ),
-        const SizedBox(height: AppSpacing.x2l),
+        const SizedBox(height: AppSpacing.x6),
         if (dashboard.liveAtiva != null) ...[
           _LivePanel(live: dashboard.liveAtiva!),
-          const SizedBox(height: AppSpacing.x2l),
+          const SizedBox(height: AppSpacing.x6),
         ],
-        Text('RESULTADOS DO MÊS', style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: AppColors.gray700)),
-        const SizedBox(height: AppSpacing.md),
+        Text('RESULTADOS DO MÊS', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: AppColors.textPrimary)),
+        const SizedBox(height: AppSpacing.x3),
         Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.md,
+          spacing: AppSpacing.x3,
+          runSpacing: AppSpacing.x3,
           children: [
             SizedBox(
               width: 200,
@@ -141,24 +137,24 @@ class _ClienteContent extends StatelessWidget {
                 label: 'ITENS VENDIDOS',
                 value: '${dashboard.volumeVendas}',
                 icon: Icons.inventory_2_outlined,
-                iconColor: AppColors.infoBlue,
+                iconColor: AppColors.info,
               ),
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.x3l),
+        const SizedBox(height: AppSpacing.x8),
         _BenchmarkSection(
           nicho: dashboard.benchmarkNicho,
           geral: dashboard.benchmarkGeral,
         ),
-        const SizedBox(height: AppSpacing.x3l),
+        const SizedBox(height: AppSpacing.x8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (dashboard.rankingDia != null)
               Expanded(
                   flex: 1, child: _RankingCard(ranking: dashboard.rankingDia!)),
-            if (dashboard.rankingDia != null) const SizedBox(width: AppSpacing.lg),
+            if (dashboard.rankingDia != null) const SizedBox(width: AppSpacing.x4),
             Expanded(
                 flex: 2,
                 child: _MaisVendidosCard(produtos: dashboard.maisVendidos)),
@@ -185,33 +181,33 @@ class _ProximaReservaCard extends StatelessWidget {
     return Card(
       elevation: 0,
       color: hasReserva
-          ? AppColors.infoBlue.withValues(alpha: 0.10)
-          : AppColors.warningYellow.withValues(alpha: 0.10),
+          ? AppColors.info.withValues(alpha: 0.10)
+          : AppColors.warning.withValues(alpha: 0.10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.xl),
         side: BorderSide(
           color: hasReserva
-              ? AppColors.infoBlue.withValues(alpha: 0.35)
-              : AppColors.warningYellow.withValues(alpha: 0.35),
+              ? AppColors.info.withValues(alpha: 0.35)
+              : AppColors.warning.withValues(alpha: 0.35),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.x4),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
               radius: 22,
               backgroundColor:
-                  hasReserva ? AppColors.infoBlue : AppColors.warningYellow,
+                  hasReserva ? AppColors.info : AppColors.warning,
               child: Icon(
                 hasReserva
                     ? Icons.event_available_outlined
                     : Icons.event_busy_outlined,
-                color: AppColors.white,
+                color: Colors.white,
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: AppSpacing.x3),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,21 +227,23 @@ class _ProximaReservaCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       subtitleBuilder(reserva!),
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
                   ] else ...[
-                    const Text(
+                    Text(
                       'No momento não há cabine vinculada à sua operação. Fale com seu franqueado para abrir a próxima janela de live.',
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: AppSpacing.x3),
                     Wrap(
-                      spacing: AppSpacing.sm,
+                      spacing: AppSpacing.x2,
                       children: [
-                        Chip(
-                          label: const Text('CTA consultivo'),
-                          backgroundColor: AppColors.white,
-                          side: const BorderSide(color: AppColors.gray200),
+                        ActionChip(
+                          label: const Text('Ver minhas cabines'),
+                          backgroundColor: AppColors.bgCard,
+                          side: BorderSide(color: AppColors.borderLight),
+                          onPressed: () => Navigator.of(context)
+                              .pushNamed(AppRoutes.clienteCabines),
                         ),
                       ],
                     ),
@@ -275,11 +273,11 @@ class _BenchmarkSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('BENCHMARK DA UNIDADE', style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: AppColors.gray700)),
-        const SizedBox(height: AppSpacing.md),
+        Text('BENCHMARK DA UNIDADE', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: AppColors.textPrimary)),
+        const SizedBox(height: AppSpacing.x3),
         Wrap(
-          spacing: AppSpacing.lg,
-          runSpacing: AppSpacing.lg,
+          spacing: AppSpacing.x4,
+          runSpacing: AppSpacing.x4,
           children: [
             if (nicho != null)
               SizedBox(
@@ -346,7 +344,7 @@ class _BenchmarkCard extends StatelessWidget {
     final progress = (benchmark.percentualDaMedia / 100).clamp(0.0, 1.0);
 
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.x4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -354,30 +352,30 @@ class _BenchmarkCard extends StatelessWidget {
                 style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Text(description,
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: AppColors.textSecondary)),
             if (benchmark.nicho != null) ...[
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.x2),
               Text('Nicho: ${benchmark.nicho}',
                   style: const TextStyle(fontWeight: FontWeight.w600)),
             ],
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.x3),
             Text(_headline(),
                 style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
             ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
+              borderRadius: BorderRadius.circular(AppRadius.full),
               child: LinearProgressIndicator(
                 minHeight: 10,
                 value: progress,
-                backgroundColor: AppColors.gray200,
+                backgroundColor: AppColors.borderLight,
                 color: benchmark.acimaDaMedia
-                    ? AppColors.successGreen
-                    : AppColors.primaryOrange,
+                    ? AppColors.success
+                    : AppColors.primary,
               ),
             ),
             const SizedBox(height: 10),
             Text(_subCopy(),
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: AppColors.textSecondary)),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -387,7 +385,7 @@ class _BenchmarkCard extends StatelessWidget {
                     value: _currency.format(benchmark.meuGmv),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: AppSpacing.x3),
                 Expanded(
                   child: _BenchmarkMetric(
                     label: 'Média',
@@ -433,15 +431,13 @@ class _BenchmarkEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      backgroundColor: AppColors.surfaceGray,
-      boxShadow: const [],
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.x4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('BENCHMARK DA UNIDADE', style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: AppColors.gray700)),
-          const SizedBox(height: AppSpacing.sm),
-          const Text(
+          Text('BENCHMARK DA UNIDADE', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: AppColors.textPrimary)),
+          const SizedBox(height: AppSpacing.x2),
+          Text(
             'Os dados comparativos ainda estão em processamento. Assim que houver amostra suficiente, vamos mostrar como a sua operação se posiciona no nicho e na unidade.',
             style: TextStyle(color: AppColors.textSecondary),
           ),
@@ -484,12 +480,12 @@ class _LivePanelState extends State<_LivePanel>
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.bgCard,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.successGreen, width: 2),
+        border: Border.all(color: AppColors.success, width: 2),
         boxShadow: AppShadows.lg,
       ),
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      padding: const EdgeInsets.all(AppSpacing.x5),
       child: Column(
         children: [
           Row(
@@ -497,19 +493,19 @@ class _LivePanelState extends State<_LivePanel>
               FadeTransition(
                 opacity: _ctrl,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3, vertical: AppSpacing.x1),
                   decoration: BoxDecoration(
-                    color: AppColors.successGreen,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    color: AppColors.success,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.live_tv, color: AppColors.white, size: 16),
-                      const SizedBox(width: AppSpacing.sm),
+                      const Icon(Icons.live_tv, color: Colors.white, size: 16),
+                      const SizedBox(width: AppSpacing.x2),
                       Text(
                         'AO VIVO AGORA',
                         style: AppTypography.caption.copyWith(
-                          color: AppColors.white,
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -517,35 +513,35 @@ class _LivePanelState extends State<_LivePanel>
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: AppSpacing.x3),
               Text('Cabine ${widget.live.cabineNumero}',
                   style: const TextStyle(fontWeight: FontWeight.w500)),
               const Spacer(),
-              const Icon(Icons.timer_outlined, color: AppColors.gray400, size: 18),
-              const SizedBox(width: AppSpacing.xs),
+              Icon(Icons.timer_outlined, color: AppColors.textMuted, size: 18),
+              const SizedBox(width: AppSpacing.x1),
               Text('${widget.live.duracaoMin} min',
-                  style: AppTypography.caption.copyWith(color: AppColors.gray400, fontWeight: FontWeight.bold)),
+                  style: AppTypography.caption.copyWith(color: AppColors.textMuted, fontWeight: FontWeight.bold)),
             ],
           ),
           const Divider(height: 32),
           Wrap(
-            spacing: AppSpacing.x2l,
-            runSpacing: AppSpacing.lg,
+            spacing: AppSpacing.x6,
+            runSpacing: AppSpacing.x4,
             alignment: WrapAlignment.spaceAround,
             children: [
               _LiveMetric(
                   icon: Icons.visibility,
-                  color: AppColors.infoBlue,
+                  color: AppColors.info,
                   label: 'Espectadores',
                   value: '${widget.live.viewerCount}'),
               _LiveMetric(
                   icon: Icons.shopping_cart,
-                  color: AppColors.primaryOrange,
+                  color: AppColors.primary,
                   label: 'GMV Atual',
                   value: currency.format(widget.live.gmvAtual)),
               _LiveMetric(
                   icon: Icons.savings,
-                  color: AppColors.successGreen,
+                  color: AppColors.success,
                   label: 'Sua Comissão',
                   value: currency.format(widget.live.comissaoProjetada)),
             ],
@@ -576,10 +572,10 @@ class _LiveMetric extends StatelessWidget {
       child: Column(
         children: [
           Icon(icon, color: color, size: 28),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.x2),
           Text(value,
               style: AppTypography.h2.copyWith(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(label, style: AppTypography.caption.copyWith(color: AppColors.gray400)),
+          Text(label, style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
         ],
       ),
     );
@@ -596,7 +592,7 @@ class _MaisVendidosCard extends StatelessWidget {
     final currency = NumberFormat.simpleCurrency(locale: 'pt_BR');
 
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.compactPadding),
+      padding: const EdgeInsets.all(AppSpacing.x3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -604,37 +600,37 @@ class _MaisVendidosCard extends StatelessWidget {
               style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold)),
           const Divider(),
           if (produtos.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(AppSpacing.compactPadding),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.x3),
               child: Text('Nenhuma venda registrada neste mês.',
-                  style: TextStyle(color: AppColors.gray400)),
+                  style: TextStyle(color: AppColors.textMuted)),
             ),
           ...produtos.map((p) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      padding: const EdgeInsets.all(AppSpacing.x2),
                       decoration: BoxDecoration(
-                        color: AppColors.gray100,
+                        color: AppColors.bgBase,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Text(
                         '${p.qty}x',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppColors.primary),
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.md),
+                    const SizedBox(width: AppSpacing.x3),
                     Expanded(
                       child: Text(p.produto,
                           style:
                               const TextStyle(fontWeight: FontWeight.w500)),
                     ),
                     Text(currency.format(p.valor),
-                        style: const TextStyle(
-                            color: AppColors.successGreen,
+                        style: TextStyle(
+                            color: AppColors.success,
                             fontWeight: FontWeight.w500)),
                   ],
                 ),
@@ -655,37 +651,37 @@ class _RankingCard extends StatelessWidget {
     final currency = NumberFormat.simpleCurrency(locale: 'pt_BR');
 
     return Card(
-      color: AppColors.warningYellow.withValues(alpha: 0.1),
+      color: AppColors.warning.withValues(alpha: 0.1),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: AppColors.warningYellow.withValues(alpha: 0.5)),
+        side: BorderSide(color: AppColors.warning.withValues(alpha: 0.5)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.compactPadding),
+        padding: const EdgeInsets.all(AppSpacing.x3),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('RANKING DE HOJE',
-                style: AppTypography.labelSmall.copyWith(fontWeight: FontWeight.bold, color: AppColors.primaryOrange, letterSpacing: 0.5)),
-            const SizedBox(height: AppSpacing.lg),
+                style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, color: AppColors.primary, letterSpacing: 0.5)),
+            const SizedBox(height: AppSpacing.x4),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
                   '#${ranking.posicao}',
-                  style: AppTypography.h1.copyWith(fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.orange600),
+                  style: AppTypography.h1.copyWith(fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.primaryHover),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10, left: 4),
                   child: Text('/ ${ranking.totalParticipantes}',
-                      style: AppTypography.bodyLarge.copyWith(color: AppColors.gray400)),
+                      style: AppTypography.bodyLarge.copyWith(color: AppColors.textMuted)),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
             Text(
               'Você gerou ${currency.format(ranking.gmvDia)} hoje',
               style: const TextStyle(fontWeight: FontWeight.w500),

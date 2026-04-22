@@ -1,55 +1,102 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
+import '../design_system/design_system.dart' hide AppCard;
 import 'app_card.dart';
 
-/// Card de métrica com ícone, label e valor
+/// Premium KPI metric card — redesigned per Figma instructions
 class MetricCard extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
-  final Color? iconColor;
+  final String? delta;
+  final bool? deltaPositive;
   final String? subtitle;
+  final IconData? icon;
+  final Color? iconColor;
 
   const MetricCard({
     super.key,
     required this.label,
     required this.value,
-    required this.icon,
-    this.iconColor,
+    this.delta,
+    this.deltaPositive,
     this.subtitle,
+    this.icon,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.compactPadding),
+      padding: const EdgeInsets.all(AppSpacing.x5),
+      boxShadow: AppShadows.sm,
+      borderColor: Colors.transparent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              Icon(icon, color: iconColor ?? AppColors.primary, size: 20),
-              const SizedBox(width: 8),
+              if (icon != null)
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: AppColors.bgMuted,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 18,
+                    color: iconColor ?? AppColors.primary,
+                  ),
+                ),
+              if (icon != null) const SizedBox(width: AppSpacing.x3),
               Expanded(
                 child: Text(
                   label,
-                  style: AppTypography.caption.copyWith(fontWeight: FontWeight.w500),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: AppTypography.h2.copyWith(fontSize: 22),
+          const SizedBox(height: AppSpacing.x4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    style: AppTypography.h2.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+              if (delta != null || subtitle != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    delta ?? subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.caption.copyWith(
+                      color: delta != null
+                          ? ((deltaPositive ?? true) ? AppColors.success : AppColors.danger)
+                          : AppColors.textMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+            ],
           ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(subtitle!, style: AppTypography.caption),
-          ],
         ],
       ),
     );

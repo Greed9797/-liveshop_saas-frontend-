@@ -1,10 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/lead.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class LeadsNotifier extends AsyncNotifier<List<Lead>> {
   @override
-  Future<List<Lead>> build() => _fetch();
+  Future<List<Lead>> build() async {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    return _fetch();
+  }
 
   Future<List<Lead>> _fetch() async {
     final resp = await ApiService.get('/leads');

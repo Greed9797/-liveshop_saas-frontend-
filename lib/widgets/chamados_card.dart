@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
-import '../theme/app_spacing.dart';
-import '../theme/app_radius.dart';
+import '../design_system/design_system.dart';
 
 class ChamadosCard extends StatelessWidget {
   final int count;
@@ -10,14 +7,14 @@ class ChamadosCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.all(AppSpacing.x4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -25,26 +22,26 @@ class ChamadosCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('CHAMADOS',
-                        style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.gray500,
+                        style: AppTypography.caption.copyWith(
+                            color: AppColors.textSecondary,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1.2)),
                     Stack(
                       children: [
-                        const Icon(Icons.person_outline,
-                            size: 24, color: AppColors.gray400),
+                        Icon(Icons.person_outline,
+                            size: 24, color: AppColors.textMuted),
                         if (count > 0)
                           Positioned(
                             right: 0,
                             top: 0,
                             child: Container(
                               padding: const EdgeInsets.all(3),
-                              decoration: const BoxDecoration(
-                                  color: AppColors.primaryOrange,
+                              decoration: BoxDecoration(
+                                  color: AppColors.primary,
                                   shape: BoxShape.circle),
                               child: Text('$count',
                                   style: const TextStyle(
-                                      color: AppColors.white,
+                                      color: Colors.white,
                                       fontSize: 8,
                                       fontWeight: FontWeight.bold)),
                             ),
@@ -59,7 +56,7 @@ class ChamadosCard extends StatelessWidget {
                       ? '$count chamados não visualizados'
                       : 'Nenhum chamado pendente',
                   style:
-                      AppTypography.caption.copyWith(color: AppColors.gray500),
+                      AppTypography.caption.copyWith(color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -68,11 +65,11 @@ class ChamadosCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             decoration: BoxDecoration(
               color: count > 0
-                  ? AppColors.dangerRed
-                  : AppColors.gray200,
+                  ? AppColors.danger
+                  : AppColors.bgMuted,
               borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(14),
-                bottomRight: Radius.circular(14),
+                bottomLeft: Radius.circular(AppRadius.xl),
+                bottomRight: Radius.circular(AppRadius.xl),
               ),
             ),
             child: Row(
@@ -80,7 +77,7 @@ class ChamadosCard extends StatelessWidget {
               children: [
                 Icon(
                     count > 0 ? Icons.money_off : Icons.check_circle_outline,
-                    color: count > 0 ? AppColors.white : AppColors.gray500,
+                    color: count > 0 ? Colors.white : AppColors.textSecondary,
                     size: 14),
                 const SizedBox(width: 6),
                 Flexible(
@@ -91,7 +88,7 @@ class ChamadosCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        color: count > 0 ? AppColors.white : AppColors.gray500,
+                        color: count > 0 ? Colors.white : AppColors.textSecondary,
                         fontWeight: FontWeight.w700,
                         fontSize: 11),
                   ),

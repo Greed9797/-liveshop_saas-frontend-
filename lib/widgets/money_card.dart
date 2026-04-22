@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_radius.dart';
-import '../theme/app_shadows.dart';
-import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../design_system/design_system.dart';
+import 'money_text.dart';
 
 // StateProvider simples para gerenciar a visibilidade globalmente
 final moneyVisibilityProvider = StateProvider<bool>((ref) => false);
@@ -27,100 +25,102 @@ class MoneyCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isVisible = ref.watch(moneyVisibilityProvider);
 
-    return GestureDetector(
+    return AppCard(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.x2l),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.primaryOrange, AppColors.orange600],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: AppShadows.md,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.account_balance_wallet_rounded,
-                          color: AppColors.white, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Text('FATURAMENTO TOTAL',
-                        style: AppTypography.caption.copyWith(
-                            letterSpacing: 1.2,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.white.withValues(alpha: 0.8))),
-                  ],
+      padding: const EdgeInsets.all(AppSpacing.x6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: const BoxDecoration(
+                  color: AppColors.bgMuted,
+                  shape: BoxShape.circle,
                 ),
-                IconButton(
-                  icon: Icon(
-                    isVisible
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    color: AppColors.white.withValues(alpha: 0.7),
-                    size: 20,
-                  ),
-                  onPressed: () => ref
-                      .read(moneyVisibilityProvider.notifier)
-                      .state = !isVisible,
+                child: Icon(
+                  PhosphorIcons.clockCounterClockwise(),
+                  color: AppColors.primary,
+                  size: 18,
                 ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                isVisible
-                    ? 'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}'
-                    : 'R\$ •••••••',
-                style: AppTypography.heroNumber.copyWith(color: AppColors.white),
               ),
-            ),
-            const SizedBox(height: 16),
-            Divider(color: AppColors.white.withValues(alpha: 0.2)),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _SubValue(
-                    label: 'FATURAMENTO BRUTO',
-                    value: bruto,
-                    isVisible: isVisible,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Faturamento Total',
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                Container(
-                    width: 1,
-                    height: 40,
-                    color: AppColors.white.withValues(alpha: 0.2)),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: AppSpacing.lg),
-                    child: _SubValue(
-                      label: 'FATURAMENTO LÍQUIDO',
-                      value: liquido,
-                      isVisible: isVisible,
+              ),
+              IconButton(
+                icon: Icon(
+                  isVisible ? PhosphorIcons.eye() : PhosphorIcons.eyeSlash(),
+                  color: AppColors.textMuted,
+                  size: 18,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () => ref
+                    .read(moneyVisibilityProvider.notifier)
+                    .state = !isVisible,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: isVisible
+                ? MoneyText(
+                    value: total,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w700,
+                  )
+                : Text(
+                    'R\$ •••••••',
+                    style: AppTypography.displayLarge.copyWith(
+                      color: AppColors.textPrimary,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+          ),
+          const SizedBox(height: 20),
+          const Divider(color: AppColors.borderLight, height: 1),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _SubValue(
+                  label: 'BRUTO',
+                  value: bruto,
+                  isVisible: isVisible,
+                  color: AppColors.success,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              Container(
+                  width: 1,
+                  height: 36,
+                  color: AppColors.borderLight),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.x4),
+                  child: _SubValue(
+                    label: 'LÍQUIDO',
+                    value: liquido,
+                    isVisible: isVisible,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -130,11 +130,13 @@ class _SubValue extends StatelessWidget {
   final String label;
   final double value;
   final bool isVisible;
+  final Color color;
 
   const _SubValue({
     required this.label,
     required this.value,
     required this.isVisible,
+    required this.color,
   });
 
   @override
@@ -143,23 +145,30 @@ class _SubValue extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          label[0] + label.substring(1).toLowerCase(),
           style: AppTypography.caption.copyWith(
-              fontSize: 10,
-              letterSpacing: 0.5,
-              color: AppColors.white.withValues(alpha: 0.7)),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary),
         ),
         const SizedBox(height: 4),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
-          child: Text(
-            isVisible
-                ? 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}'
-                : 'R\$ •••••',
-            style: AppTypography.h3
-                .copyWith(color: AppColors.white, fontSize: 16),
-          ),
+          child: isVisible
+              ? MoneyText(
+                  value: value,
+                  fontSize: 15,
+                  color: color,
+                )
+              : Text(
+                  'R\$ •••••',
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
         ),
       ],
     );

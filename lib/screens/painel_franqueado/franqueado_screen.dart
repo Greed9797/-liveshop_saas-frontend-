@@ -6,9 +6,7 @@ import '../../widgets/status_badge.dart';
 import '../../widgets/metric_card.dart';
 import '../../providers/franqueado_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
+import '../../design_system/design_system.dart';
 
 /// Painel master do franqueador — visão de todas as unidades
 class FranqueadoScreen extends ConsumerWidget {
@@ -21,7 +19,7 @@ class FranqueadoScreen extends ConsumerWidget {
     return AppScaffold(
       currentRoute: AppRoutes.franqueado,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        padding: const EdgeInsets.all(AppSpacing.x6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -34,7 +32,7 @@ class FranqueadoScreen extends ConsumerWidget {
                     Text('Painel do Franqueador',
                         style: AppTypography.h2.copyWith(fontWeight: FontWeight.w500)),
                     Text('Visão geral de todas as unidades',
-                        style: AppTypography.bodySmall.copyWith(color: AppColors.gray500)),
+                        style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
                   ],
                 ),
                 IconButton(
@@ -43,20 +41,22 @@ class FranqueadoScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.xl),
-            unidadesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text('Erro: $e'),
-                  const SizedBox(height: AppSpacing.md),
-                  ElevatedButton(
-                    onPressed: () => ref.read(franqueadoProvider.notifier).refresh(),
-                    child: const Text('Tentar novamente'),
-                  ),
-                ]),
+            const SizedBox(height: AppSpacing.x5),
+            Expanded(
+              child: unidadesAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text('Erro: $e'),
+                    const SizedBox(height: AppSpacing.x3),
+                    AppPrimaryButton(
+                      onPressed: () => ref.read(franqueadoProvider.notifier).refresh(),
+                      label: 'Tentar novamente',
+                    ),
+                  ]),
+                ),
+                data: (unidades) => _UnidadesContent(unidades: unidades),
               ),
-              data: (unidades) => _UnidadesContent(unidades: unidades),
             ),
           ],
         ),
@@ -76,12 +76,11 @@ class _UnidadesContent extends StatelessWidget {
     final pendentes  = unidades.fold(0,   (sum, u) => sum + u.contratosPendentes);
     final currency   = NumberFormat.simpleCurrency(locale: 'pt_BR');
 
-    return Expanded(
-      child: Column(
+    return Column(
         children: [
           Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.md,
+            spacing: AppSpacing.x3,
+            runSpacing: AppSpacing.x3,
             children: [
               SizedBox(
                 width: 220,
@@ -112,7 +111,7 @@ class _UnidadesContent extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.x5),
           Align(
             alignment: Alignment.centerLeft,
             child: Text('Unidades Franqueadas',
@@ -121,9 +120,9 @@ class _UnidadesContent extends StatelessWidget {
           const SizedBox(height: 10),
           Expanded(
             child: unidades.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text('Nenhuma unidade encontrada.',
-                        style: TextStyle(color: AppColors.gray500)))
+                        style: TextStyle(color: AppColors.textSecondary)))
                 : ListView.separated(
                     itemCount: unidades.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),
@@ -131,20 +130,20 @@ class _UnidadesContent extends StatelessWidget {
                       final u = unidades[i];
                       return ListTile(
                         title: Text(u.nome,
-                            style: const TextStyle(fontWeight: FontWeight.w500)),
+                            style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
                         subtitle: Text(
                             'Clientes: ${u.clientesCount} • Fat: ${currency.format(u.fatMes)}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (u.contratosPendentes > 0)
-                              Chip(
-                                label: Text('${u.contratosPendentes} pendentes',
-                                    style: AppTypography.caption.copyWith(fontSize: 11)),
-                                backgroundColor: AppColors.warning.withValues(alpha: 0.15),
-                                labelStyle: const TextStyle(color: AppColors.warning),
+                            if (u.contratosPendentes > 0) ...[
+                              AppBadge(
+                                label: '${u.contratosPendentes} pendentes',
+                                type: AppBadgeType.warning,
+                                showDot: false,
                               ),
-                            const SizedBox(width: AppSpacing.sm),
+                              const SizedBox(width: AppSpacing.x2),
+                            ],
                             StatusBadge(status: u.status),
                           ],
                         ),
@@ -153,7 +152,6 @@ class _UnidadesContent extends StatelessWidget {
                   ),
           ),
         ],
-      ),
     );
   }
 }

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_shadows.dart';
-import '../theme/app_spacing.dart';
-import '../theme/app_radius.dart';
+import '../design_system/design_system.dart';
 
 class AppCard extends StatelessWidget {
   final Widget child;
@@ -31,15 +28,15 @@ class AppCard extends StatelessWidget {
 
     final container = Container(
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.white,
+        color: backgroundColor ?? AppColors.bgCard,
         borderRadius: resolvedBorderRadius,
         border: Border.all(
-          color: borderColor ?? AppColors.sidebarBorder,
+          color: borderColor ?? AppColors.borderLight,
           width: 1,
         ),
         boxShadow: boxShadow ?? AppShadows.md,
       ),
-      padding: padding ?? const EdgeInsets.all(AppSpacing.cardPadding),
+      padding: padding ?? const EdgeInsets.all(AppSpacing.x6),
       child: child,
     );
 
@@ -51,6 +48,8 @@ class AppCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: resolvedBorderRadius,
+          hoverColor: AppColors.primary.withValues(alpha: 0.04),
+          splashColor: AppColors.primary.withValues(alpha: 0.08),
           child: container,
         ),
       );

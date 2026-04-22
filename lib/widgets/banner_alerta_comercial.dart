@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/contrato.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
+import '../design_system/design_system.dart';
 
 class BannerAlertaComercial extends StatelessWidget {
   final Contrato contrato;
@@ -59,8 +58,8 @@ class BannerAlertaComercial extends StatelessWidget {
 
   _BannerData? _resolveBannerData(Contrato contrato) {
     final status = contrato.status.toLowerCase();
-    const pendenciaColor = AppColors.orange600;
-    const reprovacaoColor = AppColors.dangerRed;
+    const pendenciaColor = AppColors.primaryHover;
+    const reprovacaoColor = AppColors.danger;
 
     if (status == 'pendencia' || status == 'pendencia_comercial') {
       final motivo = contrato.pendenciaMotivo?.trim();
@@ -93,28 +92,30 @@ class BannerAlertaComercial extends StatelessWidget {
     }
 
     if (status == 'aprovado' || status == 'ativo') {
+      const successColor = AppColors.success;
       return _BannerData(
         icon: Icons.check_circle_rounded,
         title: 'Contrato liberado',
         message:
             'Tudo certo para avançar com implantação e ativação comercial do cliente.',
-        background: AppColors.success.withValues(alpha: 0.10),
-        border: AppColors.success.withValues(alpha: 0.35),
-        iconColor: AppColors.success,
-        textColor: AppColors.success,
+        background: successColor.withValues(alpha: 0.10),
+        border: successColor.withValues(alpha: 0.35),
+        iconColor: successColor,
+        textColor: successColor,
       );
     }
 
     if (status == 'em_analise' || status == 'novo' || status == 'assinado') {
+      const infoColor = AppColors.info;
       return _BannerData(
         icon: Icons.hourglass_top_rounded,
         title: 'Análise em andamento',
         message:
             'Estamos processando os dados do contrato. Você receberá o próximo passo em instantes.',
-        background: AppColors.info.withValues(alpha: 0.10),
-        border: AppColors.info.withValues(alpha: 0.35),
-        iconColor: AppColors.info,
-        textColor: AppColors.info,
+        background: infoColor.withValues(alpha: 0.10),
+        border: infoColor.withValues(alpha: 0.35),
+        iconColor: infoColor,
+        textColor: infoColor,
       );
     }
 
