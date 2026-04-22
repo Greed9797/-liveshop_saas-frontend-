@@ -17,7 +17,7 @@ class ApiException implements Exception {
 
 /// Serviço HTTP centralizado com interceptors de JWT e refresh automático
 class ApiService {
-  static const baseUrl = 'http://127.0.0.1:3001/v1';
+  static const baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://127.0.0.1:3001/v1');
   static const _tokenKey = 'access_token';
   static const _refreshKey = 'refresh_token';
   static const _userKey = 'auth_user';
