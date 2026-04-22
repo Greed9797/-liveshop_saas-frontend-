@@ -19,17 +19,22 @@ class StatusBadge extends StatelessWidget {
       child: Text(
         config['label'] as String,
         style: const TextStyle(
-            color: AppColors.white, fontSize: 11, fontWeight: FontWeight.w500),
+          color: AppColors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
 
   static final _configs = <String, Map<String, Object>>{
     'ativo': {'color': AppColors.success, 'label': 'ATIVO'},
+    'inativo': {'color': AppColors.gray400, 'label': 'INATIVO'},
     'ativa': {'color': AppColors.info, 'label': 'ATIVA'},
     'ao_vivo': {'color': AppColors.success, 'label': 'AO VIVO'},
     'reservada': {'color': AppColors.warning, 'label': 'RESERVADA'},
     'enviado': {'color': AppColors.warning, 'label': 'ENVIADO'},
+    'em_analise': {'color': AppColors.warning, 'label': 'EM ANÁLISE'},
     'negociacao': {'color': AppColors.info, 'label': 'NEGOCIAÇÃO'},
     'inadimplente': {'color': AppColors.danger, 'label': 'INADIMPLENTE'},
     'recomendacao': {'color': AppColors.lilac, 'label': 'RECOMENDAÇÃO'},

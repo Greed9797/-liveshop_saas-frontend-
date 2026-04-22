@@ -1,0 +1,677 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+import '../../models/admin_master.dart';
+import '../../providers/admin_master_provider.dart';
+import '../../routes/app_routes.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
+import '../../widgets/app_card.dart';
+import '../../widgets/app_scaffold.dart';
+import '../../widgets/metric_card.dart';
+import '../../widgets/status_badge.dart';
+
+List<String> _unitPeriods([int count = 6]) {
+  final now = DateTime.now();
+  return List.generate(count, (index) {
+    final date = DateTime(now.year, now.month - index, 1);
+    final month = date.month.toString().padLeft(2, '0');
+    return '${date.year}-$month';
+  });
+}
+
+String _periodText(String period) {
+  return DateFormat('MMMM y', 'pt_BR').format(DateTime.parse('$period-01'));
+}
+
+String _money(double value) {
+  return NumberFormat.currency(
+    locale: 'pt_BR',
+    symbol: 'R\$',
+    decimalDigits: 2,
+  ).format(value);
+}
+
+String _pct(double value) {
+  final prefix = value > 0 ? '+' : '';
+  return '$prefix${value.toStringAsFixed(1)}%';
+}
+
+class MasterUnitsScreen extends ConsumerStatefulWidget {
+  const MasterUnitsScreen({super.key});
+
+  @override
+  ConsumerState<MasterUnitsScreen> createState() => _MasterUnitsScreenState();
+}
+
+class _MasterUnitsScreenState extends ConsumerState<MasterUnitsScreen> {
+  late String _selectedPeriod;
+  String _selectedStatus = 'todos';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedPeriod = _unitPeriods().first;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filters = (period: _selectedPeriod, status: _selectedStatus);
+    final unitsAsync = ref.watch(masterUnitsProvider(filters));
+
+    return AppScaffold(
+      currentRoute: AppRoutes.masterUnits,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        child: unitsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => _UnitsErrorState(
+            message: error.toString(),
+            onRetry: () => ref.invalidate(masterUnitsProvider(filters)),
+          ),
+          data: (data) => SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _UnitsHeader(
+                  period: _selectedPeriod,
+                  periods: _unitPeriods(),
+                  status: _selectedStatus,
+                  onPeriodChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _selectedPeriod = value);
+                  },
+                  onStatusChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _selectedStatus = value);
+                  },
+                  onRefresh: () => ref.invalidate(masterUnitsProvider(filters)),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Wrap(
+                      spacing: AppSpacing.md,
+                      runSpacing: AppSpacing.md,
+                      children: [
+                        SizedBox(
+                          width: constraints.maxWidth >= 1100
+                              ? (constraints.maxWidth - (AppSpacing.md * 3)) / 4
+                              : constraints.maxWidth >= 700
+                                  ? (constraints.maxWidth - AppSpacing.md) / 2
+                                  : constraints.maxWidth,
+                          child: MetricCard(
+                            label: 'UNIDADES',
+                            value: '${data.summary.totalUnits}',
+                            icon: Icons.storefront_rounded,
+                            iconColor: AppColors.primaryOrange,
+                          ),
+                        ),
+                        SizedBox(
+                          width: constraints.maxWidth >= 1100
+                              ? (constraints.maxWidth - (AppSpacing.md * 3)) / 4
+                              : constraints.maxWidth >= 700
+                                  ? (constraints.maxWidth - AppSpacing.md) / 2
+                                  : constraints.maxWidth,
+                          child: MetricCard(
+                            label: 'CLIENTES ATIVOS',
+                            value: '${data.summary.activeClients}',
+                            icon: Icons.people_alt_rounded,
+                            iconColor: AppColors.info,
+                          ),
+                        ),
+                        SizedBox(
+                          width: constraints.maxWidth >= 1100
+                              ? (constraints.maxWidth - (AppSpacing.md * 3)) / 4
+                              : constraints.maxWidth >= 700
+                                  ? (constraints.maxWidth - AppSpacing.md) / 2
+                                  : constraints.maxWidth,
+                          child: MetricCard(
+                            label: 'FATURAMENTO BRUTO',
+                            value: _money(data.summary.grossRevenue),
+                            icon: Icons.payments_rounded,
+                            iconColor: AppColors.success,
+                          ),
+                        ),
+                        SizedBox(
+                          width: constraints.maxWidth >= 1100
+                              ? (constraints.maxWidth - (AppSpacing.md * 3)) / 4
+                              : constraints.maxWidth >= 700
+                                  ? (constraints.maxWidth - AppSpacing.md) / 2
+                                  : constraints.maxWidth,
+                          child: MetricCard(
+                            label: 'RECEITA FRANQUEADORA',
+                            value: _money(data.summary.franchisorRevenue),
+                            icon: Icons.account_balance_rounded,
+                            iconColor: AppColors.gray700,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                if (data.units.isEmpty)
+                  AppCard(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: Center(
+                        child: Text(
+                          'Nenhuma unidade encontrada para o filtro selecionado.',
+                          style: AppTypography.bodySmall,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  ...data.units.map(
+                    (unit) => Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: _UnitExpansionCard(unit: unit),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UnitsHeader extends StatelessWidget {
+  final String period;
+  final List<String> periods;
+  final String status;
+  final ValueChanged<String?> onPeriodChanged;
+  final ValueChanged<String?> onStatusChanged;
+  final VoidCallback onRefresh;
+
+  const _UnitsHeader({
+    required this.period,
+    required this.periods,
+    required this.status,
+    required this.onPeriodChanged,
+    required this.onStatusChanged,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: AppSpacing.md,
+      runSpacing: AppSpacing.md,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      alignment: WrapAlignment.spaceBetween,
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Unidades', style: AppTypography.h1),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Cada unidade como uma mini-DRE operacional da rede, com drill-down por cliente final.',
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.gray500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Wrap(
+          spacing: AppSpacing.md,
+          runSpacing: AppSpacing.md,
+          children: [
+            SizedBox(
+              width: 220,
+              child: DropdownButtonFormField<String>(
+                key: ValueKey('units-period-$period'),
+                initialValue: period,
+                decoration: const InputDecoration(
+                  labelText: 'Período',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: periods
+                    .map(
+                      (item) => DropdownMenuItem<String>(
+                        value: item,
+                        child: Text(_periodText(item)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: onPeriodChanged,
+              ),
+            ),
+            SizedBox(
+              width: 200,
+              child: DropdownButtonFormField<String>(
+                key: ValueKey('units-status-$status'),
+                initialValue: status,
+                decoration: const InputDecoration(
+                  labelText: 'Status',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'todos', child: Text('Todos')),
+                  DropdownMenuItem(value: 'ativo', child: Text('Ativas')),
+                  DropdownMenuItem(
+                    value: 'inadimplente',
+                    child: Text('Inadimplentes'),
+                  ),
+                  DropdownMenuItem(value: 'pendente', child: Text('Pendentes')),
+                  DropdownMenuItem(value: 'inativo', child: Text('Inativas')),
+                ],
+                onChanged: onStatusChanged,
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: onRefresh,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Atualizar'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _UnitExpansionCard extends StatelessWidget {
+  final MasterUnit unit;
+
+  const _UnitExpansionCard({required this.unit});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: EdgeInsets.zero,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: AppSpacing.md,
+                runSpacing: AppSpacing.sm,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(unit.name, style: AppTypography.h3),
+                  StatusBadge(status: unit.status),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                unit.region ?? 'Região não informada',
+                style: AppTypography.bodySmall,
+              ),
+            ],
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.md),
+            child: Wrap(
+              spacing: AppSpacing.lg,
+              runSpacing: AppSpacing.sm,
+              children: [
+                _SummaryChip(label: 'Clientes', value: '${unit.activeClients}'),
+                _SummaryChip(
+                  label: 'Faturamento bruto',
+                  value: _money(unit.grossRevenue),
+                ),
+                _SummaryChip(
+                  label: 'Receita líquida unidade',
+                  value: _money(unit.unitNetRevenue),
+                ),
+                _SummaryChip(
+                  label: 'Receita franqueadora',
+                  value: _money(unit.franchisorRevenue),
+                ),
+                _SummaryChip(
+                  label: 'Crescimento',
+                  value: _pct(unit.growthPercent),
+                  color: unit.growthPercent >= 0
+                      ? AppColors.success
+                      : AppColors.danger,
+                ),
+              ],
+            ),
+          ),
+          children: [
+            const Divider(height: AppSpacing.x3l),
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.md,
+              children: [
+                _DetailMetric(
+                  label: 'Percentual médio de contrato',
+                  value: _pct(unit.contractPercent),
+                ),
+                _DetailMetric(
+                  label: 'Take rate da franqueadora',
+                  value: _pct(unit.takeRate),
+                ),
+                _DetailMetric(
+                  label: 'Contratos pendentes',
+                  value: '${unit.pendingContracts}',
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            _UnitHistoryRow(history: unit.history),
+            const SizedBox(height: AppSpacing.xl),
+            Text(
+              'Clientes finais da unidade',
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.gray900,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _ClientsSection(clients: unit.clients),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SummaryChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? color;
+
+  const _SummaryChip({required this.label, required this.value, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: (color ?? AppColors.gray700).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$label · $value',
+        style: AppTypography.caption.copyWith(
+          color: color ?? AppColors.gray700,
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailMetric extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DetailMetric({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 220,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTypography.caption),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            value,
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.gray900),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnitHistoryRow extends StatelessWidget {
+  final List<MasterHistoryPoint> history;
+
+  const _UnitHistoryRow({required this.history});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Histórico mensal',
+          style: AppTypography.bodyMedium.copyWith(color: AppColors.gray900),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: history
+                .map(
+                  (point) => Container(
+                    width: 140,
+                    margin: const EdgeInsets.only(right: AppSpacing.md),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.gray50,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.gray200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(point.label, style: AppTypography.caption),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          _money(point.grossRevenue),
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.gray900,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Franqueadora: ${_money(point.franchisorRevenue)}',
+                          style: AppTypography.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ClientsSection extends StatelessWidget {
+  final List<MasterClient> clients;
+
+  const _ClientsSection({required this.clients});
+
+  @override
+  Widget build(BuildContext context) {
+    if (clients.isEmpty) {
+      return AppCard(
+        backgroundColor: AppColors.gray50,
+        child: Text(
+          'Nenhum cliente final consolidado para esta unidade no período.',
+          style: AppTypography.bodySmall,
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 900) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columnSpacing: 24,
+              columns: const [
+                DataColumn(label: Text('Cliente')),
+                DataColumn(label: Text('Status')),
+                DataColumn(label: Text('Fat. Cliente')),
+                DataColumn(label: Text('% Contrato')),
+                DataColumn(label: Text('Receita Franqueadora')),
+                DataColumn(label: Text('Mensalidade')),
+                DataColumn(label: Text('GMV Lives')),
+              ],
+              rows: clients
+                  .map(
+                    (client) => DataRow(
+                      cells: [
+                        DataCell(
+                          SizedBox(width: 200, child: Text(client.name)),
+                        ),
+                        DataCell(StatusBadge(status: client.status)),
+                        DataCell(Text(_money(client.grossRevenue))),
+                        DataCell(Text(_pct(client.contractPercent))),
+                        DataCell(Text(_money(client.franchisorRevenue))),
+                        DataCell(Text(_money(client.monthlyFee))),
+                        DataCell(Text(_money(client.liveGmv))),
+                      ],
+                    ),
+                  )
+                  .toList(),
+            ),
+          );
+        }
+
+        return Column(
+          children: clients
+              .map(
+                (client) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: AppCard(
+                    backgroundColor: AppColors.gray50,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                client.name,
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: AppColors.gray900,
+                                ),
+                              ),
+                            ),
+                            StatusBadge(status: client.status),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Wrap(
+                          spacing: AppSpacing.md,
+                          runSpacing: AppSpacing.sm,
+                          children: [
+                            _MiniLine(
+                              label: 'Fat. cliente',
+                              value: _money(client.grossRevenue),
+                            ),
+                            _MiniLine(
+                              label: '% contrato',
+                              value: _pct(client.contractPercent),
+                            ),
+                            _MiniLine(
+                              label: 'Receita franqueadora',
+                              value: _money(client.franchisorRevenue),
+                            ),
+                            _MiniLine(
+                              label: 'Mensalidade',
+                              value: _money(client.monthlyFee),
+                            ),
+                            _MiniLine(
+                              label: 'GMV lives',
+                              value: _money(client.liveGmv),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(client.notes, style: AppTypography.bodySmall),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
+class _MiniLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _MiniLine({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 150,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTypography.caption),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            value,
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.gray900),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnitsErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _UnitsErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: AppCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              color: AppColors.danger,
+              size: 32,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Não foi possível carregar as unidades.',
+              style: AppTypography.h3,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              message,
+              style: AppTypography.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(
+              onPressed: onRetry,
+              child: const Text('Tentar novamente'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
