@@ -1,170 +1,132 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
 
-// ──────────────────────────────────────────────────────────────
-// Models
-// ──────────────────────────────────────────────────────────────
-
-class ClienteCabineBasic {
-  final String id;
-  final int numero;
-  final String status;
-
-  const ClienteCabineBasic({
-    required this.id,
-    required this.numero,
-    required this.status,
-  });
-
-  factory ClienteCabineBasic.fromJson(Map<String, dynamic> j) =>
-      ClienteCabineBasic(
-        id:     j['id'] as String,
-        numero: j['numero'] as int,
-        status: j['status'] as String,
-      );
-}
-
 class ClienteLiveAtual {
   final String liveId;
   final int viewerCount;
   final double gmvAtual;
   final int totalOrders;
-  final int duracaoMinutos;
-  final String? apresentadorNome;
-  final DateTime iniciadoEm;
   final int likesCount;
   final int commentsCount;
+  final String? apresentadorNome;
+  final int duracaoMinutos;
   final String? topProduto;
+  final double comissaoCalculada;
 
   const ClienteLiveAtual({
     required this.liveId,
     required this.viewerCount,
     required this.gmvAtual,
     required this.totalOrders,
-    required this.duracaoMinutos,
-    this.apresentadorNome,
-    required this.iniciadoEm,
     required this.likesCount,
     required this.commentsCount,
+    this.apresentadorNome,
+    this.duracaoMinutos = 0,
     this.topProduto,
+    this.comissaoCalculada = 0,
   });
 
   factory ClienteLiveAtual.fromJson(Map<String, dynamic> j) => ClienteLiveAtual(
-        liveId:           j['live_id'] as String,
-        viewerCount:      (j['viewer_count'] as num? ?? 0).toInt(),
-        gmvAtual:         (j['gmv_atual'] as num? ?? 0).toDouble(),
-        totalOrders:      (j['total_orders'] as num? ?? 0).toInt(),
-        duracaoMinutos:   (j['duracao_minutos'] as num? ?? 0).toInt(),
+        liveId: j['live_id'] as String? ?? '',
+        viewerCount: (j['viewer_count'] as num? ?? 0).toInt(),
+        gmvAtual: (j['gmv'] as num? ?? 0).toDouble(),
+        totalOrders: (j['total_orders'] as num? ?? 0).toInt(),
+        likesCount: (j['likes_count'] as num? ?? 0).toInt(),
+        commentsCount: (j['comments_count'] as num? ?? 0).toInt(),
         apresentadorNome: j['apresentador_nome'] as String?,
-        iniciadoEm:       DateTime.parse(j['iniciado_em'] as String),
-        likesCount:       (j['likes_count'] as num? ?? 0).toInt(),
-        commentsCount:    (j['comments_count'] as num? ?? 0).toInt(),
-        topProduto:       j['top_produto'] as String?,
+        duracaoMinutos: (j['duracao_minutos'] as num? ?? 0).toInt(),
+        topProduto: j['top_produto'] as String?,
+        comissaoCalculada: (j['comissao_calculada'] as num? ?? 0).toDouble(),
       );
 }
 
 class ClienteHistoricoLive {
-  final String id;
   final String iniciadoEm;
-  final String? encerradoEm;
   final String status;
+  final int duracaoMin;
   final double fatGerado;
   final double comissaoCalculada;
-  final int duracaoMin;
 
   const ClienteHistoricoLive({
-    required this.id,
     required this.iniciadoEm,
-    this.encerradoEm,
     required this.status,
+    required this.duracaoMin,
     required this.fatGerado,
     required this.comissaoCalculada,
-    required this.duracaoMin,
   });
 
   factory ClienteHistoricoLive.fromJson(Map<String, dynamic> j) =>
       ClienteHistoricoLive(
-        id:                 j['id'] as String,
-        iniciadoEm:         j['iniciado_em'] as String,
-        encerradoEm:        j['encerrado_em'] as String?,
-        status:             j['status'] as String,
-        fatGerado:          (j['fat_gerado'] as num? ?? 0).toDouble(),
-        comissaoCalculada:  (j['comissao_calculada'] as num? ?? 0).toDouble(),
-        duracaoMin:         (j['duracao_min'] as num? ?? 0).toInt(),
+        iniciadoEm: j['iniciado_em'] as String? ?? '',
+        status: j['status'] as String? ?? '',
+        duracaoMin: (j['duracao_min'] as num? ?? 0).toInt(),
+        fatGerado: (j['fat_gerado'] as num? ?? 0).toDouble(),
+        comissaoCalculada: (j['comissao_calculada'] as num? ?? 0).toDouble(),
       );
 }
 
 class ClienteCabineDetailState {
-  final ClienteCabineBasic cabine;
   final ClienteLiveAtual? liveAtual;
   final List<ClienteHistoricoLive> historicoLives;
 
   const ClienteCabineDetailState({
-    required this.cabine,
     required this.liveAtual,
     required this.historicoLives,
   });
-
-  factory ClienteCabineDetailState.fromJson(Map<String, dynamic> j) =>
-      ClienteCabineDetailState(
-        cabine: ClienteCabineBasic.fromJson(
-            j['cabine'] as Map<String, dynamic>),
-        liveAtual: j['live_atual'] != null
-            ? ClienteLiveAtual.fromJson(
-                j['live_atual'] as Map<String, dynamic>)
-            : null,
-        historicoLives: (j['historico_lives'] as List? ?? [])
-            .map((e) => ClienteHistoricoLive.fromJson(
-                e as Map<String, dynamic>))
-            .toList(),
-      );
-
-  ClienteCabineDetailState copyWith({
-    ClienteLiveAtual? liveAtual,
-    bool clearLive = false,
-  }) =>
-      ClienteCabineDetailState(
-        cabine:        cabine,
-        liveAtual:     clearLive ? null : (liveAtual ?? this.liveAtual),
-        historicoLives: historicoLives,
-      );
 }
-
-// ──────────────────────────────────────────────────────────────
-// Notifier
-// ──────────────────────────────────────────────────────────────
 
 class ClienteCabineDetailNotifier
     extends FamilyAsyncNotifier<ClienteCabineDetailState, String> {
   @override
-  Future<ClienteCabineDetailState> build(String cabineId) async {
-    final resp = await ApiService.get('/cliente/cabines/$cabineId');
-    return ClienteCabineDetailState.fromJson(
-        resp.data as Map<String, dynamic>);
+  Future<ClienteCabineDetailState> build(String arg) => _fetch(arg);
+
+  Future<ClienteCabineDetailState> _fetch(String cabineId) async {
+    final res = await ApiService.get<Map<String, dynamic>>(
+      '/cabines/$cabineId/cliente',
+    );
+    final data = res.data ?? {};
+    ClienteLiveAtual? liveAtual;
+    final liveJson = data['live_atual'];
+    if (liveJson is Map<String, dynamic>) {
+      liveAtual = ClienteLiveAtual.fromJson(liveJson);
+    }
+    final historico = (data['historico'] as List? ?? [])
+        .map((e) =>
+            ClienteHistoricoLive.fromJson(e as Map<String, dynamic>))
+        .toList();
+    return ClienteCabineDetailState(
+      liveAtual: liveAtual,
+      historicoLives: historico,
+    );
   }
 
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => build(arg));
+    state = await AsyncValue.guard(() => _fetch(arg));
   }
 
-  /// Atualiza apenas os dados da live ativa sem mostrar loading na tela.
   Future<void> refreshLiveOnly() async {
-    if (!state.hasValue) return;
+    final current = state.valueOrNull;
+    if (current == null) return;
     try {
-      final resp = await ApiService.get('/cliente/cabines/$arg');
-      final fresh =
-          ClienteCabineDetailState.fromJson(resp.data as Map<String, dynamic>);
-      state = AsyncValue.data(
-        state.value!.copyWith(liveAtual: fresh.liveAtual, clearLive: fresh.liveAtual == null),
+      final res = await ApiService.get<Map<String, dynamic>>(
+        '/cabines/$arg/cliente',
       );
-    } catch (_) {
-      // Mantém último estado estável se o refresh parcial falhar.
-    }
+      final data = res.data ?? {};
+      ClienteLiveAtual? liveAtual;
+      final liveJson = data['live_atual'];
+      if (liveJson is Map<String, dynamic>) {
+        liveAtual = ClienteLiveAtual.fromJson(liveJson);
+      }
+      state = AsyncData(ClienteCabineDetailState(
+        liveAtual: liveAtual,
+        historicoLives: current.historicoLives,
+      ));
+    } catch (_) {}
   }
 }
 
-final clienteCabineDetailProvider = AsyncNotifierProviderFamily<
+final clienteCabineDetailProvider = AsyncNotifierProvider.family<
     ClienteCabineDetailNotifier, ClienteCabineDetailState, String>(
   ClienteCabineDetailNotifier.new,
 );

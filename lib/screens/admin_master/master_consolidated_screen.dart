@@ -5,11 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../models/admin_master.dart';
 import '../../providers/admin_master_provider.dart';
+import '../../design_system/design_system.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../widgets/app_card.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/metric_card.dart';
 import '../../widgets/status_badge.dart';
@@ -68,7 +65,7 @@ class _MasterConsolidatedScreenState
     return AppScaffold(
       currentRoute: AppRoutes.masterConsolidated,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        padding: const EdgeInsets.all(AppSpacing.x6),
         child: consolidatedAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => _ConsolidatedErrorState(
@@ -118,18 +115,18 @@ class _MasterConsolidatedScreenState
                     onRefresh: () =>
                         ref.invalidate(masterConsolidatedProvider(filters)),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.x5),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final cardWidth = constraints.maxWidth >= 1100
-                          ? (constraints.maxWidth - (AppSpacing.md * 3)) / 4
+                          ? (constraints.maxWidth - (AppSpacing.x3 * 3)) / 4
                           : constraints.maxWidth >= 700
-                              ? (constraints.maxWidth - AppSpacing.md) / 2
+                              ? (constraints.maxWidth - AppSpacing.x3) / 2
                               : constraints.maxWidth;
 
                       return Wrap(
-                        spacing: AppSpacing.md,
-                        runSpacing: AppSpacing.md,
+                        spacing: AppSpacing.x3,
+                        runSpacing: AppSpacing.x3,
                         children: [
                           SizedBox(
                             width: cardWidth,
@@ -137,7 +134,7 @@ class _MasterConsolidatedScreenState
                               label: 'FATURAMENTO BRUTO',
                               value: _formatMoney(data.overview.grossRevenue),
                               icon: Icons.payments_rounded,
-                              iconColor: AppColors.primaryOrange,
+                              iconColor: AppColors.primary,
                             ),
                           ),
                           SizedBox(
@@ -148,7 +145,7 @@ class _MasterConsolidatedScreenState
                                 data.overview.franchisorRevenue,
                               ),
                               icon: Icons.account_balance_rounded,
-                              iconColor: AppColors.gray700,
+                              iconColor: AppColors.textPrimary,
                             ),
                           ),
                           SizedBox(
@@ -213,22 +210,22 @@ class _MasterConsolidatedScreenState
                                 data.overview.comparisonValue,
                               ),
                               icon: Icons.compare_arrows_rounded,
-                              iconColor: AppColors.gray700,
+                              iconColor: AppColors.textPrimary,
                             ),
                           ),
                         ],
                       );
                     },
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.x5),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final cardWidth = constraints.maxWidth >= 1100
-                          ? (constraints.maxWidth - AppSpacing.md) / 2
+                          ? (constraints.maxWidth - AppSpacing.x3) / 2
                           : constraints.maxWidth;
                       return Wrap(
-                        spacing: AppSpacing.md,
-                        runSpacing: AppSpacing.md,
+                        spacing: AppSpacing.x3,
+                        runSpacing: AppSpacing.x3,
                         children: [
                           SizedBox(
                             width: cardWidth,
@@ -242,7 +239,7 @@ class _MasterConsolidatedScreenState
                       );
                     },
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.x5),
                   _ConsolidatedTable(units: sortedUnits),
                 ],
               ),
@@ -278,8 +275,8 @@ class _ConsolidatedHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.md,
+      spacing: AppSpacing.x3,
+      runSpacing: AppSpacing.x3,
       crossAxisAlignment: WrapCrossAlignment.center,
       alignment: WrapAlignment.spaceBetween,
       children: [
@@ -289,19 +286,19 @@ class _ConsolidatedHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Consolidado', style: AppTypography.h1),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: AppSpacing.x1),
               Text(
                 'Leitura financeira da rede: bruto, receita da franqueadora, mix de receitas e risco.',
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.gray500,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
           ),
         ),
         Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.md,
+          spacing: AppSpacing.x3,
+          runSpacing: AppSpacing.x3,
           children: [
             SizedBox(
               width: 220,
@@ -403,12 +400,12 @@ class _NetworkHistoryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Evolução da Rede', style: AppTypography.h3),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             'Histórico consolidado para comparar tendência e sazonalidade.',
             style: AppTypography.bodySmall,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.x4),
           if (history.isEmpty || maxValue <= 0)
             SizedBox(
               height: 260,
@@ -472,7 +469,7 @@ class _NetworkHistoryCard extends StatelessWidget {
                   lineBarsData: [
                     LineChartBarData(
                       isCurved: true,
-                      color: AppColors.primaryOrange,
+                      color: AppColors.primary,
                       barWidth: 3,
                       dotData: const FlDotData(show: true),
                       spots: history
@@ -511,8 +508,8 @@ class _RevenueBreakdownCard extends StatelessWidget {
 
     final breakdown = [
       ('Mensalidade', data.monthlyFeeRevenue, AppColors.info),
-      ('Comissão', data.commissionRevenue, AppColors.primaryOrange),
-      ('Outros', data.otherRevenue, AppColors.gray400),
+      ('Comissão', data.commissionRevenue, AppColors.primary),
+      ('Outros', data.otherRevenue, AppColors.textMuted),
     ];
 
     return AppCard(
@@ -520,16 +517,16 @@ class _RevenueBreakdownCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Mix de Receita', style: AppTypography.h3),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             'Separação do que é mensalidade, comissão e outros componentes.',
             style: AppTypography.bodySmall,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.x4),
           ...breakdown.map((item) {
             final percent = total > 0 ? (item.$2 / total) * 100 : 0;
             return Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              padding: const EdgeInsets.only(bottom: AppSpacing.x3),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -541,22 +538,22 @@ class _RevenueBreakdownCard extends StatelessWidget {
                       Text(
                         _formatMoney(item.$2),
                         style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.gray900,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: AppSpacing.x1),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(999),
                     child: LinearProgressIndicator(
                       value: total > 0 ? item.$2 / total : 0,
                       minHeight: 10,
-                      backgroundColor: AppColors.gray100,
+                      backgroundColor: AppColors.bgMuted,
                       valueColor: AlwaysStoppedAnimation<Color>(item.$3),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: AppSpacing.x1),
                   Text(
                     '${percent.toStringAsFixed(1)}% do consolidado',
                     style: AppTypography.caption,
@@ -565,12 +562,12 @@ class _RevenueBreakdownCard extends StatelessWidget {
               ),
             );
           }),
-          const Divider(height: AppSpacing.xl),
+          const Divider(height: AppSpacing.x5),
           _InlineMetric(
             label: 'Receita franqueadora',
             value: _formatMoney(data.franchisorRevenue),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.x2),
           _InlineMetric(
             label: 'Take rate médio',
             value: _formatPct(data.averageTakeRate),
@@ -594,7 +591,7 @@ class _InlineMetric extends StatelessWidget {
         Expanded(child: Text(label, style: AppTypography.bodyMedium)),
         Text(
           value,
-          style: AppTypography.bodyMedium.copyWith(color: AppColors.gray900),
+          style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
         ),
       ],
     );
@@ -613,12 +610,12 @@ class _ConsolidatedTable extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Tabela Consolidada por Unidade', style: AppTypography.h3),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             'Bruto, percentual contratual, receita da franqueadora, crescimento e status.',
             style: AppTypography.bodySmall,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.x4),
           if (units.isEmpty)
             Text(
               'Nenhuma unidade encontrada para os filtros selecionados.',
@@ -691,19 +688,19 @@ class _ConsolidatedErrorState extends StatelessWidget {
               color: AppColors.danger,
               size: 32,
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.x3),
             Text(
               'Não foi possível carregar o consolidado.',
               style: AppTypography.h3,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
             Text(
               message,
               style: AppTypography.bodySmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.x4),
             FilledButton(
               onPressed: onRetry,
               child: const Text('Tentar novamente'),

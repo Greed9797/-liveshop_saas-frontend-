@@ -4,11 +4,8 @@ import 'package:intl/intl.dart';
 
 import '../../models/admin_master.dart';
 import '../../providers/admin_master_provider.dart';
+import '../../design_system/design_system.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../widgets/app_card.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/metric_card.dart';
 
@@ -30,7 +27,7 @@ class MasterCrmScreen extends ConsumerWidget {
     return AppScaffold(
       currentRoute: AppRoutes.masterCrm,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        padding: const EdgeInsets.all(AppSpacing.x6),
         child: crmAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => _CrmErrorState(
@@ -49,11 +46,11 @@ class MasterCrmScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('CRM', style: AppTypography.h1),
-                          const SizedBox(height: AppSpacing.xs),
+                          const SizedBox(height: AppSpacing.x1),
                           Text(
                             'Placeholder pronto para a expansão comercial da franqueadora.',
                             style: AppTypography.bodyLarge.copyWith(
-                              color: AppColors.gray500,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -66,23 +63,23 @@ class MasterCrmScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.x5),
                 AppCard(
-                  backgroundColor: AppColors.primaryOrangeLight,
-                  borderColor: AppColors.orange100,
+                  color: AppColors.primaryLight,
+                  borderColor: AppColors.primarySoft,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Icon(
                         Icons.construction_rounded,
-                        color: AppColors.primaryOrange,
+                        color: AppColors.primary,
                       ),
-                      const SizedBox(width: AppSpacing.md),
+                      const SizedBox(width: AppSpacing.x3),
                       Expanded(
                         child: Text(
                           crm.message,
                           style: AppTypography.bodyLarge.copyWith(
-                            color: AppColors.gray700,
+                            color: AppColors.textPrimary,
                             height: 1.45,
                           ),
                         ),
@@ -90,18 +87,18 @@ class MasterCrmScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.x5),
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final cardWidth = constraints.maxWidth >= 1100
-                        ? (constraints.maxWidth - (AppSpacing.md * 3)) / 4
+                        ? (constraints.maxWidth - (AppSpacing.x3 * 3)) / 4
                         : constraints.maxWidth >= 700
-                        ? (constraints.maxWidth - AppSpacing.md) / 2
+                        ? (constraints.maxWidth - AppSpacing.x3) / 2
                         : constraints.maxWidth;
 
                     return Wrap(
-                      spacing: AppSpacing.md,
-                      runSpacing: AppSpacing.md,
+                      spacing: AppSpacing.x3,
+                      runSpacing: AppSpacing.x3,
                       children: [
                         SizedBox(
                           width: cardWidth,
@@ -118,7 +115,7 @@ class MasterCrmScreen extends ConsumerWidget {
                             label: 'LEADS TOTAIS',
                             value: '${crm.summary.totalLeads}',
                             icon: Icons.groups_rounded,
-                            iconColor: AppColors.primaryOrange,
+                            iconColor: AppColors.primary,
                           ),
                         ),
                         SizedBox(
@@ -143,16 +140,16 @@ class MasterCrmScreen extends ConsumerWidget {
                     );
                   },
                 ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.x5),
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final cardWidth = constraints.maxWidth >= 1100
-                        ? (constraints.maxWidth - AppSpacing.md) / 2
+                        ? (constraints.maxWidth - AppSpacing.x3) / 2
                         : constraints.maxWidth;
 
                     return Wrap(
-                      spacing: AppSpacing.md,
-                      runSpacing: AppSpacing.md,
+                      spacing: AppSpacing.x3,
+                      runSpacing: AppSpacing.x3,
                       children: [
                         SizedBox(
                           width: cardWidth,
@@ -168,7 +165,7 @@ class MasterCrmScreen extends ConsumerWidget {
                     );
                   },
                 ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.x5),
                 AppCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,10 +174,10 @@ class MasterCrmScreen extends ConsumerWidget {
                         'Leitura atual do placeholder',
                         style: AppTypography.h3,
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: AppSpacing.x3),
                       Wrap(
-                        spacing: AppSpacing.xl,
-                        runSpacing: AppSpacing.md,
+                        spacing: AppSpacing.x5,
+                        runSpacing: AppSpacing.x3,
                         children: [
                           _SummaryLine(
                             label: 'Leads engajados',
@@ -222,23 +219,23 @@ class _PipelinePlaceholderCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Pipeline sugerida', style: AppTypography.h3),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             'Estrutura visual pronta para receber os dados reais depois.',
             style: AppTypography.bodySmall,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.x4),
           ...stages.map(
             (stage) => Container(
-              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+              margin: const EdgeInsets.only(bottom: AppSpacing.x2),
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.md,
+                horizontal: AppSpacing.x3,
+                vertical: AppSpacing.x3,
               ),
               decoration: BoxDecoration(
-                color: AppColors.gray50,
+                color: AppColors.bgBase,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.gray200),
+                border: Border.all(color: AppColors.borderLight),
               ),
               child: Row(
                 children: [
@@ -251,13 +248,13 @@ class _PipelinePlaceholderCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.white,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       '${stage.count}',
                       style: AppTypography.caption.copyWith(
-                        color: AppColors.gray700,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -283,15 +280,15 @@ class _RecommendedFieldsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Campos básicos do CRM', style: AppTypography.h3),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             'Modelagem mínima para plugar o backend real sem retrabalho.',
             style: AppTypography.bodySmall,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.x4),
           ...fields.map(
             (field) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              padding: const EdgeInsets.only(bottom: AppSpacing.x2),
               child: Row(
                 children: [
                   const Icon(
@@ -299,12 +296,12 @@ class _RecommendedFieldsCard extends StatelessWidget {
                     size: 18,
                     color: AppColors.success,
                   ),
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: AppSpacing.x2),
                   Expanded(
                     child: Text(
                       field,
                       style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.gray900,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -332,10 +329,10 @@ class _SummaryLine extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: AppTypography.caption),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             value,
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.gray900),
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
           ),
         ],
       ),
@@ -361,19 +358,19 @@ class _CrmErrorState extends StatelessWidget {
               color: AppColors.danger,
               size: 32,
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.x3),
             Text(
               'Não foi possível carregar o CRM placeholder.',
               style: AppTypography.h3,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
             Text(
               message,
               style: AppTypography.bodySmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.x4),
             FilledButton(
               onPressed: onRetry,
               child: const Text('Tentar novamente'),

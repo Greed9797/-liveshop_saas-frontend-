@@ -5,11 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../models/admin_master.dart';
 import '../../providers/admin_master_provider.dart';
+import '../../design_system/design_system.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../widgets/app_card.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/metric_card.dart';
 
@@ -79,7 +76,7 @@ class _MasterDashboardScreenState extends ConsumerState<MasterDashboardScreen> {
           final contentWidth = constraints.maxWidth;
 
           return Padding(
-            padding: const EdgeInsets.all(AppSpacing.screenPadding),
+            padding: const EdgeInsets.all(AppSpacing.x6),
             child: dashboardAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => _MasterErrorState(
@@ -102,13 +99,13 @@ class _MasterDashboardScreenState extends ConsumerState<MasterDashboardScreen> {
                         masterDashboardProvider(_selectedPeriod),
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.xl),
+                    const SizedBox(height: AppSpacing.x5),
                     _ExecutiveSummaryBanner(
                       summary: dashboard.executiveSummary,
                     ),
-                    const SizedBox(height: AppSpacing.xl),
+                    const SizedBox(height: AppSpacing.x5),
                     _MetricsGrid(width: contentWidth, cards: dashboard.cards),
-                    const SizedBox(height: AppSpacing.xl),
+                    const SizedBox(height: AppSpacing.x5),
                     _AdaptiveGrid(
                       width: contentWidth,
                       minCardWidth: 320,
@@ -124,9 +121,9 @@ class _MasterDashboardScreenState extends ConsumerState<MasterDashboardScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.xl),
+                    const SizedBox(height: AppSpacing.x5),
                     _AlertsCard(alerts: dashboard.alerts),
-                    const SizedBox(height: AppSpacing.xl),
+                    const SizedBox(height: AppSpacing.x5),
                     _AdaptiveGrid(
                       width: contentWidth,
                       minCardWidth: 420,
@@ -135,7 +132,7 @@ class _MasterDashboardScreenState extends ConsumerState<MasterDashboardScreen> {
                         _GrowthCard(points: dashboard.unitGrowth),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.xl),
+                    const SizedBox(height: AppSpacing.x5),
                     _AdaptiveGrid(
                       width: contentWidth,
                       minCardWidth: 320,
@@ -173,8 +170,8 @@ class _DashboardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.md,
+      spacing: AppSpacing.x3,
+      runSpacing: AppSpacing.x3,
       crossAxisAlignment: WrapCrossAlignment.center,
       alignment: WrapAlignment.spaceBetween,
       children: [
@@ -184,19 +181,19 @@ class _DashboardHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Painel Master', style: AppTypography.h1),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: AppSpacing.x1),
               Text(
                 'Leitura executiva da rede em poucos segundos, sem ruído operacional.',
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.gray500,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
           ),
         ),
         Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.md,
+          spacing: AppSpacing.x3,
+          runSpacing: AppSpacing.x3,
           children: [
             SizedBox(
               width: 220,
@@ -242,8 +239,8 @@ class _ExecutiveSummaryBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      backgroundColor: AppColors.primaryOrangeLight,
-      borderColor: AppColors.orange100,
+      color: AppColors.primaryLight,
+      borderColor: AppColors.primarySoft,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -251,12 +248,12 @@ class _ExecutiveSummaryBanner extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: const BoxDecoration(
-              color: AppColors.primaryOrange,
+              color: AppColors.primary,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.insights_rounded, color: AppColors.white),
+            child: const Icon(Icons.insights_rounded, color: Colors.white),
           ),
-          const SizedBox(width: AppSpacing.lg),
+          const SizedBox(width: AppSpacing.x4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,14 +261,14 @@ class _ExecutiveSummaryBanner extends StatelessWidget {
                 Text(
                   'Resumo Executivo',
                   style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.gray900,
+                    color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: AppSpacing.x1),
                 Text(
                   summary,
                   style: AppTypography.bodyLarge.copyWith(
-                    color: AppColors.gray700,
+                    color: AppColors.textPrimary,
                     height: 1.45,
                   ),
                 ),
@@ -309,13 +306,13 @@ class _MetricsGrid extends StatelessWidget {
         label: 'FATURAMENTO DA REDE',
         value: _currency(cards.grossRevenue),
         icon: Icons.payments_rounded,
-        iconColor: AppColors.primaryOrange,
+        iconColor: AppColors.primary,
       ),
       MetricCard(
         label: 'RECEITA FRANQUEADORA',
         value: _currency(cards.franchisorNetRevenue),
         icon: Icons.account_balance_rounded,
-        iconColor: AppColors.gray700,
+        iconColor: AppColors.textPrimary,
       ),
       MetricCard(
         label: 'CONTRATOS PENDENTES',
@@ -363,8 +360,8 @@ class _AdaptiveGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final columns =
-        ((width / (minCardWidth + AppSpacing.md)).floor()).clamp(1, 4).toInt();
-    const spacing = AppSpacing.md;
+        ((width / (minCardWidth + AppSpacing.x3)).floor()).clamp(1, 4).toInt();
+    const spacing = AppSpacing.x3;
     final itemWidth =
         columns == 1 ? width : (width - (spacing * (columns - 1))) / columns;
 
@@ -396,7 +393,7 @@ class _RankingCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: AppTypography.h3),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.x3),
           if (items.isEmpty)
             Text(
               'Sem dados suficientes para montar o ranking.',
@@ -406,7 +403,7 @@ class _RankingCard extends StatelessWidget {
             ...items.asMap().entries.map(
                   (entry) => Padding(
                     padding: EdgeInsets.only(
-                      bottom: entry.key == items.length - 1 ? 0 : AppSpacing.md,
+                      bottom: entry.key == items.length - 1 ? 0 : AppSpacing.x3,
                     ),
                     child: Row(
                       children: [
@@ -415,17 +412,17 @@ class _RankingCard extends StatelessWidget {
                           height: 32,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: AppColors.orange50,
+                            color: AppColors.primarySofter,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             '${entry.key + 1}',
                             style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.primaryOrange,
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.md),
+                        const SizedBox(width: AppSpacing.x3),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,7 +430,7 @@ class _RankingCard extends StatelessWidget {
                               Text(
                                 entry.value.unitName,
                                 style: AppTypography.bodyMedium.copyWith(
-                                  color: AppColors.gray900,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                               Text(
@@ -479,7 +476,7 @@ class _AlertsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Alertas Críticos', style: AppTypography.h3),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.x3),
           if (alerts.isEmpty)
             Text(
               'Nenhum alerta crítico no período selecionado.',
@@ -488,8 +485,8 @@ class _AlertsCard extends StatelessWidget {
           else
             ...alerts.map(
               (alert) => Container(
-                margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                margin: const EdgeInsets.only(bottom: AppSpacing.x3),
+                padding: const EdgeInsets.all(AppSpacing.x4),
                 decoration: BoxDecoration(
                   color: _severityColor(alert.severity).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
@@ -506,7 +503,7 @@ class _AlertsCard extends StatelessWidget {
                       Icons.error_outline_rounded,
                       color: _severityColor(alert.severity),
                     ),
-                    const SizedBox(width: AppSpacing.md),
+                    const SizedBox(width: AppSpacing.x3),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -514,14 +511,14 @@ class _AlertsCard extends StatelessWidget {
                           Text(
                             alert.title,
                             style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.gray900,
+                              color: AppColors.textPrimary,
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.xs),
+                          const SizedBox(height: AppSpacing.x1),
                           Text(
                             alert.description,
                             style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.gray700,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                         ],
@@ -554,12 +551,12 @@ class _RevenueHistoryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Receita Consolidada da Rede', style: AppTypography.h3),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             'Últimos 6 meses de faturamento bruto e receita da franqueadora.',
             style: AppTypography.bodySmall,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.x4),
           if (points.isEmpty || maxValue <= 0)
             SizedBox(
               height: 240,
@@ -624,7 +621,7 @@ class _RevenueHistoryCard extends StatelessWidget {
                   lineBarsData: [
                     LineChartBarData(
                       isCurved: true,
-                      color: AppColors.primaryOrange,
+                      color: AppColors.primary,
                       barWidth: 3,
                       dotData: const FlDotData(show: true),
                       spots: points
@@ -640,7 +637,7 @@ class _RevenueHistoryCard extends StatelessWidget {
                     ),
                     LineChartBarData(
                       isCurved: true,
-                      color: AppColors.gray700,
+                      color: AppColors.textPrimary,
                       barWidth: 3,
                       dotData: const FlDotData(show: true),
                       spots: points
@@ -681,12 +678,12 @@ class _GrowthCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Crescimento por Unidade', style: AppTypography.h3),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             'Comparativo com o mês anterior por unidade.',
             style: AppTypography.bodySmall,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.x4),
           if (points.isEmpty || maxValue <= 0)
             SizedBox(
               height: 240,
@@ -786,15 +783,15 @@ class _PipelineCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Pipeline do CRM', style: AppTypography.h3),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             'Estrutura pronta para expansão comercial global.',
             style: AppTypography.bodySmall,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.x4),
           ...stages.map(
             (stage) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              padding: const EdgeInsets.only(bottom: AppSpacing.x2),
               child: Row(
                 children: [
                   Expanded(
@@ -806,13 +803,13 @@ class _PipelineCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.gray100,
+                      color: AppColors.bgMuted,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       '${stage.count}',
                       style: AppTypography.caption.copyWith(
-                        color: AppColors.gray700,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -834,7 +831,7 @@ class _CommissionSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      ('Previsto', summary.forecast, AppColors.primaryOrange),
+      ('Previsto', summary.forecast, AppColors.primary),
       ('Recebido', summary.received, AppColors.success),
       ('Pendente', summary.pending, AppColors.warning),
       ('Inadimplente', summary.overdue, AppColors.danger),
@@ -845,15 +842,15 @@ class _CommissionSummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Comissionamento da Franqueadora', style: AppTypography.h3),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             'Leitura direta do caixa da franqueadora no período.',
             style: AppTypography.bodySmall,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.x4),
           ...items.map(
             (item) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              padding: const EdgeInsets.only(bottom: AppSpacing.x3),
               child: Row(
                 children: [
                   Container(
@@ -864,14 +861,14 @@ class _CommissionSummaryCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: AppSpacing.x2),
                   Expanded(
                     child: Text(item.$1, style: AppTypography.bodyMedium),
                   ),
                   Text(
                     _currency(item.$2),
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.gray900,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -902,19 +899,19 @@ class _MasterErrorState extends StatelessWidget {
               size: 32,
               color: AppColors.danger,
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.x3),
             Text(
               'Não foi possível carregar o painel master.',
               style: AppTypography.h3,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
             Text(
               message,
               style: AppTypography.bodySmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.x4),
             FilledButton(
               onPressed: onRetry,
               child: const Text('Tentar novamente'),

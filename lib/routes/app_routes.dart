@@ -22,6 +22,7 @@ import '../screens/home/home_screen.dart';
 import '../screens/leads/leads_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
 import '../screens/painel_cliente/carteira_clientes_screen.dart';
+import '../screens/painel_cliente/cliente_dashboard_screen.dart';
 import '../screens/painel_cliente/cliente_screen.dart';
 import '../screens/recomendacoes/recomendacoes_screen.dart';
 import '../screens/solicitacoes/solicitacoes_screen.dart';
@@ -53,6 +54,7 @@ class AppRoutes {
   static const clienteHistorico = '/cliente/historico';
   static const clienteCabines = '/cliente/cabines';
   static const clienteCabineDetail = '/cliente/cabines/detalhe';
+  static const clienteDashboard = '/cliente/dashboard';
   static const leads = '/leads';
   static const boletos = '/boletos';
   static const excelencia = '/excelencia';
@@ -265,6 +267,17 @@ class AppRoutes {
             fallbackRoute: login,
             unauthenticatedRoute: login,
             child: ClienteCabinesScreen(),
+          ),
+          settings: settings,
+        );
+
+      case clienteDashboard:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'cliente_parceiro'},
+            fallbackRoute: login,
+            unauthenticatedRoute: login,
+            child: ClienteDashboardScreen(),
           ),
           settings: settings,
         );

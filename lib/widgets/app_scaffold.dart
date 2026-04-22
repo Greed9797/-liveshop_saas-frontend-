@@ -452,6 +452,13 @@ class _MenuContent extends ConsumerWidget {
       ),
       if (isClienteParceiro) ...[
         _MenuItem(
+          icon: PhosphorIcons.chartBar(),
+          label: 'Dashboard',
+          route: AppRoutes.clienteDashboard,
+          isSelected: currentRoute == AppRoutes.clienteDashboard,
+          compact: compact,
+        ),
+        _MenuItem(
           icon: PhosphorIcons.videoCamera(),
           label: 'Minhas Cabines',
           route: AppRoutes.clienteCabines,

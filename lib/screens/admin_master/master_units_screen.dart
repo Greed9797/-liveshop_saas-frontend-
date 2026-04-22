@@ -4,11 +4,8 @@ import 'package:intl/intl.dart';
 
 import '../../models/admin_master.dart';
 import '../../providers/admin_master_provider.dart';
+import '../../design_system/design_system.dart';
 import '../../routes/app_routes.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
-import '../../widgets/app_card.dart';
 import '../../widgets/app_scaffold.dart';
 import '../../widgets/metric_card.dart';
 import '../../widgets/status_badge.dart';
@@ -64,7 +61,7 @@ class _MasterUnitsScreenState extends ConsumerState<MasterUnitsScreen> {
     return AppScaffold(
       currentRoute: AppRoutes.masterUnits,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        padding: const EdgeInsets.all(AppSpacing.x6),
         child: unitsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => _UnitsErrorState(
@@ -89,31 +86,31 @@ class _MasterUnitsScreenState extends ConsumerState<MasterUnitsScreen> {
                   },
                   onRefresh: () => ref.invalidate(masterUnitsProvider(filters)),
                 ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.x5),
                 LayoutBuilder(
                   builder: (context, constraints) {
                     return Wrap(
-                      spacing: AppSpacing.md,
-                      runSpacing: AppSpacing.md,
+                      spacing: AppSpacing.x3,
+                      runSpacing: AppSpacing.x3,
                       children: [
                         SizedBox(
                           width: constraints.maxWidth >= 1100
-                              ? (constraints.maxWidth - (AppSpacing.md * 3)) / 4
+                              ? (constraints.maxWidth - (AppSpacing.x3 * 3)) / 4
                               : constraints.maxWidth >= 700
-                                  ? (constraints.maxWidth - AppSpacing.md) / 2
+                                  ? (constraints.maxWidth - AppSpacing.x3) / 2
                                   : constraints.maxWidth,
                           child: MetricCard(
                             label: 'UNIDADES',
                             value: '${data.summary.totalUnits}',
                             icon: Icons.storefront_rounded,
-                            iconColor: AppColors.primaryOrange,
+                            iconColor: AppColors.primary,
                           ),
                         ),
                         SizedBox(
                           width: constraints.maxWidth >= 1100
-                              ? (constraints.maxWidth - (AppSpacing.md * 3)) / 4
+                              ? (constraints.maxWidth - (AppSpacing.x3 * 3)) / 4
                               : constraints.maxWidth >= 700
-                                  ? (constraints.maxWidth - AppSpacing.md) / 2
+                                  ? (constraints.maxWidth - AppSpacing.x3) / 2
                                   : constraints.maxWidth,
                           child: MetricCard(
                             label: 'CLIENTES ATIVOS',
@@ -124,9 +121,9 @@ class _MasterUnitsScreenState extends ConsumerState<MasterUnitsScreen> {
                         ),
                         SizedBox(
                           width: constraints.maxWidth >= 1100
-                              ? (constraints.maxWidth - (AppSpacing.md * 3)) / 4
+                              ? (constraints.maxWidth - (AppSpacing.x3 * 3)) / 4
                               : constraints.maxWidth >= 700
-                                  ? (constraints.maxWidth - AppSpacing.md) / 2
+                                  ? (constraints.maxWidth - AppSpacing.x3) / 2
                                   : constraints.maxWidth,
                           child: MetricCard(
                             label: 'FATURAMENTO BRUTO',
@@ -137,26 +134,26 @@ class _MasterUnitsScreenState extends ConsumerState<MasterUnitsScreen> {
                         ),
                         SizedBox(
                           width: constraints.maxWidth >= 1100
-                              ? (constraints.maxWidth - (AppSpacing.md * 3)) / 4
+                              ? (constraints.maxWidth - (AppSpacing.x3 * 3)) / 4
                               : constraints.maxWidth >= 700
-                                  ? (constraints.maxWidth - AppSpacing.md) / 2
+                                  ? (constraints.maxWidth - AppSpacing.x3) / 2
                                   : constraints.maxWidth,
                           child: MetricCard(
                             label: 'RECEITA FRANQUEADORA',
                             value: _money(data.summary.franchisorRevenue),
                             icon: Icons.account_balance_rounded,
-                            iconColor: AppColors.gray700,
+                            iconColor: AppColors.textPrimary,
                           ),
                         ),
                       ],
                     );
                   },
                 ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.x5),
                 if (data.units.isEmpty)
                   AppCard(
                     child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      padding: const EdgeInsets.all(AppSpacing.x5),
                       child: Center(
                         child: Text(
                           'Nenhuma unidade encontrada para o filtro selecionado.',
@@ -168,7 +165,7 @@ class _MasterUnitsScreenState extends ConsumerState<MasterUnitsScreen> {
                 else
                   ...data.units.map(
                     (unit) => Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.x3),
                       child: _UnitExpansionCard(unit: unit),
                     ),
                   ),
@@ -201,8 +198,8 @@ class _UnitsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.md,
+      spacing: AppSpacing.x3,
+      runSpacing: AppSpacing.x3,
       crossAxisAlignment: WrapCrossAlignment.center,
       alignment: WrapAlignment.spaceBetween,
       children: [
@@ -212,19 +209,19 @@ class _UnitsHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Unidades', style: AppTypography.h1),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: AppSpacing.x1),
               Text(
                 'Cada unidade como uma mini-DRE operacional da rede, com drill-down por cliente final.',
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.gray500,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
           ),
         ),
         Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.md,
+          spacing: AppSpacing.x3,
+          runSpacing: AppSpacing.x3,
           children: [
             SizedBox(
               width: 220,
@@ -299,15 +296,15 @@ class _UnitExpansionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Wrap(
-                spacing: AppSpacing.md,
-                runSpacing: AppSpacing.sm,
+                spacing: AppSpacing.x3,
+                runSpacing: AppSpacing.x2,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(unit.name, style: AppTypography.h3),
                   StatusBadge(status: unit.status),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.x2),
               Text(
                 unit.region ?? 'Região não informada',
                 style: AppTypography.bodySmall,
@@ -315,10 +312,10 @@ class _UnitExpansionCard extends StatelessWidget {
             ],
           ),
           subtitle: Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.md),
+            padding: const EdgeInsets.only(top: AppSpacing.x3),
             child: Wrap(
-              spacing: AppSpacing.lg,
-              runSpacing: AppSpacing.sm,
+              spacing: AppSpacing.x4,
+              runSpacing: AppSpacing.x2,
               children: [
                 _SummaryChip(label: 'Clientes', value: '${unit.activeClients}'),
                 _SummaryChip(
@@ -344,10 +341,10 @@ class _UnitExpansionCard extends StatelessWidget {
             ),
           ),
           children: [
-            const Divider(height: AppSpacing.x3l),
+            const Divider(height: AppSpacing.x8),
             Wrap(
-              spacing: AppSpacing.md,
-              runSpacing: AppSpacing.md,
+              spacing: AppSpacing.x3,
+              runSpacing: AppSpacing.x3,
               children: [
                 _DetailMetric(
                   label: 'Percentual médio de contrato',
@@ -363,16 +360,16 @@ class _UnitExpansionCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.x4),
             _UnitHistoryRow(history: unit.history),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.x5),
             Text(
               'Clientes finais da unidade',
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.gray900,
+                color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.x3),
             _ClientsSection(clients: unit.clients),
           ],
         ),
@@ -392,17 +389,17 @@ class _SummaryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+        horizontal: AppSpacing.x3,
+        vertical: AppSpacing.x2,
       ),
       decoration: BoxDecoration(
-        color: (color ?? AppColors.gray700).withValues(alpha: 0.08),
+        color: (color ?? AppColors.textPrimary).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         '$label · $value',
         style: AppTypography.caption.copyWith(
-          color: color ?? AppColors.gray700,
+          color: color ?? AppColors.textPrimary,
         ),
       ),
     );
@@ -423,10 +420,10 @@ class _DetailMetric extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: AppTypography.caption),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             value,
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.gray900),
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
           ),
         ],
       ),
@@ -446,9 +443,9 @@ class _UnitHistoryRow extends StatelessWidget {
       children: [
         Text(
           'Histórico mensal',
-          style: AppTypography.bodyMedium.copyWith(color: AppColors.gray900),
+          style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.x3),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -456,25 +453,25 @@ class _UnitHistoryRow extends StatelessWidget {
                 .map(
                   (point) => Container(
                     width: 140,
-                    margin: const EdgeInsets.only(right: AppSpacing.md),
-                    padding: const EdgeInsets.all(AppSpacing.md),
+                    margin: const EdgeInsets.only(right: AppSpacing.x3),
+                    padding: const EdgeInsets.all(AppSpacing.x3),
                     decoration: BoxDecoration(
-                      color: AppColors.gray50,
+                      color: AppColors.bgBase,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.gray200),
+                      border: Border.all(color: AppColors.borderLight),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(point.label, style: AppTypography.caption),
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: AppSpacing.x2),
                         Text(
                           _money(point.grossRevenue),
                           style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.gray900,
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.xs),
+                        const SizedBox(height: AppSpacing.x1),
                         Text(
                           'Franqueadora: ${_money(point.franchisorRevenue)}',
                           style: AppTypography.bodySmall,
@@ -500,7 +497,7 @@ class _ClientsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (clients.isEmpty) {
       return AppCard(
-        backgroundColor: AppColors.gray50,
+        color: AppColors.bgBase,
         child: Text(
           'Nenhum cliente final consolidado para esta unidade no período.',
           style: AppTypography.bodySmall,
@@ -549,9 +546,9 @@ class _ClientsSection extends StatelessWidget {
           children: clients
               .map(
                 (client) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.x3),
                   child: AppCard(
-                    backgroundColor: AppColors.gray50,
+                    color: AppColors.bgBase,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -561,17 +558,17 @@ class _ClientsSection extends StatelessWidget {
                               child: Text(
                                 client.name,
                                 style: AppTypography.bodyMedium.copyWith(
-                                  color: AppColors.gray900,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ),
                             StatusBadge(status: client.status),
                           ],
                         ),
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: AppSpacing.x2),
                         Wrap(
-                          spacing: AppSpacing.md,
-                          runSpacing: AppSpacing.sm,
+                          spacing: AppSpacing.x3,
+                          runSpacing: AppSpacing.x2,
                           children: [
                             _MiniLine(
                               label: 'Fat. cliente',
@@ -595,7 +592,7 @@ class _ClientsSection extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: AppSpacing.x2),
                         Text(client.notes, style: AppTypography.bodySmall),
                       ],
                     ),
@@ -623,10 +620,10 @@ class _MiniLine extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: AppTypography.caption),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             value,
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.gray900),
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
           ),
         ],
       ),
@@ -652,19 +649,19 @@ class _UnitsErrorState extends StatelessWidget {
               color: AppColors.danger,
               size: 32,
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.x3),
             Text(
               'Não foi possível carregar as unidades.',
               style: AppTypography.h3,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
             Text(
               message,
               style: AppTypography.bodySmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.x4),
             FilledButton(
               onPressed: onRetry,
               child: const Text('Tentar novamente'),
