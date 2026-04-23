@@ -11,8 +11,6 @@ import '../screens/auth/login_screen.dart';
 import '../screens/boletos/boletos_screen.dart';
 import '../screens/cabines/cabine_detail_screen.dart';
 import '../screens/cabines/cabines_screen.dart';
-import '../screens/cliente/cliente_cabine_detail_screen.dart';
-import '../screens/cliente/cliente_cabines_screen.dart';
 import '../screens/cliente/cliente_historico_screen.dart';
 import '../screens/clientes/clientes_leads_screen.dart';
 import '../screens/configuracoes/configuracoes_screen.dart';
@@ -22,7 +20,6 @@ import '../screens/home/home_screen.dart';
 import '../screens/leads/leads_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
 import '../screens/painel_cliente/carteira_clientes_screen.dart';
-import '../screens/painel_cliente/cliente_dashboard_screen.dart';
 import '../screens/painel_cliente/cliente_screen.dart';
 import '../screens/recomendacoes/recomendacoes_screen.dart';
 import '../screens/solicitacoes/solicitacoes_screen.dart';
@@ -77,7 +74,7 @@ class AppRoutes {
       case 'apresentador':
         return cabines;
       case 'cliente_parceiro':
-        return cliente;
+        return clienteDashboard;
       default:
         return login;
     }
@@ -263,10 +260,10 @@ class AppRoutes {
       case clienteCabines:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'cliente_parceiro'},
-            fallbackRoute: login,
+            allowedRoles: {'franqueado', 'gerente'},
+            fallbackRoute: clienteDashboard,
             unauthenticatedRoute: login,
-            child: ClienteCabinesScreen(),
+            child: CabinesScreen(),
           ),
           settings: settings,
         );
@@ -277,7 +274,7 @@ class AppRoutes {
             allowedRoles: {'cliente_parceiro'},
             fallbackRoute: login,
             unauthenticatedRoute: login,
-            child: ClienteDashboardScreen(),
+            child: ClienteScreen(),
           ),
           settings: settings,
         );
@@ -434,23 +431,29 @@ class AppRoutes {
       }
 
       case clienteCabineDetail: {
-        final cabine = settings.arguments;
-        if (cabine is! Cabine) {
+        final args = settings.arguments;
+        String? cabineId;
+        int? cabineNumero;
+        if (args is Cabine) {
+          cabineId = args.id;
+          cabineNumero = args.numero;
+        } else if (args is String) {
+          cabineId = args;
+        }
+        if (cabineId == null) {
           return buildPremiumRoute(
-            child: const Scaffold(
-              body: Center(child: Text('Cabine inválida.')),
-            ),
+            child: const _CabineNotFoundScreen(),
             settings: settings,
           );
         }
         return buildPremiumRoute(
           child: RoleRouteGuard(
-            allowedRoles: const {'cliente_parceiro'},
-            fallbackRoute: login,
+            allowedRoles: const {'franqueado', 'gerente', 'apresentador'},
+            fallbackRoute: clienteDashboard,
             unauthenticatedRoute: login,
-            child: ClienteCabineDetailScreen(
-              cabineId: cabine.id,
-              cabineNumero: cabine.numero,
+            child: CabineDetailScreen(
+              cabineId: cabineId,
+              cabineNumero: cabineNumero,
             ),
           ),
           settings: settings,

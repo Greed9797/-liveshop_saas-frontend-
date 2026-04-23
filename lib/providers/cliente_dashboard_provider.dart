@@ -1,13 +1,56 @@
-import 'package:flutter/foundation.dart';
 import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../services/api_service.dart';
-import '../models/franqueado_analytics_resumo.dart';
-import '../models/analytics_dashboard.dart';
-import 'auth_provider.dart';
 
 const _clienteLivePolling = Duration(seconds: 30);
 const _clienteIdlePolling = Duration(minutes: 10);
+
+double _toDouble(dynamic value) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '') ?? 0.0;
+}
+
+int _toInt(dynamic value) {
+  if (value is num) return value.round();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+class ClientePeriod {
+  final int mes;
+  final int ano;
+
+  const ClientePeriod({required this.mes, required this.ano});
+
+  factory ClientePeriod.current() {
+    final now = DateTime.now();
+    return ClientePeriod(mes: now.month, ano: now.year);
+  }
+
+  ClientePeriod previous() {
+    if (mes == 1) return ClientePeriod(mes: 12, ano: ano - 1);
+    return ClientePeriod(mes: mes - 1, ano: ano);
+  }
+
+  ClientePeriod next() {
+    if (mes == 12) return ClientePeriod(mes: 1, ano: ano + 1);
+    return ClientePeriod(mes: mes + 1, ano: ano);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ClientePeriod && other.mes == mes && other.ano == ano;
+
+  @override
+  int get hashCode => Object.hash(mes, ano);
+}
+
+final clientePeriodProvider = StateProvider<ClientePeriod>(
+  (_) => ClientePeriod.current(),
+);
 
 class LiveAtiva {
   final int cabineNumero;
@@ -16,6 +59,10 @@ class LiveAtiva {
   final double comissaoProjetada;
   final int duracaoMin;
   final String iniciouEm;
+  final int pedidos;
+  final int likes;
+  final int comentarios;
+  final int shares;
 
   const LiveAtiva({
     required this.cabineNumero,
@@ -24,15 +71,23 @@ class LiveAtiva {
     required this.comissaoProjetada,
     required this.duracaoMin,
     required this.iniciouEm,
+    required this.pedidos,
+    required this.likes,
+    required this.comentarios,
+    required this.shares,
   });
 
   factory LiveAtiva.fromJson(Map<String, dynamic> j) => LiveAtiva(
-        cabineNumero: int.tryParse(j['cabine_numero']?.toString() ?? '') ?? 0,
-        viewerCount: int.tryParse(j['viewer_count']?.toString() ?? '') ?? 0,
-        gmvAtual: double.tryParse(j['gmv_atual']?.toString() ?? '') ?? 0.0,
-        comissaoProjetada: double.tryParse(j['comissao_projetada']?.toString() ?? '') ?? 0.0,
-        duracaoMin: int.tryParse(j['duracao_min']?.toString() ?? '') ?? 0,
-        iniciouEm: j['iniciou_em'] as String,
+        cabineNumero: _toInt(j['cabine_numero']),
+        viewerCount: _toInt(j['viewer_count']),
+        gmvAtual: _toDouble(j['gmv_atual']),
+        comissaoProjetada: _toDouble(j['comissao_projetada']),
+        duracaoMin: _toInt(j['duracao_min']),
+        iniciouEm: j['iniciou_em']?.toString() ?? '',
+        pedidos: _toInt(j['pedidos']),
+        likes: _toInt(j['likes']),
+        comentarios: _toInt(j['comentarios']),
+        shares: _toInt(j['shares']),
       );
 }
 
@@ -48,9 +103,9 @@ class ProdutoVendido {
   });
 
   factory ProdutoVendido.fromJson(Map<String, dynamic> j) => ProdutoVendido(
-        produto: j['produto'] as String,
-        qty: j['qty'] as int,
-        valor: (j['valor'] ?? 0).toDouble(),
+        produto: j['produto']?.toString() ?? '',
+        qty: _toInt(j['qty']),
+        valor: _toDouble(j['valor']),
       );
 }
 
@@ -66,9 +121,9 @@ class RankingDia {
   });
 
   factory RankingDia.fromJson(Map<String, dynamic> j) => RankingDia(
-        posicao: j['posicao'] as int,
-        gmvDia: (j['gmv_dia'] ?? 0).toDouble(),
-        totalParticipantes: j['total_participantes'] as int,
+        posicao: _toInt(j['posicao']),
+        gmvDia: _toDouble(j['gmv_dia'] ?? j['gmv_periodo']),
+        totalParticipantes: _toInt(j['total_participantes']),
       );
 }
 
@@ -90,10 +145,10 @@ class ProximaReserva {
   });
 
   factory ProximaReserva.fromJson(Map<String, dynamic> j) => ProximaReserva(
-        cabineId: j['cabine_id'] as String,
-        cabineNumero: j['cabine_numero'] as int,
-        status: j['status'] as String,
-        contratoId: j['contrato_id'] as String,
+        cabineId: j['cabine_id']?.toString() ?? '',
+        cabineNumero: _toInt(j['cabine_numero']),
+        status: j['status']?.toString() ?? '',
+        contratoId: j['contrato_id']?.toString() ?? '',
         ativadoEm: j['ativado_em'] is String
             ? DateTime.tryParse(j['ativado_em'])
             : null,
@@ -124,62 +179,247 @@ class BenchmarkResumo {
 
   factory BenchmarkResumo.fromJson(Map<String, dynamic> j) => BenchmarkResumo(
         nicho: j['nicho'] as String?,
-        meuGmv: (j['meu_gmv'] ?? 0).toDouble(),
-        mediaGmv: (j['media_gmv'] ?? 0).toDouble(),
-        percentualDaMedia: (j['percentual_da_media'] ?? 0).toDouble(),
-        percentil:
-            j['percentil'] == null ? null : (j['percentil'] as num).toDouble(),
-        amostra: ((j['amostra'] ?? 0) as num).toInt(),
+        meuGmv: _toDouble(j['meu_gmv']),
+        mediaGmv: _toDouble(j['media_gmv']),
+        percentualDaMedia: _toDouble(j['percentual_da_media']),
+        percentil: j['percentil'] == null ? null : _toDouble(j['percentil']),
+        amostra: _toInt(j['amostra']),
         acimaDaMedia: (j['acima_da_media'] ?? false) as bool,
       );
 }
 
-class PacoteInfo {
-  final double valor;
-  final double horasIncluidas;
-  final double valorFixoContrato;
+class HorarioVenda {
+  final int hora;
+  final String label;
+  final int totalLives;
+  final double gmvTotal;
+  final int pedidos;
 
-  const PacoteInfo({
-    required this.valor,
-    required this.horasIncluidas,
-    required this.valorFixoContrato,
+  const HorarioVenda({
+    required this.hora,
+    required this.label,
+    required this.totalLives,
+    required this.gmvTotal,
+    required this.pedidos,
   });
 
-  factory PacoteInfo.fromJson(Map<String, dynamic> j) => PacoteInfo(
-        valor: (j['valor'] as num? ?? 0).toDouble(),
-        horasIncluidas: (j['horas_incluidas'] as num? ?? 0).toDouble(),
-        valorFixoContrato: (j['valor_fixo_contrato'] as num? ?? 0).toDouble(),
+  factory HorarioVenda.fromJson(Map<String, dynamic> j) => HorarioVenda(
+        hora: _toInt(j['hora']),
+        label: j['label']?.toString() ?? '${_toInt(j['hora'])}h',
+        totalLives: _toInt(j['total_lives']),
+        gmvTotal: _toDouble(j['gmv_total']),
+        pedidos: _toInt(j['pedidos']),
       );
 }
 
-class TopDiaSemana {
-  final int diaSemana; // 0=Dom .. 6=Sab
-  final double gmvTotal;
+class SerieMensal {
+  final int mes;
+  final int ano;
   final int totalLives;
+  final double gmvTotal;
+  final int itensVendidos;
+  final double horasLive;
+  final double valorInvestidoLives;
+  final double roas;
 
-  const TopDiaSemana({
-    required this.diaSemana,
-    required this.gmvTotal,
+  const SerieMensal({
+    required this.mes,
+    required this.ano,
     required this.totalLives,
+    required this.gmvTotal,
+    required this.itensVendidos,
+    required this.horasLive,
+    required this.valorInvestidoLives,
+    required this.roas,
   });
 
-  factory TopDiaSemana.fromJson(Map<String, dynamic> j) => TopDiaSemana(
-        diaSemana: (j['dia_semana'] as num? ?? 0).toInt(),
-        gmvTotal: (j['gmv_total'] as num? ?? 0).toDouble(),
-        totalLives: (j['total_lives'] as num? ?? 0).toInt(),
+  factory SerieMensal.fromJson(Map<String, dynamic> j) => SerieMensal(
+        mes: _toInt(j['mes']),
+        ano: _toInt(j['ano']),
+        totalLives: _toInt(j['total_lives']),
+        gmvTotal: _toDouble(j['gmv_total']),
+        itensVendidos: _toInt(j['itens_vendidos']),
+        horasLive: _toDouble(j['horas_live']),
+        valorInvestidoLives: _toDouble(j['valor_investido_lives']),
+        roas: _toDouble(j['roas']),
       );
+}
+
+class ClienteLive {
+  final String id;
+  final DateTime? iniciadoEm;
+  final DateTime? encerradoEm;
+  final String? streamerNome;
+  final String status;
+  final double gmv;
+  final int itensVendidos;
+  final int pedidos;
+  final int totalOrders;
+  final int duracaoMin;
+  final double duracaoHoras;
+  final int viewers;
+  final int viewerCount;
+  final int comentarios;
+  final int commentsCount;
+  final int likes;
+  final int likesCount;
+  final int shares;
+  final int sharesCount;
+  final String? topProduto;
+  final double roas;
+  final double valorInvestido;
+
+  const ClienteLive({
+    required this.id,
+    this.iniciadoEm,
+    this.encerradoEm,
+    this.streamerNome,
+    required this.status,
+    required this.gmv,
+    required this.itensVendidos,
+    required this.pedidos,
+    required this.totalOrders,
+    required this.duracaoMin,
+    required this.duracaoHoras,
+    required this.viewers,
+    required this.viewerCount,
+    required this.comentarios,
+    required this.commentsCount,
+    required this.likes,
+    required this.likesCount,
+    required this.shares,
+    required this.sharesCount,
+    this.topProduto,
+    required this.roas,
+    required this.valorInvestido,
+  });
+
+  factory ClienteLive.fromJson(Map<String, dynamic> j) => ClienteLive(
+        id: j['id']?.toString() ?? '',
+        iniciadoEm: j['iniciado_em'] is String
+            ? DateTime.tryParse(j['iniciado_em'])
+            : null,
+        encerradoEm: j['encerrado_em'] is String
+            ? DateTime.tryParse(j['encerrado_em'])
+            : null,
+        streamerNome: j['streamer_nome']?.toString(),
+        status: j['status']?.toString() ?? '',
+        gmv: _toDouble(j['gmv'] ?? j['total_faturamento']),
+        itensVendidos: _toInt(j['itens_vendidos'] ?? j['total_vendas']),
+        pedidos: _toInt(j['pedidos'] ?? j['totalOrders'] ?? j['total_orders']),
+        totalOrders:
+            _toInt(j['totalOrders'] ?? j['total_orders'] ?? j['pedidos']),
+        duracaoMin: _toInt(j['duracao_min']),
+        duracaoHoras: _toDouble(j['duracao_horas']),
+        viewers: _toInt(j['viewers'] ?? j['viewerCount'] ?? j['viewer_count']),
+        viewerCount:
+            _toInt(j['viewerCount'] ?? j['viewer_count'] ?? j['viewers']),
+        comentarios: _toInt(
+          j['comentarios'] ?? j['commentsCount'] ?? j['comments_count'],
+        ),
+        commentsCount: _toInt(
+          j['commentsCount'] ?? j['comments_count'] ?? j['comentarios'],
+        ),
+        likes: _toInt(j['likes'] ?? j['likesCount'] ?? j['likes_count']),
+        likesCount: _toInt(j['likesCount'] ?? j['likes_count'] ?? j['likes']),
+        shares: _toInt(j['shares'] ?? j['sharesCount'] ?? j['shares_count']),
+        sharesCount:
+            _toInt(j['sharesCount'] ?? j['shares_count'] ?? j['shares']),
+        topProduto: (j['topProduto'] ?? j['top_produto'])?.toString(),
+        roas: _toDouble(j['roas']),
+        valorInvestido: _toDouble(j['valor_investido']),
+      );
+}
+
+class ClienteLivesResumo {
+  final double gmvTotal;
+  final int itensVendidos;
+  final int totalLives;
+  final double horasLive;
+  final double valorInvestidoLives;
+  final double roas;
+  final int viewers;
+  final int comentarios;
+  final int likes;
+  final int shares;
+  final int pedidos;
+
+  const ClienteLivesResumo({
+    required this.gmvTotal,
+    required this.itensVendidos,
+    required this.totalLives,
+    required this.horasLive,
+    required this.valorInvestidoLives,
+    required this.roas,
+    required this.viewers,
+    required this.comentarios,
+    required this.likes,
+    required this.shares,
+    required this.pedidos,
+  });
+
+  factory ClienteLivesResumo.fromJson(Map<String, dynamic> j) =>
+      ClienteLivesResumo(
+        gmvTotal: _toDouble(j['gmv_total'] ?? j['total_faturamento']),
+        itensVendidos: _toInt(j['itens_vendidos'] ?? j['total_vendas']),
+        totalLives: _toInt(j['total_lives']),
+        horasLive: _toDouble(j['horas_live']),
+        valorInvestidoLives: _toDouble(j['valor_investido_lives']),
+        roas: _toDouble(j['roas']),
+        viewers: _toInt(j['viewers']),
+        comentarios: _toInt(j['comentarios']),
+        likes: _toInt(j['likes']),
+        shares: _toInt(j['shares']),
+        pedidos: _toInt(j['pedidos']),
+      );
+}
+
+class ClienteLivesResponse {
+  final ClientePeriod periodo;
+  final ClienteLivesResumo resumo;
+  final List<ClienteLive> lives;
+
+  const ClienteLivesResponse({
+    required this.periodo,
+    required this.resumo,
+    required this.lives,
+  });
+
+  factory ClienteLivesResponse.fromJson(Map<String, dynamic> j) {
+    final periodoJson = (j['periodo'] as Map?)?.cast<String, dynamic>();
+
+    return ClienteLivesResponse(
+      periodo: ClientePeriod(
+        mes: _toInt(periodoJson?['mes']),
+        ano: _toInt(periodoJson?['ano']),
+      ),
+      resumo: ClienteLivesResumo.fromJson(
+        (j['resumo'] as Map?)?.cast<String, dynamic>() ?? const {},
+      ),
+      lives: (j['lives'] as List?)
+              ?.map((e) => ClienteLive.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+  }
 }
 
 class ClienteDashboard {
+  final ClientePeriod periodo;
   final double faturamentoMes;
   final int crescimentoPct;
   final int volumeVendas;
-  final double horasMes;
-  final double? roasMes;
-  final PacoteInfo? pacote;
-  final List<FaturamentoMensal> faturamentoPorMes;
-  final List<HeatmapHorarioAnalytics> topHorarios;
-  final List<TopDiaSemana> topDiasSemana;
+  final double lucroEstimado;
+  final double horasLive;
+  final double valorInvestidoMes;
+  final double valorInvestidoLives;
+  final double roas;
+  final int viewers;
+  final int comentarios;
+  final int likes;
+  final int shares;
+  final int pedidos;
+  final int totalLives;
 
   final LiveAtiva? liveAtiva;
   final List<ProdutoVendido> maisVendidos;
@@ -187,77 +427,129 @@ class ClienteDashboard {
   final ProximaReserva? proximaReserva;
   final BenchmarkResumo? benchmarkNicho;
   final BenchmarkResumo? benchmarkGeral;
+  final List<HorarioVenda> melhoresHorariosVenda;
+  final List<SerieMensal> seriesMensais;
+  final List<ClienteLive> lives;
 
   const ClienteDashboard({
+    required this.periodo,
     required this.faturamentoMes,
     required this.crescimentoPct,
     required this.volumeVendas,
-    required this.horasMes,
-    this.roasMes,
-    this.pacote,
-    required this.faturamentoPorMes,
-    required this.topHorarios,
-    required this.topDiasSemana,
+    required this.lucroEstimado,
+    required this.horasLive,
+    required this.valorInvestidoMes,
+    required this.valorInvestidoLives,
+    required this.roas,
+    required this.viewers,
+    required this.comentarios,
+    required this.likes,
+    required this.shares,
+    required this.pedidos,
+    required this.totalLives,
     this.liveAtiva,
     required this.maisVendidos,
     this.rankingDia,
     this.proximaReserva,
     this.benchmarkNicho,
     this.benchmarkGeral,
+    required this.melhoresHorariosVenda,
+    required this.seriesMensais,
+    required this.lives,
   });
 
-  factory ClienteDashboard.fromJson(Map<String, dynamic> j) => ClienteDashboard(
-        faturamentoMes: (j['faturamento_mes'] as num? ?? 0).toDouble(),
-        crescimentoPct: (j['crescimento_pct'] as num? ?? 0).toInt(),
-        volumeVendas: (j['volume_vendas'] as num? ?? 0).toInt(),
-        horasMes: (j['horas_mes'] as num? ?? 0).toDouble(),
-        roasMes: j['roas_mes'] == null ? null : (j['roas_mes'] as num).toDouble(),
-        pacote: j['pacote'] != null ? PacoteInfo.fromJson(j['pacote']) : null,
-        faturamentoPorMes: (j['faturamento_por_mes'] as List? ?? [])
-            .map((e) => FaturamentoMensal.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        topHorarios: (j['top_horarios'] as List? ?? [])
-            .map((e) => HeatmapHorarioAnalytics.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        topDiasSemana: (j['top_dias_semana'] as List? ?? [])
-            .map((e) => TopDiaSemana.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        liveAtiva: j['live_ativa'] != null
-            ? LiveAtiva.fromJson(j['live_ativa'] as Map<String, dynamic>)
-            : null,
-        maisVendidos: (j['mais_vendidos'] as List? ?? [])
-            .map((e) => ProdutoVendido.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        rankingDia: j['ranking_dia'] != null
-            ? RankingDia.fromJson(j['ranking_dia'] as Map<String, dynamic>)
-            : null,
-        proximaReserva: j['proxima_reserva'] != null
-            ? ProximaReserva.fromJson(j['proxima_reserva'] as Map<String, dynamic>)
-            : null,
-        benchmarkNicho: j['benchmark_nicho'] != null
-            ? BenchmarkResumo.fromJson(j['benchmark_nicho'] as Map<String, dynamic>)
-            : null,
-        benchmarkGeral: j['benchmark_geral'] != null
-            ? BenchmarkResumo.fromJson(j['benchmark_geral'] as Map<String, dynamic>)
-            : null,
-      );
+  factory ClienteDashboard.fromJson(Map<String, dynamic> j) {
+    final periodoJson = (j['periodo'] as Map?)?.cast<String, dynamic>();
+    final pacoteJson = (j['pacote'] as Map?)?.cast<String, dynamic>();
+    final horasMes = _toDouble(j['horas_mes'] ?? j['horas_live_mes']);
+    final valorInvestidoMes = () {
+      if (pacoteJson == null) return 0.0;
+      final valor = _toDouble(pacoteJson['valor']);
+      final horasIncluidas = _toDouble(pacoteJson['horas_incluidas']);
+      if (horasIncluidas <= 0) return 0.0;
+      return horasMes * valor / horasIncluidas;
+    }();
+
+    return ClienteDashboard(
+      periodo: ClientePeriod(
+        mes: _toInt(periodoJson?['mes']),
+        ano: _toInt(periodoJson?['ano']),
+      ),
+      faturamentoMes: _toDouble(j['gmv_mes'] ?? j['faturamento_mes']),
+      crescimentoPct: _toInt(j['crescimento_pct']),
+      volumeVendas: _toInt(j['itens_vendidos'] ?? j['volume_vendas']),
+      lucroEstimado: _toDouble(j['lucro_estimado']),
+      horasLive: _toDouble(j['horas_live'] ?? j['horas_live_mes']),
+      valorInvestidoMes: valorInvestidoMes > 0
+          ? valorInvestidoMes
+          : _toDouble(j['valor_investido_mes'] ?? j['valor_investido_lives']),
+      valorInvestidoLives: _toDouble(j['valor_investido_lives']),
+      roas: _toDouble(j['roas']),
+      viewers: _toInt(j['viewers']),
+      comentarios: _toInt(j['comentarios']),
+      likes: _toInt(j['likes']),
+      shares: _toInt(j['shares']),
+      pedidos: _toInt(j['pedidos']),
+      totalLives: _toInt(j['total_lives']),
+      liveAtiva: j['live_ativa'] != null
+          ? LiveAtiva.fromJson((j['live_ativa'] as Map).cast<String, dynamic>())
+          : null,
+      maisVendidos: (j['mais_vendidos'] as List?)
+              ?.map((e) => ProdutoVendido.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      rankingDia: j['ranking_periodo'] != null || j['ranking_dia'] != null
+          ? RankingDia.fromJson(
+              ((j['ranking_periodo'] ?? j['ranking_dia']) as Map)
+                  .cast<String, dynamic>(),
+            )
+          : null,
+      proximaReserva: j['proxima_reserva'] != null
+          ? ProximaReserva.fromJson(
+              (j['proxima_reserva'] as Map).cast<String, dynamic>(),
+            )
+          : null,
+      benchmarkNicho: j['benchmark_nicho'] != null
+          ? BenchmarkResumo.fromJson(
+              (j['benchmark_nicho'] as Map).cast<String, dynamic>(),
+            )
+          : null,
+      benchmarkGeral: j['benchmark_geral'] != null
+          ? BenchmarkResumo.fromJson(
+              (j['benchmark_geral'] as Map).cast<String, dynamic>(),
+            )
+          : null,
+      melhoresHorariosVenda: (j['melhores_horarios_venda'] as List?)
+              ?.map((e) => HorarioVenda.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      seriesMensais: (j['series_mensais'] as List?)
+              ?.map((e) => SerieMensal.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      lives: (j['lives'] as List?)
+              ?.map((e) => ClienteLive.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+  }
 }
 
 class ClienteDashboardNotifier extends AsyncNotifier<ClienteDashboard> {
   Timer? _timer;
 
-  void _configurePolling(ClienteDashboard dashboard) {
+  void _configurePolling(ClientePeriod period, ClienteDashboard dashboard) {
     _timer?.cancel();
     final interval =
         dashboard.liveAtiva != null ? _clienteLivePolling : _clienteIdlePolling;
 
     _timer = Timer.periodic(interval, (_) async {
       try {
-        final newData = await _fetch();
+        final newData = await _fetch(period);
         if (state.hasValue) {
           state = AsyncValue.data(newData);
         }
-        _configurePolling(newData);
+        _configurePolling(period, newData);
       } catch (e) {
         debugPrint('Erro no polling do cliente: $e');
       }
@@ -266,35 +558,38 @@ class ClienteDashboardNotifier extends AsyncNotifier<ClienteDashboard> {
 
   @override
   Future<ClienteDashboard> build() async {
-    final authState = ref.watch(authProvider);
-    if (!authState.isAuthenticated) {
-      _timer?.cancel();
-      _timer = null;
-      throw Exception('Não autenticado');
-    }
-    final data = await _fetch();
+    final period = ref.watch(clientePeriodProvider);
+    final data = await _fetch(period);
 
-    _configurePolling(data);
+    _configurePolling(period, data);
 
     ref.onDispose(() => _timer?.cancel());
     return data;
   }
 
-  Future<ClienteDashboard> _fetch() async {
-    final resp = await ApiService.get('/cliente/dashboard');
+  Future<ClienteDashboard> _fetch(ClientePeriod period) async {
+    final resp = await ApiService.get(
+      '/cliente/dashboard?mes=${period.mes}&ano=${period.ano}',
+    );
     return ClienteDashboard.fromJson(resp.data as Map<String, dynamic>);
   }
 
   Future<void> refresh() async {
+    final period = ref.read(clientePeriodProvider);
     state = const AsyncLoading();
-    state = await AsyncValue.guard(_fetch);
+    state = await AsyncValue.guard(() => _fetch(period));
     final current = state.valueOrNull;
     if (current != null) {
-      _configurePolling(current);
+      _configurePolling(period, current);
     }
+  }
+
+  void setPeriodo(ClientePeriod period) {
+    ref.read(clientePeriodProvider.notifier).state = period;
   }
 }
 
 final clienteDashboardProvider =
     AsyncNotifierProvider<ClienteDashboardNotifier, ClienteDashboard>(
-        ClienteDashboardNotifier.new);
+  ClienteDashboardNotifier.new,
+);

@@ -440,7 +440,11 @@ class _MenuContent extends ConsumerWidget {
       );
     }
 
-    final homeRoute = isApresentador ? AppRoutes.cabines : AppRoutes.home;
+    final homeRoute = isClienteParceiro
+        ? AppRoutes.clienteDashboard
+        : isApresentador
+            ? AppRoutes.cabines
+            : AppRoutes.home;
 
     final items = <_MenuItem>[
       _MenuItem(
@@ -459,16 +463,8 @@ class _MenuContent extends ConsumerWidget {
           compact: compact,
         ),
         _MenuItem(
-          icon: PhosphorIcons.videoCamera(),
-          label: 'Minhas Cabines',
-          route: AppRoutes.clienteCabines,
-          isSelected: currentRoute == AppRoutes.clienteCabines ||
-              currentRoute == AppRoutes.clienteCabineDetail,
-          compact: compact,
-        ),
-        _MenuItem(
           icon: PhosphorIcons.clockCounterClockwise(),
-          label: 'Histórico',
+          label: 'Histórico de Lives',
           route: AppRoutes.clienteHistorico,
           isSelected: currentRoute == AppRoutes.clienteHistorico,
           compact: compact,
