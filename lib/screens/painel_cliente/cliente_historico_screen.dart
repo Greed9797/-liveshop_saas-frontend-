@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../design_system/app_colors.dart' as ds_colors;
+import '../../design_system/app_screen_scaffold.dart';
 import '../../design_system/app_tokens.dart' as ds_tokens;
 import '../../design_system/app_typography.dart' as ds_typography;
 import '../../providers/cliente_dashboard_provider.dart'
@@ -10,7 +11,6 @@ import '../../providers/cliente_dashboard_provider.dart'
 import '../../providers/cliente_lives_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/app_card.dart';
-import '../../widgets/app_scaffold.dart';
 import '../../widgets/metric_card.dart';
 
 class AppColors {
@@ -66,40 +66,17 @@ class ClienteHistoricoScreen extends ConsumerWidget {
     final livesAsync = ref.watch(clienteLivesProvider);
     final period = ref.watch(clientePeriodProvider);
 
-    return AppScaffold(
+    return AppScreenScaffold(
       currentRoute: AppRoutes.clienteHistorico,
+      eyebrow: 'HISTÓRICO',
+      title: 'Histórico de Lives',
+      subtitle: 'Resumo e detalhe por live',
+      actions: [_HistoryPeriodSelector(period: period)],
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Wrap(
-              spacing: AppSpacing.lg,
-              runSpacing: AppSpacing.md,
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Histórico de Lives',
-                      style: AppTypography.h3.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      'Resumo e detalhe por live',
-                      style: AppTypography.labelLarge.copyWith(
-                        color: AppColors.gray500,
-                      ),
-                    ),
-                  ],
-                ),
-                _HistoryPeriodSelector(period: period),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.x2l),
             livesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(

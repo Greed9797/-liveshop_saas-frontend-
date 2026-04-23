@@ -20,6 +20,7 @@ import '../screens/home/home_screen.dart';
 import '../screens/leads/leads_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
 import '../screens/painel_cliente/carteira_clientes_screen.dart';
+import '../screens/painel_cliente/cliente_dashboard_screen.dart';
 import '../screens/painel_cliente/cliente_screen.dart';
 import '../screens/recomendacoes/recomendacoes_screen.dart';
 import '../screens/solicitacoes/solicitacoes_screen.dart';
@@ -74,7 +75,7 @@ class AppRoutes {
       case 'apresentador':
         return cabines;
       case 'cliente_parceiro':
-        return clienteDashboard;
+        return cliente;
       default:
         return login;
     }
@@ -274,7 +275,7 @@ class AppRoutes {
             allowedRoles: {'cliente_parceiro'},
             fallbackRoute: login,
             unauthenticatedRoute: login,
-            child: ClienteScreen(),
+            child: ClienteDashboardScreen(),
           ),
           settings: settings,
         );
@@ -326,7 +327,12 @@ class AppRoutes {
       case manuais:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente', 'apresentador', 'cliente_parceiro'},
+            allowedRoles: {
+              'franqueado',
+              'gerente',
+              'apresentador',
+              'cliente_parceiro'
+            },
             fallbackRoute: login,
             unauthenticatedRoute: login,
             child: ManuaisScreen(),
@@ -400,65 +406,67 @@ class AppRoutes {
           settings: settings,
         );
 
-      case cabineDetail: {
-        final args = settings.arguments;
-        String? cabineId;
-        int? cabineNumero;
-        if (args is Cabine) {
-          cabineId = args.id;
-          cabineNumero = args.numero;
-        } else if (args is String) {
-          cabineId = args;
-        }
-        if (cabineId == null) {
+      case cabineDetail:
+        {
+          final args = settings.arguments;
+          String? cabineId;
+          int? cabineNumero;
+          if (args is Cabine) {
+            cabineId = args.id;
+            cabineNumero = args.numero;
+          } else if (args is String) {
+            cabineId = args;
+          }
+          if (cabineId == null) {
+            return buildPremiumRoute(
+              child: const _CabineNotFoundScreen(),
+              settings: settings,
+            );
+          }
           return buildPremiumRoute(
-            child: const _CabineNotFoundScreen(),
+            child: RoleRouteGuard(
+              allowedRoles: const {'franqueado', 'gerente', 'apresentador'},
+              fallbackRoute: home,
+              unauthenticatedRoute: login,
+              child: CabineDetailScreen(
+                cabineId: cabineId,
+                cabineNumero: cabineNumero,
+              ),
+            ),
             settings: settings,
           );
         }
-        return buildPremiumRoute(
-          child: RoleRouteGuard(
-            allowedRoles: const {'franqueado', 'gerente', 'apresentador'},
-            fallbackRoute: home,
-            unauthenticatedRoute: login,
-            child: CabineDetailScreen(
-              cabineId: cabineId,
-              cabineNumero: cabineNumero,
-            ),
-          ),
-          settings: settings,
-        );
-      }
 
-      case clienteCabineDetail: {
-        final args = settings.arguments;
-        String? cabineId;
-        int? cabineNumero;
-        if (args is Cabine) {
-          cabineId = args.id;
-          cabineNumero = args.numero;
-        } else if (args is String) {
-          cabineId = args;
-        }
-        if (cabineId == null) {
+      case clienteCabineDetail:
+        {
+          final args = settings.arguments;
+          String? cabineId;
+          int? cabineNumero;
+          if (args is Cabine) {
+            cabineId = args.id;
+            cabineNumero = args.numero;
+          } else if (args is String) {
+            cabineId = args;
+          }
+          if (cabineId == null) {
+            return buildPremiumRoute(
+              child: const _CabineNotFoundScreen(),
+              settings: settings,
+            );
+          }
           return buildPremiumRoute(
-            child: const _CabineNotFoundScreen(),
+            child: RoleRouteGuard(
+              allowedRoles: const {'franqueado', 'gerente', 'apresentador'},
+              fallbackRoute: clienteDashboard,
+              unauthenticatedRoute: login,
+              child: CabineDetailScreen(
+                cabineId: cabineId,
+                cabineNumero: cabineNumero,
+              ),
+            ),
             settings: settings,
           );
         }
-        return buildPremiumRoute(
-          child: RoleRouteGuard(
-            allowedRoles: const {'franqueado', 'gerente', 'apresentador'},
-            fallbackRoute: clienteDashboard,
-            unauthenticatedRoute: login,
-            child: CabineDetailScreen(
-              cabineId: cabineId,
-              cabineNumero: cabineNumero,
-            ),
-          ),
-          settings: settings,
-        );
-      }
 
       default:
         return null;
@@ -477,8 +485,8 @@ class _CabineNotFoundScreen extends StatelessWidget {
         title: const Text('Cabine não encontrada'),
         actions: [
           TextButton.icon(
-            onPressed: () => Navigator.of(context)
-                .pushReplacementNamed(AppRoutes.cabines),
+            onPressed: () =>
+                Navigator.of(context).pushReplacementNamed(AppRoutes.cabines),
             icon: const Icon(Icons.arrow_back),
             label: const Text('Voltar às Cabines'),
           ),
@@ -506,8 +514,8 @@ class _CabineNotFoundScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => Navigator.of(context)
-                  .pushReplacementNamed(AppRoutes.cabines),
+              onPressed: () =>
+                  Navigator.of(context).pushReplacementNamed(AppRoutes.cabines),
               icon: const Icon(Icons.grid_view_rounded),
               label: const Text('Ver Cabines'),
             ),

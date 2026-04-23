@@ -46,7 +46,8 @@ class AppScaffold extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Seu boleto referente aos serviços e comissões do período foi emitido.'),
+                  const Text(
+                      'Seu boleto referente aos serviços e comissões do período foi emitido.'),
                   const SizedBox(height: 12),
                   Text(
                     'Valor: ${NumberFormat.simpleCurrency(locale: 'pt_BR').format(alert.valor)}',
@@ -57,9 +58,12 @@ class AppScaffold extends ConsumerWidget {
               actions: [
                 if (alert.asaasPixCopiaCola != null)
                   ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
-                    icon: Icon(PhosphorIcons.copy(), size: 16, color: Colors.white),
-                    label: const Text('Copiar PIX', style: TextStyle(color: AppColors.textOnPrimary)),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success),
+                    icon: Icon(PhosphorIcons.copy(),
+                        size: 16, color: Colors.white),
+                    label: const Text('Copiar PIX',
+                        style: TextStyle(color: AppColors.textOnPrimary)),
                     onPressed: () {
                       Clipboard.setData(
                         ClipboardData(text: alert.asaasPixCopiaCola!),
@@ -161,8 +165,8 @@ class AppScaffold extends ConsumerWidget {
         },
       ),
       drawer: MediaQuery.of(context).size.width < 800
-          ? _buildDrawer(
-              context, boletosCount, isFranqueadorMaster, isClienteParceiro, isApresentador, isGerente)
+          ? _buildDrawer(context, boletosCount, isFranqueadorMaster,
+              isClienteParceiro, isApresentador, isGerente)
           : null,
     );
   }
@@ -196,14 +200,17 @@ class AppScaffold extends ConsumerWidget {
             if (!isDesktop) ...[
               Builder(
                 builder: (context) => IconButton(
-                  icon: Icon(PhosphorIcons.list(), color: AppColors.textSecondary),
+                  icon: Icon(PhosphorIcons.list(),
+                      color: AppColors.textSecondary),
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
               ),
               const SizedBox(width: 8),
             ],
             AvatarGradientTopbar(
-              initials: displayName.length >= 2 ? displayName.substring(0, 2).toUpperCase() : 'LS',
+              initials: displayName.length >= 2
+                  ? displayName.substring(0, 2).toUpperCase()
+                  : 'LS',
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -250,17 +257,19 @@ class AppScaffold extends ConsumerWidget {
                         : PhosphorIcons.moon(),
                     color: AppColors.textSecondary,
                   ),
-                  tooltip: mode == ThemeMode.dark ? 'Modo claro' : 'Modo escuro',
+                  tooltip:
+                      mode == ThemeMode.dark ? 'Modo claro' : 'Modo escuro',
                   onPressed: () {
                     ref.read(themeModeProvider.notifier).state =
-                        mode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+                        mode == ThemeMode.dark
+                            ? ThemeMode.light
+                            : ThemeMode.dark;
                   },
                 );
               },
             ),
             PopupMenuButton<String>(
-              icon: Icon(PhosphorIcons.bell(),
-                  color: AppColors.textMuted),
+              icon: Icon(PhosphorIcons.bell(), color: AppColors.textMuted),
               tooltip: 'Notificações',
               offset: const Offset(0, 40),
               color: AppColors.bgCard,
@@ -346,7 +355,8 @@ class AppScaffold extends ConsumerWidget {
                   ? CircleAvatar(
                       radius: 22,
                       backgroundColor: AppColors.bgMuted,
-                      child: Icon(PhosphorIcons.house(), color: AppColors.primary),
+                      child:
+                          Icon(PhosphorIcons.house(), color: AppColors.primary),
                     )
                   : const _Logo(),
             ),
@@ -441,7 +451,7 @@ class _MenuContent extends ConsumerWidget {
     }
 
     final homeRoute = isClienteParceiro
-        ? AppRoutes.clienteDashboard
+        ? AppRoutes.cliente
         : isApresentador
             ? AppRoutes.cabines
             : AppRoutes.home;
@@ -605,8 +615,7 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        isSelected ? AppColors.primary : AppColors.textSecondary;
+    final color = isSelected ? AppColors.primary : AppColors.textSecondary;
     final bgColor = isSelected ? AppColors.bgMuted : Colors.transparent;
 
     if (compact) {
@@ -674,7 +683,8 @@ class _MenuItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: ListTile(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               hoverColor: AppColors.bgMuted,
               leading: Icon(icon, color: color, size: 24),
               title: Text(

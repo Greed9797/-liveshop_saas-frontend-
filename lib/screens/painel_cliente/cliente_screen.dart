@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../design_system/app_colors.dart' as ds_colors;
+import '../../design_system/app_screen_scaffold.dart';
 import '../../design_system/app_tokens.dart' as ds_tokens;
 import '../../design_system/app_typography.dart' as ds_typography;
 import '../../providers/cliente_dashboard_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/app_card.dart';
-import '../../widgets/app_scaffold.dart';
 import '../../widgets/metric_card.dart';
 
 class AppColors {
@@ -64,8 +64,13 @@ class ClienteScreen extends ConsumerWidget {
     final dashAsync = ref.watch(clienteDashboardProvider);
     final period = ref.watch(clientePeriodProvider);
 
-    return AppScaffold(
-      currentRoute: AppRoutes.clienteDashboard,
+    return AppScreenScaffold(
+      currentRoute: AppRoutes.cliente,
+      eyebrow: 'PAINEL DO PARCEIRO',
+      title: 'Minha Loja',
+      subtitle: 'Visão geral da performance de lives',
+      titleSerif: true,
+      actions: [_PeriodSelector(period: period)],
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: dashAsync.when(
@@ -110,44 +115,6 @@ class _ClienteContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: AppSpacing.lg,
-          runSpacing: AppSpacing.md,
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircleAvatar(
-                  radius: 28,
-                  backgroundColor: AppColors.primaryOrange,
-                  child: Icon(Icons.store, color: AppColors.white, size: 28),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Minha Loja',
-                      style: AppTypography.h3.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      'Performance de lives',
-                      style: AppTypography.labelLarge.copyWith(
-                        color: AppColors.gray500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            _PeriodSelector(period: period),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.x2l),
         if (dashboard.liveAtiva != null) ...[
           _LivePanel(live: dashboard.liveAtiva!),
           const SizedBox(height: AppSpacing.x2l),
