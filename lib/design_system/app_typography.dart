@@ -94,7 +94,6 @@ class AppTypography {
     fontFamily: fontFamily,
     fontSize: 13,
     fontWeight: FontWeight.w400,
-    color: AppColors.textSecondary,
     height: 1.4,
   );
 
@@ -105,7 +104,6 @@ class AppTypography {
     fontFamily: fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w500,
-    color: AppColors.textSecondary,
     height: 1.4,
   );
 
@@ -113,7 +111,6 @@ class AppTypography {
     fontFamily: fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    color: AppColors.textMuted,
     height: 1.4,
   );
 
@@ -153,7 +150,6 @@ class AppTypography {
     fontSize: 11,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.12,
-    color: AppColors.textMuted,
   );
 
   static const TextStyle kpiValue = TextStyle(
@@ -168,6 +164,5 @@ class AppTypography {
     fontSize: 11,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.12,
-    color: AppColors.textMuted,
   );
 }

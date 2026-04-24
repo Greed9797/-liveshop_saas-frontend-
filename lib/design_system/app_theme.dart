@@ -125,10 +125,10 @@ class AppTheme {
         titleLarge: AppTypography.h4.copyWith(color: AppColors.textPrimary),
         bodyLarge: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
         bodyMedium: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
-        bodySmall: AppTypography.bodySmall,
+        bodySmall: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
         labelLarge: AppTypography.buttonLarge,
-        labelMedium: AppTypography.label,
-        labelSmall: AppTypography.caption,
+        labelMedium: AppTypography.label.copyWith(color: AppColors.textSecondary),
+        labelSmall: AppTypography.caption.copyWith(color: AppColors.textMuted),
       ),
 
       // Divider
@@ -213,9 +213,10 @@ class AppTheme {
         titleLarge: AppTypography.h4.copyWith(color: const Color(0xFFFFFFFF)),
         bodyLarge: AppTypography.bodyLarge.copyWith(color: const Color(0xFFFFFFFF)),
         bodyMedium: AppTypography.bodyMedium.copyWith(color: const Color(0xFFFFFFFF)),
-        bodySmall: AppTypography.bodySmall.copyWith(color: const Color(0xFF8A8A8A)),
-        labelMedium: AppTypography.label.copyWith(color: const Color(0xFF8A8A8A)),
-        labelSmall: AppTypography.caption.copyWith(color: const Color(0xFF5C5C5C)),
+        bodySmall: AppTypography.bodySmall.copyWith(color: const Color(0xFF9A9A9A)),
+        labelLarge: AppTypography.buttonLarge,
+        labelMedium: AppTypography.label.copyWith(color: const Color(0xFF9A9A9A)),
+        labelSmall: AppTypography.caption.copyWith(color: const Color(0xFF7A7A7A)),
       ),
 
       extensions: const [AppColorsTheme.dark],
