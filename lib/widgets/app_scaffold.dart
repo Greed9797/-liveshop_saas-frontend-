@@ -547,9 +547,10 @@ class _MenuContent extends ConsumerWidget {
         ),
       _MenuItem(
         icon: PhosphorIcons.bookOpen(),
-        label: 'Manuais',
-        route: AppRoutes.manuais,
-        isSelected: currentRoute == AppRoutes.manuais,
+        label: 'Base de Conhecimento',
+        route: AppRoutes.baseConhecimento,
+        isSelected: currentRoute == AppRoutes.baseConhecimento ||
+            currentRoute == AppRoutes.manuais,
         compact: compact,
       ),
       if (!isClienteParceiro && !isApresentador)

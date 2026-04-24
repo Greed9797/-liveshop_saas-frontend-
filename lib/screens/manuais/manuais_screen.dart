@@ -7,7 +7,7 @@ import '../../routes/app_routes.dart';
 import '../../design_system/design_system.dart';
 import '../../services/api_service.dart';
 
-/// Lista de manuais e documentos da franqueadora
+/// Lista de conteúdos da base de conhecimento.
 class ManuaisScreen extends ConsumerStatefulWidget {
   const ManuaisScreen({super.key});
 
@@ -16,7 +16,14 @@ class ManuaisScreen extends ConsumerStatefulWidget {
 }
 
 class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
-  static const _categories = ['Todos', 'Operação', 'Comercial', 'Equipe', 'Legal', 'Marca'];
+  static const _categories = [
+    'Todos',
+    'Operação',
+    'Comercial',
+    'Equipe',
+    'Legal',
+    'Marca'
+  ];
   String _categoria = 'Todos';
   String _busca = '';
 
@@ -44,11 +51,11 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
     final manuaisAsync = ref.watch(manuaisProvider);
 
     return AppScreenScaffold(
-      currentRoute: AppRoutes.manuais,
-      eyebrow: 'Biblioteca da franqueadora',
+      currentRoute: AppRoutes.baseConhecimento,
+      eyebrow: 'Biblioteca operacional',
       titleSerif: true,
-      title: 'Manuais & Documentos',
-      subtitle: 'Acesse os materiais e documentos da franqueadora.',
+      title: 'Base de Conhecimento',
+      subtitle: 'Acesse materiais, processos e documentos da operação.',
       actions: [
         IconButton(
           icon: const Icon(Icons.refresh),
@@ -70,7 +77,8 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: _categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.x2),
+                separatorBuilder: (_, __) =>
+                    const SizedBox(width: AppSpacing.x2),
                 itemBuilder: (_, i) => AppChip(
                   label: _categories[i],
                   active: _categories[i] == _categoria,
@@ -95,7 +103,8 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
                         .take(2)
                         .toList()
                     : const <Manual>[];
-                final demais = filtrados.where((m) => !destaques.contains(m)).toList();
+                final demais =
+                    filtrados.where((m) => !destaques.contains(m)).toList();
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,11 +118,13 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
                             return Column(
                               children: destaques
                                   .map((m) => Padding(
-                                        padding: const EdgeInsets.only(bottom: AppSpacing.x3),
+                                        padding: const EdgeInsets.only(
+                                            bottom: AppSpacing.x3),
                                         child: _FeaturedManualCard(
                                           manual: m,
                                           onOpen: () => _launchManual(m.url),
-                                          onDownload: () => _launchManual(m.url),
+                                          onDownload: () =>
+                                              _launchManual(m.url),
                                         ),
                                       ))
                                   .toList(),
@@ -127,8 +138,10 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
                                 Expanded(
                                   child: _FeaturedManualCard(
                                     manual: destaques[i],
-                                    onOpen: () => _launchManual(destaques[i].url),
-                                    onDownload: () => _launchManual(destaques[i].url),
+                                    onOpen: () =>
+                                        _launchManual(destaques[i].url),
+                                    onDownload: () =>
+                                        _launchManual(destaques[i].url),
                                   ),
                                 ),
                               ],
@@ -141,7 +154,8 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
                     if (demais.isNotEmpty) ...[
                       const AppSectionHeader(title: 'Todos os documentos'),
                       ...demais.map((m) => Padding(
-                            padding: const EdgeInsets.only(bottom: AppSpacing.x3),
+                            padding:
+                                const EdgeInsets.only(bottom: AppSpacing.x3),
                             child: _ManualListCard(
                               manual: m,
                               onOpen: () => _launchManual(m.url),
@@ -165,7 +179,8 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
           children: [
             Text(
               ApiService.extractErrorMessage(e),
-              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.caption
+                  .copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.x3),
@@ -183,7 +198,8 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
             child: Text(
               'Nenhum documento corresponde aos filtros atuais.',
-              style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.bodySmall
+                  .copyWith(color: AppColors.textSecondary),
             ),
           ),
         ),
@@ -216,7 +232,7 @@ class _SearchFieldState extends State<_SearchField> {
         setState(() {});
       },
       decoration: InputDecoration(
-        hintText: 'Buscar manual...',
+        hintText: 'Buscar conteúdo...',
         prefixIcon: const Icon(Icons.search, size: 18),
         suffixIcon: _ctrl.text.isNotEmpty
             ? IconButton(

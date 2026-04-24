@@ -58,6 +58,7 @@ class AppRoutes {
   static const excelencia = '/excelencia';
   static const recomendacoes = '/recomendacoes';
   static const manuais = '/manuais';
+  static const baseConhecimento = '/base-conhecimento';
   static const carteiraClientes = '/carteira-clientes';
   static const auditoriaContratos = '/auditoria-contratos';
   static const clientesLeads = '/clientes-leads';
@@ -324,6 +325,7 @@ class AppRoutes {
           settings: settings,
         );
 
+      case baseConhecimento:
       case manuais:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
