@@ -32,7 +32,7 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> {
         child: Column(
           children: [
             Material(
-              color: AppColors.bgCard,
+              color: context.colors.bgCard,
               elevation: 0,
               child: Column(
                 children: [
@@ -61,9 +61,9 @@ class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> {
                       ],
                     ),
                   ),
-                  const TabBar(
+                  TabBar(
                     labelColor: AppColors.primary,
-                    unselectedLabelColor: AppColors.textSecondary,
+                    unselectedLabelColor: context.colors.textSecondary,
                     indicatorColor: AppColors.primary,
                     tabs: [
                       Tab(
@@ -183,7 +183,7 @@ class _OperacionalTab extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, __) => Text('Erro ao carregar fluxo de caixa',
                 style: AppTypography.bodySmall
-                    .copyWith(color: AppColors.textSecondary)),
+                    .copyWith(color: context.colors.textSecondary)),
             data: (fluxo) => _FluxBar(
               entradas: fluxo.totalEntradas,
               saidas: fluxo.totalSaidas,
@@ -221,7 +221,7 @@ class _OperacionalTab extends ConsumerWidget {
                           const EdgeInsets.symmetric(vertical: AppSpacing.x6),
                       child: Text('Nenhum custo cadastrado este mês.',
                           style: AppTypography.bodySmall
-                              .copyWith(color: AppColors.textSecondary)),
+                              .copyWith(color: context.colors.textSecondary)),
                     ),
                   )
                 : Column(
@@ -332,7 +332,7 @@ class _PorClienteTab extends ConsumerWidget {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(ApiService.extractErrorMessage(e),
               style: AppTypography.caption
-                  .copyWith(color: AppColors.textSecondary)),
+                  .copyWith(color: context.colors.textSecondary)),
           const SizedBox(height: AppSpacing.x3),
           AppPrimaryButton(
             onPressed: () =>
@@ -348,7 +348,7 @@ class _PorClienteTab extends ConsumerWidget {
           return Center(
             child: Text('Nenhum faturamento registrado este mês.',
                 style: AppTypography.bodySmall
-                    .copyWith(color: AppColors.textSecondary)),
+                    .copyWith(color: context.colors.textSecondary)),
           );
         }
 
@@ -370,7 +370,7 @@ class _PorClienteTab extends ConsumerWidget {
               ),
               Text(c.nicho ?? '—',
                   style: AppTypography.caption
-                      .copyWith(color: AppColors.textSecondary)),
+                      .copyWith(color: context.colors.textSecondary)),
               MoneyText(
                   value: c.total, fontSize: 14, fontWeight: FontWeight.w600),
               Row(
@@ -388,7 +388,7 @@ class _PorClienteTab extends ConsumerWidget {
                       child: LinearProgressIndicator(
                         value: pct / 100,
                         minHeight: 4,
-                        backgroundColor: AppColors.bgBase,
+                        backgroundColor: context.colors.bgPage,
                         valueColor:
                             const AlwaysStoppedAnimation(AppColors.primary),
                       ),
@@ -456,7 +456,7 @@ class _ReceiveisTab extends ConsumerWidget {
                 Text(
                   'RECEBÍVEIS DO FRANQUEADO',
                   style: AppTypography.caption.copyWith(
-                    color: AppColors.textMuted,
+                    color: context.colors.textMuted,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 1.4,
                   ),
@@ -497,8 +497,8 @@ class _ReceiveisTab extends ConsumerWidget {
             // ── Card Bruto × Líquido × Custos com gradiente suave ─────────
             Container(
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primarySofter, AppColors.bgCard],
+                gradient: LinearGradient(
+                  colors: [AppColors.primarySofter, context.colors.bgCard],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -514,7 +514,7 @@ class _ReceiveisTab extends ConsumerWidget {
                   Text(
                     'Comparativo do período selecionado.',
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.textSecondary),
+                        .copyWith(color: context.colors.textSecondary),
                   ),
                   const SizedBox(height: AppSpacing.x5),
                   _BrutoLiquidoBar(resumo: resumo),
@@ -566,7 +566,7 @@ class _FluxBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.x3),
       decoration: BoxDecoration(
-        color: AppColors.bgBase,
+        color: context.colors.bgPage,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
@@ -643,7 +643,7 @@ class _FluxBar extends StatelessWidget {
             height: 8,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(4),
-              color: AppColors.bgMuted,
+              color: context.colors.bgMuted,
             ),
             child: Row(
               children: [
@@ -709,14 +709,14 @@ class _BrutoLiquidoBar extends StatelessWidget {
             width: 60,
             child: Text(label,
                 style: AppTypography.caption
-                    .copyWith(color: AppColors.textSecondary))),
+                    .copyWith(color: context.colors.textSecondary))),
         Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             child: LinearProgressIndicator(
               value: pct,
               minHeight: 14,
-              backgroundColor: AppColors.bgBase,
+              backgroundColor: context.colors.bgPage,
               valueColor: AlwaysStoppedAnimation(color),
             ),
           ),
@@ -758,7 +758,7 @@ class _CustoTile extends StatelessWidget {
           style: AppTypography.label.copyWith(fontWeight: FontWeight.w500)),
       subtitle: Text(_tipoLabel[custo.tipo] ?? custo.tipo,
           style:
-              AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+              AppTypography.caption.copyWith(color: context.colors.textSecondary)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -769,8 +769,8 @@ class _CustoTile extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.x1),
           IconButton(
-            icon: const Icon(Icons.delete_outline,
-                size: 18, color: AppColors.textMuted),
+            icon: Icon(Icons.delete_outline,
+                size: 18, color: context.colors.textMuted),
             onPressed: () async {
               await ref.read(custosProvider.notifier).deletar(custo.id);
               ref.invalidate(financeiroProvider);
@@ -799,7 +799,7 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: AppSpacing.x1),
         Text(label,
             style:
-                AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                AppTypography.caption.copyWith(color: context.colors.textSecondary)),
       ],
     );
   }

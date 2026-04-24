@@ -185,7 +185,7 @@ class _DashboardHeader extends StatelessWidget {
               Text(
                 'Leitura executiva da rede em poucos segundos, sem ruído operacional.',
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.colors.textSecondary,
                 ),
               ),
             ],
@@ -261,14 +261,14 @@ class _ExecutiveSummaryBanner extends StatelessWidget {
                 Text(
                   'Resumo Executivo',
                   style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.x1),
                 Text(
                   summary,
                   style: AppTypography.bodyLarge.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.colors.textPrimary,
                     height: 1.45,
                   ),
                 ),
@@ -312,7 +312,7 @@ class _MetricsGrid extends StatelessWidget {
         label: 'RECEITA FRANQUEADORA',
         value: _currency(cards.franchisorNetRevenue),
         icon: Icons.account_balance_rounded,
-        iconColor: AppColors.textPrimary,
+        iconColor: context.colors.textPrimary,
       ),
       MetricCard(
         label: 'CONTRATOS PENDENTES',
@@ -430,7 +430,7 @@ class _RankingCard extends StatelessWidget {
                               Text(
                                 entry.value.unitName,
                                 style: AppTypography.bodyMedium.copyWith(
-                                  color: AppColors.textPrimary,
+                                  color: context.colors.textPrimary,
                                 ),
                               ),
                               Text(
@@ -511,14 +511,14 @@ class _AlertsCard extends StatelessWidget {
                           Text(
                             alert.title,
                             style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.textPrimary,
+                              color: context.colors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: AppSpacing.x1),
                           Text(
                             alert.description,
                             style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textPrimary,
+                              color: context.colors.textPrimary,
                             ),
                           ),
                         ],
@@ -637,7 +637,7 @@ class _RevenueHistoryCard extends StatelessWidget {
                     ),
                     LineChartBarData(
                       isCurved: true,
-                      color: AppColors.textPrimary,
+                      color: context.colors.textPrimary,
                       barWidth: 3,
                       dotData: const FlDotData(show: true),
                       spots: points
@@ -803,13 +803,13 @@ class _PipelineCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.bgMuted,
+                      color: context.colors.bgMuted,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       '${stage.count}',
                       style: AppTypography.caption.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                     ),
                   ),
@@ -868,7 +868,7 @@ class _CommissionSummaryCard extends StatelessWidget {
                   Text(
                     _currency(item.$2),
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.colors.textPrimary,
                     ),
                   ),
                 ],

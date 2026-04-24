@@ -17,11 +17,11 @@ class HeatmapWidget extends StatelessWidget {
     this.height = 200,
   });
 
-  Color _cellColor(double value) {
+  Color _cellColor(double value, BuildContext context) {
     final t = value.clamp(0.0, 1.0);
     // Usamos bgCard (branco) como piso para garantir visibilidade mesmo quando
     // o HeatmapWidget é colocado dentro de um ChartCard com bg primarySofter.
-    return Color.lerp(AppColors.bgCard, AppColors.primary, t)!;
+    return Color.lerp(context.colors.bgCard, AppColors.primary, t)!;
   }
 
   @override
@@ -39,7 +39,7 @@ class HeatmapWidget extends StatelessWidget {
             padding: EdgeInsets.only(left: cellSize + 4, bottom: 4),
             child: Row(
               children: List.generate(cols, (i) => Expanded(
-                child: Text(colLabels[i], style: AppTypography.caption.copyWith(fontSize: 9, color: AppColors.textMuted), textAlign: TextAlign.center),
+                child: Text(colLabels[i], style: AppTypography.caption.copyWith(fontSize: 9, color: context.colors.textMuted), textAlign: TextAlign.center),
               )),
             ),
           ),
@@ -54,7 +54,7 @@ class HeatmapWidget extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.only(right: 4),
-                      child: Text(rowLabels[i], style: AppTypography.caption.copyWith(fontSize: 9, color: AppColors.textMuted)),
+                      child: Text(rowLabels[i], style: AppTypography.caption.copyWith(fontSize: 9, color: context.colors.textMuted)),
                     ),
                   ),
                 )),
@@ -72,9 +72,9 @@ class HeatmapWidget extends StatelessWidget {
                             width: cellSize, height: cellSize,
                             margin: const EdgeInsets.all(1),
                             decoration: BoxDecoration(
-                              color: _cellColor(value),
+                              color: _cellColor(value, context),
                               border: Border.all(
-                                color: AppColors.borderLight,
+                                color: context.colors.borderSubtle,
                                 width: 0.5,
                               ),
                               borderRadius: BorderRadius.circular(3),

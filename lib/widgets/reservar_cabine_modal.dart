@@ -18,7 +18,7 @@ Future<void> showReservarCabineModal({
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: AppColors.bgCard,
+    backgroundColor: context.colors.bgCard,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
     ),
@@ -229,7 +229,7 @@ class _ReservarCabineSheetState extends ConsumerState<_ReservarCabineSheet> {
           Text(
             'Selecione ou cadastre o cliente que vai usar esta cabine.',
             style: AppTypography.bodySmall
-                .copyWith(color: AppColors.textSecondary),
+                .copyWith(color: context.colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.x4),
           SegmentedButton<bool>(
@@ -275,10 +275,10 @@ class _ReservarCabineSheetState extends ConsumerState<_ReservarCabineSheet> {
                 focusNode: focusNode,
                 onFieldSubmitted: (_) => onSubmit(),
                 style: AppTypography.bodyMedium,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Buscar cliente por nome...',
                   prefixIcon: Icon(Icons.search,
-                      color: AppColors.textMuted, size: 20),
+                      color: ctx.colors.textMuted, size: 20),
                 ),
               ),
               optionsViewBuilder: (ctx, onSelected, options) => Align(
@@ -363,7 +363,7 @@ class _ReservarCabineSheetState extends ConsumerState<_ReservarCabineSheet> {
                                 Text(
                                   'R\$ ${contratoDoCliente.valorFixo.toStringAsFixed(2)} fixo • ${contratoDoCliente.comissaoPct.toStringAsFixed(0)}% comissão',
                                   style: AppTypography.caption.copyWith(
-                                      color: AppColors.textSecondary),
+                                      color: context.colors.textSecondary),
                                 ),
                               ],
                             )

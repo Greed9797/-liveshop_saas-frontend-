@@ -35,7 +35,7 @@ class AuditoriaContractCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   contrato.clienteNome ?? 'Cliente sem nome',
-                  style: AppTypography.h3.copyWith(color: AppColors.textPrimary),
+                  style: AppTypography.h3.copyWith(color: context.colors.textPrimary),
                 ),
               ),
               AuditoriaStatusBadge(status: contrato.status),
@@ -75,7 +75,7 @@ class AuditoriaContractCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.bgGradientStart,
+                color: context.colors.bgMuted,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(reason, style: AppTypography.bodySmall),
@@ -103,8 +103,8 @@ class AuditoriaContractCard extends StatelessWidget {
               ),
               TextButton.icon(
                 onPressed: onArquivar,
-                icon: const Icon(Icons.archive_outlined,
-                    size: 16, color: AppColors.textSecondary),
+                icon: Icon(Icons.archive_outlined,
+                    size: 16, color: context.colors.textSecondary),
                 label: const Text('Arquivar'),
               ),
             ],

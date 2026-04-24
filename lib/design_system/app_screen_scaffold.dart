@@ -70,10 +70,10 @@ class _ScreenHeader extends StatelessWidget {
         horizontal: AppSpacing.x6,
         vertical: AppSpacing.x4,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.bgCard,
+      decoration: BoxDecoration(
+        color: context.colors.bgCard,
         border: Border(
-          bottom: BorderSide(color: AppColors.borderLight, width: 1),
+          bottom: BorderSide(color: context.colors.borderSubtle, width: 1),
         ),
       ),
       child: Column(
@@ -96,7 +96,7 @@ class _ScreenHeader extends StatelessWidget {
                     fontSize: 11,
                     letterSpacing: 0.16,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.textMuted,
+                    color: context.colors.textMuted,
                   ),
                 ),
               ],
@@ -121,7 +121,7 @@ class _ScreenHeader extends StatelessWidget {
             Text(
               subtitle!,
               style: AppTypography.caption.copyWith(
-                color: AppColors.textSecondary,
+                color: context.colors.textSecondary,
               ),
             ),
           ],

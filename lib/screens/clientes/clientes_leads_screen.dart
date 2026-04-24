@@ -31,7 +31,7 @@ class _ClientesLeadsState extends ConsumerState<ClientesLeadsScreen> {
       actions: [
         IconButton(
           icon: const Icon(Icons.refresh),
-          color: AppColors.textSecondary,
+          color: context.colors.textSecondary,
           onPressed: () {
             if (_showLeads) {
               ref.read(leadsProvider.notifier).refresh();
@@ -133,7 +133,7 @@ class _ClientesTab extends ConsumerWidget {
           Text(
             ApiService.extractErrorMessage(e),
             style:
-                AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                AppTypography.caption.copyWith(color: context.colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.x3),
           AppSecondaryButton(
@@ -146,7 +146,7 @@ class _ClientesTab extends ConsumerWidget {
           ? Center(
               child: Text('Nenhum cliente cadastrado.',
                   style: AppTypography.bodySmall
-                      .copyWith(color: AppColors.textSecondary)))
+                      .copyWith(color: context.colors.textSecondary)))
           : ListView.separated(
               itemCount: clientes.length,
               separatorBuilder: (_, __) =>
@@ -197,7 +197,7 @@ class _ClienteCard extends StatelessWidget {
                       '${cliente.cidade}${cliente.estado != null ? '/${cliente.estado}' : ''}',
                   ].join(' • '),
                   style: AppTypography.caption
-                      .copyWith(color: AppColors.textSecondary),
+                      .copyWith(color: context.colors.textSecondary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -205,7 +205,7 @@ class _ClienteCard extends StatelessWidget {
                   Text(
                     'Fat. anual: ${_currencyFmt.format(cliente.fatAnual)}',
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.textMuted),
+                        .copyWith(color: context.colors.textMuted),
                   ),
               ],
             ),
@@ -258,7 +258,7 @@ class _LeadsTab extends ConsumerWidget {
           Text(
             ApiService.extractErrorMessage(e),
             style:
-                AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                AppTypography.caption.copyWith(color: context.colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.x3),
           AppSecondaryButton(
@@ -271,7 +271,7 @@ class _LeadsTab extends ConsumerWidget {
           ? Center(
               child: Text('Nenhum lead disponível no momento.',
                   style: AppTypography.bodySmall
-                      .copyWith(color: AppColors.textSecondary)))
+                      .copyWith(color: context.colors.textSecondary)))
           : ListView.separated(
               itemCount: leads.length,
               separatorBuilder: (_, __) =>
@@ -326,7 +326,7 @@ void _showClienteDetail(BuildContext context, WidgetRef ref, Cliente cliente) {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: AppSpacing.x4),
                 decoration: BoxDecoration(
-                  color: AppColors.textMuted,
+                  color: ctx.colors.textMuted,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -342,7 +342,7 @@ void _showClienteDetail(BuildContext context, WidgetRef ref, Cliente cliente) {
                       horizontal: AppSpacing.x2, vertical: AppSpacing.x1),
                   decoration: BoxDecoration(
                     color:
-                        _colorForStatus(cliente.status).withValues(alpha: 0.12),
+                        _colorForStatus(cliente.status, context).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
                   child: AppBadge(
@@ -408,12 +408,12 @@ void _showClienteDetail(BuildContext context, WidgetRef ref, Cliente cliente) {
   );
 }
 
-Color _colorForStatus(String status) => switch (status) {
+Color _colorForStatus(String status, BuildContext context) => switch (status) {
       'negociacao' => AppColors.warning,
       'enviado' => AppColors.info,
       'ativo' => AppColors.success,
       'inadimplente' => AppColors.danger,
-      _ => AppColors.textMuted,
+      _ => context.colors.textMuted,
     };
 
 AppBadgeType _badgeTypeForStatus(String status) => switch (status) {
@@ -436,19 +436,19 @@ class _InfoRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: AppColors.textMuted),
+          Icon(icon, size: 16, color: context.colors.textMuted),
           const SizedBox(width: AppSpacing.x2),
           Text('$label: ',
               style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                  color: context.colors.textSecondary, fontWeight: FontWeight.w600)),
           Expanded(
             child: value != null
                 ? Text(value!,
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.textPrimary))
+                        .copyWith(color: context.colors.textPrimary))
                 : Text('Não preenchido',
                     style: AppTypography.caption.copyWith(
-                        color: AppColors.textMuted,
+                        color: context.colors.textMuted,
                         fontStyle: FontStyle.italic)),
           ),
         ],
@@ -477,7 +477,7 @@ class _TabChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppColors.primary : AppColors.bgBase,
+      color: selected ? AppColors.primary : context.colors.bgPage,
       borderRadius: BorderRadius.circular(AppRadius.full),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -492,7 +492,7 @@ class _TabChip extends StatelessWidget {
                   size: 16,
                   color: selected
                       ? AppColors.textOnPrimary
-                      : AppColors.textSecondary),
+                      : context.colors.textSecondary),
               const SizedBox(width: AppSpacing.x1),
               Text(
                 label,
@@ -500,7 +500,7 @@ class _TabChip extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: selected
                       ? AppColors.textOnPrimary
-                      : AppColors.textPrimary,
+                      : context.colors.textPrimary,
                 ),
               ),
               if (count != null) ...[
@@ -511,7 +511,7 @@ class _TabChip extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: selected
                         ? AppColors.textOnPrimary.withValues(alpha: 0.25)
-                        : AppColors.textMuted,
+                        : context.colors.textMuted,
                     borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
                   child: Text(
@@ -521,7 +521,7 @@ class _TabChip extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: selected
                           ? AppColors.textOnPrimary
-                          : AppColors.textSecondary,
+                          : context.colors.textSecondary,
                     ),
                   ),
                 ),

@@ -243,7 +243,7 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                           Text(
                             ApiService.extractErrorMessage(e),
                             style: AppTypography.caption
-                                .copyWith(color: AppColors.textSecondary),
+                                .copyWith(color: context.colors.textSecondary),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: AppSpacing.x3),
@@ -264,12 +264,12 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.people_outline_rounded,
-                                  size: 48, color: AppColors.textMuted),
+                              Icon(Icons.people_outline_rounded,
+                                  size: 48, color: context.colors.textMuted),
                               const SizedBox(height: AppSpacing.x3),
                               Text('Nenhum cliente neste filtro',
                                   style: AppTypography.bodySmall.copyWith(
-                                      color: AppColors.textSecondary)),
+                                      color: context.colors.textSecondary)),
                             ],
                           ),
                         );
@@ -337,7 +337,7 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                       if (c.celular.isNotEmpty)
                         Text(c.celular,
                             style: AppTypography.caption
-                                .copyWith(color: AppColors.textMuted)),
+                                .copyWith(color: context.colors.textMuted)),
                     ],
                   ),
                 ],
@@ -400,7 +400,7 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                         if (c.cidade != null && c.cidade!.isNotEmpty)
                           Text(c.cidade!,
                               style: AppTypography.caption
-                                  .copyWith(color: AppColors.textSecondary)),
+                                  .copyWith(color: context.colors.textSecondary)),
                       ],
                     ),
                   ),
@@ -417,7 +417,7 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                         Text(
                           '${c.horasRestantes!.toStringAsFixed(1)} h restantes',
                           style: AppTypography.caption
-                              .copyWith(color: AppColors.textSecondary),
+                              .copyWith(color: context.colors.textSecondary),
                         ),
                       ],
                     ],

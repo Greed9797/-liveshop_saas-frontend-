@@ -190,7 +190,7 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                         'Sem localização (${semCoord.length})',
                         style: AppTypography.caption.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
+                          color: context.colors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.x1),
@@ -205,7 +205,7 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                               child: Row(
                                 children: [
                                   Icon(Icons.person_outline,
-                                      size: 14, color: _statusColor(c.status)),
+                                      size: 14, color: _statusColor(context, c.status)),
                                   const SizedBox(width: AppSpacing.x1),
                                   Expanded(
                                     child: Text(
@@ -218,7 +218,7 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                                     c.status.toUpperCase(),
                                     style: AppTypography.caption.copyWith(
                                       fontSize: 9,
-                                      color: _statusColor(c.status),
+                                      color: _statusColor(context, c.status),
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -261,12 +261,12 @@ class _CarteiraMapState extends State<_CarteiraMap> {
     );
   }
 
-  Color _statusColor(String status) => switch (status) {
+  Color _statusColor(BuildContext context, String status) => switch (status) {
     'negociacao' => AppColors.warning,
     'enviado' => AppColors.info,
     'ativo' => AppColors.success,
     'inadimplente' => AppColors.danger,
-    _ => AppColors.textMuted,
+    _ => context.colors.textMuted,
   };
 }
 

@@ -74,7 +74,7 @@ class LeadCard extends StatelessWidget {
                 if (fat > 0)
                   Text(
                     'Fat. est.: ${_currencyFmt.format(fat)}',
-                    style: AppTypography.caption.copyWith(color: AppColors.textMuted),
+                    style: AppTypography.caption.copyWith(color: context.colors.textMuted),
                   ),
               ],
             ),

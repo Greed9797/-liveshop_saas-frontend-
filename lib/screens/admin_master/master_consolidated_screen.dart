@@ -145,7 +145,7 @@ class _MasterConsolidatedScreenState
                                 data.overview.franchisorRevenue,
                               ),
                               icon: Icons.account_balance_rounded,
-                              iconColor: AppColors.textPrimary,
+                              iconColor: context.colors.textPrimary,
                             ),
                           ),
                           SizedBox(
@@ -210,7 +210,7 @@ class _MasterConsolidatedScreenState
                                 data.overview.comparisonValue,
                               ),
                               icon: Icons.compare_arrows_rounded,
-                              iconColor: AppColors.textPrimary,
+                              iconColor: context.colors.textPrimary,
                             ),
                           ),
                         ],
@@ -290,7 +290,7 @@ class _ConsolidatedHeader extends StatelessWidget {
               Text(
                 'Leitura financeira da rede: bruto, receita da franqueadora, mix de receitas e risco.',
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.colors.textSecondary,
                 ),
               ),
             ],
@@ -509,7 +509,7 @@ class _RevenueBreakdownCard extends StatelessWidget {
     final breakdown = [
       ('Mensalidade', data.monthlyFeeRevenue, AppColors.info),
       ('Comissão', data.commissionRevenue, AppColors.primary),
-      ('Outros', data.otherRevenue, AppColors.textMuted),
+      ('Outros', data.otherRevenue, context.colors.textMuted),
     ];
 
     return AppCard(
@@ -538,7 +538,7 @@ class _RevenueBreakdownCard extends StatelessWidget {
                       Text(
                         _formatMoney(item.$2),
                         style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textPrimary,
+                          color: context.colors.textPrimary,
                         ),
                       ),
                     ],
@@ -549,7 +549,7 @@ class _RevenueBreakdownCard extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: total > 0 ? item.$2 / total : 0,
                       minHeight: 10,
-                      backgroundColor: AppColors.bgMuted,
+                      backgroundColor: context.colors.bgMuted,
                       valueColor: AlwaysStoppedAnimation<Color>(item.$3),
                     ),
                   ),
@@ -591,7 +591,7 @@ class _InlineMetric extends StatelessWidget {
         Expanded(child: Text(label, style: AppTypography.bodyMedium)),
         Text(
           value,
-          style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
+          style: AppTypography.bodyMedium.copyWith(color: context.colors.textPrimary),
         ),
       ],
     );

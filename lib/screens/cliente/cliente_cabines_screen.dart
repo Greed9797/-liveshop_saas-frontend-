@@ -64,18 +64,18 @@ class _CabinesContent extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.videocam_off_outlined,
-                size: 64, color: AppColors.textMuted),
+                size: 64, color: context.colors.textMuted),
             const SizedBox(height: AppSpacing.x4),
             Text(
               'Nenhuma cabine vinculada',
-              style: AppTypography.h3.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.h3.copyWith(color: context.colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.x2),
             Text(
               'Suas cabines aparecerão aqui assim que\nhouver um contrato ativo.',
               textAlign: TextAlign.center,
               style: AppTypography.bodySmall
-                  .copyWith(color: AppColors.textMuted),
+                  .copyWith(color: context.colors.textMuted),
             ),
           ],
         ),

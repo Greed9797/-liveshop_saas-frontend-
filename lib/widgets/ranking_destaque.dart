@@ -16,7 +16,7 @@ class RankingDestaque extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.emoji_events_outlined,
-                  size: 36, color: AppColors.textMuted),
+                  size: 36, color: context.colors.textMuted),
               const SizedBox(height: 8),
               Text('Sem vendas registradas hoje',
                   style: AppTypography.bodySmall),
@@ -41,13 +41,13 @@ class RankingDestaque extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.flag_outlined, size: 20, color: AppColors.textMuted),
+                Icon(Icons.flag_outlined, size: 20, color: context.colors.textMuted),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     'DESTAQUES DO DIA',
                     style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.colors.textSecondary,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
                     ),
@@ -56,7 +56,7 @@ class RankingDestaque extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.flag_outlined, size: 20, color: AppColors.textMuted),
+                Icon(Icons.flag_outlined, size: 20, color: context.colors.textMuted),
               ],
             ),
             const SizedBox(height: 20),
@@ -93,13 +93,13 @@ class RankingDestaque extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isEmpty
-                    ? AppColors.bgBase
+                    ? context.colors.bgPage
                     : medalColor.withValues(alpha: 0.18),
                 border: Border.all(color: medalColor, width: 2),
               ),
               child: isEmpty
                   ? Icon(Icons.person_outline,
-                      size: 22 * scale, color: AppColors.textMuted)
+                      size: 22 * scale, color: context.colors.textMuted)
                   : Text(
                       nome.trim().isNotEmpty
                           ? nome.trim()[0].toUpperCase()

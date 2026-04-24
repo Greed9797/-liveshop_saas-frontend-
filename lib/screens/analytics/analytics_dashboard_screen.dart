@@ -104,7 +104,7 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
                         const SizedBox(height: AppSpacing.x1),
                         Text(
                           '$e',
-                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                          style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: AppSpacing.x4),
@@ -260,8 +260,8 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x4, AppSpacing.x6, AppSpacing.x4),
       decoration: BoxDecoration(
-        color: AppColors.bgCard,
-        border: Border(bottom: BorderSide(color: AppColors.borderLight)),
+        color: context.colors.bgCard,
+        border: Border(bottom: BorderSide(color: context.colors.borderSubtle)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -279,7 +279,7 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
                   fontSize: 11,
                   letterSpacing: 0.16,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textMuted,
+                  color: context.colors.textMuted,
                 ),
               ),
             ],
@@ -325,7 +325,7 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
               ),
               const SizedBox(width: AppSpacing.x2),
               IconButton(
-                icon: Icon(Icons.refresh, color: AppColors.textSecondary),
+                icon: Icon(Icons.refresh, color: context.colors.textSecondary),
                 tooltip: 'Atualizar',
                 onPressed: () => ref.read(analyticsDashboardProvider.notifier).refresh(),
               ),
@@ -345,7 +345,7 @@ class _AnalyticsDashboardBody extends ConsumerWidget {
                       titleRow,
                       const SizedBox(height: 2),
                       Text('Análise de faturamento e performance',
-                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                          style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                     ],
                   ),
                 ),
@@ -389,7 +389,7 @@ class _SectionHeader extends StatelessWidget {
         Text(title, style: AppTypography.h3.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 2),
         Text(subtitle,
-            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+            style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
       ],
     );
   }
@@ -492,7 +492,7 @@ class _IntelComercialSection extends ConsumerWidget {
         child: Center(
           child: Text(
             'Erro ao carregar dados',
-            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+            style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
           ),
         ),
       ),

@@ -290,14 +290,14 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
             const SizedBox(height: AppSpacing.x4),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.textMuted),
+                border: Border.all(color: context.colors.textMuted),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: SwitchListTile(
                 title: const Text('Já vende no TikTok Live?'),
                 subtitle: Text(
                   _jaVendeTikTok ? 'Sim — informe o handle abaixo' : 'Não',
-                  style: AppTypography.caption.copyWith(color: AppColors.textMuted),
+                  style: AppTypography.caption.copyWith(color: context.colors.textMuted),
                 ),
                 value: _jaVendeTikTok,
                 activeThumbColor: AppColors.primary,
@@ -335,7 +335,7 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
           SizedBox(
               width: 80,
               child: Text(label,
-                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary))),
+                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary))),
           Expanded(child: Text(value, style: AppTypography.caption)),
         ]),
       );
@@ -487,7 +487,7 @@ class _StepIndicator extends StatelessWidget {
                           ? AppColors.success
                           : active
                               ? AppColors.primary
-                              : AppColors.borderLight,
+                              : context.colors.borderSubtle,
                     ),
                     child: Center(
                       child: done
@@ -495,7 +495,7 @@ class _StepIndicator extends StatelessWidget {
                               size: 14, color: Colors.white)
                           : Text('${i + 1}',
                               style: AppTypography.caption.copyWith(
-                                  color: active ? Colors.white : AppColors.textSecondary,
+                                  color: active ? Colors.white : context.colors.textSecondary,
                                   fontWeight: FontWeight.w700)),
                     ),
                   ),
@@ -503,14 +503,14 @@ class _StepIndicator extends StatelessWidget {
                   Text(_labels[i],
                       style: AppTypography.caption.copyWith(
                           fontSize: 9,
-                          color: active ? AppColors.primary : AppColors.textMuted)),
+                          color: active ? AppColors.primary : context.colors.textMuted)),
                 ],
               ),
               if (i < _labels.length - 1)
                 Expanded(
                     child: Container(
                         height: 1,
-                        color: done ? AppColors.success : AppColors.textMuted,
+                        color: done ? AppColors.success : context.colors.textMuted,
                         margin: const EdgeInsets.only(bottom: AppSpacing.x4))),
             ],
           ),

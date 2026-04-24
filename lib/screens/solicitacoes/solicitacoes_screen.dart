@@ -201,12 +201,12 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
 
           // ── Barra de abas ──
           Material(
-            color: AppColors.bgCard,
+            color: context.colors.bgCard,
             elevation: 1,
             child: TabBar(
               controller: _tabController,
               labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textSecondary,
+              unselectedLabelColor: context.colors.textSecondary,
               indicatorColor: AppColors.primary,
               tabs: [
                 Tab(
@@ -379,12 +379,12 @@ class _SolicitacoesLista extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(emptyIcon, size: 64, color: AppColors.textMuted),
+            Icon(emptyIcon, size: 64, color: context.colors.textMuted),
             const SizedBox(height: AppSpacing.x4),
             Text(
               emptyMessage,
               style: AppTypography.bodyMedium
-                  .copyWith(color: AppColors.textSecondary),
+                  .copyWith(color: context.colors.textSecondary),
             ),
           ],
         ),

@@ -31,7 +31,7 @@ class MoneyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseColor = color ?? AppColors.textPrimary;
+    final baseColor = color ?? context.colors.textPrimary;
     // Formata sem o símbolo (ex: "27.035,25")
     final formattedNumber = _formatter.format(value).trim();
 

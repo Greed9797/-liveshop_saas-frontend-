@@ -35,14 +35,14 @@ class LeadsScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.x1),
             leadsAsync.when(
               loading: () => Text('Carregando...',
-                  style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+                  style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
               error: (e, __) => Text(
                 e.toString(),
-                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary),
               ),
               data: (leads) => Text(
                   '${leads.length} leads disponíveis para você',
-                  style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+                  style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
             ),
             const SizedBox(height: AppSpacing.x4),
             Expanded(
@@ -62,7 +62,7 @@ class LeadsScreen extends ConsumerWidget {
                 data: (leads) => leads.isEmpty
                     ? Center(
                         child: Text('Nenhum lead disponível no momento.',
-                            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)))
+                            style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)))
                     : ListView.separated(
                         itemCount: leads.length,
                         separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.x2),

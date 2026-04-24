@@ -32,7 +32,7 @@ class FranqueadoScreen extends ConsumerWidget {
                     Text('Painel do Franqueador',
                         style: AppTypography.h2.copyWith(fontWeight: FontWeight.w500)),
                     Text('Visão geral de todas as unidades',
-                        style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+                        style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
                   ],
                 ),
                 IconButton(
@@ -122,7 +122,7 @@ class _UnidadesContent extends StatelessWidget {
             child: unidades.isEmpty
                 ? Center(
                     child: Text('Nenhuma unidade encontrada.',
-                        style: TextStyle(color: AppColors.textSecondary)))
+                        style: TextStyle(color: context.colors.textSecondary)))
                 : ListView.separated(
                     itemCount: unidades.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),
@@ -130,7 +130,7 @@ class _UnidadesContent extends StatelessWidget {
                       final u = unidades[i];
                       return ListTile(
                         title: Text(u.nome,
-                            style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+                            style: TextStyle(fontWeight: FontWeight.w500, color: context.colors.textPrimary)),
                         subtitle: Text(
                             'Clientes: ${u.clientesCount} • Fat: ${currency.format(u.fatMes)}'),
                         trailing: Row(

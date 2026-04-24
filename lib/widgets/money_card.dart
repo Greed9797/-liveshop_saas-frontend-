@@ -37,8 +37,8 @@ class MoneyCard extends ConsumerWidget {
               Container(
                 width: 36,
                 height: 36,
-                decoration: const BoxDecoration(
-                  color: AppColors.bgMuted,
+                decoration: BoxDecoration(
+                  color: context.colors.bgMuted,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -52,7 +52,7 @@ class MoneyCard extends ConsumerWidget {
                 child: Text(
                   'Faturamento Total',
                   style: AppTypography.bodyLarge.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -60,7 +60,7 @@ class MoneyCard extends ConsumerWidget {
               IconButton(
                 icon: Icon(
                   isVisible ? PhosphorIcons.eye() : PhosphorIcons.eyeSlash(),
-                  color: AppColors.textMuted,
+                  color: context.colors.textMuted,
                   size: 18,
                 ),
                 padding: EdgeInsets.zero,
@@ -84,14 +84,14 @@ class MoneyCard extends ConsumerWidget {
                 : Text(
                     'R\$ •••••••',
                     style: AppTypography.displayLarge.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.colors.textPrimary,
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
           ),
           const SizedBox(height: 20),
-          const Divider(color: AppColors.borderLight, height: 1),
+          Divider(color: context.colors.borderSubtle, height: 1),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -106,7 +106,7 @@ class MoneyCard extends ConsumerWidget {
               Container(
                   width: 1,
                   height: 36,
-                  color: AppColors.borderLight),
+                  color: context.colors.borderSubtle),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: AppSpacing.x4),
@@ -149,7 +149,7 @@ class _SubValue extends StatelessWidget {
           style: AppTypography.caption.copyWith(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary),
+              color: context.colors.textSecondary),
         ),
         const SizedBox(height: 4),
         FittedBox(

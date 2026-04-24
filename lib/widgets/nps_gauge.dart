@@ -33,7 +33,7 @@ class NpsGauge extends StatelessWidget {
               children: [
                 Text('NPS',
                     style: AppTypography.caption.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.colors.textSecondary,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.2)),
                 const Spacer(),
@@ -68,7 +68,7 @@ class NpsGauge extends StatelessWidget {
                   child: Text(
                     '/10',
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.textMuted),
+                        .copyWith(color: context.colors.textMuted),
                   ),
                 ),
               ],
@@ -80,7 +80,7 @@ class NpsGauge extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: score / 10,
                 minHeight: 6,
-                backgroundColor: AppColors.bgMuted,
+                backgroundColor: context.colors.bgMuted,
                 valueColor: AlwaysStoppedAnimation<Color>(_scoreColor()),
               ),
             ),
@@ -91,13 +91,13 @@ class NpsGauge extends StatelessWidget {
               children: [
                 Text('0',
                     style: AppTypography.caption
-                        .copyWith(fontSize: 9, color: AppColors.textMuted)),
+                        .copyWith(fontSize: 9, color: context.colors.textMuted)),
                 Text('5',
                     style: AppTypography.caption
-                        .copyWith(fontSize: 9, color: AppColors.textMuted)),
+                        .copyWith(fontSize: 9, color: context.colors.textMuted)),
                 Text('10',
                     style: AppTypography.caption
-                        .copyWith(fontSize: 9, color: AppColors.textMuted)),
+                        .copyWith(fontSize: 9, color: context.colors.textMuted)),
               ],
             ),
           ],

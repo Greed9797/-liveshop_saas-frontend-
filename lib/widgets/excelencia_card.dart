@@ -27,7 +27,7 @@ class ExcelenciaCard extends ConsumerWidget {
               children: [
                 Text('Erro ao carregar métricas',
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.textSecondary)),
+                        .copyWith(color: context.colors.textSecondary)),
                 AppSecondaryButton(
                   onPressed: () =>
                       ref.read(excelenciaProvider.notifier).refresh(),
@@ -74,7 +74,7 @@ class _CardContent extends StatelessWidget {
       children: [
         Text(
           'PROGRAMA DE EXCELÊNCIA',
-          style: AppTypography.h3.copyWith(fontSize: 16, color: AppColors.textPrimary),
+          style: AppTypography.h3.copyWith(fontSize: 16, color: context.colors.textPrimary),
         ),
         const Divider(height: 24),
         _buildRatingRow(context, 'BASE DE CONTRATOS', _starsContratos()),
@@ -108,13 +108,13 @@ class _CardContent extends StatelessWidget {
         children: [
           Text(label,
               style: AppTypography.caption.copyWith(
-                  fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                  fontWeight: FontWeight.bold, color: context.colors.textSecondary)),
           Row(
             children: List.generate(5, (index) {
               return Icon(
                 index < stars ? Icons.star : Icons.star_border,
                 size: 16,
-                color: index < stars ? AppColors.primary : AppColors.bgMuted,
+                color: index < stars ? AppColors.primary : context.colors.bgMuted,
               );
             }),
           ),
@@ -134,11 +134,11 @@ class _CardContent extends StatelessWidget {
             Text(label,
                 style: AppTypography.caption.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary)),
+                    color: context.colors.textSecondary)),
             Text(percentage,
                 style: AppTypography.caption.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary)),
+                    color: context.colors.textPrimary)),
           ],
         ),
         const SizedBox(height: 6),

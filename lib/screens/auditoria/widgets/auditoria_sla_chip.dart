@@ -14,13 +14,13 @@ class AuditoriaSlaChip extends StatelessWidget {
         ? AppColors.danger
         : hours! >= 12
             ? AppColors.primary
-            : AppColors.textSecondary;
+            : context.colors.textSecondary;
 
     final bg = hours! >= 24
         ? AppColors.danger.withValues(alpha: 0.12)
         : hours! >= 12
             ? AppColors.primary.withValues(alpha: 0.12)
-            : AppColors.textPrimary.withValues(alpha: 0.05);
+            : context.colors.textPrimary.withValues(alpha: 0.05);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

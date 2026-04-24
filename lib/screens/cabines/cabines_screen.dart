@@ -119,7 +119,7 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: AppColors.bgCard,
+      backgroundColor: context.colors.bgCard,
       builder: (_) => const _FilaAtivacaoBottomSheet(),
     );
 
@@ -671,8 +671,8 @@ class _FeaturedKpiCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.x5),
       decoration: BoxDecoration(
-        color: AppColors.bgCard,
-        border: Border.all(color: AppColors.borderLight),
+        color: context.colors.bgCard,
+        border: Border.all(color: context.colors.borderSubtle),
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
@@ -682,7 +682,7 @@ class _FeaturedKpiCard extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: AppTypography.caption.copyWith(
-              color: AppColors.textMuted,
+              color: context.colors.textMuted,
               fontWeight: FontWeight.w500,
               letterSpacing: 1.2,
             ),
@@ -697,14 +697,14 @@ class _FeaturedKpiCard extends StatelessWidget {
                 fontSize: 32,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -1,
-                color: AppColors.textPrimary,
+                color: context.colors.textPrimary,
               ),
             ),
           ),
           const SizedBox(height: AppSpacing.x1),
           Text(
             sub,
-            style: AppTypography.caption.copyWith(color: AppColors.textMuted),
+            style: AppTypography.caption.copyWith(color: context.colors.textMuted),
           ),
         ],
       ),
@@ -799,7 +799,7 @@ class _ChipWithCount extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: active ? AppColors.primary : AppColors.bgCard,
+      color: active ? AppColors.primary : context.colors.bgCard,
       borderRadius: BorderRadius.circular(AppRadius.full),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -817,7 +817,7 @@ class _ChipWithCount extends StatelessWidget {
                 style: AppTypography.caption.copyWith(
                   fontWeight: FontWeight.w600,
                   color:
-                      active ? AppColors.textOnPrimary : AppColors.textPrimary,
+                      active ? AppColors.textOnPrimary : context.colors.textPrimary,
                 ),
               ),
               const SizedBox(width: 6),
@@ -828,7 +828,7 @@ class _ChipWithCount extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: active
                       ? AppColors.textOnPrimary.withValues(alpha: 0.75)
-                      : AppColors.textMuted,
+                      : context.colors.textMuted,
                 ),
               ),
             ],
@@ -850,7 +850,7 @@ class _SelectedContractBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.x3),
       decoration: BoxDecoration(
-        color: AppColors.bgGradientStart,
+        color: context.colors.bgMuted,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
       ),
@@ -866,11 +866,11 @@ class _SelectedContractBanner extends StatelessWidget {
                   'Contrato selecionado para ativação',
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary),
+                      color: context.colors.textPrimary),
                 ),
                 const SizedBox(height: AppSpacing.x1),
                 Text('${contrato.clienteNome} • ${contrato.localizacao}',
-                    style: TextStyle(color: AppColors.textSecondary)),
+                    style: TextStyle(color: context.colors.textSecondary)),
               ],
             ),
           ),
@@ -1021,7 +1021,7 @@ class _SidebarContent extends ConsumerWidget {
         : ref.watch(cabineDetailProvider(cabine.id));
 
     return AppCard(
-      borderColor: AppColors.borderLight,
+      borderColor: context.colors.borderSubtle,
       padding: const EdgeInsets.all(AppSpacing.x5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1033,7 +1033,7 @@ class _SidebarContent extends ConsumerWidget {
           const SizedBox(height: AppSpacing.x1),
           Text(
             'Da fila de ativação ao raio-X da cabine, sem sair do painel.',
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: context.colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.x5),
           Expanded(
@@ -1294,12 +1294,12 @@ class _QueuePanel extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                           color: isSelected
-                              ? AppColors.bgGradientStart
-                              : AppColors.bgBase,
+                              ? context.colors.bgMuted
+                              : context.colors.bgPage,
                           border: Border.all(
                             color: isSelected
                                 ? AppColors.primary.withValues(alpha: 0.35)
-                                : AppColors.borderLight,
+                                : context.colors.borderSubtle,
                           ),
                         ),
                         child: Column(
@@ -1308,16 +1308,16 @@ class _QueuePanel extends StatelessWidget {
                             Text(item.clienteNome,
                                 style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary)),
+                                    color: context.colors.textPrimary)),
                             const SizedBox(height: AppSpacing.x1),
                             Text(item.localizacao,
                                 style:
-                                    TextStyle(color: AppColors.textSecondary)),
+                                    TextStyle(color: context.colors.textSecondary)),
                             const SizedBox(height: AppSpacing.x2),
                             Text(
                               'Contrato ${item.id.substring(0, 8)} • Fixo R\$ ${item.valorFixo.toStringAsFixed(2)}',
                               style: AppTypography.caption
-                                  .copyWith(color: AppColors.textSecondary),
+                                  .copyWith(color: context.colors.textSecondary),
                             ),
                           ],
                         ),
@@ -1383,11 +1383,11 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                 Text('Top Closers da unidade',
                     style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary)),
+                        color: context.colors.textPrimary)),
                 const SizedBox(height: AppSpacing.x2),
                 if (analytics.rankingClosers.isEmpty)
                   Text('Nenhum closer com histórico suficiente ainda.',
-                      style: TextStyle(color: AppColors.textSecondary))
+                      style: TextStyle(color: context.colors.textSecondary))
                 else
                   ...analytics.rankingClosers
                       .take(3)
@@ -1410,11 +1410,11 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                 Text('Top Parceiros por volume',
                     style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary)),
+                        color: context.colors.textPrimary)),
                 const SizedBox(height: AppSpacing.x2),
                 if (analytics.rankingClientes.isEmpty)
                   Text('Nenhum parceiro com volume relevante ainda.',
-                      style: TextStyle(color: AppColors.textSecondary))
+                      style: TextStyle(color: context.colors.textSecondary))
                 else
                   ...analytics.rankingClientes.take(3).map(
                         (cliente) => Padding(
@@ -1429,12 +1429,12 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                 Text('Prime time da franquia',
                     style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary)),
+                        color: context.colors.textPrimary)),
                 const SizedBox(height: AppSpacing.x2),
                 if (analytics.heatmapHorarios.isEmpty)
                   Text(
                       'Ainda não há dados suficientes para mapear o melhor horário da unidade.',
-                      style: TextStyle(color: AppColors.textSecondary))
+                      style: TextStyle(color: context.colors.textSecondary))
                 else
                   ...heatmapTop.take(3).map(
                         (horario) => Padding(
@@ -1449,16 +1449,16 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                 Text('Raio-X da cabine selecionada',
                     style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary)),
+                        color: context.colors.textPrimary)),
                 const SizedBox(height: AppSpacing.x2),
                 if (historico == null)
                   Text(
                       'Selecione uma cabine no grid para ver os clientes e horários fortes desta unidade.',
-                      style: TextStyle(color: AppColors.textSecondary))
+                      style: TextStyle(color: context.colors.textSecondary))
                 else ...[
                   if (cabineTopClientes.isEmpty)
                     Text('Sem histórico de clientes para esta cabine ainda.',
-                        style: TextStyle(color: AppColors.textSecondary))
+                        style: TextStyle(color: context.colors.textSecondary))
                   else
                     ...cabineTopClientes.map(
                       (cliente) => Padding(
@@ -1507,7 +1507,7 @@ class _SidebarCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.x3),
       decoration: BoxDecoration(
-        color: AppColors.bgBase,
+        color: context.colors.bgPage,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
@@ -1541,14 +1541,14 @@ class _InfoLine extends StatelessWidget {
             width: 94,
             child: Text(
               '$label:',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colors.textSecondary),
             ),
           ),
           Expanded(
             child: Text(
               value,
               style: TextStyle(
-                  fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                  fontWeight: FontWeight.w600, color: context.colors.textPrimary),
             ),
           ),
         ],
@@ -1573,13 +1573,13 @@ class _MetricRankRow extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-                fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                fontWeight: FontWeight.w600, color: context.colors.textPrimary),
           ),
         ),
         const SizedBox(width: AppSpacing.x2),
         Flexible(
             child: Text(value,
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.colors.textSecondary),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis)),
       ],
@@ -1638,16 +1638,16 @@ class _RankedMetricRow extends StatelessWidget {
               Text(title,
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary)),
+                      color: context.colors.textPrimary)),
               const SizedBox(height: AppSpacing.x1),
               Text(subtitle,
                   style: AppTypography.caption
-                      .copyWith(color: AppColors.textSecondary)),
+                      .copyWith(color: context.colors.textSecondary)),
             ],
           ),
         ),
         const SizedBox(width: AppSpacing.x2),
-        Text(value, style: TextStyle(color: AppColors.textSecondary)),
+        Text(value, style: TextStyle(color: context.colors.textSecondary)),
       ],
     );
   }
@@ -1678,14 +1678,14 @@ class _AnalyticsSummaryRow extends StatelessWidget {
                     right: item == cards.last ? 0 : AppSpacing.x2),
                 child: AppCard(
                   shadow: const [],
-                  borderColor: AppColors.borderLight,
+                  borderColor: context.colors.borderSubtle,
                   padding: const EdgeInsets.all(AppSpacing.x3),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(item.$1,
                           style: AppTypography.caption
-                              .copyWith(color: AppColors.textSecondary)),
+                              .copyWith(color: context.colors.textSecondary)),
                       const SizedBox(height: AppSpacing.x1),
                       Text(
                         item.$2,
@@ -1717,7 +1717,7 @@ class _CabinesEmptyState extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.video_camera_front_outlined,
-                  size: 42, color: AppColors.textMuted),
+                  size: 42, color: context.colors.textMuted),
               const SizedBox(height: AppSpacing.x3),
               Text(
                 'Ainda não existem cabines para essa unidade.',
@@ -1762,7 +1762,7 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
             const SizedBox(height: AppSpacing.x1),
             Text(
               'Selecione um contrato ativo e depois toque em uma cabine disponível.',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.x4),
             Flexible(
@@ -1789,7 +1789,7 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
                       return AppCard(
                         onTap: () => Navigator.pop(context, item),
                         shadow: const [],
-                        borderColor: AppColors.borderLight,
+                        borderColor: context.colors.borderSubtle,
                         padding: const EdgeInsets.all(AppSpacing.x3),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1800,12 +1800,12 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
                             const SizedBox(height: AppSpacing.x1),
                             Text(item.localizacao,
                                 style: AppTypography.bodySmall
-                                    .copyWith(color: AppColors.textSecondary)),
+                                    .copyWith(color: context.colors.textSecondary)),
                             const SizedBox(height: AppSpacing.x2),
                             Text(
                               'Contrato ${item.id.substring(0, 8)} • Fixo R\$ ${item.valorFixo.toStringAsFixed(2)} • Comissão ${item.comissaoPct.toStringAsFixed(0)}%',
                               style: AppTypography.caption
-                                  .copyWith(color: AppColors.textSecondary),
+                                  .copyWith(color: context.colors.textSecondary),
                             ),
                           ],
                         ),
@@ -1905,7 +1905,7 @@ class _EngajamentoChip extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 10,
-              color: AppColors.textSecondary,
+              color: context.colors.textSecondary,
             ),
           ),
         ],

@@ -99,12 +99,12 @@ class RecomendacoesScreen extends ConsumerWidget {
                         child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.diamond_outlined,
-                              size: 48, color: AppColors.borderLight),
+                          Icon(Icons.diamond_outlined,
+                              size: 48, color: context.colors.borderSubtle),
                           const SizedBox(height: AppSpacing.x3),
                           Text('Nenhuma recomendação ainda.',
                               style: AppTypography.bodySmall
-                                  .copyWith(color: AppColors.textSecondary)),
+                                  .copyWith(color: context.colors.textSecondary)),
                         ],
                       ))
                     : AppTable(
@@ -135,7 +135,7 @@ class RecomendacoesScreen extends ConsumerWidget {
                                     Text(r.nomeIndicado,
                                       style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
                                     Text('Indicado por: ${r.recomendante}',
-                                      style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                                      style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
                                   ],
                                 ),
                               ],
@@ -153,7 +153,7 @@ class RecomendacoesScreen extends ConsumerWidget {
                                       color: AppColors.primary,
                                     ),
                                   )
-                                : Text('—', style: AppTypography.bodyMedium.copyWith(color: AppColors.textMuted)),
+                                : Text('—', style: AppTypography.bodyMedium.copyWith(color: context.colors.textMuted)),
                           ],
                           onTap: r.status == 'pendente'
                               ? () => _converter(context, ref, r)
@@ -315,7 +315,7 @@ class _RecomendacaoTile extends StatelessWidget {
       ),
       subtitle: Text(
         'Indicado por: ${recomendacao.recomendante}',
-        style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+        style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -452,7 +452,7 @@ class _NegociarDialogState extends State<_NegociarDialog> {
                       Text(
                         'Preencha para melhorar o score',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.textMuted),
+                            .copyWith(color: context.colors.textMuted),
                       ),
                     ],
                   ),

@@ -27,7 +27,7 @@ class ExcelenciaScreen extends ConsumerWidget {
           icon: const Icon(Icons.refresh),
           tooltip: 'Atualizar',
           onPressed: () => ref.read(excelenciaProvider.notifier).refresh(),
-          color: AppColors.textSecondary,
+          color: context.colors.textSecondary,
         ),
       ],
       child: SingleChildScrollView(
@@ -38,7 +38,7 @@ class ExcelenciaScreen extends ConsumerWidget {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               Text(
                 ApiService.extractErrorMessage(e),
-                style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.x3),
               AppSecondaryButton(
@@ -123,7 +123,7 @@ class _ExcelenciaContent extends StatelessWidget {
                           Text(
                             'RETORNO SOBRE INVESTIMENTO (ROI)',
                             style: AppTypography.caption.copyWith(
-                              color: AppColors.textMuted,
+                              color: context.colors.textMuted,
                               fontWeight: FontWeight.w500,
                               letterSpacing: 1.4,
                             ),
@@ -139,7 +139,7 @@ class _ExcelenciaContent extends StatelessWidget {
                           Text(
                             'Taxa R\$ ${taxaFranquia.toStringAsFixed(0)} ÷ faturamento líquido R\$ ${data.fatMesAtual.toStringAsFixed(0)}/mês',
                             style: AppTypography.caption
-                                .copyWith(color: AppColors.textSecondary),
+                                .copyWith(color: context.colors.textSecondary),
                           ),
                         ],
                       ),
@@ -152,7 +152,7 @@ class _ExcelenciaContent extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.x5),
-                const Divider(height: 1, color: AppColors.borderLight),
+                Divider(height: 1, color: context.colors.borderSubtle),
                 const SizedBox(height: AppSpacing.x4),
                 LayoutBuilder(
                   builder: (ctx, c) {
@@ -231,7 +231,7 @@ class _ExcelenciaContent extends StatelessWidget {
                 Text(
                   'Prioridades para subir 10 pontos no score este mês',
                   style: AppTypography.caption
-                      .copyWith(color: AppColors.textSecondary),
+                      .copyWith(color: context.colors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.x4),
                 const _ActionItem(
@@ -314,7 +314,7 @@ class _ScoreHeroCard extends StatelessWidget {
                         children: [
                           Text('Score de Excelência',
                               style: AppTypography.caption.copyWith(
-                                color: AppColors.textMuted,
+                                color: context.colors.textMuted,
                                 fontWeight: FontWeight.w500,
                                 letterSpacing: 1.2,
                               )),
@@ -333,7 +333,7 @@ class _ScoreHeroCard extends StatelessWidget {
                               TextSpan(
                                 text: '/100',
                                 style: AppTypography.h3.copyWith(
-                                  color: AppColors.textMuted,
+                                  color: context.colors.textMuted,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -360,7 +360,7 @@ class _ScoreHeroCard extends StatelessWidget {
                                 child: Text(
                                   diffText,
                                   style: AppTypography.caption.copyWith(
-                                    color: AppColors.textMuted,
+                                    color: context.colors.textMuted,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -379,7 +379,7 @@ class _ScoreHeroCard extends StatelessWidget {
                 Container(
                   height: 12,
                   decoration: BoxDecoration(
-                    color: AppColors.bgMuted,
+                    color: context.colors.bgMuted,
                     borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
                   child: FractionallySizedBox(
@@ -401,16 +401,16 @@ class _ScoreHeroCard extends StatelessWidget {
                   children: [
                     Text('0 · iniciante',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.textMuted)),
+                            .copyWith(color: context.colors.textMuted)),
                     Text('50 · operando',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.textMuted)),
+                            .copyWith(color: context.colors.textMuted)),
                     Text('80 · excelência',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.textMuted)),
+                            .copyWith(color: context.colors.textMuted)),
                     Text('100 · benchmark',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.textMuted)),
+                            .copyWith(color: context.colors.textMuted)),
                   ],
                 ),
               ],
@@ -445,7 +445,7 @@ class _RoiBox extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.x4, vertical: AppSpacing.x4),
         decoration: BoxDecoration(
-          color: dimmed ? AppColors.bgMuted : AppColors.primarySofter,
+          color: dimmed ? context.colors.bgMuted : AppColors.primarySofter,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Column(
@@ -455,7 +455,7 @@ class _RoiBox extends StatelessWidget {
             Text(
               label.toUpperCase(),
               style: AppTypography.caption.copyWith(
-                color: AppColors.textMuted,
+                color: context.colors.textMuted,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 1.2,
                 fontSize: 10,
@@ -473,7 +473,7 @@ class _RoiBox extends StatelessWidget {
             Text(
               sub,
               style: AppTypography.caption
-                  .copyWith(color: AppColors.textSecondary),
+                  .copyWith(color: context.colors.textSecondary),
             ),
           ],
         ),
@@ -538,7 +538,7 @@ class _ActionItem extends StatelessWidget {
                 Text(
                   desc,
                   style: AppTypography.caption
-                      .copyWith(color: AppColors.textSecondary),
+                      .copyWith(color: context.colors.textSecondary),
                 ),
               ],
             ),

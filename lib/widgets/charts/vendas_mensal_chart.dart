@@ -28,10 +28,10 @@ class VendasMensalChart extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Vendas Mensal', style: AppTypography.h3.copyWith(fontSize: 15, color: AppColors.textPrimary)),
+                    Text('Vendas Mensal', style: AppTypography.h3.copyWith(fontSize: 15, color: context.colors.textPrimary)),
                     const SizedBox(height: 2),
                     Text('Número de lives encerradas por mês',
-                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                   ],
                 ),
               ),
@@ -102,7 +102,7 @@ class VendasMensalChart extends StatelessWidget {
               padding: const EdgeInsets.only(top: 6),
               child: Text(
                 shortMonths[month - 1],
-                style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                style: AppTypography.caption.copyWith(color: context.colors.textSecondary, fontSize: 10),
               ),
             );
           },
@@ -119,7 +119,7 @@ class VendasMensalChart extends StatelessWidget {
               child: Text(
                 value.toInt().toString(),
                 style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary.withValues(alpha: 0.6),
+                  color: context.colors.textSecondary.withValues(alpha: 0.6),
                   fontSize: 10,
                 ),
                 textAlign: TextAlign.right,
@@ -138,8 +138,8 @@ class VendasMensalChart extends StatelessWidget {
       show: true,
       drawVerticalLine: false,
       horizontalInterval: maxY / 4 > 0 ? maxY / 4 : 2,
-      getDrawingHorizontalLine: (_) => const FlLine(
-        color: AppColors.borderLight,
+      getDrawingHorizontalLine: (_) => FlLine(
+        color: context.colors.borderSubtle,
         strokeWidth: 1,
         dashArray: [4, 4],
       ),
@@ -163,7 +163,7 @@ class VendasMensalChart extends StatelessWidget {
             backDrawRodData: BackgroundBarChartRodData(
               show: true,
               toY: _maxY(),
-              color: AppColors.borderLight.withValues(alpha: 0.08),
+              color: context.colors.borderSubtle.withValues(alpha: 0.08),
             ),
           ),
         ],
@@ -179,9 +179,9 @@ class VendasMensalChart extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.bar_chart_rounded, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.3)),
+            Icon(Icons.bar_chart_rounded, size: 48, color: context.colors.textSecondary.withValues(alpha: 0.3)),
             const SizedBox(height: AppSpacing.x3),
-            Text('Sem dados de vendas', style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+            Text('Sem dados de vendas', style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
           ],
         ),
       ),

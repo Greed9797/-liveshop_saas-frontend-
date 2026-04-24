@@ -87,7 +87,7 @@ class BoletoItem extends StatelessWidget {
                               ? _formatDate(boleto.pagoEm!)
                               : _formatDate(boleto.vencimento),
                           style: AppTypography.bodySmall.copyWith(
-                            color: boleto.isVencido ? AppColors.danger : AppColors.textPrimary,
+                            color: boleto.isVencido ? AppColors.danger : context.colors.textPrimary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -142,7 +142,7 @@ class BoletoItem extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: AppColors.bgBase,
+                            color: context.colors.bgPage,
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: Text('Sem link de pagamento',
@@ -237,7 +237,7 @@ class _TipoIcon extends StatelessWidget {
       'royalties' => (Icons.percent_rounded,          AppColors.primary),
       'imposto'   => (Icons.account_balance_rounded,  AppColors.info),
       'marketing' => (Icons.campaign_rounded,          AppColors.infoPurple),
-      _           => (Icons.receipt_long_rounded,      AppColors.textMuted),
+      _           => (Icons.receipt_long_rounded,      context.colors.textMuted),
     };
     return Icon(icon, size: 20, color: color);
   }

@@ -112,14 +112,14 @@ class _AssumirRiscoModalState extends ConsumerState<AssumirRiscoModal> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppSpacing.x4),
                   decoration: BoxDecoration(
-                    color: AppColors.bgGradientStart,
+                    color: context.colors.bgMuted,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(color: AppColors.primary),
                   ),
                   child: Text(
                     'Ao assumir esta operação, os valores de inadimplência poderão ser descontados integralmente dos seus repasses futuros, conforme as regras comerciais da franqueadora.',
                     style: AppTypography.bodySmall
-                        .copyWith(color: AppColors.textPrimary),
+                        .copyWith(color: context.colors.textPrimary),
                   ),
                 ),
                 const SizedBox(height: 20),

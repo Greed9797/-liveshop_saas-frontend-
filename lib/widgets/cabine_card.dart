@@ -62,7 +62,7 @@ class _CabineCardState extends State<CabineCard> {
         'reservada' => AppColors.warning,
         'ativa' => AppColors.info,
         'manutencao' => AppColors.danger,
-        _ => AppColors.textMuted,
+        _ => context.colors.textMuted,
       };
 
   AppBadgeType _statusType() => switch (widget.cabine.status) {
@@ -89,7 +89,7 @@ class _CabineCardState extends State<CabineCard> {
     final onEditTiktokUsername = widget.onEditTiktokUsername;
     final accent = _statusColor();
     final isLive = cabine.status == 'ao_vivo';
-    final borderColor = isSelected ? AppColors.primary : AppColors.borderLight;
+    final borderColor = isSelected ? AppColors.primary : context.colors.borderSubtle;
     final hasUsername = cabine.tiktokUsername != null &&
         cabine.tiktokUsername!.isNotEmpty;
 
@@ -129,7 +129,7 @@ class _CabineCardState extends State<CabineCard> {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: context.colors.textPrimary,
                           ),
                         ),
                       ]),
@@ -148,7 +148,7 @@ class _CabineCardState extends State<CabineCard> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -160,7 +160,7 @@ class _CabineCardState extends State<CabineCard> {
                         'Contrato ${cabine.contratoId!.substring(0, 8)}',
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textSecondary,
+                          color: context.colors.textSecondary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -176,7 +176,7 @@ class _CabineCardState extends State<CabineCard> {
                             size: 12,
                             color: hasUsername
                                 ? AppColors.primary
-                                : AppColors.textMuted,
+                                : context.colors.textMuted,
                           ),
                           const SizedBox(width: 3),
                           Expanded(
@@ -220,7 +220,7 @@ class _CabineCardState extends State<CabineCard> {
                                     'TikTok não definido',
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: AppColors.textMuted,
+                                      color: context.colors.textMuted,
                                     ),
                                   ),
                           ),
@@ -233,7 +233,7 @@ class _CabineCardState extends State<CabineCard> {
                               child: Icon(
                                 Icons.edit_outlined,
                                 size: 12,
-                                color: AppColors.textSecondary,
+                                color: context.colors.textSecondary,
                               ),
                             ),
                           ),
@@ -247,7 +247,7 @@ class _CabineCardState extends State<CabineCard> {
                         cabine.apresentadorNome!,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textSecondary,
+                          color: context.colors.textSecondary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -270,7 +270,7 @@ class _CabineCardState extends State<CabineCard> {
                         '${cabine.viewerCount} espectadores',
                         style: TextStyle(
                           fontSize: 10,
-                          color: AppColors.textSecondary,
+                          color: context.colors.textSecondary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -283,21 +283,21 @@ class _CabineCardState extends State<CabineCard> {
                           const SizedBox(width: 2),
                           Text(
                             '${cabine.likesCount}',
-                            style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 10, color: context.colors.textSecondary),
                           ),
                           const SizedBox(width: 6),
                           Icon(Icons.chat_bubble_outline, size: 10, color: AppColors.info),
                           const SizedBox(width: 2),
                           Text(
                             '${cabine.commentsCount}',
-                            style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 10, color: context.colors.textSecondary),
                           ),
                           const SizedBox(width: 6),
                           Icon(Icons.share, size: 10, color: AppColors.primary),
                           const SizedBox(width: 2),
                           Text(
                             '${cabine.sharesCount}',
-                            style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 10, color: context.colors.textSecondary),
                           ),
                         ],
                       ),

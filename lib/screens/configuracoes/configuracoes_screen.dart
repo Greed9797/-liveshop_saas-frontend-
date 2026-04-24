@@ -301,7 +301,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: AppColors.bgCard,
+      backgroundColor: context.colors.bgCard,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
@@ -651,7 +651,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(AppSpacing.x3),
                                     decoration: BoxDecoration(
-                                      color: AppColors.bgMuted,
+                                      color: context.colors.bgMuted,
                                       borderRadius: BorderRadius.circular(AppRadius.md),
                                     ),
                                     child: Row(
@@ -689,7 +689,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                                   Text(
                                     'A senha nao e copiada para o clipboard por seguranca. O usuario devera altera-la no primeiro acesso.',
                                     style: AppTypography.caption.copyWith(
-                                      color: AppColors.textSecondary,
+                                      color: context.colors.textSecondary,
                                     ),
                                   ),
                                 ],
@@ -754,8 +754,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
             Container(
               width: 220,
               decoration: BoxDecoration(
-                color: AppColors.bgBase,
-                border: Border(right: BorderSide(color: AppColors.borderLight)),
+                color: context.colors.bgPage,
+                border: Border(right: BorderSide(color: context.colors.borderSubtle)),
               ),
               child: Column(
                 children: [
@@ -824,7 +824,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
             padding: const EdgeInsets.all(AppSpacing.x6),
             child: AppCard(
               radius: AppRadius.xl,
-              borderColor: AppColors.borderLight,
+              borderColor: context.colors.borderSubtle,
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.x8),
                 child: Column(
@@ -836,7 +836,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                       children: [
                         Expanded(child: Text(title, style: AppTypography.h3)),
                         if (!isEditing)
-                          IconButton(icon: Icon(Icons.edit_rounded, color: AppColors.textSecondary), onPressed: onEdit),
+                          IconButton(icon: Icon(Icons.edit_rounded, color: context.colors.textSecondary), onPressed: onEdit),
                       ],
                     ),
                     const Divider(height: 32),
@@ -905,14 +905,14 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
           const SizedBox(height: AppSpacing.x2),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4, vertical: AppSpacing.x3),
-            decoration: BoxDecoration(color: AppColors.bgBase, borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.borderLight)),
+            decoration: BoxDecoration(color: context.colors.bgPage, borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: context.colors.borderSubtle)),
             child: Row(
               children: [
                 Expanded(child: Text(id, style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary, fontFamily: 'monospace'), overflow: TextOverflow.ellipsis)),
+                    color: context.colors.textSecondary, fontFamily: 'monospace'), overflow: TextOverflow.ellipsis)),
                 IconButton(
-                  icon: const Icon(Icons.copy_rounded, size: 16), color: AppColors.textMuted,
+                  icon: const Icon(Icons.copy_rounded, size: 16), color: context.colors.textMuted,
                   tooltip: 'Copiar ID', padding: EdgeInsets.zero, constraints: const BoxConstraints(),
                   onPressed: () async {
                     final success = await ClipboardService.copy(id);
@@ -986,9 +986,9 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
               child: _uploadingLogo
                   ? Container(
                       decoration: BoxDecoration(
-                        color: AppColors.bgBase,
+                        color: context.colors.bgPage,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.borderLight, width: 2),
+                        border: Border.all(color: context.colors.borderSubtle, width: 2),
                       ),
                       child: const Center(child: CircularProgressIndicator()),
                     )
@@ -1003,11 +1003,11 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                                   : Image.network(url, fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => Container(
                                         decoration: BoxDecoration(
-                                          color: AppColors.bgBase,
+                                          color: context.colors.bgPage,
                                           borderRadius: BorderRadius.circular(16),
-                                          border: Border.all(color: AppColors.borderLight, width: 2),
+                                          border: Border.all(color: context.colors.borderSubtle, width: 2),
                                         ),
-                                        child: Center(child: Icon(Icons.broken_image_outlined, size: 32, color: AppColors.textMuted)),
+                                        child: Center(child: Icon(Icons.broken_image_outlined, size: 32, color: context.colors.textMuted)),
                                       )),
                               if (_isEditingGeral)
                                 Positioned(
@@ -1015,7 +1015,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                                   child: Container(
                                     width: 26, height: 26,
                                     decoration: BoxDecoration(
-                                      color: AppColors.textPrimary.withValues(alpha: 0.55),
+                                      color: context.colors.textPrimary.withValues(alpha: 0.55),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: const Icon(Icons.edit_rounded, size: 14, color: AppColors.textOnPrimary),
@@ -1026,10 +1026,10 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                         )
                       : Container(
                           decoration: BoxDecoration(
-                            color: AppColors.bgBase,
+                            color: context.colors.bgPage,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: _isEditingGeral ? AppColors.primary : AppColors.borderLight,
+                              color: _isEditingGeral ? AppColors.primary : context.colors.borderSubtle,
                               width: 2,
                             ),
                           ),
@@ -1037,13 +1037,13 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.add_photo_alternate_outlined, size: 32,
-                                  color: _isEditingGeral ? AppColors.primary : AppColors.textMuted),
+                                  color: _isEditingGeral ? AppColors.primary : context.colors.textMuted),
                               const SizedBox(height: AppSpacing.x1),
                               Text(
                                 _isEditingGeral ? 'Toque para adicionar' : 'Sem logo',
                                 style: AppTypography.caption.copyWith(
                                   fontSize: 11,
-                                  color: _isEditingGeral ? AppColors.primary : AppColors.textMuted,
+                                  color: _isEditingGeral ? AppColors.primary : context.colors.textMuted,
                                 ),
                               ),
                             ],
@@ -1055,7 +1055,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.x1),
               child: Text('JPEG, PNG ou WebP • máx. 5 MB',
-                  style: AppTypography.caption.copyWith(color: AppColors.textMuted, fontSize: 11)),
+                  style: AppTypography.caption.copyWith(color: context.colors.textMuted, fontSize: 11)),
             ),
         ],
       ),
@@ -1159,7 +1159,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Conta TikTok', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                    Text('Conta TikTok', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                     const SizedBox(height: AppSpacing.x2),
                     tiktokAsync.when(
                       loading: () => const SizedBox(
@@ -1180,7 +1180,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: AppSpacing.x1),
                         child: Text('ID: ${tiktok!.userId}',
-                            style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                            style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
                       ),
                   ],
                 ),
@@ -1214,7 +1214,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   side: const BorderSide(color: Color(0xFF010101)),
-                  foregroundColor: AppColors.textPrimary,
+                  foregroundColor: context.colors.textPrimary,
                 ),
               ),
             ),
@@ -1281,7 +1281,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
             padding: const EdgeInsets.all(AppSpacing.x6),
             child: AppCard(
               radius: AppRadius.xl,
-              borderColor: AppColors.borderLight,
+              borderColor: context.colors.borderSubtle,
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.x8),
                 child: Column(
@@ -1295,7 +1295,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                     ),
                     const SizedBox(height: AppSpacing.x2),
                     Text('Defina os pacotes que serão oferecidos aos clientes.',
-                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                     const Divider(height: 32),
                     pacotesAsync.when(
                       loading: () => const Center(child: CircularProgressIndicator()),
@@ -1306,10 +1306,10 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                             padding: const EdgeInsets.symmetric(vertical: AppSpacing.x6),
                             child: Column(
                               children: [
-                                Icon(Icons.inventory_2_outlined, size: 40, color: AppColors.textMuted),
+                                Icon(Icons.inventory_2_outlined, size: 40, color: context.colors.textMuted),
                                 const SizedBox(height: AppSpacing.x3),
                                 Text('Nenhum pacote cadastrado.',
-                                    style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+                                    style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
                               ],
                             ),
                           ),
@@ -1346,7 +1346,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
             padding: const EdgeInsets.all(AppSpacing.x6),
             child: AppCard(
               radius: AppRadius.xl,
-              borderColor: AppColors.borderLight,
+              borderColor: context.colors.borderSubtle,
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.x8),
                 child: Column(
@@ -1355,7 +1355,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                     Text('Minhas Cabines', style: AppTypography.h3),
                     const SizedBox(height: AppSpacing.x2),
                     Text('Configure o nome, tamanho e descrição de cada cabine da sua unidade.',
-                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                     const Divider(height: 32),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1370,7 +1370,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.x6),
                                 child: Text('Nenhuma cabine encontrada.',
-                                    style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+                                    style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
                               ),
                             );
                             return Column(
@@ -1423,10 +1423,10 @@ class _NavItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: isActive ? AppColors.primary : AppColors.textMuted),
+            Icon(icon, size: 16, color: isActive ? AppColors.primary : context.colors.textMuted),
             const SizedBox(width: AppSpacing.x3),
             Text(label, style: AppTypography.bodyMedium.copyWith(
-              color: isActive ? AppColors.primary : AppColors.textSecondary,
+              color: isActive ? AppColors.primary : context.colors.textSecondary,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             )),
           ],
@@ -1452,7 +1452,7 @@ class _PacoteItem extends StatelessWidget {
       child: AppCard(
         padding: const EdgeInsets.all(AppSpacing.x4),
         shadow: const [],
-        borderColor: AppColors.borderLight,
+        borderColor: context.colors.borderSubtle,
         child: Opacity(
           opacity: pacote.ativo ? 1.0 : 0.5,
           child: Row(
@@ -1470,13 +1470,13 @@ class _PacoteItem extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.x1),
                     Text('R\$ ${pacote.valor.toStringAsFixed(2)} / mês • ${pacote.horasIncluidas.toStringAsFixed(0)} h incluídas',
-                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
                     if (pacote.descricao != null && pacote.descricao!.isNotEmpty)
-                      Text(pacote.descricao!, style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                      Text(pacote.descricao!, style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
                   ],
                 ),
               ),
-              IconButton(icon: const Icon(Icons.edit_outlined, size: 18), color: AppColors.textSecondary, onPressed: onEdit),
+              IconButton(icon: const Icon(Icons.edit_outlined, size: 18), color: context.colors.textSecondary, onPressed: onEdit),
               if (onDesativar != null) IconButton(icon: const Icon(Icons.delete_outline, size: 18), color: AppColors.danger,
                   tooltip: 'Desativar pacote', onPressed: onDesativar),
             ],
@@ -1545,7 +1545,7 @@ class _CabineConfigItemState extends State<_CabineConfigItem> {
       child: AppCard(
         padding: const EdgeInsets.all(AppSpacing.x4),
         shadow: const [],
-        borderColor: AppColors.borderLight,
+        borderColor: context.colors.borderSubtle,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1563,7 +1563,7 @@ class _CabineConfigItemState extends State<_CabineConfigItem> {
                       style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
                 ),
                 if (!_editing) ...[
-                  IconButton(icon: const Icon(Icons.edit_outlined, size: 18), color: AppColors.textSecondary,
+                  IconButton(icon: const Icon(Icons.edit_outlined, size: 18), color: context.colors.textSecondary,
                       onPressed: () => setState(() => _editing = true)),
                   IconButton(icon: const Icon(Icons.delete_outline_rounded, size: 18), color: AppColors.danger,
                       tooltip: 'Deletar cabine', onPressed: widget.onDelete),
@@ -1602,7 +1602,7 @@ class _CabineConfigItemState extends State<_CabineConfigItem> {
               const SizedBox(height: AppSpacing.x1),
               Text([if (widget.cabine.tamanho != null) 'Tamanho: ${widget.cabine.tamanho}',
                   if (widget.cabine.descricao != null) widget.cabine.descricao!].join(' • '),
-                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
             ],
           ],
         ),

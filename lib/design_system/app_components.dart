@@ -1013,7 +1013,7 @@ class ScoreRing extends StatelessWidget {
       width: size,
       height: size,
       child: CustomPaint(
-        painter: _ScoreRingSvgPainter(score: score, color: color),
+        painter: _ScoreRingSvgPainter(score: score, color: color, bgMuted: context.colors.bgMuted),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1035,7 +1035,8 @@ class ScoreRing extends StatelessWidget {
 class _ScoreRingSvgPainter extends CustomPainter {
   final int score;
   final Color color;
-  _ScoreRingSvgPainter({required this.score, required this.color});
+  final Color bgMuted;
+  _ScoreRingSvgPainter({required this.score, required this.color, required this.bgMuted});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1045,7 +1046,7 @@ class _ScoreRingSvgPainter extends CustomPainter {
     const startAngle = -math.pi / 2;
 
     final bg = Paint()
-      ..color = AppColors.bgMuted // TODO: theme
+      ..color = bgMuted
       ..style = PaintingStyle.stroke
       ..strokeWidth = sw
       ..strokeCap = StrokeCap.round;
@@ -1071,7 +1072,7 @@ class _ScoreRingSvgPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ScoreRingSvgPainter old) =>
-      old.score != score || old.color != color;
+      old.score != score || old.color != color || old.bgMuted != bgMuted;
 }
 
 // ═══════════════════════════════════════════════════════════

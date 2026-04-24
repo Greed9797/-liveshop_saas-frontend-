@@ -97,7 +97,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         'Gestão de Franquias',
                         textAlign: TextAlign.center,
                         style: AppTypography.bodyLarge.copyWith(
-                          color: AppColors.textSecondary,
+                          color: context.colors.textSecondary,
                           fontWeight: FontWeight.w400,
                         ),
                       ),
@@ -119,7 +119,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             _obscure
                                 ? PhosphorIcons.eyeSlash()
                                 : PhosphorIcons.eye(),
-                            color: AppColors.textMuted,
+                            color: context.colors.textMuted,
                           ),
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),

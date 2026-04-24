@@ -27,7 +27,7 @@ class _ClientPinState extends State<ClientPin>
         'negociacao' => AppColors.warning,
         'inadimplente' => AppColors.danger,
         'recomendacao' => AppColors.primary,
-        _ => AppColors.textMuted,
+        _ => context.colors.textMuted,
       };
 
   @override
@@ -60,11 +60,11 @@ class _ClientPinState extends State<ClientPin>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.bgCard,
+              color: context.colors.bgCard,
               borderRadius: BorderRadius.circular(6),
               boxShadow: [
                 BoxShadow(
-                    color: AppColors.textPrimary.withValues(alpha: 0.16),
+                    color: context.colors.textPrimary.withValues(alpha: 0.16),
                     blurRadius: 6,
                     offset: const Offset(0, 2))
               ],
@@ -74,7 +74,7 @@ class _ClientPinState extends State<ClientPin>
               style: AppTypography.caption.copyWith(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary),
+                  color: context.colors.textPrimary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

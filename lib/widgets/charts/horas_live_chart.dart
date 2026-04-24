@@ -22,9 +22,9 @@ class HorasLiveChart extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Horas de Live por Dia', style: AppTypography.h3.copyWith(fontSize: 15, color: AppColors.textPrimary)),
+                Text('Horas de Live por Dia', style: AppTypography.h3.copyWith(fontSize: 15, color: context.colors.textPrimary)),
                 const SizedBox(height: 2),
-                Text('Últimos 30 dias do período', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                Text('Últimos 30 dias do período', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
               ],
             ),
           ),
@@ -80,7 +80,7 @@ class HorasLiveChart extends StatelessWidget {
               radius: 3,
               color: AppColors.primary,
               strokeWidth: 1.5,
-              strokeColor: AppColors.bgCard,
+              strokeColor: context.colors.bgCard,
             ),
           ),
           belowBarData: BarAreaData(
@@ -102,8 +102,8 @@ class HorasLiveChart extends StatelessWidget {
         show: true,
         drawVerticalLine: false,
         horizontalInterval: maxY / 4 > 0 ? maxY / 4 : 1,
-        getDrawingHorizontalLine: (_) => const FlLine(
-          color: AppColors.borderLight,
+        getDrawingHorizontalLine: (_) => FlLine(
+          color: context.colors.borderSubtle,
           strokeWidth: 1,
           dashArray: [4, 4],
         ),
@@ -149,7 +149,7 @@ class HorasLiveChart extends StatelessWidget {
               padding: const EdgeInsets.only(top: 6),
               child: Text(
                 dayNum,
-                style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                style: AppTypography.caption.copyWith(color: context.colors.textSecondary, fontSize: 10),
               ),
             );
           },
@@ -166,7 +166,7 @@ class HorasLiveChart extends StatelessWidget {
               child: Text(
                 '${value.toStringAsFixed(1)}h',
                 style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary.withValues(alpha: 0.6),
+                  color: context.colors.textSecondary.withValues(alpha: 0.6),
                   fontSize: 10,
                 ),
                 textAlign: TextAlign.right,
@@ -186,9 +186,9 @@ class HorasLiveChart extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.show_chart_rounded, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.3)),
+          Icon(Icons.show_chart_rounded, size: 48, color: context.colors.textSecondary.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
-          Text('Sem dados de horas de live', style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+          Text('Sem dados de horas de live', style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
         ],
       ),
     );

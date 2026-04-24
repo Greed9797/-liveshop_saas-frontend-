@@ -300,7 +300,7 @@ class _ActiveLiveCard extends StatelessWidget {
               Text(
                 '${live.duracaoMin} min',
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.colors.textSecondary,
                 ),
               ),
             ],
@@ -376,7 +376,7 @@ class _LivePulseMetric extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.colors.textSecondary,
                   ),
                 ),
               ),
@@ -597,7 +597,7 @@ class _MonthlySeriesRow extends StatelessWidget {
         Text(
           '${item.totalLives} lives • ${item.horasLive.toStringAsFixed(1)}h • ROAS ${item.roas.toStringAsFixed(2)}',
           style: AppTypography.caption.copyWith(
-            color: AppColors.textSecondary,
+            color: context.colors.textSecondary,
           ),
         ),
       ],
@@ -702,7 +702,7 @@ class _InsightCard extends StatelessWidget {
             Text(
               description,
               style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+                color: context.colors.textSecondary,
               ),
             ),
           ],
@@ -850,7 +850,7 @@ class _LiveDetailCard extends StatelessWidget {
           Text(
             startedAt,
             style: AppTypography.caption.copyWith(
-              color: AppColors.textSecondary,
+              color: context.colors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSpacing.x4),
@@ -894,7 +894,7 @@ class _LiveDetailCard extends StatelessWidget {
                   child: Text(
                     'Top produto: ${live.topProduto}',
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.colors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -921,7 +921,7 @@ class _LiveMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = highlight ? AppColors.primary : AppColors.textPrimary;
+    final color = highlight ? AppColors.primary : context.colors.textPrimary;
 
     return SizedBox(
       width: 118,
@@ -931,7 +931,7 @@ class _LiveMetric extends StatelessWidget {
           Text(
             label,
             style: AppTypography.caption.copyWith(
-              color: AppColors.textSecondary,
+              color: context.colors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSpacing.x1),
@@ -966,8 +966,8 @@ class _SectionTitle extends StatelessWidget {
         Container(
           width: 36,
           height: 36,
-          decoration: const BoxDecoration(
-            color: AppColors.bgMuted,
+          decoration: BoxDecoration(
+            color: context.colors.bgMuted,
             shape: BoxShape.circle,
           ),
           child: Icon(icon, size: 18, color: AppColors.primary),
@@ -987,7 +987,7 @@ class _SectionTitle extends StatelessWidget {
                 Text(
                   subtitle!,
                   style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.colors.textSecondary,
                   ),
                 ),
             ],
@@ -1010,7 +1010,7 @@ class _EmptyHint extends StatelessWidget {
       child: Text(
         message,
         style: AppTypography.bodySmall.copyWith(
-          color: AppColors.textSecondary,
+          color: context.colors.textSecondary,
         ),
       ),
     );
@@ -1069,7 +1069,7 @@ class _SectionError extends StatelessWidget {
           Text(
             message,
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondary,
+              color: context.colors.textSecondary,
             ),
           ),
         ],
@@ -1099,7 +1099,7 @@ class _DashboardErrorState extends ConsumerWidget {
             Text(
               '$error',
               style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+                color: context.colors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),

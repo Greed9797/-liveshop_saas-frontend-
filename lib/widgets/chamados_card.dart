@@ -23,13 +23,13 @@ class ChamadosCard extends StatelessWidget {
                   children: [
                     Text('CHAMADOS',
                         style: AppTypography.caption.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.colors.textSecondary,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1.2)),
                     Stack(
                       children: [
                         Icon(Icons.person_outline,
-                            size: 24, color: AppColors.textMuted),
+                            size: 24, color: context.colors.textMuted),
                         if (count > 0)
                           Positioned(
                             right: 0,
@@ -56,7 +56,7 @@ class ChamadosCard extends StatelessWidget {
                       ? '$count chamados não visualizados'
                       : 'Nenhum chamado pendente',
                   style:
-                      AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                      AppTypography.caption.copyWith(color: context.colors.textSecondary),
                 ),
               ],
             ),
@@ -66,7 +66,7 @@ class ChamadosCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: count > 0
                   ? AppColors.danger
-                  : AppColors.bgMuted,
+                  : context.colors.bgMuted,
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(AppRadius.xl),
                 bottomRight: Radius.circular(AppRadius.xl),
@@ -77,7 +77,7 @@ class ChamadosCard extends StatelessWidget {
               children: [
                 Icon(
                     count > 0 ? Icons.money_off : Icons.check_circle_outline,
-                    color: count > 0 ? Colors.white : AppColors.textSecondary,
+                    color: count > 0 ? Colors.white : context.colors.textSecondary,
                     size: 14),
                 const SizedBox(width: 6),
                 Flexible(
@@ -88,7 +88,7 @@ class ChamadosCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        color: count > 0 ? Colors.white : AppColors.textSecondary,
+                        color: count > 0 ? Colors.white : context.colors.textSecondary,
                         fontWeight: FontWeight.w700,
                         fontSize: 11),
                   ),

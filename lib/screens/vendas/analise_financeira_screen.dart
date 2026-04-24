@@ -231,7 +231,7 @@ class _AnalisandoView extends StatelessWidget {
               style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w500)),
           const SizedBox(height: AppSpacing.x2),
           Text('Consultando score de crédito',
-              style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+              style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
         ],
       );
 }
@@ -256,7 +256,7 @@ class _AprovadoView extends StatelessWidget {
           if (score != null) ...[
             const SizedBox(height: AppSpacing.x2),
             Text('Score: $score/100',
-                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+                style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
           ],
           const SizedBox(height: AppSpacing.x2),
           const Text('Cliente aprovado para contrato ativo!'),
@@ -289,7 +289,7 @@ class _RecusadoView extends StatelessWidget {
           if (score != null) ...[
             const SizedBox(height: AppSpacing.x2),
             Text('Score: $score/100',
-                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+                style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
           ],
           const SizedBox(height: AppSpacing.x3),
           Container(

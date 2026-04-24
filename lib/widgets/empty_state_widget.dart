@@ -12,7 +12,7 @@ class EmptyStateWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.inbox_outlined,
-              size: 64, color: AppColors.textMuted),
+              size: 64, color: context.colors.textMuted),
           const SizedBox(height: 16),
           Text(message, style: AppTypography.bodySmall),
         ],

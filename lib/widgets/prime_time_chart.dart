@@ -42,7 +42,7 @@ class PrimeTimeChart extends StatelessWidget {
                                     end: Alignment.topCenter,
                                   )
                                 : null,
-                            color: isActive ? null : AppColors.bgMuted,
+                            color: isActive ? null : context.colors.bgMuted,
                             boxShadow: isActive
                                 ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 4, offset: const Offset(0, -2))]
                                 : null,
@@ -52,7 +52,7 @@ class PrimeTimeChart extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(bar.label, style: AppTypography.caption.copyWith(fontSize: 9, color: AppColors.textMuted)),
+                  Text(bar.label, style: AppTypography.caption.copyWith(fontSize: 9, color: context.colors.textMuted)),
                 ],
               ),
             ),

@@ -67,17 +67,17 @@ class SolicitacaoCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.x3),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.textMuted),
+              Icon(Icons.calendar_today_outlined, size: 14, color: context.colors.textMuted),
               const SizedBox(width: 4),
-              Text('$data às $hora', style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+              Text('$data às $hora', style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
               const SizedBox(width: AppSpacing.x3),
-              const Icon(Icons.timer_outlined, size: 14, color: AppColors.textMuted),
+              Icon(Icons.timer_outlined, size: 14, color: context.colors.textMuted),
               const SizedBox(width: 4),
-              Text(duracao, style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+              Text(duracao, style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
               const SizedBox(width: AppSpacing.x3),
-              const Icon(Icons.person_outline, size: 14, color: AppColors.textMuted),
+              Icon(Icons.person_outline, size: 14, color: context.colors.textMuted),
               const SizedBox(width: 4),
-              Text(solicitadoPor, style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+              Text(solicitadoPor, style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
             ],
           ),
           if (isPendente) ...[

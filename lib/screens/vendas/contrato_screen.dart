@@ -187,13 +187,13 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                       const SizedBox(height: AppSpacing.x10),
                       Text('Assinatura do Contratante:',
                           style: AppTypography.caption
-                              .copyWith(color: AppColors.textSecondary)),
+                              .copyWith(color: context.colors.textSecondary)),
                       const SizedBox(height: AppSpacing.x2),
                       Container(
                         width: 240,
                         height: 64,
                         decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.textMuted),
+                          border: Border.all(color: context.colors.textMuted),
                           borderRadius:
                               BorderRadius.circular(AppRadius.sm),
                         ),
@@ -201,7 +201,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                           child: Text(
                               '(clique em "Assinar Agora" →)',
                               style: AppTypography.caption
-                                  .copyWith(color: AppColors.textSecondary)),
+                                  .copyWith(color: context.colors.textSecondary)),
                         ),
                       ),
                     ],
@@ -212,7 +212,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
           ),
           Container(
             width: 240,
-            color: AppColors.bgCard,
+            color: context.colors.bgCard,
             padding: const EdgeInsets.all(AppSpacing.x5),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -224,7 +224,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                 if (pacotes.isEmpty)
                   Text('Nenhum pacote cadastrado.\nConfigure em Configurações → Pacotes.',
                       style: AppTypography.caption
-                          .copyWith(color: AppColors.textSecondary))
+                          .copyWith(color: context.colors.textSecondary))
                 else
                   AppDropdown<String>(
                     value: _selectedPacote?.id,
@@ -382,18 +382,18 @@ class _SignatureDialogState extends State<_SignatureDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Desenhe sua assinatura abaixo:', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
+            Text('Desenhe sua assinatura abaixo:', style: AppTypography.label.copyWith(color: context.colors.textSecondary)),
             const SizedBox(height: AppSpacing.x2),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.textMuted),
+                border: Border.all(color: context.colors.textMuted),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                color: AppColors.bgBase,
+                color: context.colors.bgPage,
               ),
               child: Signature(
                 controller: _ctrl,
                 height: 180,
-                backgroundColor: AppColors.bgBase,
+                backgroundColor: context.colors.bgPage,
               ),
             ),
             Align(

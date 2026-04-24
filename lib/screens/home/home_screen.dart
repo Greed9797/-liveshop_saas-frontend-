@@ -296,13 +296,13 @@ class _CabinesEmptyCard extends StatelessWidget {
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: AppColors.bgBase,
+        color: context.colors.bgPage,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: context.colors.borderSubtle),
       ),
       child: Center(
         child: Text('Nenhuma cabine configurada',
-            style: AppTypography.label.copyWith(color: AppColors.textMuted)),
+            style: AppTypography.label.copyWith(color: context.colors.textMuted)),
       ),
     );
   }
@@ -325,12 +325,12 @@ class _CabinesMiniGrid extends StatelessWidget {
           Row(
             children: [
               Icon(PhosphorIcons.videoCamera(),
-                  size: 18, color: AppColors.textSecondary),
+                  size: 18, color: context.colors.textSecondary),
               const SizedBox(width: AppSpacing.x2),
               Text(
                 'Cabines',
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.colors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -362,7 +362,7 @@ class _CabinesMiniGrid extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
               decoration: BoxDecoration(
-                color: AppColors.bgMuted,
+                color: context.colors.bgMuted,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Row(
@@ -371,12 +371,12 @@ class _CabinesMiniGrid extends StatelessWidget {
                   Text(
                     'Ver tudo',
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textMuted,
+                      color: context.colors.textMuted,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.x2),
                   Icon(PhosphorIcons.arrowRight(),
-                      size: 16, color: AppColors.textMuted),
+                      size: 16, color: context.colors.textMuted),
                 ],
               ),
             ),
@@ -445,7 +445,7 @@ class _CabineMiniTile extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => Padding(
+      builder: (sheetCtx) => Padding(
         padding: const EdgeInsets.all(AppSpacing.x4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -456,7 +456,7 @@ class _CabineMiniTile extends StatelessWidget {
                 Text(
                   'Cabine ${cabine.numero}',
                   style:
-                      AppTypography.h3.copyWith(color: AppColors.textPrimary),
+                      AppTypography.h3.copyWith(color: sheetCtx.colors.textPrimary),
                 ),
                 const SizedBox(width: AppSpacing.x2),
                 Container(
@@ -465,7 +465,7 @@ class _CabineMiniTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: cabine.status == 'ao_vivo'
                         ? AppColors.success.withValues(alpha: 0.15)
-                        : AppColors.borderLight,
+                        : sheetCtx.colors.borderSubtle,
                     borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
                   child: Text(
@@ -474,7 +474,7 @@ class _CabineMiniTile extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: cabine.status == 'ao_vivo'
                           ? AppColors.success
-                          : AppColors.textSecondary,
+                          : sheetCtx.colors.textSecondary,
                     ),
                   ),
                 ),
@@ -522,11 +522,11 @@ class _CabineMiniTile extends StatelessWidget {
 
     final (Color bgColor, Color textColor) = switch (cabine.status) {
       'ao_vivo' => (AppColors.primary, Colors.white),
-      'reservada' => (AppColors.bgMuted, AppColors.textMuted),
-      'ativa' => (AppColors.bgGradientStart, AppColors.primaryHover),
-      'disponivel' => (AppColors.bgMuted, AppColors.textMuted),
-      'manutencao' => (AppColors.borderLight, AppColors.textSecondary),
-      _ => (AppColors.bgMuted, AppColors.textMuted),
+      'reservada' => (context.colors.bgMuted, context.colors.textMuted),
+      'ativa' => (context.colors.bgMuted, AppColors.primaryHover),
+      'disponivel' => (context.colors.bgMuted, context.colors.textMuted),
+      'manutencao' => (context.colors.borderSubtle, context.colors.textSecondary),
+      _ => (context.colors.bgMuted, context.colors.textMuted),
     };
 
     final showName = cabine.clienteNome != null &&
@@ -591,16 +591,16 @@ class _DetailRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: AppColors.textMuted),
+          Icon(icon, size: 16, color: context.colors.textMuted),
           const SizedBox(width: AppSpacing.x2),
           Text('$label: ',
               style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                  color: context.colors.textSecondary, fontWeight: FontWeight.w600)),
           Expanded(
             child: Text(value,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.caption
-                    .copyWith(color: AppColors.textPrimary)),
+                    .copyWith(color: context.colors.textPrimary)),
           ),
         ],
       ),
@@ -626,8 +626,8 @@ class _HomeShimmerLoader extends StatelessWidget {
         return Padding(
           padding: EdgeInsets.all(responsivePadding),
           child: Shimmer.fromColors(
-            baseColor: AppColors.borderLight,
-            highlightColor: AppColors.bgBase,
+            baseColor: context.colors.borderSubtle,
+            highlightColor: context.colors.bgPage,
             child: Row(
               children: [
                 Expanded(
@@ -635,7 +635,7 @@ class _HomeShimmerLoader extends StatelessWidget {
                   child: Container(
                     height: 400,
                     decoration: BoxDecoration(
-                        color: AppColors.bgCard,
+                        color: context.colors.bgCard,
                         borderRadius: BorderRadius.circular(AppRadius.lg)),
                   ),
                 ),
@@ -645,7 +645,7 @@ class _HomeShimmerLoader extends StatelessWidget {
                   child: Container(
                     height: 400,
                     decoration: BoxDecoration(
-                        color: AppColors.bgCard,
+                        color: context.colors.bgCard,
                         borderRadius: BorderRadius.circular(AppRadius.lg)),
                   ),
                 ),

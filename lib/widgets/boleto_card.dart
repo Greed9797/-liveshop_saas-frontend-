@@ -49,7 +49,7 @@ class BoletoCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgCard,
+        color: context.colors.bgCard,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: isVencido ? Border.all(color: AppColors.danger.withValues(alpha: 0.3), width: 1) : null,
         boxShadow: AppShadows.md,
@@ -73,7 +73,7 @@ class BoletoCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(categoria, style: AppTypography.caption.copyWith(color: AppColors.textMuted, letterSpacing: 0.5)),
+                          Text(categoria, style: AppTypography.caption.copyWith(color: context.colors.textMuted, letterSpacing: 0.5)),
                           Text(descricao, style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
                         ],
                       ),
@@ -88,7 +88,7 @@ class BoletoCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Valor', style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                          Text('Valor', style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
                           Text(valor, style: AppTypography.h2.copyWith(fontWeight: FontWeight.w700)),
                         ],
                       ),
@@ -97,7 +97,7 @@ class BoletoCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Vencimento', style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                          Text('Vencimento', style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
                           Text(vencimento, style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w500)),
                         ],
                       ),

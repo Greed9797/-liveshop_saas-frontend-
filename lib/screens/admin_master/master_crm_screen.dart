@@ -50,7 +50,7 @@ class MasterCrmScreen extends ConsumerWidget {
                           Text(
                             'Placeholder pronto para a expansão comercial da franqueadora.',
                             style: AppTypography.bodyLarge.copyWith(
-                              color: AppColors.textSecondary,
+                              color: context.colors.textSecondary,
                             ),
                           ),
                         ],
@@ -79,7 +79,7 @@ class MasterCrmScreen extends ConsumerWidget {
                         child: Text(
                           crm.message,
                           style: AppTypography.bodyLarge.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.colors.textPrimary,
                             height: 1.45,
                           ),
                         ),
@@ -233,7 +233,7 @@ class _PipelinePlaceholderCard extends StatelessWidget {
                 vertical: AppSpacing.x3,
               ),
               decoration: BoxDecoration(
-                color: AppColors.bgBase,
+                color: context.colors.bgPage,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.borderLight),
               ),
@@ -254,7 +254,7 @@ class _PipelinePlaceholderCard extends StatelessWidget {
                     child: Text(
                       '${stage.count}',
                       style: AppTypography.caption.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                     ),
                   ),
@@ -301,7 +301,7 @@ class _RecommendedFieldsCard extends StatelessWidget {
                     child: Text(
                       field,
                       style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                     ),
                   ),
@@ -332,7 +332,7 @@ class _SummaryLine extends StatelessWidget {
           const SizedBox(height: AppSpacing.x1),
           Text(
             value,
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
+            style: AppTypography.bodyMedium.copyWith(color: context.colors.textPrimary),
           ),
         ],
       ),

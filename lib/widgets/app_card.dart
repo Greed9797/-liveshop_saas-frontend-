@@ -28,10 +28,10 @@ class AppCard extends StatelessWidget {
 
     final container = Container(
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.bgCard,
+        color: backgroundColor ?? context.colors.bgCard,
         borderRadius: resolvedBorderRadius,
         border: Border.all(
-          color: borderColor ?? AppColors.borderLight,
+          color: borderColor ?? context.colors.borderSubtle,
           width: 1,
         ),
         boxShadow: boxShadow ?? AppShadows.md,

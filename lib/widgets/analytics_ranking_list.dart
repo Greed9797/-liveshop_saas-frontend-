@@ -21,11 +21,11 @@ class AnalyticsRankingList extends StatelessWidget {
             children: [
               const Icon(Icons.emoji_events_rounded, color: AppColors.medalGold, size: 20),
               const SizedBox(width: 8),
-              Text('Top Apresentadores', style: AppTypography.h3.copyWith(fontSize: 15, color: AppColors.textPrimary)),
+              Text('Top Apresentadores', style: AppTypography.h3.copyWith(fontSize: 15, color: context.colors.textPrimary)),
             ],
           ),
           const SizedBox(height: 4),
-          Text('Ranking por GMV no período', style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+          Text('Ranking por GMV no período', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
           const SizedBox(height: 16),
           if (items.isEmpty)
             _buildEmptyState(context)
@@ -44,7 +44,7 @@ class AnalyticsRankingList extends StatelessWidget {
       1 => AppColors.medalGold,
       2 => AppColors.medalSilver,
       3 => AppColors.medalBronze,
-      _ => AppColors.textMuted,
+      _ => context.colors.textMuted,
     };
 
     return Container(
@@ -56,7 +56,7 @@ class AnalyticsRankingList extends StatelessWidget {
       decoration: BoxDecoration(
         color: isTopThree
             ? medalColor.withValues(alpha: 0.07)
-            : AppColors.bgBase,
+            : context.colors.bgPage,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: isTopThree
             ? Border.all(color: medalColor.withValues(alpha: 0.3))
@@ -118,14 +118,14 @@ class AnalyticsRankingList extends StatelessWidget {
                   item.apresentadorNome,
                   style: AppTypography.bodySmall.copyWith(
                     fontWeight: isTopThree ? FontWeight.w700 : FontWeight.w500,
-                    color: AppColors.textPrimary,
+                    color: context.colors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   '${item.totalLives} live${item.totalLives != 1 ? 's' : ''}',
-                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
                 ),
               ],
             ),
@@ -136,7 +136,7 @@ class AnalyticsRankingList extends StatelessWidget {
             _currency.format(item.gmvTotal),
             style: AppTypography.bodySmall.copyWith(
               fontWeight: FontWeight.w700,
-              color: isTopThree ? medalColor : AppColors.textSecondary,
+              color: isTopThree ? medalColor : context.colors.textSecondary,
             ),
           ),
         ],
@@ -150,10 +150,10 @@ class AnalyticsRankingList extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.people_outline_rounded, size: 40, color: AppColors.textMuted),
+            Icon(Icons.people_outline_rounded, size: 40, color: context.colors.textMuted),
             const SizedBox(height: 8),
             Text('Nenhum apresentador no período',
-                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+                style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
           ],
         ),
       ),

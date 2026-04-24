@@ -13,8 +13,8 @@ class AuditoriaStatusBadge extends StatelessWidget {
       'pendencia_comercial' => ('Pendência', AppColors.warning),
       'reprovado' => ('Restrição', AppColors.danger),
       'ativo' || 'aprovado' => ('Aprovado', AppColors.success),
-      'arquivado' => ('Arquivado', AppColors.textSecondary),
-      _ => (status, AppColors.textSecondary),
+      'arquivado' => ('Arquivado', context.colors.textSecondary),
+      _ => (status, context.colors.textSecondary),
     };
 
     return Container(

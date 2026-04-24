@@ -52,7 +52,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
           Text(
             error,
             style: AppTypography.bodySmall
-                .copyWith(color: AppColors.textSecondary),
+                .copyWith(color: context.colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -83,7 +83,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
                     Text(
                       'Visão estratégica e heatmap de conversão operacional.',
                       style: AppTypography.bodySmall
-                          .copyWith(color: AppColors.textSecondary),
+                          .copyWith(color: context.colors.textSecondary),
                     ),
                   ],
                 ),
@@ -92,7 +92,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
                   children: [
                     Text('Exibir Meta',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.textSecondary)),
+                            .copyWith(color: context.colors.textSecondary)),
                     Switch(
                       value: _mostrarMeta,
                       activeThumbColor: AppColors.primary,
@@ -105,7 +105,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
                     const SizedBox(width: 8),
                     IconButton(
                       icon: Icon(Icons.refresh_rounded,
-                          color: AppColors.textSecondary),
+                          color: context.colors.textSecondary),
                       tooltip: 'Atualizar',
                       onPressed: () =>
                           ref.invalidate(franqueadoAnalyticsResumoProvider),
@@ -124,7 +124,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
               return Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.bgCard,
+                  color: context.colors.bgCard,
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                   boxShadow: AppShadows.md,
                 ),
@@ -144,7 +144,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
               child: Text(
                 'Mais relatórios de Inteligência de Negócio em breve...',
                 style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.colors.textSecondary,
                     fontStyle: FontStyle.italic),
                 textAlign: TextAlign.center,
               ),

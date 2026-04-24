@@ -142,7 +142,7 @@ class _MasterUnitsScreenState extends ConsumerState<MasterUnitsScreen> {
                             label: 'RECEITA FRANQUEADORA',
                             value: _money(data.summary.franchisorRevenue),
                             icon: Icons.account_balance_rounded,
-                            iconColor: AppColors.textPrimary,
+                            iconColor: context.colors.textPrimary,
                           ),
                         ),
                       ],
@@ -213,7 +213,7 @@ class _UnitsHeader extends StatelessWidget {
               Text(
                 'Cada unidade como uma mini-DRE operacional da rede, com drill-down por cliente final.',
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.textSecondary,
+                  color: context.colors.textSecondary,
                 ),
               ),
             ],
@@ -366,7 +366,7 @@ class _UnitExpansionCard extends StatelessWidget {
             Text(
               'Clientes finais da unidade',
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimary,
+                color: context.colors.textPrimary,
               ),
             ),
             const SizedBox(height: AppSpacing.x3),
@@ -393,13 +393,13 @@ class _SummaryChip extends StatelessWidget {
         vertical: AppSpacing.x2,
       ),
       decoration: BoxDecoration(
-        color: (color ?? AppColors.textPrimary).withValues(alpha: 0.08),
+        color: (color ?? context.colors.textPrimary).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         '$label · $value',
         style: AppTypography.caption.copyWith(
-          color: color ?? AppColors.textPrimary,
+          color: color ?? context.colors.textPrimary,
         ),
       ),
     );
@@ -423,7 +423,7 @@ class _DetailMetric extends StatelessWidget {
           const SizedBox(height: AppSpacing.x1),
           Text(
             value,
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
+            style: AppTypography.bodyMedium.copyWith(color: context.colors.textPrimary),
           ),
         ],
       ),
@@ -443,7 +443,7 @@ class _UnitHistoryRow extends StatelessWidget {
       children: [
         Text(
           'Histórico mensal',
-          style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
+          style: AppTypography.bodyMedium.copyWith(color: context.colors.textPrimary),
         ),
         const SizedBox(height: AppSpacing.x3),
         SingleChildScrollView(
@@ -456,7 +456,7 @@ class _UnitHistoryRow extends StatelessWidget {
                     margin: const EdgeInsets.only(right: AppSpacing.x3),
                     padding: const EdgeInsets.all(AppSpacing.x3),
                     decoration: BoxDecoration(
-                      color: AppColors.bgBase,
+                      color: context.colors.bgPage,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: AppColors.borderLight),
                     ),
@@ -468,7 +468,7 @@ class _UnitHistoryRow extends StatelessWidget {
                         Text(
                           _money(point.grossRevenue),
                           style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.colors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.x1),
@@ -497,7 +497,7 @@ class _ClientsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (clients.isEmpty) {
       return AppCard(
-        color: AppColors.bgBase,
+        color: context.colors.bgPage,
         child: Text(
           'Nenhum cliente final consolidado para esta unidade no período.',
           style: AppTypography.bodySmall,
@@ -548,7 +548,7 @@ class _ClientsSection extends StatelessWidget {
                 (client) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.x3),
                   child: AppCard(
-                    color: AppColors.bgBase,
+                    color: context.colors.bgPage,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -558,7 +558,7 @@ class _ClientsSection extends StatelessWidget {
                               child: Text(
                                 client.name,
                                 style: AppTypography.bodyMedium.copyWith(
-                                  color: AppColors.textPrimary,
+                                  color: context.colors.textPrimary,
                                 ),
                               ),
                             ),
@@ -623,7 +623,7 @@ class _MiniLine extends StatelessWidget {
           const SizedBox(height: AppSpacing.x1),
           Text(
             value,
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
+            style: AppTypography.bodyMedium.copyWith(color: context.colors.textPrimary),
           ),
         ],
       ),

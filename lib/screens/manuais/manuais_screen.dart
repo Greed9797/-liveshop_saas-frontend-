@@ -59,7 +59,7 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
       actions: [
         IconButton(
           icon: const Icon(Icons.refresh),
-          color: AppColors.textSecondary,
+          color: context.colors.textSecondary,
           onPressed: () => ref.read(manuaisProvider.notifier).refresh(),
         ),
       ],
@@ -180,7 +180,7 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
             Text(
               ApiService.extractErrorMessage(e),
               style: AppTypography.caption
-                  .copyWith(color: AppColors.textSecondary),
+                  .copyWith(color: context.colors.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.x3),
@@ -199,7 +199,7 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
             child: Text(
               'Nenhum documento corresponde aos filtros atuais.',
               style: AppTypography.bodySmall
-                  .copyWith(color: AppColors.textSecondary),
+                  .copyWith(color: context.colors.textSecondary),
             ),
           ),
         ),
@@ -250,18 +250,18 @@ class _SearchFieldState extends State<_SearchField> {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          borderSide: const BorderSide(color: AppColors.borderLight),
+          borderSide: BorderSide(color: context.colors.borderSubtle),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          borderSide: const BorderSide(color: AppColors.borderLight),
+          borderSide: BorderSide(color: context.colors.borderSubtle),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
           borderSide: const BorderSide(color: AppColors.primary),
         ),
         filled: true,
-        fillColor: AppColors.bgCard,
+        fillColor: context.colors.bgCard,
       ),
     );
   }
@@ -293,8 +293,8 @@ class _FeaturedManualCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primarySofter, AppColors.bgCard],
+        gradient: LinearGradient(
+          colors: [AppColors.primarySofter, context.colors.bgCard],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -333,11 +333,11 @@ class _FeaturedManualCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.x1),
           Text(
             '$pagesText · $cat',
-            style: AppTypography.caption.copyWith(color: AppColors.textMuted),
+            style: AppTypography.caption.copyWith(color: context.colors.textMuted),
           ),
           Text(
             _formatUpdated(manual.atualizadoEm),
-            style: AppTypography.caption.copyWith(color: AppColors.textMuted),
+            style: AppTypography.caption.copyWith(color: context.colors.textMuted),
           ),
           const SizedBox(height: AppSpacing.x4),
           Row(
@@ -427,7 +427,7 @@ class _ManualListCard extends StatelessWidget {
                   Text(
                     meta,
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.textMuted),
+                        .copyWith(color: context.colors.textMuted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -443,7 +443,7 @@ class _ManualListCard extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.download, size: 18),
-            color: AppColors.textSecondary,
+            color: context.colors.textSecondary,
             onPressed: onDownload,
             tooltip: 'Baixar PDF',
           ),

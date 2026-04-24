@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../design_system/app_colors.dart' as ds_colors;
+import '../../design_system/app_colors_theme.dart';
 import '../../design_system/app_screen_scaffold.dart';
 import '../../design_system/app_tokens.dart' as ds_tokens;
 import '../../design_system/app_typography.dart' as ds_typography;
@@ -14,13 +15,7 @@ import '../../widgets/metric_card.dart';
 class AppColors {
   static const primary = ds_colors.AppColors.primary;
   static const primaryOrange = ds_colors.AppColors.primary;
-  static const white = ds_colors.AppColors.bgCard;
-  static const textSecondary = ds_colors.AppColors.textSecondary;
-  static const gray100 = ds_colors.AppColors.bgMuted;
   static const gray200 = ds_colors.AppColors.borderLight;
-  static const gray400 = ds_colors.AppColors.textMuted;
-  static const gray500 = ds_colors.AppColors.textMuted;
-  static const gray700 = ds_colors.AppColors.textPrimary;
   static const infoBlue = ds_colors.AppColors.info;
   static const lilac = ds_colors.AppColors.lilac;
   static const orange600 = ds_colors.AppColors.primaryLight;
@@ -315,7 +310,7 @@ class _PerformanceSection extends StatelessWidget {
           style: AppTypography.labelSmall.copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: 1,
-            color: AppColors.gray700,
+            color: context.colors.textPrimary,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -390,9 +385,9 @@ class _HorariosCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           if (horarios.isEmpty)
-            const Text(
+            Text(
               'Sem vendas suficientes no período.',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colors.textSecondary),
             )
           else
             ...horarios.map(
@@ -465,7 +460,7 @@ class _InsightCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             description,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: context.colors.textSecondary),
           ),
         ],
       ),
@@ -514,16 +509,16 @@ class _BenchmarkSection extends StatelessWidget {
           style: AppTypography.labelSmall.copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: 1,
-            color: AppColors.gray700,
+            color: context.colors.textPrimary,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
         if (nicho == null && geral == null)
-          const AppCard(
-            boxShadow: [],
+          AppCard(
+            boxShadow: const [],
             child: Text(
               'Os dados comparativos ainda estão em processamento.',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colors.textSecondary),
             ),
           )
         else
@@ -636,7 +631,7 @@ class _MiniMetric extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.caption.copyWith(color: AppColors.gray500),
+          style: AppTypography.caption.copyWith(color: context.colors.textMuted),
         ),
         const SizedBox(height: 3),
         Text(
@@ -679,15 +674,15 @@ class _LivePanel extends StatelessWidget {
                 child: Text(
                   'AO VIVO AGORA',
                   style: AppTypography.caption.copyWith(
-                    color: AppColors.white,
+                    color: context.colors.bgCard,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               const Spacer(),
-              const Icon(
+              Icon(
                 Icons.timer_outlined,
-                color: AppColors.gray400,
+                color: context.colors.textMuted,
                 size: 18,
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -759,7 +754,7 @@ class _LiveMetric extends StatelessWidget {
                 Text(
                   label,
                   style: AppTypography.caption.copyWith(
-                    color: AppColors.gray500,
+                    color: context.colors.textMuted,
                   ),
                 ),
               ],
@@ -794,9 +789,9 @@ class _RecentLivesCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           if (lives.isEmpty)
-            const Text(
+            Text(
               'Nenhuma live registrada neste período.',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colors.textSecondary),
             )
           else
             ...lives.take(5).map(
@@ -811,7 +806,7 @@ class _RecentLivesCard extends StatelessWidget {
                                 ? '--'
                                 : _date.format(live.iniciadoEm!.toLocal()),
                             style: AppTypography.caption.copyWith(
-                              color: AppColors.gray500,
+                              color: context.colors.textMuted,
                             ),
                           ),
                         ),
@@ -858,9 +853,9 @@ class _MaisVendidosCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           if (produtos.isEmpty)
-            const Text(
+            Text(
               'Nenhuma venda registrada neste mês.',
-              style: TextStyle(color: AppColors.gray400),
+              style: TextStyle(color: context.colors.textMuted),
             )
           else
             ...produtos.map(
@@ -875,7 +870,7 @@ class _MaisVendidosCard extends StatelessWidget {
                         vertical: AppSpacing.xs,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.gray100,
+                        color: context.colors.bgMuted,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Text(

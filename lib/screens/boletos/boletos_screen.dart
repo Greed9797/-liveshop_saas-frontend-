@@ -326,13 +326,13 @@ class _BoletosTabState extends ConsumerState<BoletosTab> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.receipt_long_outlined,
-                            size: 40, color: AppColors.textMuted),
+                        Icon(Icons.receipt_long_outlined,
+                            size: 40, color: context.colors.textMuted),
                         const SizedBox(height: AppSpacing.x2),
                         Text(
                           'Nenhum boleto encontrado.',
                           style: AppTypography.bodySmall
-                              .copyWith(color: AppColors.textSecondary),
+                              .copyWith(color: context.colors.textSecondary),
                         ),
                       ],
                     ),

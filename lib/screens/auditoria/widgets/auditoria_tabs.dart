@@ -30,12 +30,12 @@ class AuditoriaTabs extends StatelessWidget {
           selected: isActive,
           onSelected: (_) => onChanged(item.$1),
           selectedColor: AppColors.primary,
-          backgroundColor: AppColors.bgCard,
+          backgroundColor: context.colors.bgCard,
           side: BorderSide(
-            color: isActive ? AppColors.primary : AppColors.borderLight,
+            color: isActive ? AppColors.primary : context.colors.borderSubtle,
           ),
           labelStyle: AppTypography.bodySmall.copyWith(
-            color: isActive ? AppColors.bgCard : AppColors.textPrimary,
+            color: isActive ? context.colors.bgCard : context.colors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         );

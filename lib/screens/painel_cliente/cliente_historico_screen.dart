@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../design_system/app_colors.dart' as ds_colors;
+import '../../design_system/app_colors_theme.dart';
 import '../../design_system/app_screen_scaffold.dart';
 import '../../design_system/app_tokens.dart' as ds_tokens;
 import '../../design_system/app_typography.dart' as ds_typography;
@@ -21,13 +22,7 @@ class AppColors {
   static const warningYellow = ds_colors.AppColors.warning;
   static const orange600 = ds_colors.AppColors.primaryLight;
   static const lilac = ds_colors.AppColors.lilac;
-  static const gray100 = ds_colors.AppColors.bgMuted;
   static const gray200 = ds_colors.AppColors.borderLight;
-  static const gray400 = ds_colors.AppColors.textMuted;
-  static const gray500 = ds_colors.AppColors.textMuted;
-  static const gray700 = ds_colors.AppColors.textPrimary;
-  static const textSecondary = ds_colors.AppColors.textSecondary;
-  static const white = ds_colors.AppColors.bgCard;
 }
 
 class AppSpacing {
@@ -190,11 +185,11 @@ class _HistoricoContent extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.x3l),
         if (data.lives.isEmpty)
-          const AppCard(
-            boxShadow: [],
+          AppCard(
+            boxShadow: const [],
             child: Text(
               'Nenhuma live registrada neste período.',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colors.textSecondary),
             ),
           )
         else
@@ -364,7 +359,7 @@ class _DetailMetric extends StatelessWidget {
         children: [
           Text(
             label,
-            style: AppTypography.caption.copyWith(color: AppColors.gray500),
+            style: AppTypography.caption.copyWith(color: context.colors.textMuted),
           ),
           const SizedBox(height: 4),
           Text(
@@ -394,7 +389,7 @@ class _StatusPill extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: (isLive ? AppColors.successGreen : AppColors.gray200).withValues(
+        color: (isLive ? AppColors.successGreen : context.colors.borderSubtle).withValues(
           alpha: isLive ? 1 : 0.7,
         ),
         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -402,7 +397,7 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         isLive ? 'AO VIVO' : 'ENCERRADA',
         style: AppTypography.caption.copyWith(
-          color: isLive ? AppColors.white : AppColors.gray700,
+          color: isLive ? context.colors.bgCard : context.colors.textPrimary,
           fontWeight: FontWeight.bold,
         ),
       ),
