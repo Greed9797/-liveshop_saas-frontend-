@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
+import 'app_colors_theme.dart';
 import 'app_typography.dart';
 import 'app_tokens.dart';
 
@@ -136,32 +137,34 @@ class AppTheme {
         thickness: 1,
         space: 1,
       ),
+
+      extensions: const [AppColorsTheme.light],
     );
   }
 
   // ═══════════════════════════════════════════
-  // 🌙 DARK THEME
+  // 🌙 DARK THEME — TikTok Studio palette
   // ═══════════════════════════════════════════
   static ThemeData get dark {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       fontFamily: AppTypography.fontFamily,
-      scaffoldBackgroundColor: AppColors.darkBgBase,
+      scaffoldBackgroundColor: const Color(0xFF121212),
 
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         onPrimary: AppColors.textOnPrimary,
         secondary: AppColors.primaryLight,
-        surface: AppColors.darkBgCard,
-        onSurface: AppColors.darkTextPrimary,
+        surface: Color(0xFF1E1E1E),
+        onSurface: Color(0xFFFFFFFF),
         error: AppColors.danger,
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.darkBgInput,
-        hintStyle: const TextStyle(color: AppColors.textMuted),
+        fillColor: const Color(0xFF2C2C2C),
+        hintStyle: const TextStyle(color: Color(0xFF5C5C5C)),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.x4,
           vertical: AppSpacing.x4,
@@ -187,11 +190,21 @@ class AppTheme {
         ),
       ),
 
-      cardTheme: CardThemeData(
-        color: AppColors.darkBgCard,
+      cardTheme: const CardThemeData(
+        color: Color(0xFF1E1E1E),
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.xlR),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
       ),
+
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFF2E2E2E),
+        thickness: 1,
+        space: 1,
+      ),
+
+      extensions: const [AppColorsTheme.dark],
     );
   }
 }

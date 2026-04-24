@@ -106,7 +106,7 @@ class AppScaffold extends ConsumerWidget {
         0;
 
     return Scaffold(
-      backgroundColor: AppColors.bgBase,
+      backgroundColor: context.colors.bgPage,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
@@ -184,9 +184,9 @@ class AppScaffold extends ConsumerWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.bgCard,
+        color: context.colors.bgCard,
         border: Border(
-          bottom: BorderSide(color: AppColors.borderLight, width: 1),
+          bottom: BorderSide(color: context.colors.borderSubtle, width: 1),
         ),
       ),
       padding: EdgeInsets.symmetric(
@@ -201,7 +201,7 @@ class AppScaffold extends ConsumerWidget {
               Builder(
                 builder: (context) => IconButton(
                   icon: Icon(PhosphorIcons.list(),
-                      color: AppColors.textSecondary),
+                      color: context.colors.textSecondary),
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
               ),
@@ -221,7 +221,7 @@ class AppScaffold extends ConsumerWidget {
                   Text(
                     'Olá, $displayName!',
                     style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w600),
                     maxLines: 1,
                     softWrap: false,
@@ -238,7 +238,7 @@ class AppScaffold extends ConsumerWidget {
                                     ? 'Gerente'
                                     : 'Franqueado Livelab',
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.textSecondary),
+                        .copyWith(color: context.colors.textSecondary),
                     maxLines: 1,
                     softWrap: false,
                     overflow: TextOverflow.ellipsis,
@@ -255,24 +255,21 @@ class AppScaffold extends ConsumerWidget {
                     mode == ThemeMode.dark
                         ? PhosphorIcons.sun()
                         : PhosphorIcons.moon(),
-                    color: AppColors.textSecondary,
+                    color: context.colors.textSecondary,
                   ),
                   tooltip:
                       mode == ThemeMode.dark ? 'Modo claro' : 'Modo escuro',
                   onPressed: () {
-                    ref.read(themeModeProvider.notifier).state =
-                        mode == ThemeMode.dark
-                            ? ThemeMode.light
-                            : ThemeMode.dark;
+                    ref.read(themeModeProvider.notifier).toggle();
                   },
                 );
               },
             ),
             PopupMenuButton<String>(
-              icon: Icon(PhosphorIcons.bell(), color: AppColors.textMuted),
+              icon: Icon(PhosphorIcons.bell(), color: context.colors.textMuted),
               tooltip: 'Notificações',
               offset: const Offset(0, 40),
-              color: AppColors.bgCard,
+              color: context.colors.bgCard,
               itemBuilder: (context) => [
                 PopupMenuItem(
                   enabled: false,
@@ -282,7 +279,7 @@ class AppScaffold extends ConsumerWidget {
                       child: Text(
                         'Nenhuma notificação no momento',
                         style: AppTypography.caption
-                            .copyWith(color: AppColors.textSecondary),
+                            .copyWith(color: context.colors.textSecondary),
                       ),
                     ),
                   ),
@@ -304,7 +301,7 @@ class AppScaffold extends ConsumerWidget {
     bool isGerente,
   ) {
     return Drawer(
-      backgroundColor: AppColors.bgSidebar,
+      backgroundColor: context.colors.bgSidebar,
       child: SafeArea(
         child: Column(
           children: [
@@ -312,7 +309,7 @@ class AppScaffold extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 32.0),
               child: _Logo(),
             ),
-            Divider(color: AppColors.borderLight, height: 1),
+            Divider(color: context.colors.borderSubtle, height: 1),
             Expanded(
                 child: _MenuContent(
               currentRoute: currentRoute,
@@ -340,9 +337,9 @@ class AppScaffold extends ConsumerWidget {
     return Container(
       width: compact ? 68 : 220,
       decoration: BoxDecoration(
-        color: AppColors.bgSidebar,
+        color: context.colors.bgSidebar,
         border: Border(
-          right: BorderSide(color: AppColors.borderLight, width: 1),
+          right: BorderSide(color: context.colors.borderSubtle, width: 1),
         ),
       ),
       child: Column(
@@ -354,7 +351,7 @@ class AppScaffold extends ConsumerWidget {
               child: compact
                   ? CircleAvatar(
                       radius: 22,
-                      backgroundColor: AppColors.bgMuted,
+                      backgroundColor: context.colors.bgMuted,
                       child:
                           Icon(PhosphorIcons.house(), color: AppColors.primary),
                     )
@@ -620,8 +617,8 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? AppColors.primary : AppColors.textSecondary;
-    final bgColor = isSelected ? AppColors.bgMuted : Colors.transparent;
+    final color = isSelected ? AppColors.primary : context.colors.textSecondary;
+    final bgColor = isSelected ? context.colors.bgMuted : Colors.transparent;
 
     if (compact) {
       return Padding(
@@ -632,7 +629,7 @@ class _MenuItem extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(8),
             onTap: () => _handleTap(context),
-            hoverColor: AppColors.bgMuted,
+            hoverColor: context.colors.bgMuted,
             child: Tooltip(
               message: label,
               child: SizedBox(
@@ -690,7 +687,7 @@ class _MenuItem extends StatelessWidget {
             child: ListTile(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
-              hoverColor: AppColors.bgMuted,
+              hoverColor: context.colors.bgMuted,
               leading: Icon(icon, color: color, size: 24),
               title: Text(
                 label,

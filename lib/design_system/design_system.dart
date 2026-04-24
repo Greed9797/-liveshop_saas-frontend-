@@ -7,6 +7,7 @@
 library design_system;
 
 export 'app_colors.dart';
+export 'app_colors_theme.dart';
 export 'app_typography.dart';
 export 'app_tokens.dart';
 export 'app_theme.dart';

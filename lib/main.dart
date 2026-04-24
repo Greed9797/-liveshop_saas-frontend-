@@ -31,6 +31,7 @@ void main() async {
   });
 
   await container.read(authProvider.notifier).restoreSession();
+  await container.read(themeModeProvider.notifier).restore();
 
   if (isE2ETesting) {
     WidgetsBinding.instance.ensureSemantics();

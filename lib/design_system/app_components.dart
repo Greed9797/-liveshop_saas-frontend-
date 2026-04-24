@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
+import 'app_colors_theme.dart';
 import 'app_typography.dart';
 import 'app_tokens.dart';
 
@@ -44,11 +45,11 @@ class AppCard extends StatelessWidget {
     final card = Container(
       padding: padding ?? const EdgeInsets.all(AppSpacing.x6),
       decoration: BoxDecoration(
-        color: color ?? AppColors.bgCard,
+        color: color ?? context.colors.bgCard,
         borderRadius: br,
         boxShadow: effectiveShadow,
         border:
-            border ?? Border.all(color: borderColor ?? AppColors.borderLight),
+            border ?? Border.all(color: borderColor ?? context.colors.borderSubtle),
       ),
       child: child,
     );
@@ -153,7 +154,7 @@ class AppSecondaryButton extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 18, color: AppColors.textPrimary),
+          Icon(icon, size: 18, color: context.colors.textPrimary),
           const SizedBox(width: AppSpacing.x2),
         ],
         Text(label),
@@ -229,14 +230,14 @@ class _AppTextFieldState extends State<AppTextField> {
       decoration: InputDecoration(
         hintText: widget.hint,
         prefixIcon: widget.prefixIcon != null
-            ? Icon(widget.prefixIcon, color: AppColors.textMuted, size: 20)
+            ? Icon(widget.prefixIcon, color: context.colors.textMuted, size: 20)
             : null,
         suffixIcon: widget.suffixIcon ??
             (widget.obscureText
                 ? IconButton(
                     icon: Icon(
                       _obscure ? Icons.visibility_off : Icons.visibility,
-                      color: AppColors.textMuted,
+                      color: context.colors.textMuted,
                       size: 20,
                     ),
                     onPressed: () => setState(() => _obscure = !_obscure),
@@ -270,7 +271,7 @@ class AppBadge extends StatelessWidget {
       AppBadgeType.success => (AppColors.successBg, AppColors.success),
       AppBadgeType.warning => (AppColors.warningBg, AppColors.warningFg),
       AppBadgeType.danger => (AppColors.dangerBg, AppColors.danger),
-      AppBadgeType.neutral => (AppColors.bgMuted, AppColors.textSecondary),
+      AppBadgeType.neutral => (context.colors.bgMuted, context.colors.textSecondary),
       AppBadgeType.info => (AppColors.infoBg, AppColors.info),
       AppBadgeType.live => (AppColors.successBg, AppColors.success),
     };
@@ -391,7 +392,7 @@ class AppProgressBar extends StatelessWidget {
       child: LinearProgressIndicator(
         value: value.clamp(0.0, 1.0),
         minHeight: height,
-        backgroundColor: AppColors.bgMuted,
+        backgroundColor: context.colors.bgMuted,
         valueColor: const AlwaysStoppedAnimation(AppColors.primary),
       ),
     );
@@ -479,7 +480,7 @@ class AppSectionHeader extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.colors.textSecondary,
                     ),
                   ),
                 ],
@@ -517,15 +518,15 @@ class AppDropdown<T> extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
       decoration: BoxDecoration(
-        color: AppColors.bgInput,
+        color: context.colors.bgInput,
         borderRadius: AppRadius.mdR,
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: context.colors.borderSubtle),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (prefixIcon != null) ...[
-            Icon(prefixIcon, size: 16, color: AppColors.textMuted),
+            Icon(prefixIcon, size: 16, color: context.colors.textMuted),
             const SizedBox(width: AppSpacing.x2),
           ],
           Flexible(
@@ -537,15 +538,15 @@ class AppDropdown<T> extends StatelessWidget {
                 hint: hint != null
                     ? Text(hint!,
                         style: AppTypography.bodySmall
-                            .copyWith(color: AppColors.textMuted))
+                            .copyWith(color: context.colors.textMuted))
                     : null,
                 style: AppTypography.bodySmall
-                    .copyWith(color: AppColors.textPrimary),
-                dropdownColor: AppColors.bgCard,
+                    .copyWith(color: context.colors.textPrimary),
+                dropdownColor: context.colors.bgCard,
                 borderRadius: AppRadius.mdR,
                 isDense: true,
-                icon: const Icon(Icons.keyboard_arrow_down,
-                    size: 18, color: AppColors.textMuted),
+                icon: Icon(Icons.keyboard_arrow_down,
+                    size: 18, color: context.colors.textMuted),
               ),
             ),
           ),
@@ -624,9 +625,9 @@ class AppChip extends StatelessWidget {
         height: 32,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: active ? AppColors.primarySofter : AppColors.bgCard,
+          color: active ? AppColors.primarySofter : context.colors.bgCard,
           border: Border.all(
-            color: active ? AppColors.primary : AppColors.borderLight,
+            color: active ? AppColors.primary : context.colors.borderSubtle,
           ),
           borderRadius: BorderRadius.circular(AppRadius.full),
         ),
@@ -636,7 +637,7 @@ class AppChip extends StatelessWidget {
             Text(
               label,
               style: AppTypography.bodySmall.copyWith(
-                color: active ? AppColors.primary : AppColors.textSecondary,
+                color: active ? AppColors.primary : context.colors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -673,7 +674,7 @@ class AppSegmentedControl<T> extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.bgMuted,
+        color: context.colors.bgMuted,
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Row(
@@ -686,7 +687,7 @@ class AppSegmentedControl<T> extends StatelessWidget {
               duration: const Duration(milliseconds: 120),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: isActive ? AppColors.bgCard : Colors.transparent,
+                color: isActive ? context.colors.bgCard : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppRadius.full),
                 boxShadow: isActive ? AppShadows.sm : null,
               ),
@@ -694,8 +695,8 @@ class AppSegmentedControl<T> extends StatelessWidget {
                 labelOf(s),
                 style: AppTypography.bodySmall.copyWith(
                   color: isActive
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
+                      ? context.colors.textPrimary
+                      : context.colors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -738,7 +739,7 @@ class AppGhostButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 18, color: AppColors.textPrimary),
+                Icon(icon, size: 18, color: context.colors.textPrimary),
                 const SizedBox(width: AppSpacing.x2),
               ],
               if (child != null) child! else if (label != null) Text(label!),
@@ -751,8 +752,8 @@ class AppGhostButton extends StatelessWidget {
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.borderStrong),
+          foregroundColor: context.colors.textPrimary,
+          side: BorderSide(color: context.colors.borderStrong),
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.full)),
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -917,7 +918,7 @@ class AppTable extends StatelessWidget {
         children: [
           TableRow(
             decoration: BoxDecoration(
-              color: AppColors.bgMuted,
+              color: context.colors.bgMuted,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(AppRadius.md),
                 topRight: Radius.circular(AppRadius.md),
@@ -1022,7 +1023,7 @@ class ScoreRing extends StatelessWidget {
                       fontWeight: FontWeight.w800, fontSize: 26, color: color)),
               Text('SCORE',
                   style: AppTypography.caption
-                      .copyWith(fontSize: 10, color: AppColors.textMuted)),
+                      .copyWith(fontSize: 10, color: context.colors.textMuted)),
             ],
           ),
         ),
@@ -1044,7 +1045,7 @@ class _ScoreRingSvgPainter extends CustomPainter {
     const startAngle = -math.pi / 2;
 
     final bg = Paint()
-      ..color = AppColors.bgMuted
+      ..color = AppColors.bgMuted // TODO: theme
       ..style = PaintingStyle.stroke
       ..strokeWidth = sw
       ..strokeCap = StrokeCap.round;
@@ -1100,7 +1101,7 @@ class KpiAccentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgCard,
+        color: context.colors.bgCard,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border(
           top: accentTop
@@ -1135,18 +1136,18 @@ class KpiAccentCard extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(prefix!,
                       style: AppTypography.caption
-                          .copyWith(color: AppColors.textMuted)),
+                          .copyWith(color: context.colors.textMuted)),
                 ),
               Text(value,
                   style: AppTypography.kpiValue
-                      .copyWith(color: valueColor ?? AppColors.textPrimary)),
+                      .copyWith(color: valueColor ?? context.colors.textPrimary)),
             ],
           ),
           if (sub != null) ...[
             const SizedBox(height: AppSpacing.x1),
             Text(sub!,
                 style:
-                    AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                    AppTypography.caption.copyWith(color: context.colors.textMuted)),
           ],
         ],
       ),
@@ -1184,7 +1185,7 @@ class KpiFinCard extends StatelessWidget {
     };
     return Container(
       decoration: BoxDecoration(
-          color: AppColors.bgCard,
+          color: context.colors.bgCard,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: AppShadows.md),
       padding: const EdgeInsets.all(AppSpacing.x4),
@@ -1206,14 +1207,14 @@ class KpiFinCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.x3),
           Text(prefix,
               style:
-                  AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                  AppTypography.caption.copyWith(color: context.colors.textMuted)),
           Text(value,
               style: AppTypography.h2
                   .copyWith(fontWeight: FontWeight.w700, color: toneColor)),
           const SizedBox(height: AppSpacing.x1),
           Text(sub,
               style:
-                  AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                  AppTypography.caption.copyWith(color: context.colors.textMuted)),
         ],
       ),
     );
@@ -1246,11 +1247,11 @@ class BigKpi extends StatelessWidget {
     final deltaColor = switch (deltaTone) {
       DeltaTone.up => AppColors.success,
       DeltaTone.down => AppColors.danger,
-      DeltaTone.neutral => AppColors.textMuted,
+      DeltaTone.neutral => context.colors.textMuted,
     };
     return Container(
       decoration: BoxDecoration(
-          color: AppColors.bgCard,
+          color: context.colors.bgCard,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: AppShadows.md),
       padding: const EdgeInsets.all(AppSpacing.x4),
@@ -1279,7 +1280,7 @@ class BigKpi extends StatelessWidget {
                   fontSize: 34,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.025,
-                  color: AppColors.textPrimary)),
+                  color: context.colors.textPrimary)),
           if (delta != null) ...[
             const SizedBox(height: AppSpacing.x1),
             Text(delta!,
@@ -1309,7 +1310,7 @@ class ChartCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primarySofter,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: context.colors.borderSubtle),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -1322,7 +1323,7 @@ class ChartCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.x1),
             Text(sub!,
                 style:
-                    AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                    AppTypography.caption.copyWith(color: context.colors.textMuted)),
           ],
           const SizedBox(height: AppSpacing.x4),
           child,
@@ -1357,7 +1358,7 @@ class MetricCardRebrand extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-          color: AppColors.bgCard,
+          color: context.colors.bgCard,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: AppShadows.md),
       padding: const EdgeInsets.all(AppSpacing.x5),
@@ -1378,7 +1379,7 @@ class MetricCardRebrand extends StatelessWidget {
               if (target != null)
                 Text(target!,
                     style: AppTypography.caption
-                        .copyWith(color: AppColors.textMuted, fontSize: 10)),
+                        .copyWith(color: context.colors.textMuted, fontSize: 10)),
             ],
           ),
           const SizedBox(height: AppSpacing.x4),
@@ -1390,7 +1391,7 @@ class MetricCardRebrand extends StatelessWidget {
           const SizedBox(height: AppSpacing.x1),
           Text(sub,
               style:
-                  AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                  AppTypography.caption.copyWith(color: context.colors.textMuted)),
         ],
       ),
     );
