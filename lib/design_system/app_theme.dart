@@ -115,16 +115,16 @@ class AppTheme {
         margin: EdgeInsets.zero,
       ),
 
-      // Typography
-      textTheme: const TextTheme(
-        displayLarge: AppTypography.displayLarge,
-        displayMedium: AppTypography.displayMedium,
-        headlineLarge: AppTypography.h1,
-        headlineMedium: AppTypography.h2,
-        headlineSmall: AppTypography.h3,
-        titleLarge: AppTypography.h4,
-        bodyLarge: AppTypography.bodyLarge,
-        bodyMedium: AppTypography.bodyMedium,
+      // Typography — explicit colors since base styles are color-neutral
+      textTheme: TextTheme(
+        displayLarge: AppTypography.displayLarge.copyWith(color: AppColors.textPrimary),
+        displayMedium: AppTypography.displayMedium.copyWith(color: AppColors.textPrimary),
+        headlineLarge: AppTypography.h1.copyWith(color: AppColors.textPrimary),
+        headlineMedium: AppTypography.h2.copyWith(color: AppColors.textPrimary),
+        headlineSmall: AppTypography.h3.copyWith(color: AppColors.textPrimary),
+        titleLarge: AppTypography.h4.copyWith(color: AppColors.textPrimary),
+        bodyLarge: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
+        bodyMedium: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
         bodySmall: AppTypography.bodySmall,
         labelLarge: AppTypography.buttonLarge,
         labelMedium: AppTypography.label,
@@ -202,6 +202,20 @@ class AppTheme {
         color: Color(0xFF2E2E2E),
         thickness: 1,
         space: 1,
+      ),
+
+      textTheme: TextTheme(
+        displayLarge: AppTypography.displayLarge.copyWith(color: const Color(0xFFFFFFFF)),
+        displayMedium: AppTypography.displayMedium.copyWith(color: const Color(0xFFFFFFFF)),
+        headlineLarge: AppTypography.h1.copyWith(color: const Color(0xFFFFFFFF)),
+        headlineMedium: AppTypography.h2.copyWith(color: const Color(0xFFFFFFFF)),
+        headlineSmall: AppTypography.h3.copyWith(color: const Color(0xFFFFFFFF)),
+        titleLarge: AppTypography.h4.copyWith(color: const Color(0xFFFFFFFF)),
+        bodyLarge: AppTypography.bodyLarge.copyWith(color: const Color(0xFFFFFFFF)),
+        bodyMedium: AppTypography.bodyMedium.copyWith(color: const Color(0xFFFFFFFF)),
+        bodySmall: AppTypography.bodySmall.copyWith(color: const Color(0xFF8A8A8A)),
+        labelMedium: AppTypography.label.copyWith(color: const Color(0xFF8A8A8A)),
+        labelSmall: AppTypography.caption.copyWith(color: const Color(0xFF5C5C5C)),
       ),
 
       extensions: const [AppColorsTheme.dark],
