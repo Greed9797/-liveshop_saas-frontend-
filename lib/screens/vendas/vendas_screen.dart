@@ -51,11 +51,11 @@ class _VendasScreenState extends ConsumerState<VendasScreen> {
     final brl = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
     return AppScreenScaffold(
-      currentRoute: AppRoutes.vendas,
-      title: 'Vendas em Andamento',
-      eyebrow: 'Pipeline',
+      currentRoute: AppRoutes.comercial,
+      title: 'Comercial',
+      eyebrow: 'Pipeline comercial',
       titleSerif: true,
-      subtitle: 'Gerencie contratos e clientes.',
+      subtitle: 'Gerencie oportunidades, contratos e clientes em negociação.',
       child: Column(
         children: [
           // KPI strip
@@ -192,8 +192,7 @@ class _ToggleButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 15,
-                color:
-                    active ? AppColors.textPrimary : AppColors.textMuted,
+                color: active ? AppColors.textPrimary : AppColors.textMuted,
               ),
               const SizedBox(width: 6),
               Text(
@@ -300,16 +299,21 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                             onTap: _clearFilters,
                             child: Container(
                               height: 32,
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
                               decoration: BoxDecoration(
                                 color: AppColors.dangerBg,
-                                border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
-                                borderRadius: BorderRadius.circular(AppRadius.full),
+                                border: Border.all(
+                                    color: AppColors.danger
+                                        .withValues(alpha: 0.3)),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.full),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.clear, size: 14, color: AppColors.danger),
+                                  const Icon(Icons.clear,
+                                      size: 14, color: AppColors.danger),
                                   const SizedBox(width: 4),
                                   Text(
                                     'Limpar',
@@ -328,7 +332,8 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                           final (value, label, color) = opt;
                           final isActive = _activeFilters.contains(value);
                           return Padding(
-                            padding: const EdgeInsets.only(right: AppSpacing.x2),
+                            padding:
+                                const EdgeInsets.only(right: AppSpacing.x2),
                             child: AppChip(
                               label: label,
                               active: isActive,
@@ -401,8 +406,7 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                 child: FloatingActionButton(
                   backgroundColor: AppColors.primary,
                   onPressed: widget.onAddCliente,
-                  child:
-                      const Icon(Icons.add, color: AppColors.textOnPrimary),
+                  child: const Icon(Icons.add, color: AppColors.textOnPrimary),
                 ),
               ),
           ],
@@ -455,8 +459,7 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
               Text(c.cidade ?? '—', style: AppTypography.bodySmall),
               Text(_statusLabel[c.status] ?? c.status,
                   style: AppTypography.bodySmall),
-              Text(
-                  '${(c.horasContratadas ?? 0).toStringAsFixed(0)}h',
+              Text('${(c.horasContratadas ?? 0).toStringAsFixed(0)}h',
                   style: AppTypography.bodySmall),
               AppBadge(
                 label: _statusLabel[c.status] ?? c.status,
@@ -464,8 +467,7 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                 showDot: false,
               ),
             ],
-            onTap: () => Navigator.pushNamed(
-                context, AppRoutes.clienteCabines,
+            onTap: () => Navigator.pushNamed(context, AppRoutes.clienteCabines,
                 arguments: {'clienteId': c.id}),
           );
         }).toList(),
@@ -490,14 +492,12 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                 : ClientAvatarTone.neutral;
             return AppCard(
               padding: const EdgeInsets.all(AppSpacing.x4),
-              onTap: () => Navigator.pushNamed(
-                  ctx, AppRoutes.clienteCabines,
+              onTap: () => Navigator.pushNamed(ctx, AppRoutes.clienteCabines,
                   arguments: {'clienteId': c.id}),
               child: Row(
                 children: [
                   ClientAvatar(
-                    initials:
-                        c.nome.isNotEmpty ? c.nome[0].toUpperCase() : '?',
+                    initials: c.nome.isNotEmpty ? c.nome[0].toUpperCase() : '?',
                     tone: tone,
                     size: 44,
                   ),
@@ -507,8 +507,8 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(c.nome,
-                            style: AppTypography.bodyMedium.copyWith(
-                                fontWeight: FontWeight.w600),
+                            style: AppTypography.bodyMedium
+                                .copyWith(fontWeight: FontWeight.w600),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),
                         if (c.cidade != null && c.cidade!.isNotEmpty)
@@ -523,8 +523,7 @@ class _VendasListTabState extends ConsumerState<_VendasListTab> {
                     children: [
                       AppBadge(
                         label: _statusLabel[c.status] ?? c.status,
-                        type: _statusBadge[c.status] ??
-                            AppBadgeType.neutral,
+                        type: _statusBadge[c.status] ?? AppBadgeType.neutral,
                       ),
                       if (c.horasRestantes != null &&
                           (c.horasContratadas ?? 0) > 0) ...[
@@ -611,8 +610,7 @@ class _VendasMapaTabState extends State<_VendasMapaTab> {
   List<Marker> _buildMarkers(BuildContext context, List<Cliente> clientes) {
     final Map<String, List<Cliente>> groups = {};
     for (final c in clientes) {
-      final key =
-          '${c.lat!.toStringAsFixed(4)},${c.lng!.toStringAsFixed(4)}';
+      final key = '${c.lat!.toStringAsFixed(4)},${c.lng!.toStringAsFixed(4)}';
       groups.putIfAbsent(key, () => []).add(c);
     }
 
@@ -622,9 +620,8 @@ class _VendasMapaTabState extends State<_VendasMapaTab> {
       final worstIdx = cluster
           .map((c) => _statusPriority[c.status] ?? 0)
           .reduce((a, b) => a > b ? a : b);
-      final worstStatus = _statusPriority.entries
-          .firstWhere((x) => x.value == worstIdx)
-          .key;
+      final worstStatus =
+          _statusPriority.entries.firstWhere((x) => x.value == worstIdx).key;
       final color = _statusColor(worstStatus);
       final first = cluster.first;
 
@@ -681,8 +678,8 @@ class _VendasMapaTabState extends State<_VendasMapaTab> {
                           ),
                           Text(
                             '${clientes.first.cidade ?? "—"}/${clientes.first.estado ?? ""}',
-                            style: AppTypography.caption.copyWith(
-                                color: AppColors.textMuted),
+                            style: AppTypography.caption
+                                .copyWith(color: AppColors.textMuted),
                           ),
                         ],
                       ),
@@ -706,9 +703,8 @@ class _VendasMapaTabState extends State<_VendasMapaTab> {
                     final c = clientes[i];
                     return ListTile(
                       leading: ClientAvatar(
-                        initials: c.nome.isNotEmpty
-                            ? c.nome[0].toUpperCase()
-                            : '?',
+                        initials:
+                            c.nome.isNotEmpty ? c.nome[0].toUpperCase() : '?',
                         size: 36,
                         tone: c.status == 'ativo'
                             ? ClientAvatarTone.success
@@ -779,27 +775,26 @@ class _VendasMapaTabState extends State<_VendasMapaTab> {
                   // Mapa OpenStreetMap — Positioned.fill garante constraints finitas
                   Positioned.fill(
                     child: FlutterMap(
-                    options: MapOptions(
-                      initialCenter: center,
-                      initialZoom: geoClientes.isNotEmpty ? 4.5 : 4,
-                      minZoom: 2,
-                      maxZoom: 18,
-                      interactionOptions: const InteractionOptions(
-                        flags: InteractiveFlag.all &
-                            ~InteractiveFlag.rotate,
+                      options: MapOptions(
+                        initialCenter: center,
+                        initialZoom: geoClientes.isNotEmpty ? 4.5 : 4,
+                        minZoom: 2,
+                        maxZoom: 18,
+                        interactionOptions: const InteractionOptions(
+                          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                        ),
                       ),
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.livelab.saas',
-                        maxZoom: 19,
-                      ),
-                      MarkerLayer(
-                        markers: _buildMarkers(context, geoClientes),
-                      ),
-                    ],
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.livelab.saas',
+                          maxZoom: 19,
+                        ),
+                        MarkerLayer(
+                          markers: _buildMarkers(context, geoClientes),
+                        ),
+                      ],
                     ),
                   ),
                   // Filtro "Status do contrato" — MouseRegion + Listener garantem
@@ -915,8 +910,7 @@ class _VendasMapaTabState extends State<_VendasMapaTab> {
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.md),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                             border: Border.all(color: AppColors.border),
                           ),
                           child: Column(
@@ -935,8 +929,8 @@ class _VendasMapaTabState extends State<_VendasMapaTab> {
                               Text(
                                 'Adicione CEP/endereço no cadastro para aparecer no mapa.',
                                 textAlign: TextAlign.center,
-                                style: AppTypography.caption.copyWith(
-                                    color: AppColors.textSecondary),
+                                style: AppTypography.caption
+                                    .copyWith(color: AppColors.textSecondary),
                               ),
                             ],
                           ),
@@ -1181,9 +1175,7 @@ class _StatusFilterButton extends StatelessWidget {
                         ? Icons.check_box_rounded
                         : Icons.check_box_outline_blank_rounded,
                     size: 18,
-                    color: isAll
-                        ? AppColors.primary
-                        : AppColors.textMuted,
+                    color: isAll ? AppColors.primary : AppColors.textMuted,
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -1246,8 +1238,7 @@ class _StatusFilterButton extends StatelessWidget {
             }
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1275,4 +1266,3 @@ class _StatusFilterButton extends StatelessWidget {
     );
   }
 }
-

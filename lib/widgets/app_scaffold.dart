@@ -500,9 +500,10 @@ class _MenuContent extends ConsumerWidget {
       if (!isClienteParceiro && !isApresentador)
         _MenuItem(
           icon: PhosphorIcons.shoppingCart(),
-          label: 'Vendas em Andamento',
-          route: AppRoutes.vendas,
-          isSelected: currentRoute == AppRoutes.vendas,
+          label: 'Comercial',
+          route: AppRoutes.comercial,
+          isSelected: currentRoute == AppRoutes.comercial ||
+              currentRoute == AppRoutes.vendas,
           compact: compact,
         ),
       if (!isClienteParceiro && !isApresentador && !isGerente)
@@ -534,9 +535,10 @@ class _MenuContent extends ConsumerWidget {
       if (!isClienteParceiro && !isApresentador)
         _MenuItem(
           icon: PhosphorIcons.usersThree(),
-          label: 'Clientes/Leads',
-          route: AppRoutes.clientesLeads,
-          isSelected: currentRoute == AppRoutes.clientesLeads,
+          label: 'Clientes',
+          route: AppRoutes.clientes,
+          isSelected: currentRoute == AppRoutes.clientes ||
+              currentRoute == AppRoutes.clientesLeads,
           compact: compact,
         ),
       if (!isClienteParceiro && !isApresentador)

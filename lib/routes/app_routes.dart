@@ -36,6 +36,7 @@ class AppRoutes {
   static const login = '/login';
   static const home = '/';
   static const vendas = '/vendas';
+  static const comercial = '/comercial';
   static const cadastroCliente = '/vendas/cadastro';
   static const contrato = '/vendas/contrato';
   static const analise = '/vendas/analise';
@@ -62,6 +63,7 @@ class AppRoutes {
   static const carteiraClientes = '/carteira-clientes';
   static const auditoriaContratos = '/auditoria-contratos';
   static const clientesLeads = '/clientes-leads';
+  static const clientes = '/clientes';
   static const configuracoes = '/configuracoes';
   static const solicitacoes = '/solicitacoes';
   static const agendamentos = '/agendamentos';
@@ -106,6 +108,7 @@ class AppRoutes {
           settings: settings,
         );
 
+      case comercial:
       case vendas:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
@@ -354,6 +357,7 @@ class AppRoutes {
           settings: settings,
         );
 
+      case clientes:
       case clientesLeads:
         return buildPremiumRoute(
           child: const RoleRouteGuard(

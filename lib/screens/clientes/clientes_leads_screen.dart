@@ -23,11 +23,11 @@ class _ClientesLeadsState extends ConsumerState<ClientesLeadsScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScreenScaffold(
-      currentRoute: AppRoutes.clientesLeads,
+      currentRoute: AppRoutes.clientes,
       eyebrow: 'Carteira comercial',
       titleSerif: true,
-      title: 'Clientes & Leads',
-      subtitle: 'Gerencie sua carteira de clientes e leads.',
+      title: 'Clientes',
+      subtitle: 'Gerencie sua carteira de clientes.',
       actions: [
         IconButton(
           icon: const Icon(Icons.refresh),
@@ -54,7 +54,8 @@ class _ClientesLeadsState extends ConsumerState<ClientesLeadsScreen> {
                 final totalClientes = clientesAsync.valueOrNull?.length ?? 0;
                 final totalLeads = leadsAsync.valueOrNull?.length ?? 0;
                 final conversionRate = totalLeads > 0
-                    ? ((totalClientes / (totalClientes + totalLeads)) * 100).toStringAsFixed(0)
+                    ? ((totalClientes / (totalClientes + totalLeads)) * 100)
+                        .toStringAsFixed(0)
                     : '0';
                 return ResponsiveGrid(
                   mobileColumns: 1,
@@ -131,7 +132,8 @@ class _ClientesTab extends ConsumerWidget {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(
             ApiService.extractErrorMessage(e),
-            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+            style:
+                AppTypography.caption.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.x3),
           AppSecondaryButton(
@@ -147,7 +149,8 @@ class _ClientesTab extends ConsumerWidget {
                       .copyWith(color: AppColors.textSecondary)))
           : ListView.separated(
               itemCount: clientes.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.x2),
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppSpacing.x2),
               itemBuilder: (_, i) => _ClienteCard(
                 cliente: clientes[i],
                 onTap: () => _showClienteDetail(context, ref, clientes[i]),
@@ -162,7 +165,8 @@ class _ClienteCard extends StatelessWidget {
   final VoidCallback? onTap;
   const _ClienteCard({required this.cliente, this.onTap});
 
-  static final _currencyFmt = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 0);
+  static final _currencyFmt =
+      NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 0);
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +176,8 @@ class _ClienteCard extends StatelessWidget {
       child: Row(
         children: [
           ClientAvatar(
-            initials: cliente.nome.isNotEmpty ? cliente.nome[0].toUpperCase() : '?',
+            initials:
+                cliente.nome.isNotEmpty ? cliente.nome[0].toUpperCase() : '?',
             tone: _tone,
             size: 40,
           ),
@@ -252,7 +257,8 @@ class _LeadsTab extends ConsumerWidget {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(
             ApiService.extractErrorMessage(e),
-            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+            style:
+                AppTypography.caption.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.x3),
           AppSecondaryButton(
@@ -335,7 +341,8 @@ void _showClienteDetail(BuildContext context, WidgetRef ref, Cliente cliente) {
                   padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.x2, vertical: AppSpacing.x1),
                   decoration: BoxDecoration(
-                    color: _colorForStatus(cliente.status).withValues(alpha: 0.12),
+                    color:
+                        _colorForStatus(cliente.status).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
                   child: AppBadge(
@@ -348,18 +355,26 @@ void _showClienteDetail(BuildContext context, WidgetRef ref, Cliente cliente) {
             const Divider(height: AppSpacing.x6),
 
             // Dados do cliente
-            _InfoRow(icon: Icons.phone_outlined,
-                label: 'Celular', value: cliente.celular.isEmpty ? null : cliente.celular),
-            _InfoRow(icon: Icons.email_outlined,
-                label: 'Email', value: cliente.email),
-            _InfoRow(icon: Icons.business_outlined,
-                label: 'Nicho', value: cliente.nicho),
-            _InfoRow(icon: Icons.location_on_outlined,
+            _InfoRow(
+                icon: Icons.phone_outlined,
+                label: 'Celular',
+                value: cliente.celular.isEmpty ? null : cliente.celular),
+            _InfoRow(
+                icon: Icons.email_outlined,
+                label: 'Email',
+                value: cliente.email),
+            _InfoRow(
+                icon: Icons.business_outlined,
+                label: 'Nicho',
+                value: cliente.nicho),
+            _InfoRow(
+                icon: Icons.location_on_outlined,
                 label: 'Cidade',
                 value: cliente.cidade != null
                     ? '${cliente.cidade}${cliente.estado != null ? '/${cliente.estado}' : ''}'
                     : null),
-            _InfoRow(icon: Icons.attach_money,
+            _InfoRow(
+                icon: Icons.attach_money,
                 label: 'Fat. Anual',
                 value: cliente.fatAnual > 0
                     ? 'R\$ ${cliente.fatAnual.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}'
@@ -394,20 +409,20 @@ void _showClienteDetail(BuildContext context, WidgetRef ref, Cliente cliente) {
 }
 
 Color _colorForStatus(String status) => switch (status) {
-  'negociacao' => AppColors.warning,
-  'enviado' => AppColors.info,
-  'ativo' => AppColors.success,
-  'inadimplente' => AppColors.danger,
-  _ => AppColors.textMuted,
-};
+      'negociacao' => AppColors.warning,
+      'enviado' => AppColors.info,
+      'ativo' => AppColors.success,
+      'inadimplente' => AppColors.danger,
+      _ => AppColors.textMuted,
+    };
 
 AppBadgeType _badgeTypeForStatus(String status) => switch (status) {
-  'negociacao' => AppBadgeType.warning,
-  'enviado' => AppBadgeType.neutral,
-  'ativo' => AppBadgeType.success,
-  'inadimplente' => AppBadgeType.danger,
-  _ => AppBadgeType.neutral,
-};
+      'negociacao' => AppBadgeType.warning,
+      'enviado' => AppBadgeType.neutral,
+      'ativo' => AppBadgeType.success,
+      'inadimplente' => AppBadgeType.danger,
+      _ => AppBadgeType.neutral,
+    };
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;
@@ -424,14 +439,17 @@ class _InfoRow extends StatelessWidget {
           Icon(icon, size: 16, color: AppColors.textMuted),
           const SizedBox(width: AppSpacing.x2),
           Text('$label: ',
-              style: AppTypography.caption
-                  .copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+              style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
           Expanded(
             child: value != null
-                ? Text(value!, style: AppTypography.caption.copyWith(color: AppColors.textPrimary))
+                ? Text(value!,
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.textPrimary))
                 : Text('Não preenchido',
                     style: AppTypography.caption.copyWith(
-                        color: AppColors.textMuted, fontStyle: FontStyle.italic)),
+                        color: AppColors.textMuted,
+                        fontStyle: FontStyle.italic)),
           ),
         ],
       ),
@@ -472,20 +490,24 @@ class _TabChip extends StatelessWidget {
             children: [
               Icon(icon,
                   size: 16,
-                  color: selected ? AppColors.textOnPrimary : AppColors.textSecondary),
+                  color: selected
+                      ? AppColors.textOnPrimary
+                      : AppColors.textSecondary),
               const SizedBox(width: AppSpacing.x1),
               Text(
                 label,
                 style: AppTypography.caption.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: selected ? AppColors.textOnPrimary : AppColors.textPrimary,
+                  color: selected
+                      ? AppColors.textOnPrimary
+                      : AppColors.textPrimary,
                 ),
               ),
               if (count != null) ...[
                 const SizedBox(width: AppSpacing.x1),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.x2, vertical: AppSpacing.x1),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.x2, vertical: AppSpacing.x1),
                   decoration: BoxDecoration(
                     color: selected
                         ? AppColors.textOnPrimary.withValues(alpha: 0.25)
@@ -497,7 +519,9 @@ class _TabChip extends StatelessWidget {
                     style: AppTypography.caption.copyWith(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: selected ? AppColors.textOnPrimary : AppColors.textSecondary,
+                      color: selected
+                          ? AppColors.textOnPrimary
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ),
