@@ -18,6 +18,27 @@ class BoletosScreen extends ConsumerStatefulWidget {
 }
 
 class _BoletosScreenState extends ConsumerState<BoletosScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return const AppScreenScaffold(
+      currentRoute: AppRoutes.boletos,
+      eyebrow: 'Recebíveis da franquia',
+      titleSerif: true,
+      title: 'Financeiro',
+      subtitle: 'Gerencie e pague seus boletos e faturas.',
+      child: BoletosTab(),
+    );
+  }
+}
+
+class BoletosTab extends ConsumerStatefulWidget {
+  const BoletosTab({super.key});
+
+  @override
+  ConsumerState<BoletosTab> createState() => _BoletosTabState();
+}
+
+class _BoletosTabState extends ConsumerState<BoletosTab> {
   String _categoria = 'todos';
   String _status = 'todos';
 
@@ -31,30 +52,33 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
 
   int _countVencidos(List<Boleto> boletos) {
     final now = DateTime.now();
-    return boletos.where((b) =>
-      b.status == 'vencido' ||
-      (b.status == 'pendente' && b.vencimento.isBefore(now))
-    ).length;
+    return boletos
+        .where((b) =>
+            b.status == 'vencido' ||
+            (b.status == 'pendente' && b.vencimento.isBefore(now)))
+        .length;
   }
 
   int _countAVencer(List<Boleto> boletos) {
     final now = DateTime.now();
     final cutoff = now.add(const Duration(days: 30));
-    return boletos.where((b) =>
-      b.status == 'pendente' &&
-      b.vencimento.isAfter(now) &&
-      b.vencimento.isBefore(cutoff)
-    ).length;
+    return boletos
+        .where((b) =>
+            b.status == 'pendente' &&
+            b.vencimento.isAfter(now) &&
+            b.vencimento.isBefore(cutoff))
+        .length;
   }
 
   int _countPagoMes(List<Boleto> boletos) {
     final now = DateTime.now();
-    return boletos.where((b) =>
-      b.status == 'pago' &&
-      b.pagoEm != null &&
-      b.pagoEm!.year == now.year &&
-      b.pagoEm!.month == now.month
-    ).length;
+    return boletos
+        .where((b) =>
+            b.status == 'pago' &&
+            b.pagoEm != null &&
+            b.pagoEm!.year == now.year &&
+            b.pagoEm!.month == now.month)
+        .length;
   }
 
   BoletoStatus _mapStatus(String s) {
@@ -111,7 +135,8 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
     }
 
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Não foi possível abrir o boleto.')),
@@ -125,7 +150,8 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
     }
   }
 
-  String _categoriaLabel(String tipo) => const {
+  String _categoriaLabel(String tipo) =>
+      const {
         'royalties': 'Royalties',
         'imposto': 'Impostos',
         'marketing': 'Marketing',
@@ -137,205 +163,198 @@ class _BoletosScreenState extends ConsumerState<BoletosScreen> {
   Widget build(BuildContext context) {
     final boletosAsync = ref.watch(boletosProvider);
 
-    return AppScreenScaffold(
-      currentRoute: AppRoutes.boletos,
-      eyebrow: 'Recebíveis da franquia',
-      titleSerif: true,
-      title: 'Meus Boletos',
-      subtitle: 'Gerencie e pague seus boletos e faturas.',
-      child: RefreshIndicator(
-        onRefresh: () => ref.read(boletosProvider.notifier).refresh(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── KPI strip ────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.x5,
-                AppSpacing.x4,
-                AppSpacing.x5,
-                0,
-              ),
-              child: boletosAsync.when(
-                loading: () => const SizedBox(height: 100),
-                error: (_, __) => const SizedBox(height: 100),
-                data: (boletos) {
-                  final vencidos = _countVencidos(boletos);
-                  final aVencer = _countAVencer(boletos);
-                  final pagoMes = _countPagoMes(boletos);
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: KpiAccentCard(
-                          label: 'Vencidos',
-                          value: '$vencidos',
-                          sub: 'em atraso',
-                          valueColor: AppColors.danger,
-                          accentTop: true,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.x3),
-                      Expanded(
-                        child: KpiAccentCard(
-                          label: 'A vencer',
-                          value: '$aVencer',
-                          sub: 'nos próximos 30 dias',
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.x3),
-                      Expanded(
-                        child: KpiAccentCard(
-                          label: 'Pago este mês',
-                          value: '$pagoMes',
-                          sub: 'quitados',
-                          valueColor: AppColors.success,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+    return RefreshIndicator(
+      onRefresh: () => ref.read(boletosProvider.notifier).refresh(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── KPI strip ────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x5,
+              AppSpacing.x4,
+              AppSpacing.x5,
+              0,
             ),
-            const SizedBox(height: AppSpacing.x4),
-
-            // ── Filtros ────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x5),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Categoria row
-                  Wrap(
-                    spacing: AppSpacing.x2,
-                    runSpacing: AppSpacing.x2,
-                    children: [
-                      AppChip(
-                        label: 'Todos',
-                        active: _categoria == 'todos',
-                        onTap: () => setState(() => _categoria = 'todos'),
+            child: boletosAsync.when(
+              loading: () => const SizedBox(height: 100),
+              error: (_, __) => const SizedBox(height: 100),
+              data: (boletos) {
+                final vencidos = _countVencidos(boletos);
+                final aVencer = _countAVencer(boletos);
+                final pagoMes = _countPagoMes(boletos);
+                return Row(
+                  children: [
+                    Expanded(
+                      child: KpiAccentCard(
+                        label: 'Vencidos',
+                        value: '$vencidos',
+                        sub: 'em atraso',
+                        valueColor: AppColors.danger,
+                        accentTop: true,
                       ),
-                      AppChip(
-                        label: 'Impostos',
-                        active: _categoria == 'imposto',
-                        onTap: () => setState(() => _categoria = 'imposto'),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(
+                      child: KpiAccentCard(
+                        label: 'A vencer',
+                        value: '$aVencer',
+                        sub: 'nos próximos 30 dias',
                       ),
-                      AppChip(
-                        label: 'Royalties',
-                        active: _categoria == 'royalties',
-                        onTap: () => setState(() => _categoria = 'royalties'),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(
+                      child: KpiAccentCard(
+                        label: 'Pago este mês',
+                        value: '$pagoMes',
+                        sub: 'quitados',
+                        valueColor: AppColors.success,
                       ),
-                      AppChip(
-                        label: 'Marketing',
-                        active: _categoria == 'marketing',
-                        onTap: () => setState(() => _categoria = 'marketing'),
-                      ),
-                      AppChip(
-                        label: 'Outros',
-                        active: _categoria == 'outros',
-                        onTap: () => setState(() => _categoria = 'outros'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.x2),
-                  // Status row
-                  Wrap(
-                    spacing: AppSpacing.x2,
-                    runSpacing: AppSpacing.x2,
-                    children: [
-                      AppChip(
-                        label: 'Todos',
-                        active: _status == 'todos',
-                        onTap: () => setState(() => _status = 'todos'),
-                      ),
-                      AppChip(
-                        label: 'Pendente',
-                        active: _status == 'pendente',
-                        onTap: () => setState(() => _status = 'pendente'),
-                      ),
-                      AppChip(
-                        label: 'Vencido',
-                        active: _status == 'vencido',
-                        onTap: () => setState(() => _status = 'vencido'),
-                      ),
-                      AppChip(
-                        label: 'Pago',
-                        active: _status == 'pago',
-                        onTap: () => setState(() => _status = 'pago'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: AppSpacing.x3),
+          ),
+          const SizedBox(height: AppSpacing.x4),
 
-            // ── Lista ────────────────────────────────────────────────────
-            Expanded(
-              child: boletosAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(ApiService.extractErrorMessage(e)),
-                      const SizedBox(height: AppSpacing.x3),
-                      AppSecondaryButton(
-                        onPressed: () =>
-                            ref.read(boletosProvider.notifier).refresh(),
-                        label: 'Tentar novamente',
-                      ),
-                    ],
-                  ),
+          // ── Filtros ────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Categoria row
+                Wrap(
+                  spacing: AppSpacing.x2,
+                  runSpacing: AppSpacing.x2,
+                  children: [
+                    AppChip(
+                      label: 'Todos',
+                      active: _categoria == 'todos',
+                      onTap: () => setState(() => _categoria = 'todos'),
+                    ),
+                    AppChip(
+                      label: 'Impostos',
+                      active: _categoria == 'imposto',
+                      onTap: () => setState(() => _categoria = 'imposto'),
+                    ),
+                    AppChip(
+                      label: 'Royalties',
+                      active: _categoria == 'royalties',
+                      onTap: () => setState(() => _categoria = 'royalties'),
+                    ),
+                    AppChip(
+                      label: 'Marketing',
+                      active: _categoria == 'marketing',
+                      onTap: () => setState(() => _categoria = 'marketing'),
+                    ),
+                    AppChip(
+                      label: 'Outros',
+                      active: _categoria == 'outros',
+                      onTap: () => setState(() => _categoria = 'outros'),
+                    ),
+                  ],
                 ),
-                data: (boletos) {
-                  final filtrados = _filtrar(boletos);
-                  if (filtrados.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.receipt_long_outlined,
-                              size: 40, color: AppColors.textMuted),
-                          const SizedBox(height: AppSpacing.x2),
-                          Text(
-                            'Nenhum boleto encontrado.',
-                            style: AppTypography.bodySmall
-                                .copyWith(color: AppColors.textSecondary),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    padding: const EdgeInsets.all(AppSpacing.x4),
-                    itemCount: filtrados.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: AppSpacing.x3),
-                    itemBuilder: (ctx, i) {
-                      final boleto = filtrados[i];
-                      return BoletoCard(
-                        categoria: _categoriaLabel(boleto.tipo),
-                        descricao: boleto.referenciaExterna ?? _categoriaLabel(boleto.tipo),
-                        valor: NumberFormat.currency(
-                          locale: 'pt_BR',
-                          symbol: 'R\$',
-                        ).format(boleto.valor),
-                        vencimento: DateFormat('dd/MM/yyyy')
-                            .format(boleto.isPago && boleto.pagoEm != null
-                                ? boleto.pagoEm!
-                                : boleto.vencimento),
-                        status: _mapStatus(boleto.status),
-                        onCopiar: () => _copiarBoleto(boleto),
-                        onPagar: () => _pagarBoleto(boleto),
-                      );
-                    },
-                  );
-                },
-              ),
+                const SizedBox(height: AppSpacing.x2),
+                // Status row
+                Wrap(
+                  spacing: AppSpacing.x2,
+                  runSpacing: AppSpacing.x2,
+                  children: [
+                    AppChip(
+                      label: 'Todos',
+                      active: _status == 'todos',
+                      onTap: () => setState(() => _status = 'todos'),
+                    ),
+                    AppChip(
+                      label: 'Pendente',
+                      active: _status == 'pendente',
+                      onTap: () => setState(() => _status = 'pendente'),
+                    ),
+                    AppChip(
+                      label: 'Vencido',
+                      active: _status == 'vencido',
+                      onTap: () => setState(() => _status = 'vencido'),
+                    ),
+                    AppChip(
+                      label: 'Pago',
+                      active: _status == 'pago',
+                      onTap: () => setState(() => _status = 'pago'),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.x3),
+
+          // ── Lista ────────────────────────────────────────────────────
+          Expanded(
+            child: boletosAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(ApiService.extractErrorMessage(e)),
+                    const SizedBox(height: AppSpacing.x3),
+                    AppSecondaryButton(
+                      onPressed: () =>
+                          ref.read(boletosProvider.notifier).refresh(),
+                      label: 'Tentar novamente',
+                    ),
+                  ],
+                ),
+              ),
+              data: (boletos) {
+                final filtrados = _filtrar(boletos);
+                if (filtrados.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.receipt_long_outlined,
+                            size: 40, color: AppColors.textMuted),
+                        const SizedBox(height: AppSpacing.x2),
+                        Text(
+                          'Nenhum boleto encontrado.',
+                          style: AppTypography.bodySmall
+                              .copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(AppSpacing.x4),
+                  itemCount: filtrados.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppSpacing.x3),
+                  itemBuilder: (ctx, i) {
+                    final boleto = filtrados[i];
+                    return BoletoCard(
+                      categoria: _categoriaLabel(boleto.tipo),
+                      descricao: boleto.referenciaExterna ??
+                          _categoriaLabel(boleto.tipo),
+                      valor: NumberFormat.currency(
+                        locale: 'pt_BR',
+                        symbol: 'R\$',
+                      ).format(boleto.valor),
+                      vencimento: DateFormat('dd/MM/yyyy').format(
+                          boleto.isPago && boleto.pagoEm != null
+                              ? boleto.pagoEm!
+                              : boleto.vencimento),
+                      status: _mapStatus(boleto.status),
+                      onCopiar: () => _copiarBoleto(boleto),
+                      onPagar: () => _pagarBoleto(boleto),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

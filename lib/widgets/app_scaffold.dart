@@ -511,6 +511,7 @@ class _MenuContent extends ConsumerWidget {
           label: 'Financeiro',
           route: AppRoutes.financeiro,
           isSelected: currentRoute == AppRoutes.financeiro,
+          badge: boletosCount > 0 ? '$boletosCount' : null,
           compact: compact,
         ),
       if (!isClienteParceiro)
@@ -521,10 +522,10 @@ class _MenuContent extends ConsumerWidget {
           isSelected: currentRoute == AppRoutes.analyticsDashboard,
           compact: compact,
         ),
-      if (!isApresentador && !isGerente)
+      if (isClienteParceiro)
         _MenuItem(
           icon: PhosphorIcons.receipt(),
-          label: 'Meus boletos',
+          label: 'Financeiro',
           route: AppRoutes.boletos,
           isSelected: currentRoute == AppRoutes.boletos,
           badge: boletosCount > 0 ? '$boletosCount' : null,
