@@ -12,8 +12,7 @@ class SolicitacoesScreen extends ConsumerStatefulWidget {
   const SolicitacoesScreen({super.key});
 
   @override
-  ConsumerState<SolicitacoesScreen> createState() =>
-      _SolicitacoesScreenState();
+  ConsumerState<SolicitacoesScreen> createState() => _SolicitacoesScreenState();
 }
 
 class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
@@ -63,12 +62,10 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
         onConfirmar: (motivo) async {
           Navigator.pop(ctx);
           try {
-            await ref
-                .read(solicitacoesProvider.notifier)
-                .recusar(id, motivo);
+            await ref.read(solicitacoesProvider.notifier).recusar(id, motivo);
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Solicitação recusada.')),
+              const SnackBar(content: Text('Agendamento recusado.')),
             );
           } on ApiException catch (e) {
             if (!mounted) return;
@@ -95,8 +92,7 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
         0;
 
     final aprovadasHoje = solicitacoesAsync.valueOrNull
-            ?.where((s) =>
-                s.status == 'aprovada' && s.dataSolicitada == today)
+            ?.where((s) => s.status == 'aprovada' && s.dataSolicitada == today)
             .length ??
         0;
 
@@ -106,11 +102,11 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
         0;
 
     return AppScreenScaffold(
-      currentRoute: AppRoutes.solicitacoes,
-      title: 'Solicitações de Live',
-      eyebrow: 'Agendamentos',
+      currentRoute: AppRoutes.agendamentos,
+      title: 'Agendamentos de Lives',
+      eyebrow: 'Agenda operacional',
       titleSerif: true,
-      subtitle: 'Aprove ou recuse solicitações dos clientes.',
+      subtitle: 'Aprove, recuse e acompanhe pedidos de horário dos clientes.',
       child: Column(
         children: [
           // ── KPI Strip ──
@@ -129,7 +125,7 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
                             child: KpiAccentCard(
                               label: 'Aguardando você',
                               value: '$pendentesCount',
-                              sub: 'solicitações pendentes',
+                              sub: 'agendamentos pendentes',
                               accentTop: true,
                             ),
                           ),
@@ -168,7 +164,7 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
                       child: KpiAccentCard(
                         label: 'Aguardando você',
                         value: '$pendentesCount',
-                        sub: 'solicitações pendentes',
+                        sub: 'agendamentos pendentes',
                         accentTop: true,
                       ),
                     ),
@@ -191,7 +187,8 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
                       ),
                     ),
                     const SizedBox(width: AppSpacing.x3),
-                    const Expanded(child: KpiAccentCard(
+                    const Expanded(
+                        child: KpiAccentCard(
                       label: 'Tempo médio',
                       value: '—',
                       sub: 'para resposta',
@@ -229,12 +226,10 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
           // ── Conteúdo ──
           Expanded(
             child: solicitacoesAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.all(AppSpacing.x6),
+                  padding: const EdgeInsets.all(AppSpacing.x6),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -245,9 +240,8 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
                           textAlign: TextAlign.center),
                       const SizedBox(height: AppSpacing.x2),
                       AppSecondaryButton(
-                        onPressed: () => ref
-                            .read(solicitacoesProvider.notifier)
-                            .refresh(),
+                        onPressed: () =>
+                            ref.read(solicitacoesProvider.notifier).refresh(),
                         label: 'Tentar novamente',
                       ),
                     ],
@@ -255,9 +249,8 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
                 ),
               ),
               data: (solicitacoes) {
-                final pendentes = solicitacoes
-                    .where((s) => s.status == 'pendente')
-                    .toList();
+                final pendentes =
+                    solicitacoes.where((s) => s.status == 'pendente').toList();
 
                 return TabBarView(
                   controller: _tabController,
@@ -266,25 +259,23 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
                     _SolicitacoesLista(
                       items: pendentes,
                       emptyIcon: Icons.check_circle_outline_rounded,
-                      emptyMessage: 'Nenhuma solicitação pendente',
+                      emptyMessage: 'Nenhum agendamento pendente',
                       showActions: true,
                       onAprovar: _aprovar,
                       onRecusar: _recusar,
-                      onRefresh: () => ref
-                          .read(solicitacoesProvider.notifier)
-                          .refresh(),
+                      onRefresh: () =>
+                          ref.read(solicitacoesProvider.notifier).refresh(),
                     ),
                     // Tab 1: Todas
                     _SolicitacoesLista(
                       items: solicitacoes,
                       emptyIcon: Icons.inbox_outlined,
-                      emptyMessage: 'Nenhuma solicitação registrada',
+                      emptyMessage: 'Nenhum agendamento registrado',
                       showActions: false,
                       onAprovar: _aprovar,
                       onRecusar: _recusar,
-                      onRefresh: () => ref
-                          .read(solicitacoesProvider.notifier)
-                          .refresh(),
+                      onRefresh: () =>
+                          ref.read(solicitacoesProvider.notifier).refresh(),
                     ),
                   ],
                 );
@@ -349,7 +340,7 @@ class _RecusarDialog extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────────────────────
-// Lista de solicitações (reutilizada em ambas as tabs)
+// Lista de agendamentos (reutilizada em ambas as tabs)
 // ──────────────────────────────────────────────────────────────
 
 class _SolicitacoesLista extends StatelessWidget {

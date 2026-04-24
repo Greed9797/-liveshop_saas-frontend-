@@ -64,6 +64,7 @@ class AppRoutes {
   static const clientesLeads = '/clientes-leads';
   static const configuracoes = '/configuracoes';
   static const solicitacoes = '/solicitacoes';
+  static const agendamentos = '/agendamentos';
   static const analyticsDashboard = '/analytics-dashboard';
 
   static String routeForRole(String? role) {
@@ -386,6 +387,7 @@ class AppRoutes {
           settings: settings,
         );
 
+      case agendamentos:
       case solicitacoes:
         return buildPremiumRoute(
           child: const RoleRouteGuard(

@@ -491,9 +491,10 @@ class _MenuContent extends ConsumerWidget {
       if (!isClienteParceiro && !isApresentador)
         _MenuItem(
           icon: PhosphorIcons.calendarBlank(),
-          label: 'Solicitações',
-          route: AppRoutes.solicitacoes,
-          isSelected: currentRoute == AppRoutes.solicitacoes,
+          label: 'Agendamentos',
+          route: AppRoutes.agendamentos,
+          isSelected: currentRoute == AppRoutes.agendamentos ||
+              currentRoute == AppRoutes.solicitacoes,
           compact: compact,
         ),
       if (!isClienteParceiro && !isApresentador)
