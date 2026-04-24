@@ -774,7 +774,7 @@ class _ToolbarSection extends StatelessWidget {
       case 'ao_vivo':
         return 'Ao vivo';
       case 'disponivel':
-        return 'Livres';
+        return 'Disponível';
       case 'manutencao':
         return 'Manutenção';
       default:

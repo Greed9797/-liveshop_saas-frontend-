@@ -139,13 +139,25 @@ class _BoletosTabState extends ConsumerState<BoletosTab> {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível abrir o boleto.')),
+          const SnackBar(
+            content: Text(
+              'Não foi possível abrir o boleto. '
+              'Permita pop-ups para este site e tente novamente.',
+            ),
+            duration: Duration(seconds: 5),
+          ),
         );
       }
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível abrir o boleto.')),
+        const SnackBar(
+          content: Text(
+            'Não foi possível abrir o boleto. '
+            'Permita pop-ups para este site e tente novamente.',
+          ),
+          duration: Duration(seconds: 5),
+        ),
       );
     }
   }
