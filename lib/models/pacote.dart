@@ -17,13 +17,21 @@ class Pacote {
     required this.ativo,
   });
 
+  static double _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value.replaceAll(',', '.')) ?? 0.0;
+    }
+    return 0.0;
+  }
+
   factory Pacote.fromJson(Map<String, dynamic> j) => Pacote(
         id: j['id'] as String,
         nome: j['nome'] as String,
         descricao: j['descricao'] as String?,
-        valor: (j['valor'] as num? ?? 0).toDouble(),
-        horasIncluidas: (j['horas_incluidas'] as num? ?? 0).toDouble(),
-        comissaoPct: (j['comissao_pct'] as num? ?? 0).toDouble(),
+        valor: _toDouble(j['valor']),
+        horasIncluidas: _toDouble(j['horas_incluidas']),
+        comissaoPct: _toDouble(j['comissao_pct']),
         ativo: j['ativo'] as bool? ?? true,
       );
 
