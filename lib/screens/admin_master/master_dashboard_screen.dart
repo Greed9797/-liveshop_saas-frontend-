@@ -240,7 +240,7 @@ class _ExecutiveSummaryBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       color: AppColors.primaryLight,
-      borderColor: AppColors.primarySoft,
+      borderColor: context.colors.primarySoftFg.withValues(alpha: 0.3),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -412,7 +412,7 @@ class _RankingCard extends StatelessWidget {
                           height: 32,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: AppColors.primarySofter,
+                            color: context.colors.primarySoftBg,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(

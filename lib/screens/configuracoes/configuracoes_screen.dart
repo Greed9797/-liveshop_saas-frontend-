@@ -1418,7 +1418,7 @@ class _NavItem extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4, vertical: AppSpacing.x3),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.primarySofter : Colors.transparent,
+          color: isActive ? context.colors.primarySoftBg : Colors.transparent,
           border: isActive ? Border(left: BorderSide(color: AppColors.primary, width: 3)) : null,
         ),
         child: Row(

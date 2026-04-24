@@ -66,7 +66,7 @@ class MasterCrmScreen extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.x5),
                 AppCard(
                   color: AppColors.primaryLight,
-                  borderColor: AppColors.primarySoft,
+                  borderColor: context.colors.primarySoftFg.withValues(alpha: 0.3),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

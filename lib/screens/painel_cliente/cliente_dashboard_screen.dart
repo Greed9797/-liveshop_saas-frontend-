@@ -830,7 +830,7 @@ class _LiveDetailCard extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: live.encerradoEm == null
-                      ? AppColors.primarySofter
+                      ? context.colors.primarySoftBg
                       : AppColors.successBg,
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),

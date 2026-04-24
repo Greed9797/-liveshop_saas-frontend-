@@ -121,7 +121,7 @@ class RecomendacoesScreen extends ConsumerWidget {
                                 Container(
                                   width: 34, height: 34,
                                   decoration: BoxDecoration(
-                                    color: AppColors.primarySofter,
+                                    color: context.colors.primarySoftBg,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Icon(Icons.handshake_outlined,

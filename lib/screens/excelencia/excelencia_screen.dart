@@ -295,8 +295,8 @@ class _ScoreHeroCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.primarySofter,
-                      AppColors.primarySofter.withValues(alpha: 0.0),
+                      context.colors.primarySoftBg,
+                      context.colors.primarySoftBg.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
@@ -445,7 +445,7 @@ class _RoiBox extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.x4, vertical: AppSpacing.x4),
         decoration: BoxDecoration(
-          color: dimmed ? context.colors.bgMuted : AppColors.primarySofter,
+          color: dimmed ? context.colors.bgMuted : context.colors.primarySoftBg,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Column(
@@ -512,7 +512,7 @@ class _ActionItem extends StatelessWidget {
             height: 28,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.primarySofter,
+              color: context.colors.primarySoftBg,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Text(

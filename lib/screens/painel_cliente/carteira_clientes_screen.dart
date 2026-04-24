@@ -135,7 +135,7 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.x2, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.bgGradientStart,
+                          color: context.colors.primarySoftBg,
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Text(

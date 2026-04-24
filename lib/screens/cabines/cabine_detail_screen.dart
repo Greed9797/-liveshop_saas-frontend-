@@ -23,24 +23,10 @@ import '../../services/api_service.dart';
 class _Livelab {
   static const primary = Color(0xFFFF5A1F);
   static const primaryLight = Color(0xFFFF7A42);
-  static const primarySoft = Color(0xFFFFE8DC);
-  static const primarySofter = Color(0xFFFFF3EC);
-
-  static const bgBase = Color(0xFFFDF6F1);
-  static const bgCard = Color(0xFFFFFFFF);
-  static const bgMuted = Color(0xFFF5EBE3);
-
-  static const textPrimary = Color(0xFF1A1A1A);
-  static const textSecondary = Color(0xFF4A4A4A);
-  static const textMuted = Color(0xFF8A8A8A);
 
   static const success = Color(0xFF1FA968);
   static const warning = Color(0xFFE08A0B);
   static const danger = Color(0xFFE04B3C);
-
-  static const border = Color(0xFFEFE4DB);
-  static const borderStrong = Color(0xFFE1D2C4);
-  static const hairline = Color(0x0F1A1A1A); // rgba(26,26,26,0.06)
 }
 
 enum _Tone { blue, green, orange, pink, red, purple, yellow, cyan }
@@ -115,17 +101,17 @@ class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
           onPressed: () => ref
               .read(cabineDetailProvider(widget.cabineId).notifier)
               .refresh(),
-          color: _Livelab.textSecondary,
+          color: context.colors.textSecondary,
         ),
         IconButton(
           icon: const Icon(Icons.close),
           tooltip: 'Fechar',
           onPressed: () => Navigator.of(context).pop(),
-          color: _Livelab.textSecondary,
+          color: context.colors.textSecondary,
         ),
       ],
       child: Container(
-        color: _Livelab.bgBase,
+        color: context.colors.bgPage,
         child: Column(
           children: [
             _buildTabBar(numeroLabel),
@@ -172,9 +158,9 @@ class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
   Widget _buildTabBar(String numeroLabel) {
     return Container(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 8),
-      decoration: const BoxDecoration(
-        color: _Livelab.bgCard,
-        border: Border(bottom: BorderSide(color: _Livelab.border)),
+      decoration: BoxDecoration(
+        color: context.colors.bgCard,
+        border: Border(bottom: BorderSide(color: context.colors.borderSubtle)),
       ),
       child: Row(
         children: [
@@ -182,7 +168,7 @@ class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: _Livelab.primarySofter,
+              color: context.colors.primarySoftBg,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -201,7 +187,7 @@ class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
               controller: _tabController,
               isScrollable: false,
               labelColor: _Livelab.primary,
-              unselectedLabelColor: _Livelab.textMuted,
+              unselectedLabelColor: context.colors.textMuted,
               indicatorColor: _Livelab.primary,
               indicatorWeight: 2.5,
               indicatorSize: TabBarIndicatorSize.label,
@@ -275,9 +261,9 @@ class _LivelabError extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: _Livelab.textSecondary,
+                color: context.colors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -497,32 +483,32 @@ class _HeroLive extends StatelessWidget {
               final clientInfo = Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: DefaultTextStyle(
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
-                    color: _Livelab.textSecondary,
+                    color: context.colors.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                   child: Wrap(
                     spacing: 6,
                     children: [
-                      const Text('Cliente',
-                          style: TextStyle(color: _Livelab.textMuted)),
+                      Text('Cliente',
+                          style: TextStyle(color: context.colors.textMuted)),
                       Text(
                         live.clienteNome.isEmpty ? '—' : live.clienteNome,
-                        style: const TextStyle(
-                          color: _Livelab.textPrimary,
+                        style: TextStyle(
+                          color: context.colors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const Text('·', style: TextStyle(color: _Livelab.textMuted)),
-                      const Text('Closer',
-                          style: TextStyle(color: _Livelab.textMuted)),
+                      Text('·', style: TextStyle(color: context.colors.textMuted)),
+                      Text('Closer',
+                          style: TextStyle(color: context.colors.textMuted)),
                       Text(
                         live.apresentadorNome.isEmpty
                             ? '—'
                             : live.apresentadorNome,
-                        style: const TextStyle(
-                          color: _Livelab.textPrimary,
+                        style: TextStyle(
+                          color: context.colors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -536,14 +522,14 @@ class _HeroLive extends StatelessWidget {
                 children: [
                   Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.timer_outlined, size: 14, color: _Livelab.textMuted),
-                      SizedBox(width: 6),
+                    children: [
+                      Icon(Icons.timer_outlined, size: 14, color: context.colors.textMuted),
+                      const SizedBox(width: 6),
                       Text(
                         'Em transmissão há',
                         style: TextStyle(
                           fontSize: 12,
-                          color: _Livelab.textMuted,
+                          color: context.colors.textMuted,
                         ),
                       ),
                     ],
@@ -551,11 +537,11 @@ class _HeroLive extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     horas > 0 ? '${horas}h ${mins.toString().padLeft(2, '0')}min' : '${mins}min',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.6,
-                      color: _Livelab.textPrimary,
+                      color: context.colors.textPrimary,
                     ),
                   ),
                 ],
@@ -766,8 +752,8 @@ class _MetricTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: _Livelab.bgCard,
-        border: Border.all(color: _Livelab.border),
+        color: context.colors.bgCard,
+        border: Border.all(color: context.colors.borderSubtle),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -788,11 +774,11 @@ class _MetricTile extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.4,
-              color: _Livelab.textPrimary,
+              color: context.colors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
@@ -800,9 +786,9 @@ class _MetricTile extends StatelessWidget {
             label,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11.5,
-              color: _Livelab.textMuted,
+              color: context.colors.textMuted,
               height: 1.3,
             ),
           ),
@@ -844,7 +830,7 @@ class _AudienceCard extends StatelessWidget {
                     withDot: true,
                   ),
                   _ChipBadge(
-                    color: _Livelab.textMuted,
+                    color: context.colors.textMuted,
                     label: 'Pico $peak',
                   ),
                 ],
@@ -858,6 +844,7 @@ class _AudienceCard extends StatelessWidget {
               painter: _SparklinePainter(
                 current: current.toDouble(),
                 peak: peak.toDouble(),
+                borderColor: context.colors.borderSubtle,
               ),
               size: const Size.fromHeight(160),
             ),
@@ -871,8 +858,13 @@ class _AudienceCard extends StatelessWidget {
 class _SparklinePainter extends CustomPainter {
   final double current;
   final double peak;
+  final Color borderColor;
 
-  _SparklinePainter({required this.current, required this.peak});
+  _SparklinePainter({
+    required this.current,
+    required this.peak,
+    required this.borderColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -889,7 +881,7 @@ class _SparklinePainter extends CustomPainter {
 
     // Grid dashes
     final gridPaint = Paint()
-      ..color = _Livelab.border
+      ..color = borderColor
       ..strokeWidth = 1;
     for (var i = 0; i < 3; i++) {
       final y = pad + i * (h - pad * 2) / 2;
@@ -1009,7 +1001,7 @@ class _SparklinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SparklinePainter old) =>
-      old.current != current || old.peak != peak;
+      old.current != current || old.peak != peak || old.borderColor != borderColor;
 }
 
 // ─── Card do canal TikTok ──────────────────────────────────────────────────
@@ -1118,10 +1110,10 @@ class _TiktokChannelCardState extends ConsumerState<_TiktokChannelCard> {
                       has ? '@${widget.username}' : 'Canal não vinculado',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: _Livelab.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                     ),
                   ),
@@ -1140,9 +1132,9 @@ class _TiktokChannelCardState extends ConsumerState<_TiktokChannelCard> {
                 has
                     ? 'Canal TikTok vinculado · conector ativo'
                     : 'Vincule o @username para iniciar o monitoramento',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: _Livelab.textMuted,
+                  color: context.colors.textMuted,
                 ),
               ),
             ],
@@ -1153,7 +1145,7 @@ class _TiktokChannelCardState extends ConsumerState<_TiktokChannelCard> {
           icon: Icon(
             has ? Icons.edit_outlined : Icons.add_rounded,
             size: 18,
-            color: _Livelab.textSecondary,
+            color: context.colors.textSecondary,
           ),
           tooltip: has ? 'Editar username' : 'Adicionar username',
           visualDensity: VisualDensity.compact,
@@ -1165,14 +1157,14 @@ class _TiktokChannelCardState extends ConsumerState<_TiktokChannelCard> {
   Widget _buildEditMode() {
     return Row(
       children: [
-        const Icon(Icons.music_note_rounded,
-            size: 18, color: _Livelab.textSecondary),
+        Icon(Icons.music_note_rounded,
+            size: 18, color: context.colors.textSecondary),
         const SizedBox(width: 10),
         Expanded(
           child: TextField(
             controller: _ctrl,
             autofocus: true,
-            style: const TextStyle(fontSize: 14, color: _Livelab.textPrimary),
+            style: TextStyle(fontSize: 14, color: context.colors.textPrimary),
             decoration: const InputDecoration(
               prefixText: '@',
               hintText: 'username',
@@ -1198,9 +1190,9 @@ class _TiktokChannelCardState extends ConsumerState<_TiktokChannelCard> {
               _editing = false;
               _ctrl.text = widget.username ?? '';
             }),
-            child: const Text(
+            child: Text(
               'Cancelar',
-              style: TextStyle(color: _Livelab.textMuted),
+              style: TextStyle(color: context.colors.textMuted),
             ),
           ),
           FilledButton(
@@ -1250,7 +1242,7 @@ class _BusinessInfoCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: _Livelab.primarySofter,
+                  color: context.colors.primarySoftBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.work_outline_rounded,
@@ -1266,7 +1258,7 @@ class _BusinessInfoCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          const Divider(color: _Livelab.hairline, height: 1),
+          Divider(color: context.colors.borderSubtle.withValues(alpha: 0.06), height: 1),
           const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -1337,11 +1329,11 @@ class _InfoCell extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10.5,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.6,
-            color: _Livelab.textMuted,
+            color: context.colors.textMuted,
           ),
         ),
         const SizedBox(height: 4),
@@ -1353,7 +1345,7 @@ class _InfoCell extends StatelessWidget {
             fontSize: 14,
             fontWeight: FontWeight.w600,
             fontFamily: mono ? 'monospace' : null,
-            color: color ?? _Livelab.textPrimary,
+            color: color ?? context.colors.textPrimary,
           ),
         ),
       ],
@@ -1501,12 +1493,12 @@ class _CloserNotifyCardState extends ConsumerState<_CloserNotifyCard> {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_Livelab.primarySofter, _Livelab.bgCard],
+          colors: [context.colors.primarySoftBg, context.colors.bgCard],
         ),
-        border: Border.all(color: _Livelab.primarySoft),
+        border: Border.all(color: context.colors.primarySoftBg),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -1531,21 +1523,21 @@ class _CloserNotifyCardState extends ConsumerState<_CloserNotifyCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       'Notificar o Closer',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: _Livelab.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Envie instruções discretas — aparece como pop-up de 8s no app do apresentador, sem interromper a live.',
                       style: TextStyle(
                         fontSize: 12.5,
                         height: 1.5,
-                        color: _Livelab.textSecondary,
+                        color: context.colors.textSecondary,
                       ),
                     ),
                   ],
@@ -1567,16 +1559,16 @@ class _CloserNotifyCardState extends ConsumerState<_CloserNotifyCard> {
             }).toList(),
           ),
           const SizedBox(height: 16),
-          const Divider(color: _Livelab.hairline, height: 1),
+          Divider(color: context.colors.borderSubtle.withValues(alpha: 0.06), height: 1),
           const SizedBox(height: 14),
           // Campo de mensagem personalizada
-          const Text(
+          Text(
             'MENSAGEM PERSONALIZADA',
             style: TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
-              color: _Livelab.textMuted,
+              color: context.colors.textMuted,
             ),
           ),
           const SizedBox(height: 8),
@@ -1586,19 +1578,19 @@ class _CloserNotifyCardState extends ConsumerState<_CloserNotifyCard> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: _Livelab.bgCard,
+                    color: context.colors.bgCard,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: _Livelab.border),
+                    border: Border.all(color: context.colors.borderSubtle),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: TextField(
                     controller: _customCtrl,
                     maxLines: 2,
                     maxLength: 500,
-                    style: const TextStyle(fontSize: 13, color: _Livelab.textPrimary),
-                    decoration: const InputDecoration(
+                    style: TextStyle(fontSize: 13, color: context.colors.textPrimary),
+                    decoration: InputDecoration(
                       hintText: 'Ex: Mostre o produto novo na câmera e fale do preço especial hoje.',
-                      hintStyle: TextStyle(fontSize: 13, color: _Livelab.textMuted),
+                      hintStyle: TextStyle(fontSize: 13, color: context.colors.textMuted),
                       border: InputBorder.none,
                       counterText: '',
                       isDense: true,
@@ -1658,16 +1650,16 @@ class _TemplateChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: _Livelab.bgCard,
+      color: context.colors.bgCard,
       borderRadius: BorderRadius.circular(999),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        hoverColor: _Livelab.primarySoft.withValues(alpha: 0.4),
+        hoverColor: context.colors.primarySoftBg.withValues(alpha: 0.4),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: _Livelab.border),
+            border: Border.all(color: context.colors.borderSubtle),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
@@ -1677,10 +1669,10 @@ class _TemplateChip extends StatelessWidget {
               const SizedBox(width: 7),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
-                  color: _Livelab.textPrimary,
+                  color: context.colors.textPrimary,
                 ),
               ),
             ],
@@ -1787,16 +1779,16 @@ class _MelhoresHorariosCard extends StatelessWidget {
       return _LivelabCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            _CardTitle(
+          children: [
+            const _CardTitle(
               title: 'Melhores horários',
               subtitle:
                   'Prime time da cabine baseado no GMV médio das lives encerradas',
             ),
-            SizedBox(height: 18),
+            const SizedBox(height: 18),
             Text(
               'Ainda não há janelas com dados suficientes para sugerir horários vencedores.',
-              style: TextStyle(color: _Livelab.textMuted, fontSize: 13),
+              style: TextStyle(color: context.colors.textMuted, fontSize: 13),
             ),
           ],
         ),
@@ -1887,7 +1879,7 @@ class _HorarioBar extends StatelessWidget {
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: FontWeight.w600,
-            color: isBest ? _Livelab.primary : _Livelab.textMuted,
+            color: isBest ? _Livelab.primary : context.colors.textMuted,
           ),
         ),
         const SizedBox(height: 8),
@@ -1920,7 +1912,7 @@ class _HorarioBar extends StatelessWidget {
                                     ],
                                   )
                                 : null,
-                            color: isBest ? null : _Livelab.bgMuted,
+                            color: isBest ? null : context.colors.bgMuted,
                             borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(12),
                               bottom: Radius.circular(3),
@@ -1974,7 +1966,7 @@ class _HorarioBar extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: isBest ? FontWeight.w600 : FontWeight.w500,
-            color: isBest ? _Livelab.primary : _Livelab.textMuted,
+            color: isBest ? _Livelab.primary : context.colors.textMuted,
           ),
         ),
       ],
@@ -1993,15 +1985,15 @@ class _TopClientesCard extends StatelessWidget {
       return _LivelabCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            _CardTitle(
+          children: [
+            const _CardTitle(
               title: 'Top clientes da cabine',
               subtitle: 'Ranking dos parceiros que mais monetizam nesta unidade',
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'Nenhum cliente com histórico de GMV nesta cabine ainda.',
-              style: TextStyle(color: _Livelab.textMuted, fontSize: 13),
+              style: TextStyle(color: context.colors.textMuted, fontSize: 13),
             ),
           ],
         ),
@@ -2034,7 +2026,7 @@ class _TopClientesCard extends StatelessWidget {
               isTop: i == 0,
             ),
             if (i < top.length - 1)
-              const Divider(color: _Livelab.hairline, height: 1),
+              Divider(color: context.colors.borderSubtle.withValues(alpha: 0.06), height: 1),
           ],
         ],
       ),
@@ -2064,7 +2056,7 @@ class _TopClienteRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: isTop ? _Livelab.primarySofter : Colors.transparent,
+        color: isTop ? context.colors.primarySoftBg : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -2073,7 +2065,7 @@ class _TopClienteRow extends StatelessWidget {
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: isTop ? _Livelab.primary : _Livelab.bgMuted,
+              color: isTop ? _Livelab.primary : context.colors.bgMuted,
               borderRadius: BorderRadius.circular(10),
             ),
             alignment: Alignment.center,
@@ -2082,7 +2074,7 @@ class _TopClienteRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: isTop ? Colors.white : _Livelab.textSecondary,
+                color: isTop ? Colors.white : context.colors.textSecondary,
               ),
             ),
           ),
@@ -2097,19 +2089,19 @@ class _TopClienteRow extends StatelessWidget {
                   nome,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
-                    color: _Livelab.textPrimary,
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 Text(
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11.5,
-                    color: _Livelab.textMuted,
+                    color: context.colors.textMuted,
                   ),
                 ),
               ],
@@ -2123,9 +2115,9 @@ class _TopClienteRow extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: sharePct.clamp(0, 1),
                 minHeight: 6,
-                backgroundColor: _Livelab.bgMuted,
+                backgroundColor: context.colors.bgMuted,
                 valueColor: AlwaysStoppedAnimation(
-                  isTop ? _Livelab.primary : _Livelab.borderStrong,
+                  isTop ? _Livelab.primary : context.colors.borderStrong,
                 ),
               ),
             ),
@@ -2141,7 +2133,7 @@ class _TopClienteRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: isTop ? _Livelab.primary : _Livelab.textPrimary,
+                color: isTop ? _Livelab.primary : context.colors.textPrimary,
               ),
             ),
           ),
@@ -2209,12 +2201,12 @@ class _LeituraEficienciaCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_Livelab.primarySofter, _Livelab.bgCard],
+          colors: [context.colors.primarySoftBg, context.colors.bgCard],
         ),
-        border: Border.all(color: _Livelab.primarySoft),
+        border: Border.all(color: context.colors.primarySoftBg),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -2235,18 +2227,18 @@ class _LeituraEficienciaCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Leitura de eficiência',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: _Livelab.textPrimary,
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 3),
-                const Text(
+                Text(
                   'Resumo executivo para o franqueado agir sem ruído operacional',
-                  style: TextStyle(fontSize: 12, color: _Livelab.textMuted),
+                  style: TextStyle(fontSize: 12, color: context.colors.textMuted),
                 ),
                 const SizedBox(height: 14),
                 for (var i = 0; i < bullets.length; i++)
@@ -2255,8 +2247,8 @@ class _LeituraEficienciaCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       border: i == 0
                           ? null
-                          : const Border(
-                              top: BorderSide(color: _Livelab.hairline)),
+                          : Border(
+                              top: BorderSide(color: context.colors.borderSubtle.withValues(alpha: 0.06))),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2273,10 +2265,10 @@ class _LeituraEficienciaCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             bullets[i].$2,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               height: 1.55,
-                              color: _Livelab.textSecondary,
+                              color: context.colors.textSecondary,
                             ),
                           ),
                         ),
@@ -2398,11 +2390,11 @@ class _HistoricoTabState extends State<_HistoricoTab> {
                   ),
                   const SizedBox(height: 14),
                   if (months.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 18),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
                       child: Text(
                         'Sem histórico de lives no período selecionado.',
-                        style: TextStyle(color: _Livelab.textMuted),
+                        style: TextStyle(color: context.colors.textMuted),
                       ),
                     )
                   else
@@ -2488,7 +2480,7 @@ class _SegmentedControl extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: _Livelab.bgMuted,
+        color: context.colors.bgMuted,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -2520,7 +2512,7 @@ class _SegButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: active ? _Livelab.bgCard : Colors.transparent,
+      color: active ? context.colors.bgCard : Colors.transparent,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
@@ -2532,7 +2524,7 @@ class _SegButton extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
-              color: active ? _Livelab.textPrimary : _Livelab.textMuted,
+              color: active ? context.colors.textPrimary : context.colors.textMuted,
             ),
           ),
         ),
@@ -2560,8 +2552,8 @@ class _EvolucaoMensalRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: showTopDivider
-          ? const BoxDecoration(
-              border: Border(top: BorderSide(color: _Livelab.hairline)),
+          ? BoxDecoration(
+              border: Border(top: BorderSide(color: context.colors.borderSubtle.withValues(alpha: 0.06))),
             )
           : null,
       child: Column(
@@ -2573,7 +2565,7 @@ class _EvolucaoMensalRow extends StatelessWidget {
                 width: 6,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: isBest ? _Livelab.primary : _Livelab.borderStrong,
+                  color: isBest ? _Livelab.primary : context.colors.borderStrong,
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
@@ -2585,19 +2577,19 @@ class _EvolucaoMensalRow extends StatelessWidget {
                   children: [
                     Text(
                       month.rotulo,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: _Livelab.textPrimary,
+                        color: context.colors.textPrimary,
                         fontFamily: 'monospace',
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${month.lives} ${month.lives == 1 ? "live" : "lives"} encerradas',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11.5,
-                        color: _Livelab.textMuted,
+                        color: context.colors.textMuted,
                       ),
                     ),
                   ],
@@ -2608,7 +2600,7 @@ class _EvolucaoMensalRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: isBest ? _Livelab.primary : _Livelab.textPrimary,
+                  color: isBest ? _Livelab.primary : context.colors.textPrimary,
                 ),
               ),
             ],
@@ -2635,13 +2627,13 @@ class _EvolucaoMensalRow extends StatelessWidget {
                                 ],
                               )
                             : null,
-                        color: isBest ? null : _Livelab.borderStrong,
+                        color: isBest ? null : context.colors.borderStrong,
                       ),
                     ),
                   ),
                   Expanded(
                     flex: ((1 - v) * 1000).toInt(),
-                    child: Container(height: 6, color: _Livelab.bgMuted),
+                    child: Container(height: 6, color: context.colors.bgMuted),
                   ),
                 ],
               ),
@@ -2661,11 +2653,11 @@ class _UltimasLivesTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (meses.isEmpty || meses.every((m) => m.lives == 0)) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 18),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 18),
         child: Text(
           'Sem lives encerradas no período.',
-          style: TextStyle(color: _Livelab.textMuted, fontSize: 13),
+          style: TextStyle(color: context.colors.textMuted, fontSize: 13),
         ),
       );
     }
@@ -2675,8 +2667,8 @@ class _UltimasLivesTable extends StatelessWidget {
         // Header
         Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: _Livelab.hairline)),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: context.colors.borderSubtle.withValues(alpha: 0.06))),
           ),
           child: Row(
             children: const [
@@ -2693,8 +2685,8 @@ class _UltimasLivesTable extends StatelessWidget {
         for (final m in meses.where((m) => m.lives > 0))
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: _Livelab.hairline)),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: context.colors.borderSubtle.withValues(alpha: 0.06))),
             ),
             child: Row(
               children: [
@@ -2702,10 +2694,10 @@ class _UltimasLivesTable extends StatelessWidget {
                   flex: 3,
                   child: Text(
                     m.rotulo,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: _Livelab.textPrimary,
+                      color: context.colors.textPrimary,
                       fontFamily: 'monospace',
                     ),
                   ),
@@ -2715,9 +2707,9 @@ class _UltimasLivesTable extends StatelessWidget {
                   child: Text(
                     m.lives.toString(),
                     textAlign: TextAlign.right,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: _Livelab.textSecondary,
+                      color: context.colors.textSecondary,
                     ),
                   ),
                 ),
@@ -2738,9 +2730,9 @@ class _UltimasLivesTable extends StatelessWidget {
                   child: Text(
                     _currencyFmt.format(m.lives > 0 ? m.gmv / m.lives : 0),
                     textAlign: TextAlign.right,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: _Livelab.textSecondary,
+                      color: context.colors.textSecondary,
                     ),
                   ),
                 ),
@@ -2762,11 +2754,11 @@ class _TableHeader extends StatelessWidget {
     return Text(
       label.toUpperCase(),
       textAlign: right ? TextAlign.right : TextAlign.left,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 10.5,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.6,
-        color: _Livelab.textMuted,
+        color: context.colors.textMuted,
       ),
     );
   }
@@ -2790,8 +2782,8 @@ class _LivelabCard extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: _Livelab.bgCard,
-        border: Border.all(color: _Livelab.border),
+        color: context.colors.bgCard,
+        border: Border.all(color: context.colors.borderSubtle),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -2820,10 +2812,10 @@ class _CardTitle extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: _Livelab.textPrimary,
+            color: context.colors.textPrimary,
             letterSpacing: -0.1,
           ),
         ),
@@ -2831,9 +2823,9 @@ class _CardTitle extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             subtitle!,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
-              color: _Livelab.textMuted,
+              color: context.colors.textMuted,
               height: 1.4,
             ),
           ),
@@ -2916,7 +2908,7 @@ class _EmptyState extends StatelessWidget {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: _Livelab.primarySofter,
+                  color: context.colors.primarySoftBg,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(icon, size: 26, color: _Livelab.primary),
@@ -2925,10 +2917,10 @@ class _EmptyState extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: _Livelab.textPrimary,
+                  color: context.colors.textPrimary,
                   letterSpacing: -0.2,
                 ),
               ),
@@ -2936,9 +2928,9 @@ class _EmptyState extends StatelessWidget {
               Text(
                 description,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: _Livelab.textMuted,
+                  color: context.colors.textMuted,
                   height: 1.5,
                 ),
               ),

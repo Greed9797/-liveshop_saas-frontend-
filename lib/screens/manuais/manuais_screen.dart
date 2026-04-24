@@ -294,11 +294,11 @@ class _FeaturedManualCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.primarySofter, context.colors.bgCard],
+          colors: [context.colors.primarySoftBg, context.colors.bgCard],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
-        border: Border.all(color: AppColors.primarySoft),
+        border: Border.all(color: context.colors.primarySoftFg.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       padding: const EdgeInsets.all(AppSpacing.x5),

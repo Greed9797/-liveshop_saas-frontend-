@@ -49,7 +49,7 @@ class SolicitacaoCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primarySofter,
+                  color: context.colors.primarySoftBg,
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Text(

@@ -337,7 +337,7 @@ class AppKpiCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.primarySofter,
+                  color: context.colors.primarySoftBg,
                   borderRadius: AppRadius.smR,
                 ),
                 child: Icon(icon, size: 18, color: AppColors.primary),
@@ -441,6 +441,9 @@ class AppGradientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (Theme.of(context).brightness == Brightness.dark) {
+      return child;
+    }
     return Container(
       decoration: const BoxDecoration(gradient: AppColors.peachGradient),
       child: child,
@@ -625,7 +628,7 @@ class AppChip extends StatelessWidget {
         height: 32,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: active ? AppColors.primarySofter : context.colors.bgCard,
+          color: active ? context.colors.primarySoftBg : context.colors.bgCard,
           border: Border.all(
             color: active ? AppColors.primary : context.colors.borderSubtle,
           ),
@@ -949,7 +952,7 @@ class AppTable extends StatelessWidget {
                 return InkWell(
                   onTap: row.onTap,
                   hoverColor: hoverHighlight
-                      ? AppColors.primarySofter
+                      ? context.colors.primarySoftBg
                       : Colors.transparent,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -963,7 +966,7 @@ class AppTable extends StatelessWidget {
           if (footer != null)
             TableRow(
               decoration: BoxDecoration(
-                color: AppColors.primarySofter,
+                color: context.colors.primarySoftBg,
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(AppRadius.md),
                   bottomRight: Radius.circular(AppRadius.md),
@@ -1265,7 +1268,7 @@ class BigKpi extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                    color: AppColors.primarySofter,
+                    color: context.colors.primarySoftBg,
                     borderRadius: AppRadius.smR),
                 child: Icon(icon, size: 18, color: AppColors.primary),
               ),
@@ -1309,7 +1312,7 @@ class ChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.primarySofter,
+        color: context.colors.primarySoftBg,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: context.colors.borderSubtle),
       ),
@@ -1372,7 +1375,7 @@ class MetricCardRebrand extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                    color: AppColors.primarySofter,
+                    color: context.colors.primarySoftBg,
                     borderRadius: AppRadius.smR),
                 child: Icon(icon, size: 18, color: AppColors.primary),
               ),

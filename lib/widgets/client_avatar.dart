@@ -20,7 +20,7 @@ class ClientAvatar extends StatelessWidget {
     final (bg, fg) = switch (tone) {
       ClientAvatarTone.success => (AppColors.successBg, AppColors.success),
       ClientAvatarTone.warning => (AppColors.warningBg, AppColors.warning),
-      ClientAvatarTone.neutral => (AppColors.primarySofter, AppColors.primary),
+      ClientAvatarTone.neutral => (context.colors.primarySoftBg, AppColors.primary),
     };
     return Container(
       width: size, height: size,

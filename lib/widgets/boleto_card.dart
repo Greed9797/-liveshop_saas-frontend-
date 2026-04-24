@@ -65,7 +65,7 @@ class BoletoCard extends StatelessWidget {
                   children: [
                     Container(
                       width: 40, height: 40,
-                      decoration: BoxDecoration(color: AppColors.primarySofter, borderRadius: AppRadius.mdR),
+                      decoration: BoxDecoration(color: context.colors.primarySoftBg, borderRadius: AppRadius.mdR),
                       child: Icon(_categoriaIcon(), size: 20, color: AppColors.primary),
                     ),
                     const SizedBox(width: AppSpacing.x3),
@@ -111,9 +111,9 @@ class BoletoCard extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(AppSpacing.x3),
-              decoration: const BoxDecoration(
-                color: AppColors.primarySofter,
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(AppRadius.xl)),
+              decoration: BoxDecoration(
+                color: context.colors.primarySoftBg,
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(AppRadius.xl)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,

@@ -25,6 +25,8 @@ class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
     required this.iconMuted,
     required this.shimmerBase,
     required this.shimmerHighlight,
+    required this.primarySoftBg,
+    required this.primarySoftFg,
   });
 
   final Color bgPage;
@@ -46,6 +48,9 @@ class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
   final Color iconMuted;
   final Color shimmerBase;
   final Color shimmerHighlight;
+  // Background/foreground for soft-primary badges/pills (e.g. "CABINE 01" label)
+  final Color primarySoftBg;
+  final Color primarySoftFg;
 
   // ─── LIGHT (valores do AppColors atual) ────────────────────────────────────
   static const light = AppColorsTheme(
@@ -68,6 +73,8 @@ class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
     iconMuted: Color(0xFF8A8A8A),
     shimmerBase: Color(0xFFECE7E2),
     shimmerHighlight: Color(0xFFFDF6F1),
+    primarySoftBg: Color(0xFFFFF3EC),
+    primarySoftFg: Color(0xFFE8673C),
   );
 
   // ─── DARK (TikTok Studio palette) ──────────────────────────────────────────
@@ -91,6 +98,8 @@ class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
     iconMuted: Color(0xFF5C5C5C),
     shimmerBase: Color(0xFF2C2C2C),
     shimmerHighlight: Color(0xFF3A3A3A),
+    primarySoftBg: Color(0x2EE8673C),
+    primarySoftFg: Color(0xFFE8673C),
   );
 
   @override
@@ -114,6 +123,8 @@ class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
     Color? iconMuted,
     Color? shimmerBase,
     Color? shimmerHighlight,
+    Color? primarySoftBg,
+    Color? primarySoftFg,
   }) {
     return AppColorsTheme(
       bgPage: bgPage ?? this.bgPage,
@@ -135,6 +146,8 @@ class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
       iconMuted: iconMuted ?? this.iconMuted,
       shimmerBase: shimmerBase ?? this.shimmerBase,
       shimmerHighlight: shimmerHighlight ?? this.shimmerHighlight,
+      primarySoftBg: primarySoftBg ?? this.primarySoftBg,
+      primarySoftFg: primarySoftFg ?? this.primarySoftFg,
     );
   }
 
@@ -161,6 +174,8 @@ class AppColorsTheme extends ThemeExtension<AppColorsTheme> {
       iconMuted: Color.lerp(iconMuted, other.iconMuted, t)!,
       shimmerBase: Color.lerp(shimmerBase, other.shimmerBase, t)!,
       shimmerHighlight: Color.lerp(shimmerHighlight, other.shimmerHighlight, t)!,
+      primarySoftBg: Color.lerp(primarySoftBg, other.primarySoftBg, t)!,
+      primarySoftFg: Color.lerp(primarySoftFg, other.primarySoftFg, t)!,
     );
   }
 }
