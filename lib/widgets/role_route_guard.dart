@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
+import '../routes/app_routes.dart';
 
 class RoleRouteGuard extends ConsumerStatefulWidget {
   final Set<String> allowedRoles;
@@ -26,11 +27,9 @@ class _RoleRouteGuardState extends ConsumerState<RoleRouteGuard> {
 
   // Rota inicial correta por papel — evita cadeia de redirecionamentos
   // entre rotas protegidas que causa spinner infinito em Flutter Web.
-  static String _homeForRole(String papel) => switch (papel) {
-        'cliente_parceiro' => '/cliente',
-        'apresentador' => '/cabines',
-        _ => '/login',
-      };
+  // Reutiliza AppRoutes.routeForRole para cobrir todos os papéis suportados
+  // (franqueador_master, franqueado, gerente, apresentador, cliente_parceiro).
+  static String _homeForRole(String papel) => AppRoutes.routeForRole(papel);
 
   void _scheduleRedirect(String route) {
     if (_redirectScheduled) return;
