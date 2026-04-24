@@ -31,8 +31,6 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
   static const _statusFilters = [
     'todos',
     'ao_vivo',
-    'reservada',
-    'ativa',
     'disponivel',
     'manutencao',
   ];
@@ -182,64 +180,14 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
     }
   }
 
-  Future<void> _encerrarLive(Cabine cabine) async {
-    final fatCtrl = TextEditingController();
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Encerrar Live'),
-        content: AppTextField(
-          controller: fatCtrl,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          hint: r'Faturamento gerado (R$)',
-          prefixIcon: Icons.attach_money,
-        ),
-        actions: [
-          AppSecondaryButton(
-            onPressed: () => Navigator.pop(context, false),
-            label: 'Cancelar',
-          ),
-          const SizedBox(width: AppSpacing.x2),
-          AppPrimaryButton(
-            onPressed: () => Navigator.pop(context, true),
-            label: 'Encerrar',
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || cabine.liveAtualId == null) return;
-
-    final fatGerado = double.tryParse(fatCtrl.text.replaceAll(',', '.')) ?? 0;
-    try {
-      await ref
-          .read(cabinesProvider.notifier)
-          .encerrarLive(cabine.liveAtualId!, fatGerado);
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                'Live encerrada na cabine ${cabine.numero.toString().padLeft(2, '0')}.')),
-      );
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiService.extractErrorMessage(error))),
-      );
-    }
-  }
-
   Future<void> _showTiktokDialog(Cabine cabine) async {
     if (cabine.contratoId == null) return;
-    final ctrl = TextEditingController(
-        text: cabine.tiktokUsername ?? '');
+    final ctrl = TextEditingController(text: cabine.tiktokUsername ?? '');
+    bool saving = false;
     await showDialog<void>(
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setDlg) {
-          bool saving = false;
           return AlertDialog(
             title: Text(
                 'TikTok — Cabine ${cabine.numero.toString().padLeft(2, '0')}'),
@@ -262,22 +210,19 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
                     ? null
                     : () async {
                         setDlg(() => saving = true);
-                        final username = ctrl.text
-                            .trim()
-                            .replaceAll('@', '');
+                        final username = ctrl.text.trim().replaceAll('@', '');
                         try {
                           await ref
                               .read(contratosProvider.notifier)
-                              .setTiktokUsername(
-                                  cabine.contratoId!, username);
+                              .setTiktokUsername(cabine.contratoId!, username);
                           ref.invalidate(cabinesProvider);
                           if (ctx.mounted) Navigator.pop(ctx);
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                  content: Text(
-                                      ApiService.extractErrorMessage(e))),
+                                  content:
+                                      Text(ApiService.extractErrorMessage(e))),
                             );
                           }
                           setDlg(() => saving = false);
@@ -331,7 +276,8 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
       title: 'Painel de Cabines',
       eyebrow: 'Operação ao Vivo',
       titleSerif: true,
-      subtitle: 'Visão operacional da unidade: ao vivo, reservadas e rendimento.',
+      subtitle:
+          'Visão operacional da unidade: ao vivo, reservadas e rendimento.',
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
@@ -384,7 +330,6 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
                 onReservar: (cabine) =>
                     _reservarCabine(cabine, isDesktop: isDesktop),
                 onIniciarLive: _iniciarLive,
-                onEncerrarLive: _encerrarLive,
                 onLiberar: _liberarCabine,
                 onEditTiktokUsername: _showTiktokDialog,
               );
@@ -443,7 +388,6 @@ class _MainOperationalArea extends StatelessWidget {
   final ValueChanged<Cabine> onCabineDoubleTap;
   final ValueChanged<Cabine> onReservar;
   final ValueChanged<Cabine> onIniciarLive;
-  final ValueChanged<Cabine> onEncerrarLive;
   final ValueChanged<Cabine> onLiberar;
   final ValueChanged<Cabine> onEditTiktokUsername;
 
@@ -464,7 +408,6 @@ class _MainOperationalArea extends StatelessWidget {
     required this.onCabineDoubleTap,
     required this.onReservar,
     required this.onIniciarLive,
-    required this.onEncerrarLive,
     required this.onLiberar,
     required this.onEditTiktokUsername,
   });
@@ -493,7 +436,8 @@ class _MainOperationalArea extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x6, AppSpacing.x6, 0),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x6, AppSpacing.x6, AppSpacing.x6, 0),
           sliver: SliverToBoxAdapter(
             child: _HeaderSection(
               onOpenQueue: onOpenQueue,
@@ -503,13 +447,15 @@ class _MainOperationalArea extends StatelessWidget {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x4, AppSpacing.x6, 0),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x6, AppSpacing.x4, AppSpacing.x6, 0),
           sliver: SliverToBoxAdapter(
             child: _KpiSection(metrics: metrics),
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x4, AppSpacing.x6, 0),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x6, AppSpacing.x4, AppSpacing.x6, 0),
           sliver: SliverToBoxAdapter(
             child: _ToolbarSection(
               controller: searchController,
@@ -522,7 +468,8 @@ class _MainOperationalArea extends StatelessWidget {
         ),
         if (!isDesktop && selectedContrato != null)
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x4, AppSpacing.x6, 0),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x6, AppSpacing.x4, AppSpacing.x6, 0),
             sliver: SliverToBoxAdapter(
               child: _SelectedContractBanner(
                 contrato: selectedContrato!,
@@ -531,7 +478,8 @@ class _MainOperationalArea extends StatelessWidget {
             ),
           ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x3, AppSpacing.x6, AppSpacing.x4),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x6, AppSpacing.x3, AppSpacing.x6, AppSpacing.x4),
           sliver: cabines.isEmpty
               ? const SliverFillRemaining(
                   hasScrollBody: false,
@@ -554,9 +502,6 @@ class _MainOperationalArea extends StatelessWidget {
                         onIniciarLive: (cabine.status == 'reservada' ||
                                 cabine.status == 'ativa')
                             ? () => onIniciarLive(cabine)
-                            : null,
-                        onEncerrarLive: cabine.status == 'ao_vivo'
-                            ? () => onEncerrarLive(cabine)
                             : null,
                         onLiberar: (cabine.status == 'reservada' ||
                                 cabine.status == 'ativa')
@@ -629,11 +574,6 @@ class _KpiSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gmvLabel = NumberFormat.currency(
-      locale: 'pt_BR',
-      symbol: 'R\$',
-    ).format(metrics.gmvTotalHoje);
-
     return Column(
       children: [
         // 4 KPIs operacionais
@@ -670,21 +610,14 @@ class _KpiSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.x3),
-        // 2 KPIs destacados (GMV + Audiência)
+        // KPI operacional destacado
         ResponsiveGrid(
           mobileColumns: 1,
-          tabletColumns: 2,
-          desktopColumns: 2,
+          tabletColumns: 1,
+          desktopColumns: 1,
           spacing: AppSpacing.x3,
           runSpacing: AppSpacing.x3,
           children: [
-            _FeaturedKpiCard(
-              label: 'GMV total hoje',
-              value: gmvLabel,
-              sub: 'soma do que está no ar · atualizando agora',
-              valueColor: AppColors.primary,
-              gradient: true,
-            ),
             _FeaturedKpiCard(
               label: 'Audiência simultânea',
               value: metrics.audienciaTotal.toString(),
@@ -702,15 +635,11 @@ class _FeaturedKpiCard extends StatelessWidget {
   final String label;
   final String value;
   final String sub;
-  final Color? valueColor;
-  final bool gradient;
 
   const _FeaturedKpiCard({
     required this.label,
     required this.value,
     required this.sub,
-    this.valueColor,
-    this.gradient = false,
   });
 
   @override
@@ -718,14 +647,7 @@ class _FeaturedKpiCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.x5),
       decoration: BoxDecoration(
-        gradient: gradient
-            ? const LinearGradient(
-                colors: [AppColors.primarySofter, AppColors.bgCard],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        color: gradient ? null : AppColors.bgCard,
+        color: AppColors.bgCard,
         border: Border.all(color: AppColors.borderLight),
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
@@ -751,7 +673,7 @@ class _FeaturedKpiCard extends StatelessWidget {
                 fontSize: 32,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -1,
-                color: valueColor ?? AppColors.textPrimary,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -783,8 +705,6 @@ class _ToolbarSection extends StatelessWidget {
 
   int _countFor(String status) => switch (status) {
         'ao_vivo' => metrics.aoVivo,
-        'reservada' => metrics.reservadas,
-        'ativa' => metrics.ativas,
         'disponivel' => metrics.disponiveis,
         'manutencao' => metrics.manutencao,
         _ => metrics.total,
@@ -829,10 +749,6 @@ class _ToolbarSection extends StatelessWidget {
     switch (status) {
       case 'ao_vivo':
         return 'Ao vivo';
-      case 'reservada':
-        return 'Reservadas';
-      case 'ativa':
-        return 'Ativas';
       case 'disponivel':
         return 'Livres';
       case 'manutencao':
@@ -876,9 +792,8 @@ class _ChipWithCount extends StatelessWidget {
                 label,
                 style: AppTypography.caption.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: active
-                      ? AppColors.textOnPrimary
-                      : AppColors.textPrimary,
+                  color:
+                      active ? AppColors.textOnPrimary : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(width: 6),
@@ -913,8 +828,7 @@ class _SelectedContractBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.bgGradientStart,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border:
-            Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
@@ -926,7 +840,9 @@ class _SelectedContractBanner extends StatelessWidget {
               children: [
                 Text(
                   'Contrato selecionado para ativação',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: AppSpacing.x1),
                 Text('${contrato.clienteNome} • ${contrato.localizacao}',
@@ -954,7 +870,6 @@ class _OperationalCard extends StatelessWidget {
   final VoidCallback? onDoubleTap;
   final VoidCallback? onReservar;
   final VoidCallback? onIniciarLive;
-  final VoidCallback? onEncerrarLive;
   final VoidCallback? onLiberar;
   final VoidCallback? onEditTiktokUsername;
 
@@ -967,29 +882,9 @@ class _OperationalCard extends StatelessWidget {
     this.onDoubleTap,
     this.onReservar,
     this.onIniciarLive,
-    this.onEncerrarLive,
     this.onLiberar,
     this.onEditTiktokUsername,
   });
-
-  String _trendLabel() {
-    if (cabine.status == 'ao_vivo' && cabine.viewerCount > 0) {
-      return cabine.gmvAtual > 500
-          ? '↑ acima da média da unidade'
-          : '→ operação estável';
-    }
-
-    if (cabine.status == 'reservada') {
-      return 'Pronta para ativação';
-    }
-    if (cabine.status == 'ativa') {
-      return 'Contrato vigente aguardando próxima live';
-    }
-    if (cabine.status == 'disponivel') {
-      return 'Capacidade ociosa disponível';
-    }
-    return 'Intervenção técnica necessária';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1002,8 +897,7 @@ class _OperationalCard extends StatelessWidget {
             onTap: onTap,
             onDoubleTap: onDoubleTap,
             isSelected: isSelected,
-            isSelectable:
-                hasSelectedContrato && cabine.status == 'disponivel',
+            isSelectable: hasSelectedContrato && cabine.status == 'disponivel',
             onEditTiktokUsername: onEditTiktokUsername,
           ),
         ),
@@ -1012,7 +906,6 @@ class _OperationalCard extends StatelessWidget {
           cabine: cabine,
           onReservar: onReservar,
           onIniciarLive: onIniciarLive,
-          onEncerrarLive: onEncerrarLive,
           onLiberar: onLiberar,
         ),
       ],
@@ -1024,25 +917,19 @@ class _OperationalActions extends StatelessWidget {
   final Cabine cabine;
   final VoidCallback? onReservar;
   final VoidCallback? onIniciarLive;
-  final VoidCallback? onEncerrarLive;
   final VoidCallback? onLiberar;
 
   const _OperationalActions({
     required this.cabine,
     this.onReservar,
     this.onIniciarLive,
-    this.onEncerrarLive,
     this.onLiberar,
   });
 
   @override
   Widget build(BuildContext context) {
     if (cabine.status == 'ao_vivo') {
-      return AppDangerButton(
-        label: 'ENCERRAR LIVE',
-        icon: Icons.stop_circle_rounded,
-        onPressed: onEncerrarLive ?? () {},
-      );
+      return const SizedBox.shrink();
     }
 
     if (cabine.status == 'reservada' || cabine.status == 'ativa') {
@@ -1178,20 +1065,34 @@ class _SelectedCabinePanel extends ConsumerWidget {
     // sempre mostra números quando cabine está AO VIVO no grid.
     final isAoVivo = cabine?.status == 'ao_vivo';
 
-    final viewers  = sse?.viewerCount   ?? live?.viewerCount
-        ?? (isAoVivo ? cabine?.viewerCount : null) ?? 0;
-    final gmv      = sse?.gmv           ?? live?.gmvAtual
-        ?? (isAoVivo ? cabine?.gmvAtual : null) ?? 0.0;
-    final likes    = sse?.likesCount    ?? live?.likesCount
-        ?? (isAoVivo ? cabine?.likesCount : null) ?? 0;
-    final comments = sse?.commentsCount ?? live?.commentsCount
-        ?? (isAoVivo ? cabine?.commentsCount : null) ?? 0;
-    final shares   = sse?.sharesCount   ?? live?.sharesCount
-        ?? (isAoVivo ? cabine?.sharesCount : null) ?? 0;
-    final gifts    = sse?.giftsDiamonds ?? live?.giftsDiamonds
-        ?? (isAoVivo ? cabine?.giftsDiamonds : null) ?? 0;
-    final orders   = sse?.totalOrders   ?? live?.totalOrders
-        ?? (isAoVivo ? cabine?.totalOrders : null) ?? 0;
+    final viewers = sse?.viewerCount ??
+        live?.viewerCount ??
+        (isAoVivo ? cabine?.viewerCount : null) ??
+        0;
+    final gmv = sse?.gmv ??
+        live?.gmvAtual ??
+        (isAoVivo ? cabine?.gmvAtual : null) ??
+        0.0;
+    final likes = sse?.likesCount ??
+        live?.likesCount ??
+        (isAoVivo ? cabine?.likesCount : null) ??
+        0;
+    final comments = sse?.commentsCount ??
+        live?.commentsCount ??
+        (isAoVivo ? cabine?.commentsCount : null) ??
+        0;
+    final shares = sse?.sharesCount ??
+        live?.sharesCount ??
+        (isAoVivo ? cabine?.sharesCount : null) ??
+        0;
+    final gifts = sse?.giftsDiamonds ??
+        live?.giftsDiamonds ??
+        (isAoVivo ? cabine?.giftsDiamonds : null) ??
+        0;
+    final orders = sse?.totalOrders ??
+        live?.totalOrders ??
+        (isAoVivo ? cabine?.totalOrders : null) ??
+        0;
 
     return _SidebarCard(
       title: 'Cabine Selecionada',
@@ -1200,114 +1101,118 @@ class _SelectedCabinePanel extends ConsumerWidget {
               'Selecione uma cabine no grid para inspecionar a operação desta unidade.')
           : Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: AppBreakpoints.desktop),
+                constraints:
+                    const BoxConstraints(maxWidth: AppBreakpoints.desktop),
                 child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        'Cabine ${cabine!.numero.toString().padLeft(2, '0')}',
-                        style: AppTypography.h3.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    StatusBadge(status: cabine!.status),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.x3),
-                _InfoLine(
-                    label: 'Cliente',
-                    value: cabine!.clienteNome ?? 'Sem vínculo ativo'),
-                _InfoLine(
-                    label: 'Contrato',
-                    value:
-                        cabine!.contratoId?.substring(0, 8) ?? 'Sem contrato'),
-                _InfoLine(
-                    label: 'Apresentador',
-                    value: cabine!.apresentadorNome ?? 'A definir'),
-                const SizedBox(height: 12),
-                detailAsync.when(
-                  loading: () => const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: LinearProgressIndicator(minHeight: 3),
-                  ),
-                  error: (_, __) => const Text(
-                      'Não foi possível carregar os indicadores detalhados desta cabine.'),
-                  data: (detail) {
-                    // Mostra dados ao vivo sempre que a cabine está ao_vivo no grid
-                    // (mesmo que /live-atual tenha falhado — fallback usa dados do card)
-                    if (detail.liveAtual == null && !isAoVivo) {
-                      return const _InfoLine(label: 'GMV atual', value: 'Sem live agora');
-                    }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
                       children: [
-                        _InfoLine(
-                          label: 'GMV atual',
-                          value: 'R\$ ${gmv.toStringAsFixed(2)}',
+                        Expanded(
+                          child: Text(
+                            'Cabine ${cabine!.numero.toString().padLeft(2, '0')}',
+                            style: AppTypography.h3
+                                .copyWith(fontWeight: FontWeight.w700),
+                          ),
                         ),
-                        _InfoLine(
-                          label: 'Audiência',
-                          value: '$viewers espectadores',
-                        ),
-                        _InfoLine(
-                          label: 'Pedidos',
-                          value: '$orders',
-                        ),
-                        const SizedBox(height: AppSpacing.x2),
-                        // Engajamento ao vivo — atualiza via SSE
-                        Wrap(
-                          spacing: AppSpacing.x3,
-                          runSpacing: AppSpacing.x2,
+                        StatusBadge(status: cabine!.status),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.x3),
+                    _InfoLine(
+                        label: 'Cliente',
+                        value: cabine!.clienteNome ?? 'Sem vínculo ativo'),
+                    _InfoLine(
+                        label: 'Contrato',
+                        value: cabine!.contratoId?.substring(0, 8) ??
+                            'Sem contrato'),
+                    _InfoLine(
+                        label: 'Apresentador',
+                        value: cabine!.apresentadorNome ?? 'A definir'),
+                    const SizedBox(height: 12),
+                    detailAsync.when(
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: LinearProgressIndicator(minHeight: 3),
+                      ),
+                      error: (_, __) => const Text(
+                          'Não foi possível carregar os indicadores detalhados desta cabine.'),
+                      data: (detail) {
+                        // Mostra dados ao vivo sempre que a cabine está ao_vivo no grid
+                        // (mesmo que /live-atual tenha falhado — fallback usa dados do card)
+                        if (detail.liveAtual == null && !isAoVivo) {
+                          return const _InfoLine(
+                              label: 'GMV atual', value: 'Sem live agora');
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _EngajamentoChip(
-                              icon: Icons.favorite,
-                              color: AppColors.danger,
-                              value: likes,
-                              label: 'curtidas',
+                            _InfoLine(
+                              label: 'GMV atual',
+                              value: 'R\$ ${gmv.toStringAsFixed(2)}',
                             ),
-                            _EngajamentoChip(
-                              icon: Icons.chat_bubble_outline,
-                              color: AppColors.info,
-                              value: comments,
-                              label: 'comentários',
+                            _InfoLine(
+                              label: 'Audiência',
+                              value: '$viewers espectadores',
                             ),
-                            _EngajamentoChip(
-                              icon: Icons.share,
-                              color: AppColors.primary,
-                              value: shares,
-                              label: 'shares',
+                            _InfoLine(
+                              label: 'Pedidos',
+                              value: '$orders',
                             ),
-                            _EngajamentoChip(
-                              icon: Icons.card_giftcard,
-                              color: AppColors.warning,
-                              value: gifts,
-                              label: '💎',
+                            const SizedBox(height: AppSpacing.x2),
+                            // Engajamento ao vivo — atualiza via SSE
+                            Wrap(
+                              spacing: AppSpacing.x3,
+                              runSpacing: AppSpacing.x2,
+                              children: [
+                                _EngajamentoChip(
+                                  icon: Icons.favorite,
+                                  color: AppColors.danger,
+                                  value: likes,
+                                  label: 'curtidas',
+                                ),
+                                _EngajamentoChip(
+                                  icon: Icons.chat_bubble_outline,
+                                  color: AppColors.info,
+                                  value: comments,
+                                  label: 'comentários',
+                                ),
+                                _EngajamentoChip(
+                                  icon: Icons.share,
+                                  color: AppColors.primary,
+                                  value: shares,
+                                  label: 'shares',
+                                ),
+                                _EngajamentoChip(
+                                  icon: Icons.card_giftcard,
+                                  color: AppColors.warning,
+                                  value: gifts,
+                                  label: '💎',
+                                ),
+                              ],
                             ),
                           ],
-                        ),
-                      ],
-                    );
-                  },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.x3),
+                    if (cabine!.status == 'ao_vivo') ...[
+                      AppSecondaryButton(
+                        label: 'Ver Analytics Completo',
+                        icon: Icons.analytics_outlined,
+                        fullWidth: true,
+                        onPressed: () => Navigator.of(context)
+                            .pushNamed(AppRoutes.analyticsDashboard),
+                      ),
+                      const SizedBox(height: AppSpacing.x2),
+                    ],
+                    AppSecondaryButton(
+                      label: 'Ver Analítico',
+                      icon: Icons.analytics_outlined,
+                      onPressed: onOpenAnalyticalDetail ?? () {},
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.x3),
-                if (cabine!.status == 'ao_vivo') ...[
-                  AppSecondaryButton(
-                    label: 'Ver Analytics Completo',
-                    icon: Icons.analytics_outlined,
-                    fullWidth: true,
-                    onPressed: () => Navigator.of(context).pushNamed(AppRoutes.analyticsDashboard),
-                  ),
-                  const SizedBox(height: AppSpacing.x2),
-                ],
-                AppSecondaryButton(
-                  label: 'Ver Analítico',
-                  icon: Icons.analytics_outlined,
-                  onPressed: onOpenAnalyticalDetail ?? () {},
-                ),
-              ],
-            ),
               ),
             ),
     );
@@ -1369,8 +1274,7 @@ class _QueuePanel extends StatelessWidget {
                               : AppColors.bgBase,
                           border: Border.all(
                             color: isSelected
-                                ? AppColors.primary
-                                    .withValues(alpha: 0.35)
+                                ? AppColors.primary.withValues(alpha: 0.35)
                                 : AppColors.borderLight,
                           ),
                         ),
@@ -1379,15 +1283,17 @@ class _QueuePanel extends StatelessWidget {
                           children: [
                             Text(item.clienteNome,
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary)),
                             const SizedBox(height: AppSpacing.x1),
                             Text(item.localizacao,
-                                style: TextStyle(
-                                    color: AppColors.textSecondary)),
+                                style:
+                                    TextStyle(color: AppColors.textSecondary)),
                             const SizedBox(height: AppSpacing.x2),
                             Text(
                               'Contrato ${item.id.substring(0, 8)} • Fixo R\$ ${item.valorFixo.toStringAsFixed(2)}',
-                              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                              style: AppTypography.caption
+                                  .copyWith(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -1451,7 +1357,9 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                 _AnalyticsSummaryRow(resumo: analytics.resumoHoje),
                 const SizedBox(height: AppSpacing.x4),
                 Text('Top Closers da unidade',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary)),
                 const SizedBox(height: AppSpacing.x2),
                 if (analytics.rankingClosers.isEmpty)
                   Text('Nenhum closer com histórico suficiente ainda.',
@@ -1476,7 +1384,9 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                       ),
                 const SizedBox(height: AppSpacing.x4),
                 Text('Top Parceiros por volume',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary)),
                 const SizedBox(height: AppSpacing.x2),
                 if (analytics.rankingClientes.isEmpty)
                   Text('Nenhum parceiro com volume relevante ainda.',
@@ -1493,7 +1403,9 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                       ),
                 const SizedBox(height: AppSpacing.x4),
                 Text('Prime time da franquia',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary)),
                 const SizedBox(height: AppSpacing.x2),
                 if (analytics.heatmapHorarios.isEmpty)
                   Text(
@@ -1511,7 +1423,9 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                       ),
                 const SizedBox(height: AppSpacing.x4),
                 Text('Raio-X da cabine selecionada',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary)),
                 const SizedBox(height: AppSpacing.x2),
                 if (historico == null)
                   Text(
@@ -1519,8 +1433,7 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
                       style: TextStyle(color: AppColors.textSecondary))
                 else ...[
                   if (cabineTopClientes.isEmpty)
-                    Text(
-                        'Sem histórico de clientes para esta cabine ainda.',
+                    Text('Sem histórico de clientes para esta cabine ainda.',
                         style: TextStyle(color: AppColors.textSecondary))
                   else
                     ...cabineTopClientes.map(
@@ -1577,7 +1490,8 @@ class _SidebarCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w700)),
+              style: AppTypography.bodyLarge
+                  .copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: AppSpacing.x3),
           child,
         ],
@@ -1609,7 +1523,8 @@ class _InfoLine extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              style: TextStyle(
+                  fontWeight: FontWeight.w600, color: AppColors.textPrimary),
             ),
           ),
         ],
@@ -1633,11 +1548,16 @@ class _MetricRankRow extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: TextStyle(
+                fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           ),
         ),
         const SizedBox(width: AppSpacing.x2),
-        Flexible(child: Text(value, style: TextStyle(color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis)),
+        Flexible(
+            child: Text(value,
+                style: TextStyle(color: AppColors.textSecondary),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis)),
       ],
     );
   }
@@ -1674,15 +1594,16 @@ class _RankedMetricRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2, vertical: AppSpacing.x1),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x2, vertical: AppSpacing.x1),
           decoration: BoxDecoration(
             color: rankColor.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           child: Text(
             rankLabel,
-            style: AppTypography.caption.copyWith(
-                color: rankColor, fontWeight: FontWeight.w700),
+            style: AppTypography.caption
+                .copyWith(color: rankColor, fontWeight: FontWeight.w700),
           ),
         ),
         const SizedBox(width: AppSpacing.x3),
@@ -1690,10 +1611,14 @@ class _RankedMetricRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              Text(title,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: AppSpacing.x1),
               Text(subtitle,
-                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                  style: AppTypography.caption
+                      .copyWith(color: AppColors.textSecondary)),
             ],
           ),
         ),
@@ -1715,11 +1640,7 @@ class _AnalyticsSummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cards = [
-      (
-        'GMV hoje',
-        _currency.format(resumo.gmvTotalHoje),
-        AppColors.success
-      ),
+      ('GMV hoje', _currency.format(resumo.gmvTotalHoje), AppColors.success),
       ('Audiência', '${resumo.audienciaTotalAoVivo}', AppColors.primary),
       ('Lives hoje', '${resumo.totalLivesHoje}', AppColors.info),
     ];
@@ -1729,7 +1650,8 @@ class _AnalyticsSummaryRow extends StatelessWidget {
           .map(
             (item) => Expanded(
               child: Padding(
-                padding: EdgeInsets.only(right: item == cards.last ? 0 : AppSpacing.x2),
+                padding: EdgeInsets.only(
+                    right: item == cards.last ? 0 : AppSpacing.x2),
                 child: AppCard(
                   shadow: const [],
                   borderColor: AppColors.borderLight,
@@ -1738,7 +1660,8 @@ class _AnalyticsSummaryRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(item.$1,
-                          style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                          style: AppTypography.caption
+                              .copyWith(color: AppColors.textSecondary)),
                       const SizedBox(height: AppSpacing.x1),
                       Text(
                         item.$2,
@@ -1774,7 +1697,8 @@ class _CabinesEmptyState extends StatelessWidget {
               const SizedBox(height: AppSpacing.x3),
               Text(
                 'Ainda não existem cabines para essa unidade.',
-                style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+                style: AppTypography.bodyLarge
+                    .copyWith(fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.x6),
@@ -1800,14 +1724,16 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.x5, AppSpacing.x2, AppSpacing.x5, AppSpacing.x5),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.x5, AppSpacing.x2, AppSpacing.x5, AppSpacing.x5),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Fila de Ativação',
-              style: AppTypography.h2.copyWith(fontSize: 20, fontWeight: FontWeight.w700),
+              style: AppTypography.h2
+                  .copyWith(fontSize: 20, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: AppSpacing.x1),
             Text(
@@ -1832,7 +1758,8 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
                   return ListView.separated(
                     shrinkWrap: true,
                     itemCount: fila.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.x3),
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: AppSpacing.x3),
                     itemBuilder: (context, index) {
                       final item = fila[index];
                       return AppCard(
@@ -1844,17 +1771,17 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(item.clienteNome,
-                                style: AppTypography.bodyMedium.copyWith(
-                                    fontWeight: FontWeight.w700)),
+                                style: AppTypography.bodyMedium
+                                    .copyWith(fontWeight: FontWeight.w700)),
                             const SizedBox(height: AppSpacing.x1),
                             Text(item.localizacao,
-                                style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.textSecondary)),
+                                style: AppTypography.bodySmall
+                                    .copyWith(color: AppColors.textSecondary)),
                             const SizedBox(height: AppSpacing.x2),
                             Text(
                               'Contrato ${item.id.substring(0, 8)} • Fixo R\$ ${item.valorFixo.toStringAsFixed(2)} • Comissão ${item.comissaoPct.toStringAsFixed(0)}%',
-                              style: AppTypography.caption.copyWith(
-                                  color: AppColors.textSecondary),
+                              style: AppTypography.caption
+                                  .copyWith(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -1869,15 +1796,6 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _KpiCardData {
-  final String label;
-  final String value;
-  final Color color;
-  final String helper;
-
-  const _KpiCardData(this.label, this.value, this.color, this.helper);
 }
 
 // ─── METRICS ─────────────────────────────────────────────────────────────────
@@ -1933,8 +1851,8 @@ class _EngajamentoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.x2, vertical: 4),
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.x2, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.full),
@@ -1965,4 +1883,3 @@ class _EngajamentoChip extends StatelessWidget {
     );
   }
 }
-

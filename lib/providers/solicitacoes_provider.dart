@@ -8,8 +8,8 @@ import 'auth_provider.dart';
 
 class SolicitacaoFranqueador {
   final String id;
-  final String dataSolicitada;  // "YYYY-MM-DD"
-  final String horaInicio;      // "HH:MM:SS"
+  final String dataSolicitada; // "YYYY-MM-DD"
+  final String horaInicio; // "HH:MM:SS"
   final String horaFim;
   final String? observacao;
   final String status;
@@ -35,17 +35,17 @@ class SolicitacaoFranqueador {
 
   factory SolicitacaoFranqueador.fromJson(Map<String, dynamic> j) =>
       SolicitacaoFranqueador(
-        id:               j['id'] as String,
-        dataSolicitada:   j['data_solicitada'] as String,
-        horaInicio:       j['hora_inicio'] as String,
-        horaFim:          j['hora_fim'] as String,
-        observacao:       j['observacao'] as String?,
-        status:           j['status'] as String,
-        motivoRecusa:     j['motivo_recusa'] as String?,
-        criadoEm:         j['criado_em'] as String,
-        cabineNumero:     (j['cabine_numero'] as num).toInt(),
-        clienteNome:      j['cliente_nome'] as String,
-        solicitanteNome:  j['solicitante_nome'] as String,
+        id: j['id'] as String,
+        dataSolicitada: j['data_solicitada'] as String,
+        horaInicio: j['hora_inicio'] as String,
+        horaFim: j['hora_fim'] as String,
+        observacao: j['observacao'] as String?,
+        status: j['status'] as String,
+        motivoRecusa: j['motivo_recusa'] as String?,
+        criadoEm: j['criado_em'] as String,
+        cabineNumero: (j['cabine_numero'] as num).toInt(),
+        clienteNome: j['cliente_nome'] as String,
+        solicitanteNome: j['solicitante_nome'] as String,
       );
 
   String get horaInicioDisplay =>
@@ -58,8 +58,7 @@ class SolicitacaoFranqueador {
 // Notifier
 // ──────────────────────────────────────────────────────────────
 
-class SolicitacoesNotifier
-    extends AsyncNotifier<List<SolicitacaoFranqueador>> {
+class SolicitacoesNotifier extends AsyncNotifier<List<SolicitacaoFranqueador>> {
   @override
   Future<List<SolicitacaoFranqueador>> build() async {
     final authState = ref.watch(authProvider);
@@ -73,8 +72,7 @@ class SolicitacoesNotifier
     final resp =
         await ApiService.get('/solicitacoes', params: {'status': 'all'});
     return (resp.data as List)
-        .map((e) =>
-            SolicitacaoFranqueador.fromJson(e as Map<String, dynamic>))
+        .map((e) => SolicitacaoFranqueador.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
@@ -86,7 +84,7 @@ class SolicitacoesNotifier
   /// Aprova uma solicitação. Lança [ApiException] em caso de conflito (409)
   /// ou outro erro — a mensagem já vem em pt_BR pronta para exibição.
   Future<void> aprovar(String id) async {
-    await ApiService.patch('/solicitacoes/$id/aprovar');
+    await ApiService.patch('/solicitacoes/$id/aprovar', data: {});
     state = const AsyncLoading();
     state = await AsyncValue.guard(_fetch);
   }

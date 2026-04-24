@@ -38,7 +38,8 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final br = BorderRadius.circular(radius ?? AppRadius.xl);
 
-    final effectiveShadow = variant == AppCardVariant.flat ? null : (shadow ?? AppShadows.md);
+    final effectiveShadow =
+        variant == AppCardVariant.flat ? null : (shadow ?? AppShadows.md);
 
     final card = Container(
       padding: padding ?? const EdgeInsets.all(AppSpacing.x6),
@@ -46,7 +47,8 @@ class AppCard extends StatelessWidget {
         color: color ?? AppColors.bgCard,
         borderRadius: br,
         boxShadow: effectiveShadow,
-        border: border ?? Border.all(color: borderColor ?? AppColors.borderLight),
+        border:
+            border ?? Border.all(color: borderColor ?? AppColors.borderLight),
       ),
       child: child,
     );
@@ -115,7 +117,8 @@ class AppPrimaryButton extends StatelessWidget {
           foregroundColor: AppColors.textOnPrimary,
           shadowColor: AppColors.primary.withValues(alpha: 0.45),
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.full)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.full)),
           padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
         child: child,
@@ -205,6 +208,14 @@ class _AppTextFieldState extends State<AppTextField> {
   }
 
   @override
+  void didUpdateWidget(covariant AppTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.obscureText != widget.obscureText) {
+      _obscure = widget.obscureText;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: widget.controller,
@@ -218,8 +229,7 @@ class _AppTextFieldState extends State<AppTextField> {
       decoration: InputDecoration(
         hintText: widget.hint,
         prefixIcon: widget.prefixIcon != null
-            ? Icon(widget.prefixIcon,
-                color: AppColors.textMuted, size: 20)
+            ? Icon(widget.prefixIcon, color: AppColors.textMuted, size: 20)
             : null,
         suffixIcon: widget.suffixIcon ??
             (widget.obscureText
@@ -280,7 +290,11 @@ class AppBadge extends StatelessWidget {
           if (showDot) ...[
             type == AppBadgeType.live
                 ? const _PulsingDot(color: AppColors.success)
-                : Container(width: 6, height: 6, decoration: BoxDecoration(color: fg, shape: BoxShape.circle)),
+                : Container(
+                    width: 6,
+                    height: 6,
+                    decoration:
+                        BoxDecoration(color: fg, shape: BoxShape.circle)),
             const SizedBox(width: AppSpacing.x2),
           ],
           Text(label, style: AppTypography.badge.copyWith(color: fg)),
@@ -521,13 +535,17 @@ class AppDropdown<T> extends StatelessWidget {
                 items: items,
                 onChanged: onChanged,
                 hint: hint != null
-                    ? Text(hint!, style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted))
+                    ? Text(hint!,
+                        style: AppTypography.bodySmall
+                            .copyWith(color: AppColors.textMuted))
                     : null,
-                style: AppTypography.bodySmall.copyWith(color: AppColors.textPrimary),
+                style: AppTypography.bodySmall
+                    .copyWith(color: AppColors.textPrimary),
                 dropdownColor: AppColors.bgCard,
                 borderRadius: AppRadius.mdR,
                 isDense: true,
-                icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: AppColors.textMuted),
+                icon: const Icon(Icons.keyboard_arrow_down,
+                    size: 18, color: AppColors.textMuted),
               ),
             ),
           ),
@@ -547,24 +565,34 @@ class _PulsingDot extends StatefulWidget {
   State<_PulsingDot> createState() => _PulsingDotState();
 }
 
-class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1800));
     _ctrl.repeat(reverse: true);
   }
+
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: _ctrl,
       builder: (context, child) => Transform.scale(
         scale: 1.0 + 0.4 * _ctrl.value,
-        child: Container(width: 6, height: 6,
-          decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle)),
+        child: Container(
+            width: 6,
+            height: 6,
+            decoration:
+                BoxDecoration(color: widget.color, shape: BoxShape.circle)),
       ),
     );
   }
@@ -665,7 +693,9 @@ class AppSegmentedControl<T> extends StatelessWidget {
               child: Text(
                 labelOf(s),
                 style: AppTypography.bodySmall.copyWith(
-                  color: isActive ? AppColors.textPrimary : AppColors.textSecondary,
+                  color: isActive
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -699,7 +729,10 @@ class AppGhostButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = isLoading
-        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+        ? const SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(strokeWidth: 2))
         : Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -720,7 +753,8 @@ class AppGhostButton extends StatelessWidget {
           backgroundColor: Colors.transparent,
           foregroundColor: AppColors.textPrimary,
           side: const BorderSide(color: AppColors.borderStrong),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.full)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.full)),
           padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
         child: content,
@@ -752,8 +786,11 @@ class AppDangerButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final child = isLoading
         ? const SizedBox(
-            height: 20, width: 20,
-            child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation(Colors.white)),
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
@@ -776,7 +813,8 @@ class AppDangerButton extends StatelessWidget {
           foregroundColor: Colors.white,
           shadowColor: AppColors.danger.withValues(alpha: 0.45),
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.full)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.full)),
           padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
         child: child,
@@ -892,22 +930,29 @@ class AppTable extends StatelessWidget {
                       ? Alignment.center
                       : Alignment.centerLeft;
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Text(col.label, style: AppTypography.tableTh, textAlign: _alignToTextAlign(align)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Text(col.label,
+                    style: AppTypography.tableTh,
+                    textAlign: _alignToTextAlign(align)),
               );
             }).toList(),
           ),
           ...rows.map((row) {
             return TableRow(
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.hairline, width: 0.5)),
+                border: Border(
+                    bottom: BorderSide(color: AppColors.hairline, width: 0.5)),
               ),
               children: row.cells.map((cell) {
                 return InkWell(
                   onTap: row.onTap,
-                  hoverColor: hoverHighlight ? AppColors.primarySofter : Colors.transparent,
+                  hoverColor: hoverHighlight
+                      ? AppColors.primarySofter
+                      : Colors.transparent,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12),
                     child: cell,
                   ),
                 );
@@ -972,8 +1017,12 @@ class ScoreRing extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('$score', style: AppTypography.h1.copyWith(fontWeight: FontWeight.w800, fontSize: 26, color: color)),
-              Text('SCORE', style: AppTypography.caption.copyWith(fontSize: 10, color: AppColors.textMuted)),
+              Text('$score',
+                  style: AppTypography.h1.copyWith(
+                      fontWeight: FontWeight.w800, fontSize: 26, color: color)),
+              Text('SCORE',
+                  style: AppTypography.caption
+                      .copyWith(fontSize: 10, color: AppColors.textMuted)),
             ],
           ),
         ),
@@ -1005,7 +1054,8 @@ class _ScoreRingSvgPainter extends CustomPainter {
     final sweep = 2 * math.pi * (score / 100);
     final rect = Rect.fromCircle(center: center, radius: radius);
     final grad = SweepGradient(
-      startAngle: startAngle, endAngle: startAngle + sweep,
+      startAngle: startAngle,
+      endAngle: startAngle + sweep,
       colors: [color.withValues(alpha: 0.5), color],
       stops: const [0.0, 1.0],
       transform: GradientRotation(startAngle),
@@ -1019,7 +1069,8 @@ class _ScoreRingSvgPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _ScoreRingSvgPainter old) => old.score != score || old.color != color;
+  bool shouldRepaint(covariant _ScoreRingSvgPainter old) =>
+      old.score != score || old.color != color;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1052,8 +1103,12 @@ class KpiAccentCard extends StatelessWidget {
         color: AppColors.bgCard,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border(
-          top: accentTop ? BorderSide(color: AppColors.primary, width: 2) : BorderSide.none,
-          left: BorderSide.none, right: BorderSide.none, bottom: BorderSide.none,
+          top: accentTop
+              ? BorderSide(color: AppColors.primary, width: 2)
+              : BorderSide.none,
+          left: BorderSide.none,
+          right: BorderSide.none,
+          bottom: BorderSide.none,
         ),
         boxShadow: AppShadows.md,
       ),
@@ -1063,8 +1118,12 @@ class KpiAccentCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(label.toUpperCase(), style: AppTypography.kpiLabel)),
-              if (isLive) AppBadge(label: '● LIVE', type: AppBadgeType.live, showDot: false),
+              Expanded(
+                  child:
+                      Text(label.toUpperCase(), style: AppTypography.kpiLabel)),
+              if (isLive)
+                AppBadge(
+                    label: '● LIVE', type: AppBadgeType.live, showDot: false),
             ],
           ),
           const SizedBox(height: AppSpacing.x3),
@@ -1074,14 +1133,20 @@ class KpiAccentCard extends StatelessWidget {
               if (prefix != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(prefix!, style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+                  child: Text(prefix!,
+                      style: AppTypography.caption
+                          .copyWith(color: AppColors.textMuted)),
                 ),
-              Text(value, style: AppTypography.kpiValue.copyWith(color: valueColor ?? AppColors.textPrimary)),
+              Text(value,
+                  style: AppTypography.kpiValue
+                      .copyWith(color: valueColor ?? AppColors.textPrimary)),
             ],
           ),
           if (sub != null) ...[
             const SizedBox(height: AppSpacing.x1),
-            Text(sub!, style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+            Text(sub!,
+                style:
+                    AppTypography.caption.copyWith(color: AppColors.textMuted)),
           ],
         ],
       ),
@@ -1118,22 +1183,37 @@ class KpiFinCard extends StatelessWidget {
       KpiFinTone.info => AppColors.info,
     };
     return Container(
-      decoration: BoxDecoration(color: AppColors.bgCard, borderRadius: BorderRadius.circular(AppRadius.xl), boxShadow: AppShadows.md),
+      decoration: BoxDecoration(
+          color: AppColors.bgCard,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: AppShadows.md),
       padding: const EdgeInsets.all(AppSpacing.x4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(child: Text(label.toUpperCase(), style: AppTypography.kpiLabel)),
-              Container(width: 6, height: 6, decoration: BoxDecoration(color: toneColor, shape: BoxShape.circle)),
+              Expanded(
+                  child:
+                      Text(label.toUpperCase(), style: AppTypography.kpiLabel)),
+              Container(
+                  width: 6,
+                  height: 6,
+                  decoration:
+                      BoxDecoration(color: toneColor, shape: BoxShape.circle)),
             ],
           ),
           const SizedBox(height: AppSpacing.x3),
-          Text(prefix, style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
-          Text(value, style: AppTypography.h2.copyWith(fontWeight: FontWeight.w700, color: toneColor)),
+          Text(prefix,
+              style:
+                  AppTypography.caption.copyWith(color: AppColors.textMuted)),
+          Text(value,
+              style: AppTypography.h2
+                  .copyWith(fontWeight: FontWeight.w700, color: toneColor)),
           const SizedBox(height: AppSpacing.x1),
-          Text(sub, style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+          Text(sub,
+              style:
+                  AppTypography.caption.copyWith(color: AppColors.textMuted)),
         ],
       ),
     );
@@ -1169,7 +1249,10 @@ class BigKpi extends StatelessWidget {
       DeltaTone.neutral => AppColors.textMuted,
     };
     return Container(
-      decoration: BoxDecoration(color: AppColors.bgCard, borderRadius: BorderRadius.circular(AppRadius.xl), boxShadow: AppShadows.md),
+      decoration: BoxDecoration(
+          color: AppColors.bgCard,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: AppShadows.md),
       padding: const EdgeInsets.all(AppSpacing.x4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1177,19 +1260,31 @@ class BigKpi extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(color: AppColors.primarySofter, borderRadius: AppRadius.smR),
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                    color: AppColors.primarySofter,
+                    borderRadius: AppRadius.smR),
                 child: Icon(icon, size: 18, color: AppColors.primary),
               ),
               const SizedBox(width: AppSpacing.x3),
-              Expanded(child: Text(label.toUpperCase(), style: AppTypography.kpiLabel)),
+              Expanded(
+                  child:
+                      Text(label.toUpperCase(), style: AppTypography.kpiLabel)),
             ],
           ),
           const SizedBox(height: AppSpacing.x3),
-          Text(value, style: AppTypography.h2.copyWith(fontSize: 34, fontWeight: FontWeight.w700, letterSpacing: -0.025, color: AppColors.textPrimary)),
+          Text(value,
+              style: AppTypography.h2.copyWith(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.025,
+                  color: AppColors.textPrimary)),
           if (delta != null) ...[
             const SizedBox(height: AppSpacing.x1),
-            Text(delta!, style: AppTypography.caption.copyWith(color: deltaColor, fontWeight: FontWeight.w500)),
+            Text(delta!,
+                style: AppTypography.caption
+                    .copyWith(color: deltaColor, fontWeight: FontWeight.w500)),
           ],
         ],
       ),
@@ -1205,7 +1300,8 @@ class ChartCard extends StatelessWidget {
   final String? sub;
   final Widget child;
 
-  const ChartCard({super.key, required this.title, this.sub, required this.child});
+  const ChartCard(
+      {super.key, required this.title, this.sub, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -1219,10 +1315,14 @@ class ChartCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
+          Text(title,
+              style: AppTypography.bodyLarge
+                  .copyWith(fontWeight: FontWeight.w600)),
           if (sub != null) ...[
             const SizedBox(height: AppSpacing.x1),
-            Text(sub!, style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+            Text(sub!,
+                style:
+                    AppTypography.caption.copyWith(color: AppColors.textMuted)),
           ],
           const SizedBox(height: AppSpacing.x4),
           child,
@@ -1256,7 +1356,10 @@ class MetricCardRebrand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(color: AppColors.bgCard, borderRadius: BorderRadius.circular(AppRadius.xl), boxShadow: AppShadows.md),
+      decoration: BoxDecoration(
+          color: AppColors.bgCard,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: AppShadows.md),
       padding: const EdgeInsets.all(AppSpacing.x5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1264,25 +1367,32 @@ class MetricCardRebrand extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 32, height: 32,
-                decoration: BoxDecoration(color: AppColors.primarySofter, borderRadius: AppRadius.smR),
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                    color: AppColors.primarySofter,
+                    borderRadius: AppRadius.smR),
                 child: Icon(icon, size: 18, color: AppColors.primary),
               ),
               const Spacer(),
               if (target != null)
-                Text(target!, style: AppTypography.caption.copyWith(color: AppColors.textMuted, fontSize: 10)),
+                Text(target!,
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.textMuted, fontSize: 10)),
             ],
           ),
           const SizedBox(height: AppSpacing.x4),
           Text(label.toUpperCase(), style: AppTypography.kpiLabel),
           const SizedBox(height: AppSpacing.x2),
-          Text(value, style: AppTypography.h2.copyWith(fontWeight: FontWeight.w700, color: toneColor)),
+          Text(value,
+              style: AppTypography.h2
+                  .copyWith(fontWeight: FontWeight.w700, color: toneColor)),
           const SizedBox(height: AppSpacing.x1),
-          Text(sub, style: AppTypography.caption.copyWith(color: AppColors.textMuted)),
+          Text(sub,
+              style:
+                  AppTypography.caption.copyWith(color: AppColors.textMuted)),
         ],
       ),
     );
   }
 }
-
-

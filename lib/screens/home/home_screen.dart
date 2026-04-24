@@ -3,7 +3,6 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../widgets/app_scaffold.dart';
-import '../../widgets/money_card.dart';
 import '../../widgets/excelencia_card.dart';
 import '../../widgets/nps_gauge.dart';
 import '../../widgets/chamados_card.dart';
@@ -108,10 +107,10 @@ class _KpiRow extends StatelessWidget {
 
     final cards = [
       MetricCard(
-        label: 'Faturamento Total',
-        value: _formatFaturamento(dashboard.fatLiquido),
+        label: 'GMV do Mês',
+        value: _formatFaturamento(dashboard.gmvLivesMes),
         icon: PhosphorIcons.currencyCircleDollar(),
-        subtitle: '+ ${dashboard.novosClientes} novos',
+        subtitle: '${dashboard.livesMes} lives encerradas',
       ),
       MetricCard(
         label: 'Clientes Ativos',
@@ -199,23 +198,13 @@ class _DesktopLayout extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Coluna esquerda: dinheiro + excelência + ações
+            // Coluna esquerda: excelência
             Expanded(
               flex: 5,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  MoneyCard(
-                    total: dashboard.fatTotal,
-                    bruto: dashboard.fatBruto,
-                    liquido: dashboard.fatLiquido,
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.financeiro),
-                  ),
-                  const SizedBox(height: AppSpacing.x4),
                   const ExcelenciaCard(),
-                  const SizedBox(height: AppSpacing.x4),
-                  const _ActionButtons(),
                 ],
               ),
             ),
@@ -227,7 +216,8 @@ class _DesktopLayout extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (dashboard.cabines.isNotEmpty)
-                    _CabinesMiniGrid(cabines: dashboard.cabines, isLargeScreen: true)
+                    _CabinesMiniGrid(
+                        cabines: dashboard.cabines, isLargeScreen: true)
                   else
                     const _CabinesEmptyCard(),
                   const SizedBox(height: AppSpacing.x4),
@@ -241,7 +231,8 @@ class _DesktopLayout extends StatelessWidget {
                         const SizedBox(width: AppSpacing.x4),
                         Expanded(
                           flex: 2,
-                          child: ChamadosCard(count: dashboard.contratosAnalise),
+                          child:
+                              ChamadosCard(count: dashboard.contratosAnalise),
                         ),
                       ],
                     ),
@@ -275,19 +266,10 @@ class _MobileLayout extends StatelessWidget {
       children: [
         _KpiRow(dashboard: dashboard),
         const SizedBox(height: AppSpacing.x4),
-        MoneyCard(
-          total: dashboard.fatTotal,
-          bruto: dashboard.fatBruto,
-          liquido: dashboard.fatLiquido,
-          onTap: () => Navigator.pushNamed(context, AppRoutes.financeiro),
-        ),
-        const SizedBox(height: AppSpacing.x4),
         if (dashboard.cabines.isNotEmpty)
           _CabinesMiniGrid(cabines: dashboard.cabines, isLargeScreen: false)
         else
           const _CabinesEmptyCard(),
-        const SizedBox(height: AppSpacing.x4),
-        const _ActionButtons(),
         const SizedBox(height: AppSpacing.x4),
         RankingDestaque(
           rankings: dashboard.rankingDia
@@ -305,34 +287,6 @@ class _MobileLayout extends StatelessWidget {
 }
 
 // ─── WIDGETS INTERNOS ─────────────────────────────────────────────────────────
-
-class _ActionButtons extends StatelessWidget {
-  const _ActionButtons();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: AppPrimaryButton(
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRoutes.cadastroCliente),
-            icon: PhosphorIcons.shoppingCart(),
-            label: 'VENDER',
-          ),
-        ),
-        const SizedBox(width: AppSpacing.x3),
-        Expanded(
-          child: AppSecondaryButton(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.financeiro),
-            icon: PhosphorIcons.wallet(),
-            label: 'FINANCEIRO',
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _CabinesEmptyCard extends StatelessWidget {
   const _CabinesEmptyCard();
@@ -370,7 +324,8 @@ class _CabinesMiniGrid extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(PhosphorIcons.videoCamera(), size: 18, color: AppColors.textSecondary),
+              Icon(PhosphorIcons.videoCamera(),
+                  size: 18, color: AppColors.textSecondary),
               const SizedBox(width: AppSpacing.x2),
               Text(
                 'Cabines',
@@ -420,7 +375,8 @@ class _CabinesMiniGrid extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.x2),
-                  Icon(PhosphorIcons.arrowRight(), size: 16, color: AppColors.textMuted),
+                  Icon(PhosphorIcons.arrowRight(),
+                      size: 16, color: AppColors.textMuted),
                 ],
               ),
             ),
@@ -439,12 +395,12 @@ class _LiveBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     if (liveCount == 0) return const SizedBox.shrink();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2, vertical: 2),
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.x2, vertical: 2),
       decoration: BoxDecoration(
         color: AppColors.success.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.full),
-        border:
-            Border.all(color: AppColors.success.withValues(alpha: 0.4)),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -476,12 +432,12 @@ class _CabineMiniTile extends StatelessWidget {
 
   void _showDetails(BuildContext context) {
     final statusLabel = switch (cabine.status) {
-      'ao_vivo'    => 'AO VIVO',
-      'reservada'  => 'RESERVADA',
-      'ativa'      => 'ATIVA',
+      'ao_vivo' => 'AO VIVO',
+      'reservada' => 'RESERVADA',
+      'ativa' => 'ATIVA',
       'disponivel' => 'DISPONÍVEL',
       'manutencao' => 'MANUTENÇÃO',
-      _            => cabine.status.toUpperCase(),
+      _ => cabine.status.toUpperCase(),
     };
 
     showModalBottomSheet(
@@ -499,7 +455,8 @@ class _CabineMiniTile extends StatelessWidget {
               children: [
                 Text(
                   'Cabine ${cabine.numero}',
-                  style: AppTypography.h3.copyWith(color: AppColors.textPrimary),
+                  style:
+                      AppTypography.h3.copyWith(color: AppColors.textPrimary),
                 ),
                 const SizedBox(width: AppSpacing.x2),
                 Container(
@@ -524,15 +481,23 @@ class _CabineMiniTile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.x3),
-            _DetailRow(icon: PhosphorIcons.user(),
-                label: 'Cliente', value: cabine.clienteNome ?? '—'),
-            _DetailRow(icon: PhosphorIcons.currencyDollar(),
-                label: 'GMV', value: 'R\$ ${cabine.gmvAtual.toStringAsFixed(2)}'),
-            _DetailRow(icon: PhosphorIcons.eye(),
-                label: 'Viewers', value: '${cabine.viewerCount}'),
+            _DetailRow(
+                icon: PhosphorIcons.user(),
+                label: 'Cliente',
+                value: cabine.clienteNome ?? '—'),
+            _DetailRow(
+                icon: PhosphorIcons.currencyDollar(),
+                label: 'GMV',
+                value: 'R\$ ${cabine.gmvAtual.toStringAsFixed(2)}'),
+            _DetailRow(
+                icon: PhosphorIcons.eye(),
+                label: 'Viewers',
+                value: '${cabine.viewerCount}'),
             if (cabine.duracaoMin > 0)
-              _DetailRow(icon: PhosphorIcons.timer(),
-                  label: 'Duração', value: '${cabine.duracaoMin} min'),
+              _DetailRow(
+                  icon: PhosphorIcons.timer(),
+                  label: 'Duração',
+                  value: '${cabine.duracaoMin} min'),
             const SizedBox(height: AppSpacing.x3),
             SizedBox(
               width: double.infinity,
@@ -556,12 +521,12 @@ class _CabineMiniTile extends StatelessWidget {
     final isEmpty = cabine.status == 'disponivel' && cabine.clienteNome == null;
 
     final (Color bgColor, Color textColor) = switch (cabine.status) {
-      'ao_vivo'    => (AppColors.primary, Colors.white),
-      'reservada'  => (AppColors.bgMuted, AppColors.textMuted),
-      'ativa'      => (AppColors.bgGradientStart, AppColors.primaryHover),
+      'ao_vivo' => (AppColors.primary, Colors.white),
+      'reservada' => (AppColors.bgMuted, AppColors.textMuted),
+      'ativa' => (AppColors.bgGradientStart, AppColors.primaryHover),
       'disponivel' => (AppColors.bgMuted, AppColors.textMuted),
       'manutencao' => (AppColors.borderLight, AppColors.textSecondary),
-      _            => (AppColors.bgMuted, AppColors.textMuted),
+      _ => (AppColors.bgMuted, AppColors.textMuted),
     };
 
     final showName = cabine.clienteNome != null &&
@@ -569,14 +534,14 @@ class _CabineMiniTile extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => _showDetails(context),
-        child: Container(
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+      child: Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
             if (isEmpty)
               Text(
                 '+',
@@ -588,8 +553,8 @@ class _CabineMiniTile extends StatelessWidget {
             else
               Text(
                 'Cabine ${cabine.numero.toString().padLeft(2, '0')}',
-                style: AppTypography.bodySmall.copyWith(
-                    color: textColor, fontWeight: FontWeight.w500),
+                style: AppTypography.bodySmall
+                    .copyWith(color: textColor, fontWeight: FontWeight.w500),
               ),
             if (showName)
               Padding(
@@ -617,7 +582,8 @@ class _DetailRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  const _DetailRow({required this.icon, required this.label, required this.value});
+  const _DetailRow(
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -628,12 +594,13 @@ class _DetailRow extends StatelessWidget {
           Icon(icon, size: 16, color: AppColors.textMuted),
           const SizedBox(width: AppSpacing.x2),
           Text('$label: ',
-              style: AppTypography.caption
-                  .copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+              style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
           Expanded(
             child: Text(value,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.caption.copyWith(color: AppColors.textPrimary)),
+                style: AppTypography.caption
+                    .copyWith(color: AppColors.textPrimary)),
           ),
         ],
       ),
