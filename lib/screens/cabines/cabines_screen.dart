@@ -90,6 +90,20 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
     return cabines.first;
   }
 
+  int _sumLiveAudienceFromSse(List<Cabine> cabines) {
+    var total = 0;
+
+    for (final cabine in cabines) {
+      final liveId = cabine.liveAtualId;
+      if (liveId == null) continue;
+
+      final snapshot = ref.watch(liveStreamProvider(liveId));
+      total += snapshot.valueOrNull?.viewerCount ?? 0;
+    }
+
+    return total;
+  }
+
   FilaAtivacaoItem? _findSelectedContrato(List<FilaAtivacaoItem> fila) {
     if (fila.isEmpty) return null;
 
@@ -302,7 +316,10 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
             data: (cabines) {
               _syncSelectedCabine(cabines, isDesktop: isDesktop);
               final filteredCabines = _applyFilters(cabines);
-              final metrics = _CabinesMetrics.from(cabines);
+              final metrics = _CabinesMetrics.from(
+                cabines,
+                audienciaTotal: _sumLiveAudienceFromSse(cabines),
+              );
               final selectedCabine = _findSelectedCabine(cabines);
               final fila = filaAsync.valueOrNull ?? const <FilaAtivacaoItem>[];
               final selectedContrato = _findSelectedContrato(fila);
@@ -574,6 +591,9 @@ class _KpiSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasLiveStream = metrics.livesComStream > 0;
+    final liveLabel = metrics.livesComStream == 1 ? 'live' : 'lives';
+
     return Column(
       children: [
         // 4 KPIs operacionais
@@ -620,9 +640,13 @@ class _KpiSection extends StatelessWidget {
           children: [
             _FeaturedKpiCard(
               label: 'Audiência simultânea',
-              value: metrics.audienciaTotal.toString(),
-              sub:
-                  'espectadores conectados · ${metrics.aoVivo} live${metrics.aoVivo == 1 ? '' : 's'}',
+              value: hasLiveStream
+                  ? NumberFormat.decimalPattern('pt_BR')
+                      .format(metrics.audienciaTotal)
+                  : '—',
+              sub: hasLiveStream
+                  ? 'espectadores conectados via SSE · ${metrics.livesComStream} $liveLabel'
+                  : 'sem lives ativas no momento',
             ),
           ],
         ),
@@ -1809,6 +1833,7 @@ class _CabinesMetrics {
   final int manutencao;
   final double gmvTotalHoje;
   final int audienciaTotal;
+  final int livesComStream;
 
   const _CabinesMetrics({
     required this.total,
@@ -1819,9 +1844,13 @@ class _CabinesMetrics {
     required this.manutencao,
     required this.gmvTotalHoje,
     required this.audienciaTotal,
+    required this.livesComStream,
   });
 
-  factory _CabinesMetrics.from(List<Cabine> cabines) {
+  factory _CabinesMetrics.from(
+    List<Cabine> cabines, {
+    required int audienciaTotal,
+  }) {
     return _CabinesMetrics(
       total: cabines.length,
       aoVivo: cabines.where((c) => c.status == 'ao_vivo').length,
@@ -1830,7 +1859,8 @@ class _CabinesMetrics {
       disponiveis: cabines.where((c) => c.status == 'disponivel').length,
       manutencao: cabines.where((c) => c.status == 'manutencao').length,
       gmvTotalHoje: cabines.fold(0.0, (sum, c) => sum + c.gmvAtual),
-      audienciaTotal: cabines.fold(0, (sum, c) => sum + c.viewerCount),
+      audienciaTotal: audienciaTotal,
+      livesComStream: cabines.where((c) => c.liveAtualId != null).length,
     );
   }
 }
