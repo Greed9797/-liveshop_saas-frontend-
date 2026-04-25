@@ -70,6 +70,13 @@ class ApresentadorasScreen extends ConsumerWidget {
     final metaCtrl = TextEditingController(
         text: item?.metaDiariaGmv.toStringAsFixed(2) ?? '');
     final obsCtrl = TextEditingController(text: item?.observacoes ?? '');
+    final linkContratoCtrl =
+        TextEditingController(text: item?.linkContrato ?? '');
+    final aniversarioCtrl =
+        TextEditingController(text: item?.dataAniversario ?? '');
+    final dataInicioCtrl =
+        TextEditingController(text: item?.dataInicio ?? '');
+    final dataFimCtrl = TextEditingController(text: item?.dataFim ?? '');
     var ativo = item?.ativo ?? true;
 
     showModalBottomSheet<void>(
@@ -151,6 +158,34 @@ class ApresentadorasScreen extends ConsumerWidget {
                     hint: 'Observações',
                     keyboardType: TextInputType.multiline,
                   ),
+                  const SizedBox(height: AppSpacing.x3),
+                  AppTextField(
+                    controller: linkContratoCtrl,
+                    hint: 'Link do contrato (URL)',
+                  ),
+                  const SizedBox(height: AppSpacing.x3),
+                  AppTextField(
+                    controller: aniversarioCtrl,
+                    hint: 'Aniversário (YYYY-MM-DD)',
+                  ),
+                  const SizedBox(height: AppSpacing.x3),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          controller: dataInicioCtrl,
+                          hint: 'Data início (YYYY-MM-DD)',
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.x3),
+                      Expanded(
+                        child: AppTextField(
+                          controller: dataFimCtrl,
+                          hint: 'Data fim (YYYY-MM-DD)',
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: AppSpacing.x5),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -182,6 +217,12 @@ class ApresentadorasScreen extends ConsumerWidget {
                             'comissao_pct': _toDouble(comissaoCtrl.text),
                             'meta_diaria_gmv': _toDouble(metaCtrl.text),
                             'observacoes': _emptyToNull(obsCtrl.text),
+                            'link_contrato':
+                                _emptyToNull(linkContratoCtrl.text),
+                            'data_aniversario':
+                                _emptyToNull(aniversarioCtrl.text),
+                            'data_inicio': _emptyToNull(dataInicioCtrl.text),
+                            'data_fim': _emptyToNull(dataFimCtrl.text),
                           };
                           try {
                             await ref
@@ -228,6 +269,8 @@ class _ApresentadoraCard extends StatelessWidget {
   const _ApresentadoraCard({required this.item, required this.onEdit});
 
   static final _money = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+  static final _moneyInt =
+      NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 0);
 
   @override
   Widget build(BuildContext context) {
@@ -273,6 +316,14 @@ class _ApresentadoraCard extends StatelessWidget {
                   style: AppTypography.caption
                       .copyWith(color: context.colors.textSecondary),
                 ),
+                if (item.totalLives > 0) ...[
+                  const SizedBox(height: AppSpacing.x1),
+                  Text(
+                    'Lives: ${item.totalLives} • Horas: ${item.totalHoras.toStringAsFixed(1)}h • Fat: ${_moneyInt.format(item.totalFaturamento)}',
+                    style: AppTypography.caption
+                        .copyWith(color: context.colors.textMuted),
+                  ),
+                ],
               ],
             ),
           ),

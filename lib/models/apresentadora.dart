@@ -11,6 +11,13 @@ class Apresentadora {
   final double comissaoPct;
   final double metaDiariaGmv;
   final String? observacoes;
+  final String? linkContrato;
+  final String? dataAniversario;
+  final String? dataInicio;
+  final String? dataFim;
+  final int totalLives;
+  final double totalHoras;
+  final double totalFaturamento;
 
   const Apresentadora({
     required this.id,
@@ -25,6 +32,13 @@ class Apresentadora {
     required this.comissaoPct,
     required this.metaDiariaGmv,
     this.observacoes,
+    this.linkContrato,
+    this.dataAniversario,
+    this.dataInicio,
+    this.dataFim,
+    this.totalLives = 0,
+    this.totalHoras = 0.0,
+    this.totalFaturamento = 0.0,
   });
 
   factory Apresentadora.fromJson(Map<String, dynamic> json) => Apresentadora(
@@ -40,6 +54,13 @@ class Apresentadora {
         comissaoPct: _toDouble(json['comissao_pct']),
         metaDiariaGmv: _toDouble(json['meta_diaria_gmv']),
         observacoes: json['observacoes'] as String?,
+        linkContrato: json['link_contrato'] as String?,
+        dataAniversario: json['data_aniversario'] as String?,
+        dataInicio: json['data_inicio'] as String?,
+        dataFim: json['data_fim'] as String?,
+        totalLives: (json['total_lives'] as num? ?? 0).toInt(),
+        totalHoras: _toDouble(json['total_horas']),
+        totalFaturamento: _toDouble(json['total_faturamento']),
       );
 
   static double _toDouble(Object? value) =>
