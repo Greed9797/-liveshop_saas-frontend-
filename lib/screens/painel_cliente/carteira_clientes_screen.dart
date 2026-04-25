@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import '../../widgets/app_scaffold.dart';
-import '../../widgets/client_pin.dart';
 import '../../routes/app_routes.dart';
 import '../../providers/clientes_provider.dart';
 import '../../models/cliente.dart';
@@ -16,8 +12,11 @@ class CarteiraClientesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final clientesAsync = ref.watch(clientesProvider);
 
-    return AppScaffold(
+    return AppScreenScaffold(
       currentRoute: AppRoutes.carteiraClientes,
+      eyebrow: 'Clientes',
+      title: 'Carteira de Clientes',
+      subtitle: 'Lista completa de clientes ativos e em negociação.',
       child: clientesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
@@ -33,21 +32,21 @@ class CarteiraClientesScreen extends ConsumerWidget {
             ],
           ),
         ),
-        data: (clientes) => _CarteiraMap(clientes: clientes),
+        data: (clientes) => _CarteiraList(clientes: clientes),
       ),
     );
   }
 }
 
-class _CarteiraMap extends StatefulWidget {
+class _CarteiraList extends StatefulWidget {
   final List<Cliente> clientes;
-  const _CarteiraMap({required this.clientes});
+  const _CarteiraList({required this.clientes});
 
   @override
-  State<_CarteiraMap> createState() => _CarteiraMapState();
+  State<_CarteiraList> createState() => _CarteiraListState();
 }
 
-class _CarteiraMapState extends State<_CarteiraMap> {
+class _CarteiraListState extends State<_CarteiraList> {
   String _filtroStatus = 'Todos';
 
   static const _statusOptions = [
@@ -65,97 +64,83 @@ class _CarteiraMapState extends State<_CarteiraMap> {
     'Inadimplente': 'inadimplente',
   };
 
-  List<Cliente> get _todosClientesFiltrados {
+  List<Cliente> get _clientesFiltrados {
     if (_filtroStatus == 'Todos') return widget.clientes;
     final apiStatus = _statusMap[_filtroStatus];
     return widget.clientes.where((c) => c.status == apiStatus).toList();
   }
 
-  List<Cliente> get _clientesNoMapa {
-    return _todosClientesFiltrados.where((c) => c.lat != null && c.lng != null).toList();
-  }
+  Color _statusColor(BuildContext context, String status) => switch (status) {
+        'negociacao' => AppColors.warning,
+        'enviado' => AppColors.info,
+        'ativo' => AppColors.success,
+        'inadimplente' => AppColors.danger,
+        _ => context.colors.textMuted,
+      };
 
-  List<Cliente> get _clientesSemCoordenadas {
-    return _todosClientesFiltrados.where((c) => c.lat == null || c.lng == null).toList();
-  }
+  String _statusLabel(String status) => switch (status) {
+        'negociacao' => 'Negociação',
+        'enviado' => 'Enviado',
+        'ativo' => 'Ativo',
+        'inadimplente' => 'Inadimplente',
+        _ => status,
+      };
 
   @override
   Widget build(BuildContext context) {
-    final noMapa = _clientesNoMapa;
-    final semCoord = _clientesSemCoordenadas;
-    final total = _todosClientesFiltrados.length;
+    final clientes = _clientesFiltrados;
 
-    return Stack(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FlutterMap(
-          options: const MapOptions(
-            initialCenter: LatLng(-15.7801, -47.9292),
-            initialZoom: 4.5,
+        // Header bar with filter and count
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.x6,
+            vertical: AppSpacing.x3,
           ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.liveshop.app',
+          decoration: BoxDecoration(
+            color: context.colors.bgCard,
+            border: Border(
+              bottom: BorderSide(color: context.colors.borderSubtle, width: 1),
             ),
-            MarkerLayer(
-              markers: noMapa
-                  .map((c) => Marker(
-                        point: LatLng(c.lat!, c.lng!),
-                        width: 80,
-                        height: 60,
-                        child: ClientPin(status: c.status, nome: c.nome),
-                      ))
-                  .toList(),
-            ),
-          ],
-        ),
-        // Header com filtro
-        Positioned(
-          top: AppSpacing.x4,
-          left: AppSpacing.x4,
-          right: AppSpacing.x4,
+          ),
           child: Row(
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4, vertical: AppSpacing.x2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.people_alt_rounded,
-                          size: 18, color: AppColors.primary),
-                      const SizedBox(width: AppSpacing.x2),
-                      Text(
-                        'Carteira de Clientes',
-                        style: AppTypography.bodyLarge.copyWith(
-                            fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.x2, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: context.colors.primarySoftBg,
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                        ),
-                        child: Text(
-                          '$total',
-                          style: AppTypography.caption.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
+              // Total count chip
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.x3,
+                  vertical: AppSpacing.x1,
+                ),
+                decoration: BoxDecoration(
+                  color: context.colors.primarySoftBg,
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                ),
+                child: Text(
+                  '${clientes.length} cliente${clientes.length == 1 ? '' : 's'}',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.x3),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
-                  child: DropdownButtonHideUnderline(
+              const Spacer(),
+              // Status filter dropdown
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Status:',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: context.colors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x2),
+                  DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _filtroStatus,
+                      style: AppTypography.bodySmall,
                       items: _statusOptions
                           .map((s) => DropdownMenuItem(
                                 value: s,
@@ -167,123 +152,190 @@ class _CarteiraMapState extends State<_CarteiraMap> {
                           setState(() => _filtroStatus = v ?? 'Todos'),
                     ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
         ),
-        // Lista de clientes sem coordenadas
-        if (semCoord.isNotEmpty)
-          Positioned(
-            bottom: AppSpacing.x6,
-            left: AppSpacing.x4,
-            child: Card(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 280, maxHeight: 200),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.x3),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Sem localização (${semCoord.length})',
-                        style: AppTypography.caption.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: context.colors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.x1),
-                      Flexible(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: semCoord.length,
-                          itemBuilder: (_, i) {
-                            final c = semCoord[i];
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.person_outline,
-                                      size: 14, color: _statusColor(context, c.status)),
-                                  const SizedBox(width: AppSpacing.x1),
-                                  Expanded(
-                                    child: Text(
-                                      c.nome,
-                                      style: AppTypography.caption,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  Text(
-                                    c.status.toUpperCase(),
-                                    style: AppTypography.caption.copyWith(
-                                      fontSize: 9,
-                                      color: _statusColor(context, c.status),
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+        // Client list
+        Expanded(
+          child: clientes.isEmpty
+              ? Center(
+                  child: Text(
+                    'Nenhum cliente encontrado.',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: context.colors.textMuted,
+                    ),
                   ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(AppSpacing.x4),
+                  itemCount: clientes.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppSpacing.x3),
+                  itemBuilder: (context, index) {
+                    final cliente = clientes[index];
+                    return _ClienteCard(
+                      cliente: cliente,
+                      statusColor: _statusColor(context, cliente.status),
+                      statusLabel: _statusLabel(cliente.status),
+                    );
+                  },
                 ),
-              ),
-            ),
-          ),
-        // Legenda
-        Positioned(
-          bottom: AppSpacing.x6,
-          right: AppSpacing.x4,
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.x3),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _LegendItem(color: AppColors.info, label: 'Negociação'),
-                  const SizedBox(height: AppSpacing.x1),
-                  _LegendItem(color: AppColors.warning, label: 'Enviado'),
-                  const SizedBox(height: AppSpacing.x1),
-                  _LegendItem(color: AppColors.success, label: 'Ativo'),
-                  const SizedBox(height: AppSpacing.x1),
-                  _LegendItem(color: AppColors.danger, label: 'Inadimplente'),
-                ],
-              ),
-            ),
-          ),
         ),
       ],
     );
   }
-
-  Color _statusColor(BuildContext context, String status) => switch (status) {
-    'negociacao' => AppColors.warning,
-    'enviado' => AppColors.info,
-    'ativo' => AppColors.success,
-    'inadimplente' => AppColors.danger,
-    _ => context.colors.textMuted,
-  };
 }
 
-class _LegendItem extends StatelessWidget {
-  final Color color;
-  final String label;
-  const _LegendItem({required this.color, required this.label});
+class _ClienteCard extends StatelessWidget {
+  final Cliente cliente;
+  final Color statusColor;
+  final String statusLabel;
+
+  const _ClienteCard({
+    required this.cliente,
+    required this.statusColor,
+    required this.statusLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.location_on, color: color, size: 16),
-        const SizedBox(width: AppSpacing.x1),
-        Text(label, style: AppTypography.caption),
-      ],
+    final localizacao = [
+      if (cliente.cidade != null) cliente.cidade!,
+      if (cliente.estado != null) cliente.estado!,
+    ].join(', ');
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.x4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Status dot
+          Container(
+            width: 10,
+            height: 10,
+            margin: const EdgeInsets.only(right: AppSpacing.x3, top: 2),
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          // Main content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Name + status badge row
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        cliente.nome,
+                        style: AppTypography.bodyLarge.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x2),
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.x2,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        border: Border.all(
+                          color: statusColor.withValues(alpha: 0.35),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        statusLabel,
+                        style: AppTypography.caption.copyWith(
+                          color: statusColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                // Secondary info row
+                const SizedBox(height: AppSpacing.x1),
+                Row(
+                  children: [
+                    if (localizacao.isNotEmpty) ...[
+                      Text(
+                        localizacao,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: context.colors.textSecondary,
+                        ),
+                      ),
+                      if (cliente.nicho != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.x2),
+                          child: Text(
+                            '·',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: context.colors.textMuted,
+                            ),
+                          ),
+                        ),
+                    ],
+                    if (cliente.nicho != null)
+                      Expanded(
+                        child: Text(
+                          cliente.nicho!,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: context.colors.textSecondary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Score chip
+          const SizedBox(width: AppSpacing.x3),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x2,
+              vertical: AppSpacing.x1,
+            ),
+            decoration: BoxDecoration(
+              color: context.colors.bgMuted,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: context.colors.borderSubtle),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${cliente.score}',
+                  style: AppTypography.bodySmall.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.textSecondary,
+                  ),
+                ),
+                Text(
+                  'score',
+                  style: AppTypography.caption.copyWith(
+                    fontSize: 9,
+                    color: context.colors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

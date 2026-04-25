@@ -2,12 +2,12 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/cabine.dart';
-import '../../models/pacote.dart';
 import '../../models/usuario.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cabines_provider.dart';
@@ -30,14 +30,6 @@ class ConfiguracoesScreen extends ConsumerStatefulWidget {
 
 class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   int _selectedSection = 0;
-
-  Pacote? _editingPacote;
-  final _pacNomeCtrl = TextEditingController();
-  final _pacDescCtrl = TextEditingController();
-  final _pacValorCtrl = TextEditingController();
-  final _pacComissaoCtrl = TextEditingController();
-  final _pacHorasCtrl = TextEditingController();
-  bool _pacLoading = false;
 
   final _nomeCtrl = TextEditingController();
   final _logoCtrl = TextEditingController();
@@ -230,11 +222,6 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     _asaasWalletCtrl.dispose();
     _tiktokShopCtrl.dispose();
     _senhaCtrl.dispose();
-    _pacNomeCtrl.dispose();
-    _pacDescCtrl.dispose();
-    _pacValorCtrl.dispose();
-    _pacComissaoCtrl.dispose();
-    _pacHorasCtrl.dispose();
     super.dispose();
   }
 
@@ -253,149 +240,6 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
         SnackBar(content: Text(ApiService.extractErrorMessage(e))),
       );
     }
-  }
-
-  Future<void> _salvarPacote(BuildContext sheetCtx) async {
-    final nome = _pacNomeCtrl.text.trim();
-    final sheetMessenger = ScaffoldMessenger.of(sheetCtx);
-    final sheetNav = Navigator.of(sheetCtx);
-
-    if (nome.isEmpty) {
-      sheetMessenger
-          .showSnackBar(const SnackBar(content: Text('Nome é obrigatório')));
-      return;
-    }
-    final valorFixo = double.tryParse(_pacValorCtrl.text.replaceAll(',', '.'));
-    final comissaoPct =
-        double.tryParse(_pacComissaoCtrl.text.replaceAll(',', '.'));
-    final horas = double.tryParse(_pacHorasCtrl.text.replaceAll(',', '.'));
-    if (valorFixo == null || comissaoPct == null || horas == null) {
-      sheetMessenger.showSnackBar(const SnackBar(
-          content: Text('Informe fixo, percentual e horas válidos')));
-      return;
-    }
-
-    setState(() => _pacLoading = true);
-    try {
-      final payload = {
-        'nome': nome,
-        if (_pacDescCtrl.text.isNotEmpty) 'descricao': _pacDescCtrl.text,
-        'valor_fixo': valorFixo,
-        'valor': valorFixo,
-        'comissao_pct': comissaoPct,
-        'horas_incluidas': horas,
-      };
-      if (_editingPacote == null) {
-        await ref.read(pacotesProvider.notifier).criar(payload);
-      } else {
-        await ref
-            .read(pacotesProvider.notifier)
-            .atualizar(_editingPacote!.id, payload);
-      }
-      if (!mounted) return;
-      sheetNav.pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pacote salvo com sucesso!')));
-    } catch (e) {
-      if (!mounted) return;
-      sheetMessenger.showSnackBar(
-          SnackBar(content: Text(ApiService.extractErrorMessage(e))));
-    } finally {
-      if (mounted) setState(() => _pacLoading = false);
-    }
-  }
-
-  void _abrirFormPacote([Pacote? pacote]) {
-    setState(() {
-      _editingPacote = pacote;
-      _pacNomeCtrl.text = pacote?.nome ?? '';
-      _pacDescCtrl.text = pacote?.descricao ?? '';
-      _pacValorCtrl.text = pacote?.valorFixo.toStringAsFixed(2) ?? '';
-      _pacComissaoCtrl.text = pacote?.comissaoPct.toStringAsFixed(2) ?? '';
-      _pacHorasCtrl.text = pacote?.horasIncluidas.toStringAsFixed(0) ?? '';
-    });
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: context.colors.bgCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-      ),
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setModal) => Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.x5,
-            AppSpacing.x2,
-            AppSpacing.x5,
-            AppSpacing.x5 + MediaQuery.of(ctx).viewInsets.bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(pacote == null ? 'Novo Pacote' : 'Editar Pacote',
-                  style:
-                      AppTypography.h2.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: AppSpacing.x4),
-              AppTextField(controller: _pacNomeCtrl, hint: 'Nome do pacote *'),
-              const SizedBox(height: AppSpacing.x3),
-              AppTextField(
-                  controller: _pacDescCtrl, hint: 'Descrição (opcional)'),
-              const SizedBox(height: AppSpacing.x3),
-              AppTextField(
-                controller: _pacValorCtrl,
-                hint: 'Valor mensal mínimo (fixo) R\$',
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-              ),
-              const SizedBox(height: AppSpacing.x3),
-              Row(
-                children: [
-                  Expanded(
-                      child: AppTextField(
-                    controller: _pacComissaoCtrl,
-                    hint: '% sobre faturamento',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                  )),
-                  const SizedBox(width: AppSpacing.x3),
-                  Expanded(
-                      child: AppTextField(
-                    controller: _pacHorasCtrl,
-                    hint: 'Horas incluídas',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                  )),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.x5),
-              if (_pacLoading)
-                const Center(child: CircularProgressIndicator())
-              else
-                Row(
-                  children: [
-                    Expanded(
-                        child: AppSecondaryButton(
-                      label: 'Cancelar',
-                      fullWidth: true,
-                      onPressed: () => Navigator.pop(ctx),
-                    )),
-                    const SizedBox(width: AppSpacing.x3),
-                    Expanded(
-                        child: AppPrimaryButton(
-                      label: 'Salvar',
-                      fullWidth: true,
-                      onPressed: () => _salvarPacote(ctx),
-                    )),
-                  ],
-                ),
-              const SizedBox(height: AppSpacing.x2),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _mostrarFormCabine(BuildContext context) async {
@@ -905,8 +749,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                     onTap: () => setState(() => _selectedSection = 3),
                   ),
                   _NavItem(
-                    icon: Icons.inventory_2_outlined,
-                    label: 'Pacotes',
+                    icon: Icons.workspace_premium_outlined,
+                    label: 'Meu Plano',
                     isActive: _selectedSection == 4,
                     onTap: () => setState(() => _selectedSection = 4),
                   ),
@@ -1584,6 +1428,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
 
   Widget _buildPacotes() {
     final pacotesAsync = ref.watch(pacotesProvider);
+    final currencyFmt = NumberFormat.currency(
+        locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2);
 
     return SingleChildScrollView(
       child: Center(
@@ -1599,21 +1445,13 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                            child: Text('Pacotes de Serviço',
-                                style: AppTypography.h3)),
-                        AppPrimaryButton(
-                            label: 'Novo Pacote',
-                            icon: Icons.add,
-                            onPressed: () => _abrirFormPacote()),
-                      ],
-                    ),
+                    Text('Meu Plano', style: AppTypography.h3),
                     const SizedBox(height: AppSpacing.x2),
-                    Text('Defina os pacotes que serão oferecidos aos clientes.',
-                        style: AppTypography.caption
-                            .copyWith(color: context.colors.textSecondary)),
+                    Text(
+                      'Pacotes disponíveis na sua franquia. Contate a franqueadora para alterações.',
+                      style: AppTypography.caption
+                          .copyWith(color: context.colors.textSecondary),
+                    ),
                     const Divider(height: 32),
                     pacotesAsync.when(
                       loading: () =>
@@ -1621,38 +1459,109 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                       error: (e, _) => Center(
                           child: Text(ApiService.extractErrorMessage(e))),
                       data: (pacotes) {
-                        if (pacotes.isEmpty)
+                        if (pacotes.isEmpty) {
                           return Center(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                   vertical: AppSpacing.x6),
                               child: Column(
                                 children: [
-                                  Icon(Icons.inventory_2_outlined,
+                                  Icon(Icons.workspace_premium_outlined,
                                       size: 40,
                                       color: context.colors.textMuted),
                                   const SizedBox(height: AppSpacing.x3),
-                                  Text('Nenhum pacote cadastrado.',
-                                      style: AppTypography.bodySmall.copyWith(
-                                          color: context.colors.textSecondary)),
+                                  Text(
+                                    'Nenhum pacote disponível.',
+                                    style: AppTypography.bodySmall.copyWith(
+                                        color: context.colors.textSecondary),
+                                  ),
                                 ],
                               ),
                             ),
                           );
+                        }
                         return Column(
-                          children: pacotes
-                              .map((p) => _PacoteItem(
-                                    pacote: p,
-                                    onEdit: () => _abrirFormPacote(p),
-                                    onDesativar: p.ativo
-                                        ? () async {
-                                            await ref
-                                                .read(pacotesProvider.notifier)
-                                                .desativar(p.id);
-                                          }
-                                        : null,
-                                  ))
-                              .toList(),
+                          children: pacotes.map((p) {
+                            return Container(
+                              margin: const EdgeInsets.only(
+                                  bottom: AppSpacing.x4),
+                              padding: const EdgeInsets.all(AppSpacing.x5),
+                              decoration: BoxDecoration(
+                                color: context.colors.bgMuted,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
+                                border: Border.all(
+                                    color: context.colors.borderSubtle),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.workspace_premium_outlined,
+                                          size: 18,
+                                          color: AppColors.primary),
+                                      const SizedBox(width: AppSpacing.x2),
+                                      Expanded(
+                                        child: Text(p.nome,
+                                            style: AppTypography.bodyLarge
+                                                .copyWith(
+                                                    fontWeight:
+                                                        FontWeight.w600)),
+                                      ),
+                                      if (!p.ativo)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: AppSpacing.x2,
+                                              vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.danger
+                                                .withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(
+                                                    AppRadius.sm),
+                                          ),
+                                          child: Text('Inativo',
+                                              style: AppTypography.caption
+                                                  .copyWith(
+                                                      color: AppColors.danger)),
+                                        ),
+                                    ],
+                                  ),
+                                  if (p.descricao != null &&
+                                      p.descricao!.isNotEmpty) ...[
+                                    const SizedBox(height: AppSpacing.x2),
+                                    Text(p.descricao!,
+                                        style: AppTypography.bodySmall.copyWith(
+                                            color:
+                                                context.colors.textSecondary)),
+                                  ],
+                                  const SizedBox(height: AppSpacing.x3),
+                                  Wrap(
+                                    spacing: AppSpacing.x4,
+                                    runSpacing: AppSpacing.x2,
+                                    children: [
+                                      _InfoChip(
+                                        label: 'Valor fixo',
+                                        value: currencyFmt
+                                            .format(p.valorFixo),
+                                      ),
+                                      _InfoChip(
+                                        label: 'Comissão',
+                                        value:
+                                            '${p.comissaoPct.toStringAsFixed(1)}%',
+                                      ),
+                                      _InfoChip(
+                                        label: 'Horas/mês',
+                                        value: p.horasIncluidas
+                                            .toStringAsFixed(0),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
                         );
                       },
                     ),
@@ -1799,76 +1708,6 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-// ─── Pacote Item ──────────────────────────────────────────────────────────────
-
-class _PacoteItem extends StatelessWidget {
-  final Pacote pacote;
-  final VoidCallback onEdit;
-  final VoidCallback? onDesativar;
-
-  const _PacoteItem(
-      {required this.pacote, required this.onEdit, this.onDesativar});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.x3),
-      child: AppCard(
-        padding: const EdgeInsets.all(AppSpacing.x4),
-        shadow: const [],
-        borderColor: context.colors.borderSubtle,
-        child: Opacity(
-          opacity: pacote.ativo ? 1.0 : 0.5,
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(pacote.nome,
-                            style: AppTypography.bodyMedium
-                                .copyWith(fontWeight: FontWeight.w600)),
-                        const SizedBox(width: AppSpacing.x2),
-                        if (!pacote.ativo)
-                          const AppBadge(
-                              label: 'Inativo',
-                              type: AppBadgeType.neutral,
-                              showDot: false),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.x1),
-                    Text(
-                        'Fixo R\$ ${pacote.valorFixo.toStringAsFixed(2)} • ${pacote.comissaoPct.toStringAsFixed(2)}% sobre faturamento • ${pacote.horasIncluidas.toStringAsFixed(0)} h',
-                        style: AppTypography.caption
-                            .copyWith(color: context.colors.textSecondary)),
-                    if (pacote.descricao != null &&
-                        pacote.descricao!.isNotEmpty)
-                      Text(pacote.descricao!,
-                          style: AppTypography.caption
-                              .copyWith(color: context.colors.textMuted)),
-                  ],
-                ),
-              ),
-              IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  color: context.colors.textSecondary,
-                  onPressed: onEdit),
-              if (onDesativar != null)
-                IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    color: AppColors.danger,
-                    tooltip: 'Desativar pacote',
-                    onPressed: onDesativar),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // ─── Cabine Config Item ───────────────────────────────────────────────────────
 
 class _CabineConfigItem extends StatefulWidget {
@@ -2009,6 +1848,43 @@ class _CabineConfigItemState extends State<_CabineConfigItem> {
                   style: AppTypography.caption
                       .copyWith(color: context.colors.textSecondary)),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x3, vertical: AppSpacing.x1),
+      decoration: BoxDecoration(
+        color: context.colors.bgCard,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: context.colors.borderSubtle),
+      ),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: AppTypography.caption
+                  .copyWith(color: context.colors.textSecondary),
+            ),
+            TextSpan(
+              text: value,
+              style: AppTypography.caption.copyWith(
+                  color: context.colors.textPrimary,
+                  fontWeight: FontWeight.w600),
+            ),
           ],
         ),
       ),

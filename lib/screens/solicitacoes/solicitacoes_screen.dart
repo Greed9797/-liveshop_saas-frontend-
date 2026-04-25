@@ -379,7 +379,7 @@ class _RecusarDialog extends StatelessWidget {
 // Lista de agendamentos (reutilizada em ambas as tabs)
 // ──────────────────────────────────────────────────────────────
 
-class _SolicitacoesLista extends StatelessWidget {
+class _SolicitacoesLista extends StatefulWidget {
   final List<SolicitacaoFranqueador> items;
   final IconData emptyIcon;
   final String emptyMessage;
@@ -398,27 +398,83 @@ class _SolicitacoesLista extends StatelessWidget {
     required this.onRefresh,
   });
 
+  @override
+  State<_SolicitacoesLista> createState() => _SolicitacoesListaState();
+}
+
+class _SolicitacoesListaState extends State<_SolicitacoesLista> {
+  String _statusFilter = 'todos';
+  String _filtroData = '';
+  String _filtroCabine = '';
+  final _dataCtrl = TextEditingController();
+  final _cabineCtrl = TextEditingController();
+
   static final _dateDisplay = DateFormat('dd/MM/yyyy');
+  static final _dateParser = DateFormat('yyyy-MM-dd');
+
+  @override
+  void dispose() {
+    _dataCtrl.dispose();
+    _cabineCtrl.dispose();
+    super.dispose();
+  }
 
   String _formatDate(String raw) {
     try {
-      return _dateDisplay.format(DateFormat('yyyy-MM-dd').parse(raw));
+      return _dateDisplay.format(_dateParser.parse(raw));
     } catch (_) {
       return raw;
     }
   }
 
+  bool get _hasActiveFilters =>
+      (!widget.showActions && _statusFilter != 'todos') ||
+      _filtroData.isNotEmpty ||
+      _filtroCabine.isNotEmpty;
+
+  List<SolicitacaoFranqueador> get _filtered {
+    return widget.items.where((item) {
+      // Status filter (only in Todas tab)
+      if (!widget.showActions && _statusFilter != 'todos') {
+        if (item.status != _statusFilter) return false;
+      }
+      // Data filter
+      if (_filtroData.isNotEmpty) {
+        final formatted = _formatDate(item.dataSolicitada);
+        if (!formatted.contains(_filtroData)) return false;
+      }
+      // Cabine filter
+      if (_filtroCabine.isNotEmpty) {
+        if (!item.cabineNumero.toString().contains(_filtroCabine)) return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  void _limparFiltros() {
+    setState(() {
+      _statusFilter = 'todos';
+      _filtroData = '';
+      _filtroCabine = '';
+      _dataCtrl.clear();
+      _cabineCtrl.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
+    final filtered = _filtered;
+
+    // Empty original list (no data at all)
+    if (widget.items.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(emptyIcon, size: 64, color: context.colors.textMuted),
+            Icon(widget.emptyIcon, size: 64, color: context.colors.textMuted),
             const SizedBox(height: AppSpacing.x4),
             Text(
-              emptyMessage,
+              widget.emptyMessage,
               style: AppTypography.bodyMedium
                   .copyWith(color: context.colors.textSecondary),
             ),
@@ -427,29 +483,210 @@ class _SolicitacoesLista extends StatelessWidget {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      color: AppColors.primary,
-      child: ListView.separated(
-        padding: const EdgeInsets.all(AppSpacing.x4),
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.x3),
-        itemBuilder: (ctx, i) {
-          final req = items[i];
-          return SolicitacaoCard(
-            cabineNumero: req.cabineNumero.toString().padLeft(2, '0'),
-            clienteNome: req.clienteNome,
-            data: _formatDate(req.dataSolicitada),
-            hora: '${req.horaInicioDisplay} – ${req.horaFimDisplay}',
-            duracao: req.observacao ?? '',
-            solicitadoPor: req.solicitanteNome,
-            apresentadoraNome: req.apresentadoraNome,
-            status: req.status,
-            onApprove: showActions ? () => onAprovar(req.id) : () {},
-            onReject: showActions ? () => onRecusar(req.id) : () {},
-            showStatusBadge: !showActions,
-          );
-        },
+    return Column(
+      children: [
+        // ── Filter Bar ──
+        _FilterBar(
+          showStatusChips: !widget.showActions,
+          statusFilter: _statusFilter,
+          dataCtrl: _dataCtrl,
+          cabineCtrl: _cabineCtrl,
+          hasActiveFilters: _hasActiveFilters,
+          onStatusChanged: (v) => setState(() => _statusFilter = v),
+          onDataChanged: (v) => setState(() => _filtroData = v),
+          onCabineChanged: (v) => setState(() => _filtroCabine = v),
+          onLimpar: _limparFiltros,
+        ),
+
+        // ── List or empty-filtered state ──
+        Expanded(
+          child: filtered.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.search_off_rounded,
+                          size: 56, color: context.colors.textMuted),
+                      const SizedBox(height: AppSpacing.x4),
+                      Text(
+                        'Nenhum resultado para os filtros aplicados',
+                        style: AppTypography.bodyMedium
+                            .copyWith(color: context.colors.textSecondary),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.x4),
+                      AppSecondaryButton(
+                        label: 'Limpar filtros',
+                        icon: Icons.filter_list_off_rounded,
+                        onPressed: _limparFiltros,
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: widget.onRefresh,
+                  color: AppColors.primary,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(AppSpacing.x4),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: AppSpacing.x3),
+                    itemBuilder: (ctx, i) {
+                      final req = filtered[i];
+                      return SolicitacaoCard(
+                        cabineNumero:
+                            req.cabineNumero.toString().padLeft(2, '0'),
+                        clienteNome: req.clienteNome,
+                        data: _formatDate(req.dataSolicitada),
+                        hora:
+                            '${req.horaInicioDisplay} – ${req.horaFimDisplay}',
+                        duracao: req.observacao ?? '',
+                        solicitadoPor: req.solicitanteNome,
+                        apresentadoraNome: req.apresentadoraNome,
+                        status: req.status,
+                        onApprove:
+                            widget.showActions ? () => widget.onAprovar(req.id) : () {},
+                        onReject:
+                            widget.showActions ? () => widget.onRecusar(req.id) : () {},
+                        showStatusBadge: !widget.showActions,
+                      );
+                    },
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Filter Bar widget
+// ──────────────────────────────────────────────────────────────
+
+class _FilterBar extends StatelessWidget {
+  final bool showStatusChips;
+  final String statusFilter;
+  final TextEditingController dataCtrl;
+  final TextEditingController cabineCtrl;
+  final bool hasActiveFilters;
+  final ValueChanged<String> onStatusChanged;
+  final ValueChanged<String> onDataChanged;
+  final ValueChanged<String> onCabineChanged;
+  final VoidCallback onLimpar;
+
+  const _FilterBar({
+    required this.showStatusChips,
+    required this.statusFilter,
+    required this.dataCtrl,
+    required this.cabineCtrl,
+    required this.hasActiveFilters,
+    required this.onStatusChanged,
+    required this.onDataChanged,
+    required this.onCabineChanged,
+    required this.onLimpar,
+  });
+
+  static const _statusOpts = [
+    ('todos', 'Todos'),
+    ('pendente', 'Pendente'),
+    ('aprovada', 'Aprovada'),
+    ('recusada', 'Recusada'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: context.colors.bgCard,
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.x4, AppSpacing.x3, AppSpacing.x4, AppSpacing.x3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Status chips row (Todas tab only)
+          if (showStatusChips) ...[
+            Wrap(
+              spacing: AppSpacing.x2,
+              runSpacing: AppSpacing.x2,
+              children: _statusOpts.map((opt) {
+                final (value, label) = opt;
+                final isActive = statusFilter == value;
+                return AppChip(
+                  label: label,
+                  active: isActive,
+                  onTap: () => onStatusChanged(value),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: AppSpacing.x3),
+          ],
+          // Text fields row
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 40,
+                  child: TextFormField(
+                    controller: dataCtrl,
+                    onChanged: onDataChanged,
+                    keyboardType: TextInputType.datetime,
+                    style: AppTypography.bodySmall,
+                    decoration: InputDecoration(
+                      hintText: 'Data (dd/mm/aaaa)',
+                      hintStyle: AppTypography.bodySmall
+                          .copyWith(color: context.colors.textMuted),
+                      prefixIcon: Icon(Icons.calendar_today_outlined,
+                          size: 16, color: context.colors.textMuted),
+                      prefixIconConstraints:
+                          const BoxConstraints(minWidth: 36, minHeight: 36),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.x2, vertical: AppSpacing.x2),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              Expanded(
+                child: SizedBox(
+                  height: 40,
+                  child: TextFormField(
+                    controller: cabineCtrl,
+                    onChanged: onCabineChanged,
+                    keyboardType: TextInputType.number,
+                    style: AppTypography.bodySmall,
+                    decoration: InputDecoration(
+                      hintText: 'Cabine nº',
+                      hintStyle: AppTypography.bodySmall
+                          .copyWith(color: context.colors.textMuted),
+                      prefixIcon: Icon(Icons.meeting_room_outlined,
+                          size: 16, color: context.colors.textMuted),
+                      prefixIconConstraints:
+                          const BoxConstraints(minWidth: 36, minHeight: 36),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.x2, vertical: AppSpacing.x2),
+                    ),
+                  ),
+                ),
+              ),
+              if (hasActiveFilters) ...[
+                const SizedBox(width: AppSpacing.x2),
+                TextButton.icon(
+                  onPressed: onLimpar,
+                  icon: const Icon(Icons.filter_list_off_rounded, size: 16),
+                  label: const Text('Limpar'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: context.colors.textSecondary,
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
+                    visualDensity: VisualDensity.compact,
+                    textStyle: AppTypography.bodySmall,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }

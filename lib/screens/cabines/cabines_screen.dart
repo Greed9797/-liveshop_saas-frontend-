@@ -1701,13 +1701,9 @@ class _AnalyticsSummaryRow extends StatelessWidget {
 
   const _AnalyticsSummaryRow({required this.resumo});
 
-  static final NumberFormat _currency =
-      NumberFormat.simpleCurrency(locale: 'pt_BR');
-
   @override
   Widget build(BuildContext context) {
     final cards = [
-      ('GMV hoje', _currency.format(resumo.gmvTotalHoje), AppColors.success),
       ('Audiência', '${resumo.audienciaTotalAoVivo}', AppColors.primary),
       ('Lives hoje', '${resumo.totalLivesHoje}', AppColors.info),
     ];
