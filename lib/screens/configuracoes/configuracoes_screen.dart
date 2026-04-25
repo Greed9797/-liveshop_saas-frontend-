@@ -40,7 +40,9 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   final _asaasWalletCtrl = TextEditingController();
   bool _isConnectingTiktok = false;
   final _tiktokShopCtrl = TextEditingController();
+  final _senhaAtualCtrl = TextEditingController();
   final _senhaCtrl = TextEditingController();
+  final _senhaConfirmCtrl = TextEditingController();
 
   bool _isEditingGeral = false;
   bool _isEditingFin = false;
@@ -184,14 +186,55 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     await _salvar(payload, () => setState(() => _isEditingFin = false));
   }
 
+  PasswordStrength _passwordStrength(String pwd) {
+    final hasUpper = pwd.contains(RegExp(r'[A-Z]'));
+    final hasNumber = pwd.contains(RegExp(r'[0-9]'));
+    final hasSpecial = pwd.contains(RegExp(r'[!@#$%^&*()\-_=+\[\]{};:,.<>?/\\|`~]'));
+    if (pwd.length >= 10 && hasUpper && hasNumber && hasSpecial) {
+      return PasswordStrength.forte;
+    }
+    if (pwd.length >= 8 && hasNumber) {
+      return PasswordStrength.media;
+    }
+    return PasswordStrength.fraca;
+  }
+
   Future<void> _salvarNovaSenha() async {
-    if (_senhaCtrl.text.length < 6) {
+    if (_senhaAtualCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('A senha deve ter no minimo 6 caracteres.'),
+          content: Text('Informe sua senha atual.'),
         ),
       );
       return;
+    }
+
+    if (_senhaCtrl.text != _senhaConfirmCtrl.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('As senhas não coincidem.'),
+        ),
+      );
+      return;
+    }
+
+    if (_senhaCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Informe a nova senha.'),
+        ),
+      );
+      return;
+    }
+
+    final strength = _passwordStrength(_senhaCtrl.text);
+    if (strength == PasswordStrength.fraca) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Atenção: sua senha é fraca. Considere usar letras maiúsculas, números e símbolos.'),
+        ),
+      );
     }
 
     final confirmed = await _ensureSensitiveAuth(
@@ -200,7 +243,9 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     if (!confirmed) return;
 
     await _salvar({'nova_senha': _senhaCtrl.text}, () {
+      _senhaAtualCtrl.clear();
       _senhaCtrl.clear();
+      _senhaConfirmCtrl.clear();
       setState(() => _isEditingSeguranca = false);
     });
   }
@@ -209,6 +254,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   void initState() {
     super.initState();
     _logoCtrl.addListener(() => setState(() {}));
+    _senhaCtrl.addListener(() => setState(() {}));
   }
 
   @override
@@ -221,7 +267,9 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     _asaasKeyCtrl.dispose();
     _asaasWalletCtrl.dispose();
     _tiktokShopCtrl.dispose();
+    _senhaAtualCtrl.dispose();
     _senhaCtrl.dispose();
+    _senhaConfirmCtrl.dispose();
     super.dispose();
   }
 
@@ -1415,12 +1463,23 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       isEditing: _isEditingSeguranca,
       onEdit: () => setState(() => _isEditingSeguranca = true),
       onCancel: () {
+        _senhaAtualCtrl.clear();
         _senhaCtrl.clear();
+        _senhaConfirmCtrl.clear();
         setState(() => _isEditingSeguranca = false);
       },
       onSave: _salvarNovaSenha,
       children: [
-        _field('Nova Senha', _senhaCtrl,
+        _field('Senha atual *', _senhaAtualCtrl,
+            enabled: _isEditingSeguranca, obscureText: true),
+        _field('Nova senha *', _senhaCtrl,
+            enabled: _isEditingSeguranca, obscureText: true),
+        if (_isEditingSeguranca && _senhaCtrl.text.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.x2),
+          _PasswordStrengthBar(strength: _passwordStrength(_senhaCtrl.text)),
+          const SizedBox(height: AppSpacing.x4),
+        ],
+        _field('Confirmar nova senha *', _senhaConfirmCtrl,
             enabled: _isEditingSeguranca, obscureText: true),
       ],
     );
@@ -1888,6 +1947,45 @@ class _InfoChip extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─── Password Strength ────────────────────────────────────────────────────────
+
+enum PasswordStrength { fraca, media, forte }
+
+class _PasswordStrengthBar extends StatelessWidget {
+  const _PasswordStrengthBar({required this.strength});
+
+  final PasswordStrength strength;
+
+  @override
+  Widget build(BuildContext context) {
+    final (value, color, label) = switch (strength) {
+      PasswordStrength.fraca => (0.33, AppColors.danger, 'Senha fraca'),
+      PasswordStrength.media => (0.66, AppColors.warning, 'Senha média'),
+      PasswordStrength.forte => (1.0, AppColors.success, 'Senha forte'),
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          child: LinearProgressIndicator(
+            value: value,
+            minHeight: 4,
+            backgroundColor: context.colors.borderSubtle,
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.x1),
+        Text(
+          label,
+          style: AppTypography.caption.copyWith(color: color),
+        ),
+      ],
     );
   }
 }
