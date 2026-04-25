@@ -12,6 +12,8 @@ import '../screens/auth/login_screen.dart';
 import '../screens/boletos/boletos_screen.dart';
 import '../screens/cabines/cabine_detail_screen.dart';
 import '../screens/cabines/cabines_screen.dart';
+import '../screens/cliente/cliente_ao_vivo_screen.dart';
+import '../screens/cliente/cliente_configuracoes_screen.dart';
 import '../screens/cliente/cliente_historico_screen.dart';
 import '../screens/clientes/clientes_leads_screen.dart';
 import '../screens/configuracoes/configuracoes_screen.dart';
@@ -50,6 +52,7 @@ class AppRoutes {
   static const masterConsolidated = '/master/consolidado';
   static const masterCrm = '/master/crm';
   static const cliente = '/cliente';
+  static const clienteAoVivo = '/cliente/ao-vivo';
   static const clienteHistorico = '/cliente/historico';
   static const clienteCabines = '/cliente/cabines';
   static const clienteCabineDetail = '/cliente/cabines/detalhe';
@@ -69,6 +72,7 @@ class AppRoutes {
   static const agendamentos = '/agendamentos';
   static const apresentadoras = '/apresentadoras';
   static const analyticsDashboard = '/analytics-dashboard';
+  static const clienteConfiguracoes = '/cliente/configuracoes';
 
   static const Set<String> _internalRoles = {
     'franqueado',
@@ -295,6 +299,28 @@ class AppRoutes {
             fallbackRoute: login,
             unauthenticatedRoute: login,
             child: ClienteHistoricoScreen(),
+          ),
+          settings: settings,
+        );
+
+      case clienteAoVivo:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'cliente_parceiro'},
+            fallbackRoute: cliente,
+            unauthenticatedRoute: login,
+            child: ClienteAoVivoScreen(),
+          ),
+          settings: settings,
+        );
+
+      case clienteConfiguracoes:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'cliente_parceiro'},
+            fallbackRoute: cliente,
+            unauthenticatedRoute: login,
+            child: ClienteConfiguracoesScreen(),
           ),
           settings: settings,
         );

@@ -542,6 +542,13 @@ class _MenuContent extends ConsumerWidget {
           compact: compact,
         ),
         _MenuItem(
+          icon: PhosphorIcons.broadcast(),
+          label: 'Ao Vivo!',
+          route: AppRoutes.clienteAoVivo,
+          isSelected: currentRoute == AppRoutes.clienteAoVivo,
+          compact: compact,
+        ),
+        _MenuItem(
           icon: PhosphorIcons.clockCounterClockwise(),
           label: 'Histórico de Lives',
           route: AppRoutes.clienteHistorico,
@@ -614,6 +621,14 @@ class _MenuContent extends ConsumerWidget {
           route: AppRoutes.boletos,
           isSelected: currentRoute == AppRoutes.boletos,
           badge: boletosCount > 0 ? '$boletosCount' : null,
+          compact: compact,
+        ),
+      if (isClienteParceiro)
+        _MenuItem(
+          icon: PhosphorIcons.gear(),
+          label: 'Configurações',
+          route: AppRoutes.clienteConfiguracoes,
+          isSelected: currentRoute == AppRoutes.clienteConfiguracoes,
           compact: compact,
         ),
       _MenuItem(
