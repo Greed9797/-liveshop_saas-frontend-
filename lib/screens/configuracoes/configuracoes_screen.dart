@@ -42,6 +42,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   final _nomeCtrl = TextEditingController();
   final _logoCtrl = TextEditingController();
   final _metaCtrl = TextEditingController();
+  final _telefoneCtrl = TextEditingController();
+  final _emailContatoCtrl = TextEditingController();
   final _asaasKeyCtrl = TextEditingController();
   final _asaasWalletCtrl = TextEditingController();
   bool _isConnectingTiktok = false;
@@ -222,6 +224,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     _nomeCtrl.dispose();
     _logoCtrl.dispose();
     _metaCtrl.dispose();
+    _telefoneCtrl.dispose();
+    _emailContatoCtrl.dispose();
     _asaasKeyCtrl.dispose();
     _asaasWalletCtrl.dispose();
     _tiktokShopCtrl.dispose();
@@ -1249,33 +1253,101 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       _nomeCtrl.text = conf.nomeExibicao;
       _logoCtrl.text = conf.logoUrl ?? '';
       _metaCtrl.text = conf.metaDiariaGmv.toStringAsFixed(0);
+      _telefoneCtrl.text = conf.telefoneContato ?? '';
+      _emailContatoCtrl.text = conf.emailContato ?? '';
     }
-    return _buildPanel(
-      title: 'Identidade da Franquia',
-      isEditing: _isEditingGeral,
-      onEdit: () => setState(() => _isEditingGeral = true),
-      onCancel: () => setState(() {
-        _isEditingGeral = false;
-        _pickedImageBytes = null;
-      }),
-      onSave: () => _salvar(
-          {
-            'apelido': _nomeCtrl.text,
-            'logo_url': _logoCtrl.text.isEmpty ? null : _logoCtrl.text,
-            'meta_diaria_gmv': double.tryParse(_metaCtrl.text) ?? 10000,
-          },
-          () => setState(() {
-                _isEditingGeral = false;
-                _pickedImageBytes = null;
-              })),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _idDisplay(conf.id),
-        _field('Apelido da unidade', _nomeCtrl, enabled: _isEditingGeral),
-        _field('Meta Diária de GMV (R\$)', _metaCtrl,
-            enabled: _isEditingGeral,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true)),
-        _logoUploadArea(),
+        _buildPanel(
+          title: 'Identidade da Franquia',
+          isEditing: _isEditingGeral,
+          onEdit: () => setState(() => _isEditingGeral = true),
+          onCancel: () => setState(() {
+            _isEditingGeral = false;
+            _pickedImageBytes = null;
+          }),
+          onSave: () => _salvar(
+              {
+                'apelido': _nomeCtrl.text,
+                'logo_url': _logoCtrl.text.isEmpty ? null : _logoCtrl.text,
+                'meta_diaria_gmv': double.tryParse(_metaCtrl.text) ?? 10000,
+                if (_telefoneCtrl.text.trim().isNotEmpty || _isEditingGeral)
+                  'telefone_contato': _telefoneCtrl.text.trim().isEmpty
+                      ? null
+                      : _telefoneCtrl.text.trim(),
+                if (_emailContatoCtrl.text.trim().isNotEmpty || _isEditingGeral)
+                  'email_contato': _emailContatoCtrl.text.trim().isEmpty
+                      ? null
+                      : _emailContatoCtrl.text.trim(),
+              },
+              () => setState(() {
+                    _isEditingGeral = false;
+                    _pickedImageBytes = null;
+                  })),
+          children: [
+            _idDisplay(conf.id),
+            _field('Apelido da unidade', _nomeCtrl, enabled: _isEditingGeral),
+            _field('Meta Diária de GMV (R\$)', _metaCtrl,
+                enabled: _isEditingGeral,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true)),
+            _field('Telefone de contato', _telefoneCtrl,
+                enabled: _isEditingGeral,
+                keyboardType: TextInputType.phone),
+            _field('E-mail de contato', _emailContatoCtrl,
+                enabled: _isEditingGeral,
+                keyboardType: TextInputType.emailAddress),
+            _logoUploadArea(),
+          ],
+        ),
+        if (conf.contactHistory.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.x3),
+          _buildContactHistory(conf.contactHistory),
+        ],
       ],
+    );
+  }
+
+  Widget _buildContactHistory(List<dynamic> history) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.colors.bgCard,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: context.colors.borderSubtle),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.x4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Histórico de alterações de contato',
+              style: AppTypography.label
+                  .copyWith(color: context.colors.textSecondary)),
+          const SizedBox(height: AppSpacing.x2),
+          ...history.take(10).map((e) {
+            final campo = e.campo == 'telefone' ? 'Telefone' : 'E-mail';
+            final dt = e.alteradoEm.toString().substring(0, 10);
+            return Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: AppSpacing.x1),
+              child: Row(children: [
+                Icon(Icons.history, size: 14,
+                    color: context.colors.textMuted),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '$campo alterado em $dt'
+                    '${e.alteradoPorNome != null ? " por ${e.alteradoPorNome}" : ""}'
+                    ': ${e.valorAnterior ?? "—"} → ${e.valorNovo ?? "—"}',
+                    style: AppTypography.caption
+                        .copyWith(color: context.colors.textSecondary),
+                  ),
+                ),
+              ]),
+            );
+          }),
+        ],
+      ),
     );
   }
 

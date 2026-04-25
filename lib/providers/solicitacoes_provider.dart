@@ -99,6 +99,13 @@ class SolicitacoesNotifier extends AsyncNotifier<List<SolicitacaoFranqueador>> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(_fetch);
   }
+
+  /// Franqueado cria agendamento diretamente (já aprovado, com apresentadora opcional).
+  Future<void> criarAgendamento(Map<String, dynamic> data) async {
+    await ApiService.post('/solicitacoes', data: data);
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(_fetch);
+  }
 }
 
 final solicitacoesProvider =

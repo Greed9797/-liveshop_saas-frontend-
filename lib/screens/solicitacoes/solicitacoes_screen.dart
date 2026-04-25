@@ -281,7 +281,24 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
       ],
     );
 
-    if (widget.embedded) return content;
+    final contentWithFab = Stack(
+      children: [
+        content,
+        Positioned(
+          bottom: AppSpacing.x4,
+          right: AppSpacing.x4,
+          child: FloatingActionButton.extended(
+            onPressed: () => _mostrarNovoAgendamento(context),
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add),
+            label: const Text('Novo Agendamento'),
+          ),
+        ),
+      ],
+    );
+
+    if (widget.embedded) return contentWithFab;
 
     return AppScreenScaffold(
       currentRoute: AppRoutes.agendamentos,
@@ -289,7 +306,20 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
       eyebrow: 'Agenda operacional',
       titleSerif: true,
       subtitle: 'Aprove, recuse e acompanhe pedidos de horário dos clientes.',
-      child: content,
+      child: contentWithFab,
+    );
+  }
+
+  Future<void> _mostrarNovoAgendamento(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => _NovoAgendamentoDialog(
+        onSalvar: (data) async {
+          await ref
+              .read(solicitacoesProvider.notifier)
+              .criarAgendamento(data);
+        },
+      ),
     );
   }
 }
@@ -420,6 +450,141 @@ class _SolicitacoesLista extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Dialog: Novo Agendamento (criado pelo franqueado)
+// ──────────────────────────────────────────────────────────────
+
+class _NovoAgendamentoDialog extends StatefulWidget {
+  final Future<void> Function(Map<String, dynamic> data) onSalvar;
+
+  const _NovoAgendamentoDialog({required this.onSalvar});
+
+  @override
+  State<_NovoAgendamentoDialog> createState() => _NovoAgendamentoDialogState();
+}
+
+class _NovoAgendamentoDialogState extends State<_NovoAgendamentoDialog> {
+  final _cabineIdCtrl      = TextEditingController();
+  final _clienteIdCtrl     = TextEditingController();
+  final _apresentadoraCtrl = TextEditingController();
+  final _dataCtrl          = TextEditingController();
+  final _horaInicioCtrl    = TextEditingController();
+  final _horaFimCtrl       = TextEditingController();
+  final _obsCtrl           = TextEditingController();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _cabineIdCtrl.dispose();
+    _clienteIdCtrl.dispose();
+    _apresentadoraCtrl.dispose();
+    _dataCtrl.dispose();
+    _horaInicioCtrl.dispose();
+    _horaFimCtrl.dispose();
+    _obsCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _salvar() async {
+    final cabineId  = _cabineIdCtrl.text.trim();
+    final clienteId = _clienteIdCtrl.text.trim();
+    final data      = _dataCtrl.text.trim();
+    final hI        = _horaInicioCtrl.text.trim();
+    final hF        = _horaFimCtrl.text.trim();
+
+    if (cabineId.isEmpty || clienteId.isEmpty || data.isEmpty || hI.isEmpty || hF.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Preencha todos os campos obrigatórios')));
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      await widget.onSalvar({
+        'cabine_id':        cabineId,
+        'cliente_id':       clienteId,
+        if (_apresentadoraCtrl.text.trim().isNotEmpty)
+          'apresentadora_id': _apresentadoraCtrl.text.trim(),
+        'data_solicitada':  data,
+        'hora_inicio':      hI,
+        'hora_fim':         hF,
+        if (_obsCtrl.text.trim().isNotEmpty)
+          'observacao': _obsCtrl.text.trim(),
+      });
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(ApiService.extractErrorMessage(e))));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg)),
+      title: const Row(children: [
+        Icon(Icons.calendar_month, color: AppColors.primary, size: 20),
+        SizedBox(width: AppSpacing.x2),
+        Text('Novo Agendamento'),
+      ]),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppTextField(controller: _cabineIdCtrl,
+                  hint: 'ID da Cabine *'),
+              const SizedBox(height: AppSpacing.x3),
+              AppTextField(controller: _clienteIdCtrl,
+                  hint: 'ID do Cliente *'),
+              const SizedBox(height: AppSpacing.x3),
+              AppTextField(controller: _apresentadoraCtrl,
+                  hint: 'ID da Apresentadora (opcional)'),
+              const SizedBox(height: AppSpacing.x3),
+              AppTextField(controller: _dataCtrl,
+                  hint: 'Data (YYYY-MM-DD) *',
+                  keyboardType: TextInputType.datetime),
+              const SizedBox(height: AppSpacing.x3),
+              Row(children: [
+                Expanded(
+                  child: AppTextField(controller: _horaInicioCtrl,
+                      hint: 'Início (HH:MM) *',
+                      keyboardType: TextInputType.datetime),
+                ),
+                const SizedBox(width: AppSpacing.x2),
+                Expanded(
+                  child: AppTextField(controller: _horaFimCtrl,
+                      hint: 'Fim (HH:MM) *',
+                      keyboardType: TextInputType.datetime),
+                ),
+              ]),
+              const SizedBox(height: AppSpacing.x3),
+              AppTextField(controller: _obsCtrl,
+                  hint: 'Observação (opcional)',
+                  keyboardType: TextInputType.multiline),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        AppSecondaryButton(
+            label: 'Cancelar',
+            onPressed: () => Navigator.of(context).pop()),
+        AppPrimaryButton(
+            label: 'Agendar',
+            isLoading: _saving,
+            onPressed: _salvar),
+      ],
     );
   }
 }
