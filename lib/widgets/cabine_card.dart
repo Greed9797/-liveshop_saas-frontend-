@@ -267,7 +267,7 @@ class _CabineCardState extends State<CabineCard> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        '${cabine.viewerCount} espectadores',
+                        '– espectadores',
                         style: TextStyle(
                           fontSize: 10,
                           color: context.colors.textSecondary,

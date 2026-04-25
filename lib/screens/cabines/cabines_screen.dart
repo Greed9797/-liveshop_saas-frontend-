@@ -680,12 +680,9 @@ class _KpiSection extends StatelessWidget {
           children: [
             _FeaturedKpiCard(
               label: 'Audiência simultânea',
-              value: hasLiveStream
-                  ? NumberFormat.decimalPattern('pt_BR')
-                      .format(metrics.audienciaTotal)
-                  : '—',
+              value: '–',
               sub: hasLiveStream
-                  ? 'espectadores conectados via SSE · ${metrics.livesComStream} $liveLabel'
+                  ? 'integração TikTok pendente · ${metrics.livesComStream} $liveLabel ativa${metrics.livesComStream == 1 ? '' : 's'}'
                   : 'sem lives ativas no momento',
             ),
           ],
@@ -1205,6 +1202,7 @@ class _SelectedCabinePanel extends ConsumerWidget {
                         value: _formatDuracao(
                             DateTime.now().difference(cabine!.iniciadoEm!)),
                       ),
+                      _TempoRestanteLine(cabine: cabine!),
                     ],
                     if (cabine!.status == 'ao_vivo') ...[
                       Builder(
@@ -1246,7 +1244,7 @@ class _SelectedCabinePanel extends ConsumerWidget {
                             ),
                             _InfoLine(
                               label: 'Audiência',
-                              value: '$viewers espectadores',
+                              value: '–',
                             ),
                             _InfoLine(
                               label: 'Pedidos',
@@ -1419,6 +1417,25 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final analyticsAsync = ref.watch(franqueadoAnalyticsResumoProvider);
+    final cabinesAsync = ref.watch(cabinesProvider);
+
+    // Compute horas planejadas/realizadas from the cabines list
+    final cabines = cabinesAsync.valueOrNull ?? const <Cabine>[];
+    final horasPlanejadas = cabines
+        .where((c) =>
+            c.status == 'ao_vivo' ||
+            c.status == 'reservada' ||
+            c.status == 'ativa')
+        .fold<double>(0.0, (sum, c) => sum + c.horasContratadas);
+    // Horas realizadas = encerradas hoje (from backend) + in-progress ao_vivo
+    final now = DateTime.now();
+    final horasRealizadas = cabines.fold<double>(0.0, (sum, c) {
+      double h = c.horasRealizadasHoje;
+      if (c.status == 'ao_vivo' && c.iniciadoEm != null) {
+        h += now.difference(c.iniciadoEm!).inMinutes / 60.0;
+      }
+      return sum + h;
+    });
 
     return _SidebarCard(
       title: 'Mini Analytics',
@@ -1447,7 +1464,11 @@ class _MiniAnalyticsPanel extends ConsumerWidget {
               key: const ValueKey('analytics-data'),
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _AnalyticsSummaryRow(resumo: analytics.resumoHoje),
+                _AnalyticsSummaryRow(
+                  resumo: analytics.resumoHoje,
+                  horasPlanejadas: horasPlanejadas,
+                  horasRealizadas: horasRealizadas,
+                ),
                 const SizedBox(height: AppSpacing.x4),
                 Text('Top Closers da unidade',
                     style: TextStyle(
@@ -1627,6 +1648,55 @@ class _InfoLine extends StatelessWidget {
   }
 }
 
+class _TempoRestanteLine extends StatelessWidget {
+  final Cabine cabine;
+
+  const _TempoRestanteLine({required this.cabine});
+
+  @override
+  Widget build(BuildContext context) {
+    // If horas_contratadas not available from backend yet, show –
+    if (cabine.horasContratadas <= 0 || cabine.iniciadoEm == null) {
+      return const _InfoLine(label: 'Tempo restante', value: '–');
+    }
+
+    final totalMin = (cabine.horasContratadas * 60).round();
+    final decorrido = DateTime.now().difference(cabine.iniciadoEm!).inMinutes;
+    final restante = totalMin - decorrido;
+
+    if (restante <= 0) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.x2),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 94,
+              child: Text(
+                'Encerramento:',
+                style: TextStyle(color: context.colors.textSecondary),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                'Previsto',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.danger),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final h = restante ~/ 60;
+    final m = restante.remainder(60);
+    final label = h > 0 ? '${h}h${m.toString().padLeft(2, '0')}m' : '${m}min';
+    return _InfoLine(label: 'Tempo restante', value: label);
+  }
+}
+
 class _MetricRankRow extends StatelessWidget {
   final String title;
   final String value;
@@ -1725,41 +1795,54 @@ class _RankedMetricRow extends StatelessWidget {
 
 class _AnalyticsSummaryRow extends StatelessWidget {
   final ResumoHojeAnalytics resumo;
+  final double horasPlanejadas;
+  final double horasRealizadas;
 
-  const _AnalyticsSummaryRow({required this.resumo});
+  const _AnalyticsSummaryRow({
+    required this.resumo,
+    required this.horasPlanejadas,
+    required this.horasRealizadas,
+  });
+
+  String _formatHoras(double h) {
+    if (h <= 0) return '–';
+    final hInt = h.floor();
+    final min = ((h - hInt) * 60).round();
+    return min > 0 ? '${hInt}h${min.toString().padLeft(2, '0')}m' : '${hInt}h';
+  }
 
   @override
   Widget build(BuildContext context) {
     final cards = [
-      ('Audiência', '${resumo.audienciaTotalAoVivo}', AppColors.primary),
       ('Lives hoje', '${resumo.totalLivesHoje}', AppColors.info),
+      ('Hs planejadas', _formatHoras(horasPlanejadas), AppColors.primary),
+      ('Hs realizadas', _formatHoras(horasRealizadas), AppColors.success),
     ];
 
-    return Row(
+    return Wrap(
+      spacing: AppSpacing.x2,
+      runSpacing: AppSpacing.x2,
       children: cards
           .map(
-            (item) => Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(
-                    right: item == cards.last ? 0 : AppSpacing.x2),
-                child: AppCard(
-                  shadow: const [],
-                  borderColor: context.colors.borderSubtle,
-                  padding: const EdgeInsets.all(AppSpacing.x3),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(item.$1,
-                          style: AppTypography.caption
-                              .copyWith(color: context.colors.textSecondary)),
-                      const SizedBox(height: AppSpacing.x1),
-                      Text(
-                        item.$2,
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700, color: item.$3),
-                      ),
-                    ],
-                  ),
+            (item) => SizedBox(
+              width: 95,
+              child: AppCard(
+                shadow: const [],
+                borderColor: context.colors.borderSubtle,
+                padding: const EdgeInsets.all(AppSpacing.x3),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.$1,
+                        style: AppTypography.caption
+                            .copyWith(color: context.colors.textSecondary)),
+                    const SizedBox(height: AppSpacing.x1),
+                    Text(
+                      item.$2,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, color: item.$3),
+                    ),
+                  ],
                 ),
               ),
             ),

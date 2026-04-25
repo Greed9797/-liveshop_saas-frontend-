@@ -86,22 +86,33 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
   @override
   Widget build(BuildContext context) {
     final solicitacoesAsync = ref.watch(solicitacoesProvider);
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final now = DateTime.now();
+    final mesAtual = DateFormat('yyyy-MM').format(now);
 
     final pendentesCount = solicitacoesAsync.valueOrNull
             ?.where((s) => s.status == 'pendente')
             .length ??
         0;
 
-    final aprovadasHoje = solicitacoesAsync.valueOrNull
-            ?.where((s) => s.status == 'aprovada' && s.dataSolicitada == today)
+    final aprovadasMes = solicitacoesAsync.valueOrNull
+            ?.where((s) =>
+                s.status == 'aprovada' &&
+                s.dataSolicitada.startsWith(mesAtual))
             .length ??
         0;
 
-    final recusadasCount = solicitacoesAsync.valueOrNull
-            ?.where((s) => s.status == 'recusada')
+    final recusadasMes = solicitacoesAsync.valueOrNull
+            ?.where((s) =>
+                s.status == 'recusada' &&
+                s.dataSolicitada.startsWith(mesAtual))
             .length ??
         0;
+
+    final taxaAprovacao = () {
+      final total = aprovadasMes + recusadasMes;
+      if (total == 0) return '–';
+      return '${(aprovadasMes / total * 100).toStringAsFixed(0)}%';
+    }();
 
     final content = Column(
       children: [
@@ -119,18 +130,18 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
                       children: [
                         Expanded(
                           child: KpiAccentCard(
-                            label: 'Aguardando você',
+                            label: 'Pendentes',
                             value: '$pendentesCount',
-                            sub: 'agendamentos pendentes',
+                            sub: 'aguardando aprovação',
                             accentTop: true,
                           ),
                         ),
                         const SizedBox(width: AppSpacing.x3),
                         Expanded(
                           child: KpiAccentCard(
-                            label: 'Aprovadas hoje',
-                            value: '$aprovadasHoje',
-                            sub: 'neste dia',
+                            label: 'Aprovadas (mês)',
+                            value: '$aprovadasMes',
+                            sub: 'neste mês',
                             valueColor: AppColors.success,
                           ),
                         ),
@@ -141,14 +152,20 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
                       children: [
                         Expanded(
                           child: KpiAccentCard(
-                            label: 'Recusadas',
-                            value: '$recusadasCount',
-                            sub: 'total',
+                            label: 'Recusadas (mês)',
+                            value: '$recusadasMes',
+                            sub: 'neste mês',
                             valueColor: AppColors.danger,
                           ),
                         ),
                         const SizedBox(width: AppSpacing.x3),
-                        const Expanded(child: SizedBox()),
+                        Expanded(
+                          child: KpiAccentCard(
+                            label: 'Taxa aprovação',
+                            value: taxaAprovacao,
+                            sub: 'aprovadas / total',
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -158,37 +175,38 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
                 children: [
                   Expanded(
                     child: KpiAccentCard(
-                      label: 'Aguardando você',
+                      label: 'Pendentes',
                       value: '$pendentesCount',
-                      sub: 'agendamentos pendentes',
+                      sub: 'aguardando aprovação',
                       accentTop: true,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.x3),
                   Expanded(
                     child: KpiAccentCard(
-                      label: 'Aprovadas hoje',
-                      value: '$aprovadasHoje',
-                      sub: 'neste dia',
+                      label: 'Aprovadas (mês)',
+                      value: '$aprovadasMes',
+                      sub: 'neste mês',
                       valueColor: AppColors.success,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.x3),
                   Expanded(
                     child: KpiAccentCard(
-                      label: 'Recusadas',
-                      value: '$recusadasCount',
-                      sub: 'total',
+                      label: 'Recusadas (mês)',
+                      value: '$recusadasMes',
+                      sub: 'neste mês',
                       valueColor: AppColors.danger,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.x3),
-                  const Expanded(
-                      child: KpiAccentCard(
-                    label: 'Tempo médio',
-                    value: '—',
-                    sub: 'para resposta',
-                  )),
+                  Expanded(
+                    child: KpiAccentCard(
+                      label: 'Taxa aprovação',
+                      value: taxaAprovacao,
+                      sub: 'aprovadas / total',
+                    ),
+                  ),
                 ],
               );
             },

@@ -130,7 +130,7 @@ class _LiveActiveView extends StatelessWidget {
                 icon: PhosphorIcons.users(),
                 iconColor: _AppColors.info,
                 label: 'Viewers',
-                value: '${live.viewerCount}',
+                value: '–',
                 large: true,
               ),
               _MetricTile(
@@ -176,6 +176,9 @@ class _LiveActiveView extends StatelessWidget {
 
         // Engagement chips row
         _EngagementRow(live: live),
+
+        const SizedBox(height: _AppSpacing.lg),
+        _ActionButtons(),
       ],
     );
   }
@@ -460,6 +463,8 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: _AppSpacing.lg),
           _ProximaReservaCard(reserva: proximaReserva!),
         ],
+        const SizedBox(height: _AppSpacing.lg),
+        _ActionButtons(),
       ],
     );
   }
@@ -558,6 +563,67 @@ class _ReservaRow extends StatelessWidget {
           value,
           style: _AppTypography.bodySmall.copyWith(
             fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Action buttons — shown in both active-live and empty state
+// ---------------------------------------------------------------------------
+
+class _ActionButtons extends StatelessWidget {
+  const _ActionButtons();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.clienteHistorico),
+            icon: Icon(
+              PhosphorIcons.calendarBlank(),
+              size: 18,
+              color: _AppColors.primary,
+            ),
+            label: const Text('Ver agenda'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _AppColors.primary,
+              side: const BorderSide(color: _AppColors.primary),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: _AppSpacing.md, vertical: _AppSpacing.sm),
+              shape: RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(ds_tokens.AppRadius.md),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: _AppSpacing.md),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.cliente),
+            icon: Icon(
+              PhosphorIcons.plusCircle(),
+              size: 18,
+              color: _AppColors.primary,
+            ),
+            label: const Text('Solicitar nova live'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _AppColors.primary,
+              side: const BorderSide(color: _AppColors.primary),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: _AppSpacing.md, vertical: _AppSpacing.sm),
+              shape: RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(ds_tokens.AppRadius.md),
+              ),
+            ),
           ),
         ),
       ],

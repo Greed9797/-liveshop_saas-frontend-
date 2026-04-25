@@ -21,6 +21,8 @@ class Cabine {
   final int sharesCount;
   final int giftsDiamonds;
   final int totalOrders;
+  final double horasContratadas;
+  final double horasRealizadasHoje;
 
   const Cabine({
     required this.id,
@@ -44,6 +46,8 @@ class Cabine {
     this.sharesCount = 0,
     this.giftsDiamonds = 0,
     this.totalOrders = 0,
+    this.horasContratadas = 0,
+    this.horasRealizadasHoje = 0,
   });
 
   factory Cabine.fromJson(Map<String, dynamic> j) => Cabine(
@@ -74,6 +78,8 @@ class Cabine {
         sharesCount: (j['shares_count'] as num? ?? 0).toInt(),
         giftsDiamonds: (j['gifts_diamonds'] as num? ?? 0).toInt(),
         totalOrders: (j['total_orders'] as num? ?? 0).toInt(),
+        horasContratadas: (j['horas_contratadas'] as num? ?? 0).toDouble(),
+        horasRealizadasHoje: (j['horas_realizadas_hoje'] as num? ?? 0).toDouble(),
       );
 
   Map<String, dynamic> toCardMap() => {

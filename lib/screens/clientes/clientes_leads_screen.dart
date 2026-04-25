@@ -9,6 +9,37 @@ import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../widgets/responsive_grid.dart';
 
+// ── Métricas provider ─────────────────────────────────────────────────────────
+
+class _ClientesMetricas {
+  final double ltvTotal;
+  final double faturamentoAcumulado;
+  final int totalLives;
+  final double comissaoPaga;
+
+  const _ClientesMetricas({
+    required this.ltvTotal,
+    required this.faturamentoAcumulado,
+    required this.totalLives,
+    required this.comissaoPaga,
+  });
+
+  factory _ClientesMetricas.fromJson(Map<String, dynamic> j) =>
+      _ClientesMetricas(
+        ltvTotal: (j['ltv_total'] as num? ?? 0).toDouble(),
+        faturamentoAcumulado:
+            (j['faturamento_acumulado'] as num? ?? 0).toDouble(),
+        totalLives: (j['total_lives'] as num? ?? 0).toInt(),
+        comissaoPaga: (j['comissao_paga'] as num? ?? 0).toDouble(),
+      );
+}
+
+final _clientesMetricasProvider =
+    FutureProvider.autoDispose<_ClientesMetricas>((ref) async {
+  final resp = await ApiService.get('/clientes/metricas');
+  return _ClientesMetricas.fromJson(resp.data as Map<String, dynamic>);
+});
+
 class ClientesLeadsScreen extends ConsumerWidget {
   const ClientesLeadsScreen({super.key});
 
@@ -117,18 +148,24 @@ List<_KanbanPhase> _buildPhases(List<Cliente> all) {
 
 // ── Content widget ────────────────────────────────────────────────────────────
 
-class _ClientesContent extends StatefulWidget {
+class _ClientesContent extends ConsumerStatefulWidget {
   final List<Cliente> clientes;
 
   const _ClientesContent({required this.clientes});
 
   @override
-  State<_ClientesContent> createState() => _ClientesContentState();
+  ConsumerState<_ClientesContent> createState() => _ClientesContentState();
 }
 
-class _ClientesContentState extends State<_ClientesContent> {
+class _ClientesContentState extends ConsumerState<_ClientesContent> {
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
+
+  static final _currencyFmt = NumberFormat.currency(
+    locale: 'pt_BR',
+    symbol: 'R\$',
+    decimalDigits: 0,
+  );
 
   @override
   void dispose() {
@@ -155,6 +192,8 @@ class _ClientesContentState extends State<_ClientesContent> {
         _allClientes.where((c) => c.status == 'inadimplente').length;
     final cancelados =
         _allClientes.where((c) => c.status == 'cancelado').length;
+
+    final metricasAsync = ref.watch(_clientesMetricasProvider);
 
     // Build phases from the full list, then apply search to each
     final phases = _buildPhases(_allClientes).map((phase) {
@@ -198,6 +237,68 @@ class _ClientesContentState extends State<_ClientesContent> {
             ),
           ],
         ),
+        const SizedBox(height: AppSpacing.x4),
+
+        // ── Métricas LTV (dados de lives encerradas) ──────────────────
+        metricasAsync.when(
+          loading: () => ResponsiveGrid(
+            mobileColumns: 1,
+            tabletColumns: 4,
+            desktopColumns: 4,
+            spacing: AppSpacing.x3,
+            runSpacing: AppSpacing.x3,
+            children: List.generate(
+              4,
+              (_) => const KpiAccentCard(label: '—', value: '...'),
+            ),
+          ),
+          error: (_, __) => const ResponsiveGrid(
+            mobileColumns: 1,
+            tabletColumns: 4,
+            desktopColumns: 4,
+            spacing: AppSpacing.x3,
+            runSpacing: AppSpacing.x3,
+            children: [
+              KpiAccentCard(label: 'LTV Total', value: '–'),
+              KpiAccentCard(label: 'Faturamento Acumulado', value: '–'),
+              KpiAccentCard(label: 'Total de Lives', value: '–'),
+              KpiAccentCard(label: 'Comissão Paga', value: '–'),
+            ],
+          ),
+          data: (m) => ResponsiveGrid(
+            mobileColumns: 1,
+            tabletColumns: 4,
+            desktopColumns: 4,
+            spacing: AppSpacing.x3,
+            runSpacing: AppSpacing.x3,
+            children: [
+              KpiAccentCard(
+                label: 'LTV Total',
+                value: _currencyFmt.format(m.ltvTotal),
+                sub: 'soma de lives encerradas',
+                valueColor: AppColors.primary,
+              ),
+              KpiAccentCard(
+                label: 'Faturamento Acumulado',
+                value: _currencyFmt.format(m.faturamentoAcumulado),
+                sub: 'receita bruta gerada',
+                valueColor: AppColors.primary,
+              ),
+              KpiAccentCard(
+                label: 'Total de Lives',
+                value: '${m.totalLives}',
+                sub: 'lives encerradas',
+                valueColor: AppColors.info,
+              ),
+              KpiAccentCard(
+                label: 'Comissão Paga',
+                value: _currencyFmt.format(m.comissaoPaga),
+                sub: 'comissão calculada',
+                valueColor: AppColors.warning,
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: AppSpacing.x5),
 
         // ── Search field ──────────────────────────────────────────────
@@ -229,7 +330,10 @@ class _ClientesContentState extends State<_ClientesContent> {
                 children: phases.map((phase) {
                   return Padding(
                     padding: const EdgeInsets.only(right: AppSpacing.x4),
-                    child: _KanbanColumn(phase: phase),
+                    child: _KanbanColumn(
+                      phase: phase,
+                      onMoverParaOnboarding: _moverParaOnboarding,
+                    ),
                   );
                 }).toList(),
               ),
@@ -238,14 +342,44 @@ class _ClientesContentState extends State<_ClientesContent> {
       ],
     );
   }
+
+  Future<void> _moverParaOnboarding(Cliente cliente) async {
+    try {
+      await ApiService.patch('/clientes/${cliente.id}',
+          data: {'status': 'ganho'});
+      ref.read(clientesProvider.notifier).refresh();
+      ref.invalidate(_clientesMetricasProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cliente promovido para Ativo! Onboarding iniciado.'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ApiService.extractErrorMessage(e)),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
+  }
 }
 
 // ── Kanban column ─────────────────────────────────────────────────────────────
 
 class _KanbanColumn extends StatelessWidget {
   final _KanbanPhase phase;
+  final Future<void> Function(Cliente) onMoverParaOnboarding;
 
-  const _KanbanColumn({required this.phase});
+  const _KanbanColumn({
+    required this.phase,
+    required this.onMoverParaOnboarding,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -327,8 +461,10 @@ class _KanbanColumn extends StatelessWidget {
                     itemCount: phase.clients.length,
                     separatorBuilder: (_, __) =>
                         const SizedBox(height: AppSpacing.x3),
-                    itemBuilder: (context, index) =>
-                        _KanbanCard(cliente: phase.clients[index]),
+                    itemBuilder: (context, index) => _KanbanCard(
+                      cliente: phase.clients[index],
+                      onMoverParaOnboarding: onMoverParaOnboarding,
+                    ),
                   ),
           ),
         ],
@@ -341,14 +477,21 @@ class _KanbanColumn extends StatelessWidget {
 
 class _KanbanCard extends StatelessWidget {
   final Cliente cliente;
+  final Future<void> Function(Cliente) onMoverParaOnboarding;
 
-  const _KanbanCard({required this.cliente});
+  const _KanbanCard({
+    required this.cliente,
+    required this.onMoverParaOnboarding,
+  });
 
   static final _currencyFmt = NumberFormat.currency(
     locale: 'pt_BR',
     symbol: 'R\$',
     decimalDigits: 0,
   );
+
+  bool get _podeIniciarOnboarding =>
+      cliente.status == 'ativo' || cliente.status == 'inadimplente';
 
   @override
   Widget build(BuildContext context) {
@@ -366,7 +509,7 @@ class _KanbanCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Name + status badge
+          // Name + status badge + menu
           Row(
             children: [
               Expanded(
@@ -380,6 +523,27 @@ class _KanbanCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.x2),
               AppBadge(label: _statusLabel, type: _badgeType),
+              if (_podeIniciarOnboarding) ...[
+                const SizedBox(width: AppSpacing.x1),
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    Icons.more_vert,
+                    size: 16,
+                    color: context.colors.textMuted,
+                  ),
+                  onSelected: (value) {
+                    if (value == 'onboarding') {
+                      onMoverParaOnboarding(cliente);
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
+                      value: 'onboarding',
+                      child: Text('Mover para Onboarding'),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
 

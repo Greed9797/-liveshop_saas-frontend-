@@ -412,27 +412,25 @@ class _KpiCardsRow extends StatelessWidget {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
 
+        final ticketMedioValue = data.kpis.totalVendas > 0
+            ? _currencyFmt.format(data.kpis.ticketMedio)
+            : '–';
+
         final cards = [
           BigKpi(
             icon: Icons.account_balance_wallet_outlined,
             label: 'Faturamento Total',
             value: _currencyFmt.format(data.kpis.faturamentoTotal),
-            delta: '+12% vs mês anterior',
-            deltaTone: DeltaTone.up,
           ),
           BigKpi(
             icon: Icons.shopping_cart_outlined,
             label: 'Total de Vendas',
             value: '${data.kpis.totalVendas} vendas',
-            delta: '+8% vs mês anterior',
-            deltaTone: DeltaTone.up,
           ),
           BigKpi(
             icon: Icons.trending_up,
             label: 'Ticket Médio',
-            value: _currencyFmt.format(data.kpis.ticketMedio),
-            delta: '-3% vs mês anterior',
-            deltaTone: DeltaTone.down,
+            value: ticketMedioValue,
           ),
         ];
 
@@ -524,11 +522,13 @@ class _IntelComercialSection extends ConsumerWidget {
           );
         });
 
-        // Build HeatmapWidget matrix (7 days × 6 time slots)
-        // Since API provides hourly aggregates without day-of-week, distribute evenly
-        final heatmapMatrix = List.generate(7, (day) {
+        // Heatmap por dia-da-semana: a API retorna apenas agregados por hora,
+        // sem breakdown por dia da semana. Exibimos a intensidade horária
+        // repetida igualmente para cada dia como aproximação visual.
+        // Valores são normalizados 0.0–1.0; se não há dados, ficam 0.0.
+        final heatmapMatrix = List.generate(7, (_) {
           return List.generate(6, (slot) {
-            final hora = slot == 0 ? 6 : (slot == 1 ? 9 : (slot == 2 ? 12 : (slot == 3 ? 15 : (slot == 4 ? 18 : 21))));
+            final hora = [6, 9, 12, 15, 18, 21][slot];
             final gmv = gmvForHora(horarios, hora);
             return maxGmv > 0 ? (gmv / maxGmv) : 0.0;
           });
