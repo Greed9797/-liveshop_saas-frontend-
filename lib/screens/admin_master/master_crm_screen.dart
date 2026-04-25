@@ -248,7 +248,7 @@ class _PipelinePlaceholderCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.colors.bgCard,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(

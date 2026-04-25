@@ -212,7 +212,7 @@ class _AppTextFieldState extends State<AppTextField> {
   void didUpdateWidget(covariant AppTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.obscureText != widget.obscureText) {
-      _obscure = widget.obscureText;
+      setState(() => _obscure = widget.obscureText);
     }
   }
 

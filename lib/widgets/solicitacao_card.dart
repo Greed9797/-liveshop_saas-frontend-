@@ -12,6 +12,7 @@ class SolicitacaoCard extends StatelessWidget {
   final String status;
   final VoidCallback onApprove;
   final VoidCallback onReject;
+  final bool showStatusBadge;
 
   const SolicitacaoCard({
     super.key,
@@ -25,6 +26,7 @@ class SolicitacaoCard extends StatelessWidget {
     required this.status,
     required this.onApprove,
     required this.onReject,
+    this.showStatusBadge = true,
   });
 
   @override
@@ -67,7 +69,8 @@ class SolicitacaoCard extends StatelessWidget {
                     style: AppTypography.bodyMedium
                         .copyWith(fontWeight: FontWeight.w600)),
               ),
-              AppBadge(label: badgeLabel, type: badgeType, showDot: false),
+              if (showStatusBadge)
+                AppBadge(label: badgeLabel, type: badgeType, showDot: false),
             ],
           ),
           const SizedBox(height: AppSpacing.x3),

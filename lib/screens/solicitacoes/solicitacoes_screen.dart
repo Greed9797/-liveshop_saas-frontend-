@@ -447,6 +447,7 @@ class _SolicitacoesLista extends StatelessWidget {
             status: req.status,
             onApprove: showActions ? () => onAprovar(req.id) : () {},
             onReject: showActions ? () => onRecusar(req.id) : () {},
+            showStatusBadge: !showActions,
           );
         },
       ),

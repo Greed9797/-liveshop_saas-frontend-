@@ -452,16 +452,27 @@ class _HeroLive extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFF3FBF6),
-            Color(0xFFFFFFFF),
-            Color(0xFFFFF8F3),
-          ],
-          stops: [0.0, 0.6, 1.0],
-        ),
+        gradient: Theme.of(context).brightness == Brightness.dark
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  context.colors.bgCard,
+                  context.colors.bgElevated,
+                  context.colors.bgCard,
+                ],
+                stops: const [0.0, 0.6, 1.0],
+              )
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFF3FBF6),
+                  Color(0xFFFFFFFF),
+                  Color(0xFFFFF8F3),
+                ],
+                stops: [0.0, 0.6, 1.0],
+              ),
         border: Border.all(color: const Color(0x401FA968)),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
