@@ -1195,6 +1195,14 @@ class _SelectedCabinePanel extends ConsumerWidget {
                     _InfoLine(
                         label: 'Apresentador',
                         value: cabine!.apresentadorNome ?? 'A definir'),
+                    if (cabine!.status == 'ao_vivo' &&
+                        cabine!.iniciadoEm != null) ...[
+                      _InfoLine(
+                        label: 'Tempo no ar',
+                        value: _formatDuracao(
+                            DateTime.now().difference(cabine!.iniciadoEm!)),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     detailAsync.when(
                       loading: () => const Padding(
@@ -1951,4 +1959,10 @@ class _EngajamentoChip extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatDuracao(Duration d) {
+  final h = d.inHours;
+  final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+  return h > 0 ? '${h}h${m}min' : '${d.inMinutes}min';
 }
