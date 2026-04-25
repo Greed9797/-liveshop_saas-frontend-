@@ -1105,7 +1105,7 @@ class _SidebarContent extends ConsumerWidget {
   }
 }
 
-class _SelectedCabinePanel extends ConsumerWidget {
+class _SelectedCabinePanel extends ConsumerStatefulWidget {
   final Cabine? cabine;
   final AsyncValue<CabineDetailState> detailAsync;
   final AsyncValue<List<FilaAtivacaoItem>> filaAsync;
@@ -1119,12 +1119,104 @@ class _SelectedCabinePanel extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SelectedCabinePanel> createState() =>
+      _SelectedCabinePanelState();
+}
+
+class _SelectedCabinePanelState extends ConsumerState<_SelectedCabinePanel> {
+
+  Future<void> _addApresentador(BuildContext context, WidgetRef ref, Cabine cabine) async {
+    final liveId = cabine.liveAtualId;
+    if (liveId == null) return;
+
+    final ctrl = TextEditingController();
+    bool saving = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          title: const Text('Adicionar Apresentador'),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: 'UUID do apresentador',
+              labelText: 'ID do apresentador',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      final id = ctrl.text.trim();
+                      if (id.isEmpty) return;
+                      setDlg(() => saving = true);
+                      try {
+                        await ApiService.post(
+                          '/lives/$liveId/apresentadores',
+                          data: {'apresentador_id': id},
+                        );
+                        ref.invalidate(cabinesProvider);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Apresentador adicionado')),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    ApiService.extractErrorMessage(e))),
+                          );
+                        }
+                        setDlg(() => saving = false);
+                      }
+                    },
+              child: saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Adicionar'),
+            ),
+          ],
+        ),
+      ),
+    );
+    ctrl.dispose();
+  }
+
+  String _buildApresentadoresLabel(Cabine cabine) {
+    final primary = cabine.apresentadorNome;
+    final extras = cabine.apresentadoresExtra;
+    final all = [
+      if (primary != null && primary.isNotEmpty) primary,
+      ...extras,
+    ];
+    return all.isEmpty ? 'A definir' : all.join(' · ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // SSE do live_snapshots — dados em tempo real (flush a cada 10s no backend)
-    final live = detailAsync.valueOrNull?.liveAtual;
+    final live = widget.detailAsync.valueOrNull?.liveAtual;
     final sse = live != null
         ? ref.watch(liveStreamProvider(live.liveId)).valueOrNull
         : null;
+
+    // Alias for convenience inside build
+    final cabine = widget.cabine;
+    final detailAsync = widget.detailAsync;
+    final filaAsync = widget.filaAsync;
 
     // Fallback: quando /live-atual falhar, usar dados do card da cabine (já
     // vindos do /cabines com engajamento completo). Garante que sidebar
@@ -1176,35 +1268,29 @@ class _SelectedCabinePanel extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            'Cabine ${cabine!.numero.toString().padLeft(2, '0')}',
+                            'Cabine ${cabine.numero.toString().padLeft(2, '0')}',
                             style: AppTypography.h3
                                 .copyWith(fontWeight: FontWeight.w700),
                           ),
                         ),
-                        StatusBadge(status: cabine!.status),
+                        StatusBadge(status: cabine.status),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.x3),
+                    // ── Primary info (always visible, full weight) ──────────
                     _InfoLine(
                         label: 'Cliente',
-                        value: cabine!.clienteNome ?? 'Sem vínculo ativo'),
-                    _InfoLine(
-                        label: 'Contrato',
-                        value: cabine!.contratoId?.substring(0, 8) ??
-                            'Sem contrato'),
-                    _InfoLine(
-                        label: 'Apresentador',
-                        value: cabine!.apresentadorNome ?? 'A definir'),
-                    if (cabine!.status == 'ao_vivo' &&
-                        cabine!.iniciadoEm != null) ...[
+                        value: cabine.clienteNome ?? 'Sem vínculo ativo'),
+                    if (cabine.status == 'ao_vivo' &&
+                        cabine.iniciadoEm != null) ...[
                       _InfoLine(
                         label: 'Tempo no ar',
                         value: _formatDuracao(
-                            DateTime.now().difference(cabine!.iniciadoEm!)),
+                            DateTime.now().difference(cabine.iniciadoEm!)),
                       ),
-                      _TempoRestanteLine(cabine: cabine!),
+                      _TempoRestanteLine(cabine: cabine),
                     ],
-                    if (cabine!.status == 'ao_vivo') ...[
+                    if (cabine.status == 'ao_vivo') ...[
                       Builder(
                         builder: (context) {
                           final fila = filaAsync.valueOrNull;
@@ -1232,8 +1318,33 @@ class _SelectedCabinePanel extends ConsumerWidget {
                         // Mostra dados ao vivo sempre que a cabine está ao_vivo no grid
                         // (mesmo que /live-atual tenha falhado — fallback usa dados do card)
                         if (detail.liveAtual == null && !isAoVivo) {
-                          return const _InfoLine(
-                              label: 'GMV atual', value: 'Sem live agora');
+                          // ── Secondary info when not live ──────────────────
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _SecondaryInfoLine(
+                                label: 'Apresentadores',
+                                value: _buildApresentadoresLabel(cabine),
+                              ),
+                              if (cabine.tiktokUsername != null &&
+                                  cabine.tiktokUsername!.isNotEmpty)
+                                _SecondaryInfoLine(
+                                  label: 'TikTok da marca',
+                                  value: '@${cabine.tiktokUsername}',
+                                ),
+                              _SecondaryInfoLine(
+                                label: 'Contrato',
+                                value: cabine.contratoId?.substring(0, 8) ??
+                                    'Sem contrato',
+                              ),
+                              _SecondaryInfoLine(
+                                label: 'Horas contrat.',
+                                value: cabine.horasContratadas > 0
+                                    ? '${cabine.horasContratadas.toStringAsFixed(1)}h'
+                                    : '–',
+                              ),
+                            ],
+                          );
                         }
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1282,12 +1393,53 @@ class _SelectedCabinePanel extends ConsumerWidget {
                                 ),
                               ],
                             ),
+                            const SizedBox(height: AppSpacing.x3),
+                            // ── Secondary info (smaller, muted) ──────────
+                            _SecondaryInfoLine(
+                              label: 'Apresentadores',
+                              value: _buildApresentadoresLabel(cabine),
+                            ),
+                            if (cabine.status == 'ao_vivo')
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    bottom: AppSpacing.x1),
+                                child: TextButton.icon(
+                                  onPressed: () => _addApresentador(
+                                      context, ref, cabine),
+                                  icon: const Icon(Icons.person_add_outlined,
+                                      size: 14),
+                                  label: const Text('+ Apresentador'),
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    textStyle: AppTypography.bodySmall,
+                                  ),
+                                ),
+                              ),
+                            if (cabine.tiktokUsername != null &&
+                                cabine.tiktokUsername!.isNotEmpty)
+                              _SecondaryInfoLine(
+                                label: 'TikTok da marca',
+                                value: '@${cabine.tiktokUsername}',
+                              ),
+                            _SecondaryInfoLine(
+                              label: 'Contrato',
+                              value: cabine.contratoId?.substring(0, 8) ??
+                                  'Sem contrato',
+                            ),
+                            _SecondaryInfoLine(
+                              label: 'Horas contrat.',
+                              value: cabine.horasContratadas > 0
+                                  ? '${cabine.horasContratadas.toStringAsFixed(1)}h'
+                                  : '–',
+                            ),
                           ],
                         );
                       },
                     ),
                     const SizedBox(height: AppSpacing.x3),
-                    if (cabine!.status == 'ao_vivo') ...[
+                    if (cabine.status == 'ao_vivo') ...[
                       AppSecondaryButton(
                         label: 'Ver Analytics Completo',
                         icon: Icons.analytics_outlined,
@@ -1300,7 +1452,7 @@ class _SelectedCabinePanel extends ConsumerWidget {
                     AppSecondaryButton(
                       label: 'Ver Analítico',
                       icon: Icons.analytics_outlined,
-                      onPressed: onOpenAnalyticalDetail ?? () {},
+                      onPressed: widget.onOpenAnalyticalDetail ?? () {},
                     ),
                   ],
                 ),
@@ -1640,6 +1792,42 @@ class _InfoLine extends StatelessWidget {
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: context.colors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SecondaryInfoLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _SecondaryInfoLine({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.x1),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 94,
+            child: Text(
+              '$label:',
+              style: AppTypography.bodySmall.copyWith(
+                color: context.colors.textMuted,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: AppTypography.bodySmall.copyWith(
+                color: context.colors.textSecondary,
+              ),
             ),
           ),
         ],
