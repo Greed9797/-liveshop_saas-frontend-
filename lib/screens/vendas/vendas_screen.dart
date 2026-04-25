@@ -9,10 +9,17 @@ import '../../providers/pacotes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../widgets/client_avatar.dart';
-import '../../widgets/kpi_strip.dart';
 
-class VendasScreen extends ConsumerWidget {
+class VendasScreen extends ConsumerStatefulWidget {
   const VendasScreen({super.key});
+
+  @override
+  ConsumerState<VendasScreen> createState() => _VendasScreenState();
+}
+
+class _VendasScreenState extends ConsumerState<VendasScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
 
   static const _etapas = <_CrmStage>[
     _CrmStage('lead_novo', 'Lead novo'),
@@ -28,13 +35,27 @@ class VendasScreen extends ConsumerWidget {
       NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 0);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final leadsAsync = ref.watch(leadsProvider);
     final leads = leadsAsync.valueOrNull ?? const <Lead>[];
     final abertos = leads.where((lead) => lead.crmEtapa != 'perdido').toList();
     final pipelineValue =
         abertos.fold(0.0, (sum, lead) => sum + lead.valorOportunidade);
     final parados = abertos.where(_leadParado).length;
+    final aguardandoAssinatura =
+        leads.where((l) => l.crmEtapa == 'aguardando_assinatura').length;
 
     return AppScreenScaffold(
       currentRoute: AppRoutes.comercial,
@@ -57,59 +78,63 @@ class VendasScreen extends ConsumerWidget {
       ],
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4,
-              AppSpacing.x4,
-              AppSpacing.x4,
-              0,
-            ),
-            child: KpiStrip(
-              items: [
-                KpiStripItem(
-                  label: 'Pipeline aberto',
-                  value: '${abertos.length}',
-                  sub: 'leads ativos',
-                  accentTop: true,
+          // ── Barra de abas ──
+          Material(
+            color: context.colors.bgCard,
+            elevation: 1,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: context.colors.textSecondary,
+              indicatorColor: AppColors.primary,
+              tabs: const [
+                Tab(
+                  icon: Icon(Icons.view_column_outlined, size: 18),
+                  text: 'Pipeline',
                 ),
-                KpiStripItem(
-                  label: 'Valor pipeline',
-                  value: _brl.format(pipelineValue),
-                  sub: 'oportunidades',
-                  valueColor: AppColors.success,
-                ),
-                KpiStripItem(
-                  label: 'Aguardando assinatura',
-                  value:
-                      '${leads.where((l) => l.crmEtapa == 'aguardando_assinatura').length}',
-                  sub: 'negociações',
-                ),
-                KpiStripItem(
-                  label: 'Leads parados',
-                  value: '$parados',
-                  sub: '7+ dias sem avanço',
-                  valueColor: parados > 0 ? AppColors.warning : null,
+                Tab(
+                  icon: Icon(Icons.analytics_outlined, size: 18),
+                  text: 'Métricas',
                 ),
               ],
-              accentIndex: 0,
             ),
           ),
-          const SizedBox(height: AppSpacing.x4),
+
+          // ── Conteúdo das abas ──
           Expanded(
-            child: leadsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => _ErrorState(
-                message: ApiService.extractErrorMessage(e),
-                onRetry: () => ref.read(leadsProvider.notifier).refresh(),
-              ),
-              data: (items) => _KanbanBoard(
-                etapas: _etapas,
-                leads: items,
-                currency: _brl,
-                onOpenLead: (lead) => _showLeadDetail(context, ref, lead),
-                onMoveLead: (lead, etapa) =>
-                    _moveLead(context, ref, lead, etapa),
-              ),
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // Tab 0 — Pipeline
+                leadsAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => _ErrorState(
+                    message: ApiService.extractErrorMessage(e),
+                    onRetry: () => ref.read(leadsProvider.notifier).refresh(),
+                  ),
+                  data: (items) => _KanbanBoard(
+                    etapas: _etapas,
+                    leads: items,
+                    currency: _brl,
+                    onOpenLead: (lead) =>
+                        _showLeadDetail(context, ref, lead),
+                    onMoveLead: (lead, etapa) =>
+                        _moveLead(context, ref, lead, etapa),
+                  ),
+                ),
+
+                // Tab 1 — Métricas
+                _MetricasTab(
+                  leads: leads,
+                  abertos: abertos,
+                  pipelineValue: pipelineValue,
+                  parados: parados,
+                  aguardandoAssinatura: aguardandoAssinatura,
+                  etapas: _etapas,
+                  currency: _brl,
+                ),
+              ],
             ),
           ),
         ],
@@ -461,6 +486,248 @@ class VendasScreen extends ConsumerWidget {
     );
   }
 }
+
+// ── Tab 1: Métricas ────────────────────────────────────────────────────────
+
+class _MetricasTab extends StatelessWidget {
+  final List<Lead> leads;
+  final List<Lead> abertos;
+  final double pipelineValue;
+  final int parados;
+  final int aguardandoAssinatura;
+  final List<_CrmStage> etapas;
+  final NumberFormat currency;
+
+  const _MetricasTab({
+    required this.leads,
+    required this.abertos,
+    required this.pipelineValue,
+    required this.parados,
+    required this.aguardandoAssinatura,
+    required this.etapas,
+    required this.currency,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final total = leads.length;
+    final perdidos = leads.where((l) => l.crmEtapa == 'perdido').length;
+    final ganhos = leads.where((l) => l.crmEtapa == 'aguardando_assinatura').length;
+    final taxaConversao = total > 0
+        ? (ganhos / total * 100).toStringAsFixed(1)
+        : '0.0';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.x4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── KPI cards (2×2 grid) ──
+          LayoutBuilder(
+            builder: (ctx, constraints) {
+              final isNarrow = constraints.maxWidth < 560;
+              if (isNarrow) {
+                return Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: KpiAccentCard(
+                            label: 'Pipeline aberto',
+                            value: '${abertos.length}',
+                            sub: 'leads ativos',
+                            accentTop: true,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.x3),
+                        Expanded(
+                          child: KpiAccentCard(
+                            label: 'Valor pipeline',
+                            value: currency.format(pipelineValue),
+                            sub: 'oportunidades',
+                            valueColor: AppColors.success,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.x3),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: KpiAccentCard(
+                            label: 'Aguardando assinatura',
+                            value: '$aguardandoAssinatura',
+                            sub: 'negociações',
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.x3),
+                        Expanded(
+                          child: KpiAccentCard(
+                            label: 'Leads parados',
+                            value: '$parados',
+                            sub: '7+ dias sem avanço',
+                            valueColor: parados > 0 ? AppColors.warning : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(
+                    child: KpiAccentCard(
+                      label: 'Pipeline aberto',
+                      value: '${abertos.length}',
+                      sub: 'leads ativos',
+                      accentTop: true,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x3),
+                  Expanded(
+                    child: KpiAccentCard(
+                      label: 'Valor pipeline',
+                      value: currency.format(pipelineValue),
+                      sub: 'oportunidades',
+                      valueColor: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x3),
+                  Expanded(
+                    child: KpiAccentCard(
+                      label: 'Aguardando assinatura',
+                      value: '$aguardandoAssinatura',
+                      sub: 'negociações',
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x3),
+                  Expanded(
+                    child: KpiAccentCard(
+                      label: 'Leads parados',
+                      value: '$parados',
+                      sub: '7+ dias sem avanço',
+                      valueColor: parados > 0 ? AppColors.warning : null,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+
+          const SizedBox(height: AppSpacing.x5),
+
+          // ── Métricas derivadas ──
+          Row(
+            children: [
+              Expanded(
+                child: KpiAccentCard(
+                  label: 'Taxa de conversão',
+                  value: '$taxaConversao%',
+                  sub: 'leads → aguardando assinatura',
+                  valueColor: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x3),
+              Expanded(
+                child: KpiAccentCard(
+                  label: 'Leads perdidos',
+                  value: '$perdidos',
+                  sub: 'total histórico',
+                  valueColor: perdidos > 0 ? AppColors.danger : null,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: AppSpacing.x5),
+
+          // ── Contagem por etapa ──
+          const Text('Leads por etapa', style: AppTypography.h3),
+          const SizedBox(height: AppSpacing.x3),
+          AppCard(
+            child: Column(
+              children: [
+                for (int i = 0; i < etapas.length; i++) ...[
+                  if (i > 0)
+                    Divider(
+                      height: 1,
+                      color: context.colors.borderSubtle,
+                    ),
+                  _EtapaRow(
+                    etapa: etapas[i],
+                    count:
+                        leads.where((l) => l.crmEtapa == etapas[i].id).length,
+                    total: leads.isEmpty ? 1 : leads.length,
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: AppSpacing.x4),
+        ],
+      ),
+    );
+  }
+}
+
+class _EtapaRow extends StatelessWidget {
+  final _CrmStage etapa;
+  final int count;
+  final int total;
+
+  const _EtapaRow({
+    required this.etapa,
+    required this.count,
+    required this.total,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = count / total;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x4,
+        vertical: AppSpacing.x3,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(etapa.label, style: AppTypography.bodyMedium),
+          ),
+          Expanded(
+            flex: 5,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              child: LinearProgressIndicator(
+                value: pct,
+                minHeight: 6,
+                backgroundColor: context.colors.bgMuted,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  etapa.id == 'perdido' ? AppColors.danger : AppColors.primary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.x3),
+          SizedBox(
+            width: 32,
+            child: Text(
+              '$count',
+              style: AppTypography.bodyMedium
+                  .copyWith(fontWeight: FontWeight.w700),
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Kanban ─────────────────────────────────────────────────────────────────
 
 class _KanbanBoard extends StatelessWidget {
   final List<_CrmStage> etapas;
