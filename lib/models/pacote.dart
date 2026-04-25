@@ -17,6 +17,8 @@ class Pacote {
     required this.ativo,
   });
 
+  double get valorFixo => valor;
+
   static double _toDouble(dynamic value) {
     if (value is num) return value.toDouble();
     if (value is String) {
@@ -29,7 +31,7 @@ class Pacote {
         id: j['id'] as String,
         nome: j['nome'] as String,
         descricao: j['descricao'] as String?,
-        valor: _toDouble(j['valor']),
+        valor: _toDouble(j['valor_fixo'] ?? j['valor']),
         horasIncluidas: _toDouble(j['horas_incluidas']),
         comissaoPct: _toDouble(j['comissao_pct']),
         ativo: j['ativo'] as bool? ?? true,
@@ -38,7 +40,9 @@ class Pacote {
   Map<String, dynamic> toJson() => {
         'nome': nome,
         if (descricao != null) 'descricao': descricao,
+        'valor_fixo': valorFixo,
         'valor': valor,
+        'comissao_pct': comissaoPct,
         'horas_incluidas': horasIncluidas,
         'ativo': ativo,
       };

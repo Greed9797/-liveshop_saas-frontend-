@@ -1,443 +1,1104 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../models/cliente.dart';
-import '../../providers/clientes_provider.dart';
-import '../../routes/app_routes.dart';
+
 import '../../design_system/design_system.dart';
+import '../../models/lead.dart';
+import '../../providers/leads_provider.dart';
+import '../../providers/pacotes_provider.dart';
+import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../widgets/client_avatar.dart';
 import '../../widgets/kpi_strip.dart';
 
-class VendasScreen extends ConsumerStatefulWidget {
+class VendasScreen extends ConsumerWidget {
   const VendasScreen({super.key});
 
+  static const _etapas = <_CrmStage>[
+    _CrmStage('lead_novo', 'Lead novo'),
+    _CrmStage('contato_iniciado', 'Contato iniciado'),
+    _CrmStage('reuniao_agendada', 'Reunião agendada'),
+    _CrmStage('proposta_enviada', 'Proposta enviada'),
+    _CrmStage('em_negociacao', 'Em negociação'),
+    _CrmStage('aguardando_assinatura', 'Aguardando assinatura'),
+    _CrmStage('perdido', 'Perdido'),
+  ];
+
+  static final _brl =
+      NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 0);
+
   @override
-  ConsumerState<VendasScreen> createState() => _VendasScreenState();
-}
-
-class _VendasScreenState extends ConsumerState<VendasScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.invalidate(clientesProvider);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final clientesAsync = ref.watch(clientesProvider);
-
-    final allClientes = clientesAsync.valueOrNull ?? [];
-    final openPipeline = allClientes
-        .where((c) => c.status == 'negociacao' || c.status == 'enviado')
-        .length;
-    final pipelineValue = allClientes
-        .where((c) => c.status == 'negociacao' || c.status == 'enviado')
-        .fold(0.0, (sum, c) => sum + (c.horasContratadas ?? 0) * 100);
-    final activeContracts =
-        allClientes.where((c) => c.status == 'ativo').length;
-    final conversionRate = allClientes.isNotEmpty
-        ? ((activeContracts / allClientes.length) * 100).toStringAsFixed(1)
-        : '0';
-
-    final brl = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+  Widget build(BuildContext context, WidgetRef ref) {
+    final leadsAsync = ref.watch(leadsProvider);
+    final leads = leadsAsync.valueOrNull ?? const <Lead>[];
+    final abertos = leads.where((lead) => lead.crmEtapa != 'perdido').toList();
+    final pipelineValue =
+        abertos.fold(0.0, (sum, lead) => sum + lead.valorOportunidade);
+    final parados = abertos.where(_leadParado).length;
 
     return AppScreenScaffold(
       currentRoute: AppRoutes.comercial,
       title: 'Comercial',
-      eyebrow: 'Pipeline comercial',
+      eyebrow: 'CRM',
       titleSerif: true,
-      subtitle: 'Gerencie oportunidades, contratos e clientes em negociação.',
+      subtitle: 'Pipeline de leads e negociações.',
+      actions: [
+        IconButton(
+          tooltip: 'Atualizar',
+          icon: const Icon(Icons.refresh),
+          color: context.colors.textSecondary,
+          onPressed: () => ref.read(leadsProvider.notifier).refresh(),
+        ),
+        AppPrimaryButton(
+          label: 'Novo lead',
+          icon: Icons.add,
+          onPressed: () => _showLeadForm(context, ref),
+        ),
+      ],
       child: Column(
         children: [
-          // KPI strip
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.x4, AppSpacing.x4, AppSpacing.x4, 0),
+              AppSpacing.x4,
+              AppSpacing.x4,
+              AppSpacing.x4,
+              0,
+            ),
             child: KpiStrip(
               items: [
                 KpiStripItem(
                   label: 'Pipeline aberto',
-                  value: '$openPipeline',
-                  sub: 'negociações',
+                  value: '${abertos.length}',
+                  sub: 'leads ativos',
                   accentTop: true,
                 ),
                 KpiStripItem(
                   label: 'Valor pipeline',
-                  value: brl.format(pipelineValue),
-                  sub: 'em potencial',
+                  value: _brl.format(pipelineValue),
+                  sub: 'oportunidades',
                   valueColor: AppColors.success,
                 ),
                 KpiStripItem(
-                  label: 'Contratos ativos',
-                  value: '$activeContracts',
-                  sub: 'clientes',
+                  label: 'Aguardando assinatura',
+                  value:
+                      '${leads.where((l) => l.crmEtapa == 'aguardando_assinatura').length}',
+                  sub: 'negociações',
                 ),
                 KpiStripItem(
-                  label: 'Taxa conversão',
-                  value: '$conversionRate%',
-                  sub: 'closed won',
+                  label: 'Leads parados',
+                  value: '$parados',
+                  sub: '7+ dias sem avanço',
+                  valueColor: parados > 0 ? AppColors.warning : null,
                 ),
               ],
               accentIndex: 0,
             ),
           ),
-          const SizedBox(height: AppSpacing.x3),
+          const SizedBox(height: AppSpacing.x4),
           Expanded(
-            child: _VendasListTab(
-              onAddCliente: () =>
-                  Navigator.pushNamed(context, AppRoutes.cadastroCliente),
+            child: leadsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => _ErrorState(
+                message: ApiService.extractErrorMessage(e),
+                onRetry: () => ref.read(leadsProvider.notifier).refresh(),
+              ),
+              data: (items) => _KanbanBoard(
+                etapas: _etapas,
+                leads: items,
+                currency: _brl,
+                onOpenLead: (lead) => _showLeadDetail(context, ref, lead),
+                onMoveLead: (lead, etapa) =>
+                    _moveLead(context, ref, lead, etapa),
+              ),
             ),
           ),
         ],
       ),
     );
   }
-}
 
-// ──────────────────────────────────────────────
-// Lista de clientes/contratos
-// ──────────────────────────────────────────────
-
-class _VendasListTab extends ConsumerStatefulWidget {
-  final VoidCallback onAddCliente;
-
-  const _VendasListTab({required this.onAddCliente});
-
-  @override
-  ConsumerState<_VendasListTab> createState() => _VendasListTabState();
-}
-
-class _VendasListTabState extends ConsumerState<_VendasListTab> {
-  final Set<String> _activeFilters = {};
-
-  static const _statusOptions = [
-    ('negociacao', 'Negociação', AppColors.warning),
-    ('enviado', 'Enviado', AppColors.info),
-    ('em_analise', 'Em Análise', AppColors.warning),
-    ('ativo', 'Ativo', AppColors.success),
-    ('inadimplente', 'Inadimplente', AppColors.danger),
-    ('recomendacao', 'Recomendação', AppColors.primary),
-  ];
-
-  static const _statusLabel = {
-    'negociacao': 'Negociação',
-    'enviado': 'Enviado',
-    'em_analise': 'Em Análise',
-    'ativo': 'Ativo',
-    'inadimplente': 'Inadimplente',
-    'recomendacao': 'Recomendação',
-  };
-
-  static const _statusBadge = {
-    'ativo': AppBadgeType.success,
-    'inadimplente': AppBadgeType.danger,
-    'negociacao': AppBadgeType.warning,
-    'enviado': AppBadgeType.neutral,
-    'em_analise': AppBadgeType.warning,
-    'recomendacao': AppBadgeType.neutral,
-  };
-
-  bool _clientePassaFiltro(String status) {
-    if (_activeFilters.isEmpty) return true;
-    return _activeFilters.contains(status);
+  static bool _leadParado(Lead lead) {
+    final refDate = lead.atualizadoEm ?? lead.pegoEm ?? lead.criadoEm;
+    return DateTime.now().difference(refDate).inDays >= 7;
   }
 
-  void _toggleFilter(String value) {
-    setState(() {
-      if (_activeFilters.contains(value)) {
-        _activeFilters.remove(value);
-      } else {
-        _activeFilters.add(value);
-      }
-    });
+  static Future<void> _moveLead(
+    BuildContext context,
+    WidgetRef ref,
+    Lead lead,
+    String etapa,
+  ) async {
+    if (lead.crmEtapa == etapa) return;
+
+    String? motivo;
+    if (etapa == 'perdido') {
+      motivo = await _askMotivoPerda(context);
+      if (motivo == null || motivo.trim().isEmpty) return;
+    }
+
+    try {
+      await ref
+          .read(leadsProvider.notifier)
+          .moverEtapa(lead.id, etapa, motivoPerda: motivo?.trim());
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiService.extractErrorMessage(e))),
+      );
+    }
   }
 
-  void _clearFilters() {
-    setState(() => _activeFilters.clear());
+  static Future<String?> _askMotivoPerda(BuildContext context) {
+    final ctrl = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Motivo de perda', style: AppTypography.h3),
+        content: _TextArea(
+          controller: ctrl,
+          hint: 'Ex.: sem fit, preço, sem retorno...',
+          maxLines: 3,
+        ),
+        actions: [
+          AppSecondaryButton(
+            label: 'Cancelar',
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
+          AppPrimaryButton(
+            label: 'Salvar',
+            onPressed: () => Navigator.of(dialogContext).pop(ctrl.text),
+          ),
+        ],
+      ),
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final clientesAsync = ref.watch(clientesProvider);
-    final hasFilter = _activeFilters.isNotEmpty;
+  static Future<void> _showLeadForm(BuildContext context, WidgetRef ref) async {
+    final nomeCtrl = TextEditingController();
+    final valorCtrl = TextEditingController();
+    final responsavelCtrl = TextEditingController();
+    final origemCtrl = TextEditingController(text: 'SDR');
+    final nichoCtrl = TextEditingController();
+    final cidadeCtrl = TextEditingController();
+    bool saving = false;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 800;
-
-        return Stack(
-          children: [
-            Column(
-              children: [
-                // Inline filter chips
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.x4, AppSpacing.x4, AppSpacing.x4, 0),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        if (hasFilter) ...[
-                          GestureDetector(
-                            onTap: _clearFilters,
-                            child: Container(
-                              height: 32,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: AppColors.dangerBg,
-                                border: Border.all(
-                                    color: AppColors.danger
-                                        .withValues(alpha: 0.3)),
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.full),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.clear,
-                                      size: 14, color: AppColors.danger),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Limpar',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: AppColors.danger,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.x2),
-                        ],
-                        ..._statusOptions.map((opt) {
-                          final (value, label, color) = opt;
-                          final isActive = _activeFilters.contains(value);
-                          return Padding(
-                            padding:
-                                const EdgeInsets.only(right: AppSpacing.x2),
-                            child: AppChip(
-                              label: label,
-                              active: isActive,
-                              onTap: () => _toggleFilter(value),
-                            ),
-                          );
-                        }),
-                      ],
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: context.colors.bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.x5,
+            AppSpacing.x2,
+            AppSpacing.x5,
+            AppSpacing.x5 + MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Novo lead', style: AppTypography.h2),
+              const SizedBox(height: AppSpacing.x4),
+              AppTextField(controller: nomeCtrl, hint: 'Nome do lead *'),
+              const SizedBox(height: AppSpacing.x3),
+              AppTextField(
+                controller: valorCtrl,
+                hint: 'Valor da oportunidade R\$',
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: AppSpacing.x3),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      controller: responsavelCtrl,
+                      hint: 'Responsável',
                     ),
                   ),
-                ),
-                // Client list / table
-                Expanded(
-                  child: clientesAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            ApiService.extractErrorMessage(e),
-                            style: AppTypography.caption
-                                .copyWith(color: context.colors.textSecondary),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: AppSpacing.x3),
-                          AppSecondaryButton(
-                            onPressed: () => ref.invalidate(clientesProvider),
-                            label: 'Tentar novamente',
-                          ),
-                        ],
+                  const SizedBox(width: AppSpacing.x3),
+                  Expanded(
+                    child: AppTextField(
+                      controller: origemCtrl,
+                      hint: 'Origem',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.x3),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppTextField(controller: nichoCtrl, hint: 'Nicho'),
+                  ),
+                  const SizedBox(width: AppSpacing.x3),
+                  Expanded(
+                    child: AppTextField(controller: cidadeCtrl, hint: 'Cidade'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.x5),
+              if (saving)
+                const Center(child: CircularProgressIndicator())
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppSecondaryButton(
+                        label: 'Cancelar',
+                        fullWidth: true,
+                        onPressed: () => Navigator.pop(ctx),
                       ),
                     ),
-                    data: (clientes) {
-                      final filtrados = clientes
-                          .where((c) => _clientePassaFiltro(c.status))
-                          .toList();
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(
+                      child: AppPrimaryButton(
+                        label: 'Salvar',
+                        fullWidth: true,
+                        onPressed: () async {
+                          final nome = nomeCtrl.text.trim();
+                          if (nome.isEmpty) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Nome é obrigatório')),
+                            );
+                            return;
+                          }
+                          setModalState(() => saving = true);
+                          try {
+                            final valor = double.tryParse(
+                                  valorCtrl.text.replaceAll(',', '.'),
+                                ) ??
+                                0;
+                            await ref.read(leadsProvider.notifier).criar({
+                              'nome': nome,
+                              'valor_oportunidade': valor,
+                              'fat_estimado': valor,
+                              if (responsavelCtrl.text.trim().isNotEmpty)
+                                'responsavel_nome': responsavelCtrl.text.trim(),
+                              if (origemCtrl.text.trim().isNotEmpty)
+                                'origem': origemCtrl.text.trim(),
+                              if (nichoCtrl.text.trim().isNotEmpty)
+                                'nicho': nichoCtrl.text.trim(),
+                              if (cidadeCtrl.text.trim().isNotEmpty)
+                                'cidade': cidadeCtrl.text.trim(),
+                            });
+                            if (ctx.mounted) Navigator.pop(ctx);
+                          } catch (e) {
+                            if (!ctx.mounted) return;
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                  content:
+                                      Text(ApiService.extractErrorMessage(e))),
+                            );
+                          } finally {
+                            if (ctx.mounted) {
+                              setModalState(() => saving = false);
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-                      if (filtrados.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.people_outline_rounded,
-                                  size: 48, color: context.colors.textMuted),
-                              const SizedBox(height: AppSpacing.x3),
-                              Text('Nenhum cliente neste filtro',
-                                  style: AppTypography.bodySmall.copyWith(
-                                      color: context.colors.textSecondary)),
-                            ],
-                          ),
-                        );
-                      }
+  static Future<void> _showLeadDetail(
+    BuildContext context,
+    WidgetRef ref,
+    Lead lead,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: context.colors.bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (_) => _LeadDetailSheet(
+        lead: lead,
+        currency: _brl,
+        onSave: (payload) =>
+            ref.read(leadsProvider.notifier).atualizar(lead.id, payload),
+        onLost: () async {
+          final motivo = await _askMotivoPerda(context);
+          if (motivo == null || motivo.trim().isEmpty) return;
+          await ref
+              .read(leadsProvider.notifier)
+              .moverEtapa(lead.id, 'perdido', motivoPerda: motivo.trim());
+        },
+        onWon: () => _showGanharLeadDialog(context, ref, lead),
+      ),
+    );
+  }
 
-                      if (isDesktop) {
-                        return _buildDesktopTable(filtrados);
-                      }
-                      return _buildMobileCards(filtrados);
-                    },
-                  ),
+  static Future<void> _showGanharLeadDialog(
+    BuildContext context,
+    WidgetRef ref,
+    Lead lead,
+  ) async {
+    final celularCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    String? pacoteId;
+    bool saving = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Consumer(
+        builder: (ctx, ref, _) {
+          final pacotesAsync = ref.watch(pacotesProvider);
+          final pacotes =
+              pacotesAsync.valueOrNull?.where((p) => p.ativo).toList() ?? [];
+          pacoteId ??= pacotes.isNotEmpty ? pacotes.first.id : null;
+
+          return StatefulBuilder(
+            builder: (ctx, setDialogState) => AlertDialog(
+              title: const Text('Marcar ganho', style: AppTypography.h3),
+              content: SizedBox(
+                width: 460,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppTextField(
+                      controller: celularCtrl,
+                      hint: 'Telefone do cliente *',
+                    ),
+                    const SizedBox(height: AppSpacing.x3),
+                    AppTextField(
+                      controller: emailCtrl,
+                      hint: 'E-mail do cliente',
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: AppSpacing.x3),
+                    DropdownButtonFormField<String>(
+                      initialValue: pacoteId,
+                      items: pacotes
+                          .map(
+                            (p) => DropdownMenuItem(
+                              value: p.id,
+                              child: Text(
+                                '${p.nome} · ${_brl.format(p.valorFixo)} · ${p.comissaoPct.toStringAsFixed(1)}%',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setDialogState(() => pacoteId = value),
+                      decoration: const InputDecoration(
+                        labelText: 'Pacote do contrato ativo',
+                      ),
+                    ),
+                    if (pacotesAsync.isLoading)
+                      const Padding(
+                        padding: EdgeInsets.only(top: AppSpacing.x3),
+                        child: LinearProgressIndicator(),
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                AppSecondaryButton(
+                  label: 'Cancelar',
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+                AppPrimaryButton(
+                  label: saving ? 'Convertendo...' : 'Criar cliente',
+                  onPressed: saving
+                      ? null
+                      : () async {
+                          if (celularCtrl.text.trim().isEmpty ||
+                              pacoteId == null) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              const SnackBar(
+                                content: Text('Informe telefone e pacote.'),
+                              ),
+                            );
+                            return;
+                          }
+                          setDialogState(() => saving = true);
+                          try {
+                            await ref.read(leadsProvider.notifier).ganhar(
+                              lead.id,
+                              {
+                                'pacote_id': pacoteId,
+                                'celular': celularCtrl.text.trim(),
+                                if (emailCtrl.text.trim().isNotEmpty)
+                                  'email': emailCtrl.text.trim(),
+                              },
+                            );
+                            if (ctx.mounted) Navigator.pop(ctx);
+                          } catch (e) {
+                            if (!ctx.mounted) return;
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content:
+                                    Text(ApiService.extractErrorMessage(e)),
+                              ),
+                            );
+                          } finally {
+                            if (ctx.mounted) {
+                              setDialogState(() => saving = false);
+                            }
+                          }
+                        },
                 ),
               ],
             ),
-            // FAB — only on mobile
-            if (!isDesktop)
-              Positioned(
-                bottom: AppSpacing.x6,
-                right: AppSpacing.x4,
-                child: FloatingActionButton(
-                  backgroundColor: AppColors.primary,
-                  onPressed: widget.onAddCliente,
-                  child: const Icon(Icons.add, color: AppColors.textOnPrimary),
-                ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _KanbanBoard extends StatelessWidget {
+  final List<_CrmStage> etapas;
+  final List<Lead> leads;
+  final NumberFormat currency;
+  final void Function(Lead lead) onOpenLead;
+  final Future<void> Function(Lead lead, String etapa) onMoveLead;
+
+  const _KanbanBoard({
+    required this.etapas,
+    required this.leads,
+    required this.currency,
+    required this.onOpenLead,
+    required this.onMoveLead,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (leads.isEmpty) {
+      return Center(
+        child: Text(
+          'Nenhum lead no pipeline.',
+          style: AppTypography.bodySmall
+              .copyWith(color: context.colors.textSecondary),
+        ),
+      );
+    }
+
+    return Scrollbar(
+      thumbVisibility: true,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.x4,
+          0,
+          AppSpacing.x4,
+          AppSpacing.x4,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: etapas.map((etapa) {
+            final items =
+                leads.where((lead) => lead.crmEtapa == etapa.id).toList();
+            return Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.x3),
+              child: _KanbanColumn(
+                etapa: etapa,
+                leads: items,
+                currency: currency,
+                onOpenLead: onOpenLead,
+                onAcceptLead: (lead) => onMoveLead(lead, etapa.id),
               ),
-          ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _KanbanColumn extends StatelessWidget {
+  final _CrmStage etapa;
+  final List<Lead> leads;
+  final NumberFormat currency;
+  final void Function(Lead lead) onOpenLead;
+  final Future<void> Function(Lead lead) onAcceptLead;
+
+  const _KanbanColumn({
+    required this.etapa,
+    required this.leads,
+    required this.currency,
+    required this.onOpenLead,
+    required this.onAcceptLead,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final total = leads.fold(0.0, (sum, lead) => sum + lead.valorOportunidade);
+    return DragTarget<Lead>(
+      onWillAcceptWithDetails: (details) => details.data.crmEtapa != etapa.id,
+      onAcceptWithDetails: (details) => onAcceptLead(details.data),
+      builder: (context, candidateData, rejectedData) {
+        final isHover = candidateData.isNotEmpty;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          width: 292,
+          constraints: const BoxConstraints(minHeight: 520),
+          decoration: BoxDecoration(
+            color:
+                isHover ? context.colors.primarySoftBg : context.colors.bgMuted,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: isHover ? AppColors.primary : context.colors.borderSubtle,
+            ),
+          ),
+          padding: const EdgeInsets.all(AppSpacing.x3),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      etapa.label,
+                      style: AppTypography.bodyMedium
+                          .copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  AppBadge(
+                    label: '${leads.length}',
+                    type: AppBadgeType.neutral,
+                    showDot: false,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.x1),
+              Text(
+                currency.format(total),
+                style: AppTypography.caption
+                    .copyWith(color: context.colors.textSecondary),
+              ),
+              const SizedBox(height: AppSpacing.x3),
+              if (leads.isEmpty)
+                Container(
+                  height: 96,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: context.colors.borderSubtle),
+                  ),
+                  child: Text(
+                    'Arraste leads aqui',
+                    style: AppTypography.caption
+                        .copyWith(color: context.colors.textMuted),
+                  ),
+                )
+              else
+                ...leads.map(
+                  (lead) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.x3),
+                    child: LongPressDraggable<Lead>(
+                      data: lead,
+                      feedback: Material(
+                        color: Colors.transparent,
+                        child: SizedBox(
+                          width: 276,
+                          child: _LeadKanbanCard(
+                            lead: lead,
+                            currency: currency,
+                            dragging: true,
+                            onTap: () {},
+                          ),
+                        ),
+                      ),
+                      childWhenDragging: Opacity(
+                        opacity: 0.35,
+                        child: _LeadKanbanCard(
+                          lead: lead,
+                          currency: currency,
+                          onTap: () => onOpenLead(lead),
+                        ),
+                      ),
+                      child: _LeadKanbanCard(
+                        lead: lead,
+                        currency: currency,
+                        onTap: () => onOpenLead(lead),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         );
       },
     );
   }
+}
 
-  Widget _buildDesktopTable(List<Cliente> clientes) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.x4),
-      child: AppTable(
-        columns: const [
-          AppTableColumn(label: 'CLIENTE', align: 'left'),
-          AppTableColumn(label: 'CIDADE', align: 'left'),
-          AppTableColumn(label: 'ESTÁGIO', align: 'left'),
-          AppTableColumn(label: 'VALOR', align: 'right'),
-          AppTableColumn(label: 'STATUS', align: 'right'),
-        ],
-        rows: clientes.map((c) {
-          final tone = c.status == 'ativo'
-              ? ClientAvatarTone.success
-              : ClientAvatarTone.neutral;
-          return AppTableRow(
-            cells: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ClientAvatar(
-                    initials: c.nome.isNotEmpty ? c.nome[0] : '?',
-                    tone: tone,
-                    size: 32,
-                  ),
-                  const SizedBox(width: AppSpacing.x3),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(c.nome,
-                          style: AppTypography.bodyMedium
-                              .copyWith(fontWeight: FontWeight.w600)),
-                      if (c.celular.isNotEmpty)
-                        Text(c.celular,
-                            style: AppTypography.caption
-                                .copyWith(color: context.colors.textMuted)),
-                    ],
-                  ),
-                ],
+class _LeadKanbanCard extends StatelessWidget {
+  final Lead lead;
+  final NumberFormat currency;
+  final VoidCallback onTap;
+  final bool dragging;
+
+  const _LeadKanbanCard({
+    required this.lead,
+    required this.currency,
+    required this.onTap,
+    this.dragging = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      onTap: dragging ? null : onTap,
+      padding: const EdgeInsets.all(AppSpacing.x3),
+      shadow: dragging
+          ? [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 10),
               ),
-              Text(c.cidade ?? '—', style: AppTypography.bodySmall),
-              Text(_statusLabel[c.status] ?? c.status,
-                  style: AppTypography.bodySmall),
-              Text('${(c.horasContratadas ?? 0).toStringAsFixed(0)}h',
-                  style: AppTypography.bodySmall),
-              AppBadge(
-                label: _statusLabel[c.status] ?? c.status,
-                type: _statusBadge[c.status] ?? AppBadgeType.neutral,
+            ]
+          : const [],
+      borderColor: context.colors.borderSubtle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ClientAvatar(
+                initials:
+                    lead.nome.isNotEmpty ? lead.nome[0].toUpperCase() : '?',
+                tone: ClientAvatarTone.neutral,
+                size: 34,
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              Expanded(
+                child: Text(
+                  lead.nome,
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (lead.isNovo)
+                const AppBadge(
+                  label: 'NOVO',
+                  type: AppBadgeType.danger,
+                  showDot: false,
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.x3),
+          Text(
+            currency.format(lead.valorOportunidade),
+            style: AppTypography.h3.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: AppSpacing.x2),
+          _MiniLine(
+              icon: Icons.person_outline,
+              text: lead.responsavelNome ?? 'Sem responsável'),
+          _MiniLine(
+              icon: Icons.campaign_outlined,
+              text: lead.origem ?? 'Origem não informada'),
+          if ((lead.nicho ?? '').isNotEmpty || (lead.cidade ?? '').isNotEmpty)
+            _MiniLine(
+              icon: Icons.storefront_outlined,
+              text: [
+                if ((lead.nicho ?? '').isNotEmpty) lead.nicho!,
+                if ((lead.cidade ?? '').isNotEmpty) lead.cidade!,
+              ].join(' • '),
+            ),
+          if (lead.tarefas.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.x2),
+              child: AppBadge(
+                label:
+                    '${lead.tarefas.length} tarefa${lead.tarefas.length == 1 ? '' : 's'}',
+                type: AppBadgeType.warning,
                 showDot: false,
               ),
-            ],
-            onTap: () => Navigator.pushNamed(context, AppRoutes.clienteCabines,
-                arguments: {'clienteId': c.id}),
-          );
-        }).toList(),
-        hoverHighlight: true,
+            ),
+        ],
       ),
     );
   }
+}
 
-  // ... mobile cards começam abaixo
-  Widget _buildMobileCards(List<Cliente> clientes) {
-    return Stack(
-      children: [
-        ListView.separated(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4, AppSpacing.x4, AppSpacing.x4, 80),
-          itemCount: clientes.length,
-          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.x3),
-          itemBuilder: (ctx, i) {
-            final c = clientes[i];
-            final tone = c.status == 'ativo'
-                ? ClientAvatarTone.success
-                : ClientAvatarTone.neutral;
-            return AppCard(
-              padding: const EdgeInsets.all(AppSpacing.x4),
-              onTap: () => Navigator.pushNamed(ctx, AppRoutes.clienteCabines,
-                  arguments: {'clienteId': c.id}),
-              child: Row(
+class _LeadDetailSheet extends StatefulWidget {
+  final Lead lead;
+  final NumberFormat currency;
+  final Future<void> Function(Map<String, dynamic> payload) onSave;
+  final Future<void> Function() onLost;
+  final Future<void> Function() onWon;
+
+  const _LeadDetailSheet({
+    required this.lead,
+    required this.currency,
+    required this.onSave,
+    required this.onLost,
+    required this.onWon,
+  });
+
+  @override
+  State<_LeadDetailSheet> createState() => _LeadDetailSheetState();
+}
+
+class _LeadDetailSheetState extends State<_LeadDetailSheet> {
+  late final TextEditingController _valorCtrl;
+  late final TextEditingController _responsavelCtrl;
+  late final TextEditingController _origemCtrl;
+  late final TextEditingController _observacoesCtrl;
+  late final TextEditingController _historicoCtrl;
+  late final TextEditingController _tarefaCtrl;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _valorCtrl = TextEditingController(
+      text: widget.lead.valorOportunidade.toStringAsFixed(2),
+    );
+    _responsavelCtrl =
+        TextEditingController(text: widget.lead.responsavelNome ?? '');
+    _origemCtrl = TextEditingController(text: widget.lead.origem ?? '');
+    _observacoesCtrl =
+        TextEditingController(text: widget.lead.observacoesInternas ?? '');
+    _historicoCtrl = TextEditingController();
+    _tarefaCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _valorCtrl.dispose();
+    _responsavelCtrl.dispose();
+    _origemCtrl.dispose();
+    _observacoesCtrl.dispose();
+    _historicoCtrl.dispose();
+    _tarefaCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      final contatos = [...widget.lead.historicoContatos];
+      final contato = _historicoCtrl.text.trim();
+      if (contato.isNotEmpty) {
+        contatos.add({
+          'texto': contato,
+          'criado_em': DateTime.now().toIso8601String(),
+        });
+      }
+
+      final tarefas = [...widget.lead.tarefas];
+      final tarefa = _tarefaCtrl.text.trim();
+      if (tarefa.isNotEmpty) {
+        tarefas.add({
+          'titulo': tarefa,
+          'status': 'pendente',
+          'criado_em': DateTime.now().toIso8601String(),
+        });
+      }
+
+      await widget.onSave({
+        'valor_oportunidade':
+            double.tryParse(_valorCtrl.text.replaceAll(',', '.')) ?? 0,
+        'responsavel_nome': _responsavelCtrl.text.trim().isEmpty
+            ? null
+            : _responsavelCtrl.text.trim(),
+        'origem':
+            _origemCtrl.text.trim().isEmpty ? null : _origemCtrl.text.trim(),
+        'observacoes_internas': _observacoesCtrl.text.trim().isEmpty
+            ? null
+            : _observacoesCtrl.text.trim(),
+        'historico_contatos': contatos,
+        'tarefas': tarefas,
+      });
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiService.extractErrorMessage(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lead = widget.lead;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.x6,
+        AppSpacing.x2,
+        AppSpacing.x6,
+        AppSpacing.x6 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  ClientAvatar(
-                    initials: c.nome.isNotEmpty ? c.nome[0].toUpperCase() : '?',
-                    tone: tone,
-                    size: 44,
-                  ),
-                  const SizedBox(width: AppSpacing.x3),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(c.nome,
-                            style: AppTypography.bodyMedium
-                                .copyWith(fontWeight: FontWeight.w600),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                        if (c.cidade != null && c.cidade!.isNotEmpty)
-                          Text(c.cidade!,
-                              style: AppTypography.caption
-                                  .copyWith(color: context.colors.textSecondary)),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      AppBadge(
-                        label: _statusLabel[c.status] ?? c.status,
-                        type: _statusBadge[c.status] ?? AppBadgeType.neutral,
-                      ),
-                      if (c.horasRestantes != null &&
-                          (c.horasContratadas ?? 0) > 0) ...[
+                        Text(lead.nome, style: AppTypography.h2),
                         const SizedBox(height: AppSpacing.x1),
                         Text(
-                          '${c.horasRestantes!.toStringAsFixed(1)} h restantes',
-                          style: AppTypography.caption
+                          [
+                            if (lead.nicho != null) lead.nicho!,
+                            if (lead.cidade != null) lead.cidade!,
+                          ].join(' • '),
+                          style: AppTypography.bodySmall
                               .copyWith(color: context.colors.textSecondary),
                         ),
                       ],
-                    ],
+                    ),
+                  ),
+                  if (lead.crmEtapa != 'perdido')
+                    Wrap(
+                      spacing: AppSpacing.x2,
+                      children: [
+                        AppSecondaryButton(
+                          label: 'Marcar perdido',
+                          onPressed: () async {
+                            await widget.onLost();
+                            if (context.mounted) Navigator.pop(context);
+                          },
+                        ),
+                        AppPrimaryButton(
+                          label: 'Ganho',
+                          onPressed: () async {
+                            await widget.onWon();
+                            if (context.mounted) Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.x5),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      controller: _valorCtrl,
+                      hint: 'Valor da oportunidade',
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x3),
+                  Expanded(
+                    child: AppTextField(
+                      controller: _responsavelCtrl,
+                      hint: 'Responsável pela negociação',
+                    ),
                   ),
                 ],
               ),
-            );
-          },
-        ),
-        // FAB
-        Positioned(
-          bottom: AppSpacing.x6,
-          right: AppSpacing.x4,
-          child: FloatingActionButton(
-            backgroundColor: AppColors.primary,
-            onPressed: widget.onAddCliente,
-            child: const Icon(Icons.add, color: AppColors.textOnPrimary),
+              const SizedBox(height: AppSpacing.x3),
+              AppTextField(controller: _origemCtrl, hint: 'Origem do lead'),
+              const SizedBox(height: AppSpacing.x3),
+              _TextArea(
+                controller: _observacoesCtrl,
+                hint: 'Observações internas',
+                maxLines: 4,
+              ),
+              const SizedBox(height: AppSpacing.x5),
+              const Text('Histórico de contatos', style: AppTypography.h3),
+              const SizedBox(height: AppSpacing.x2),
+              ...lead.historicoContatos.map(
+                (item) => _HistoryRow(text: item['texto']?.toString() ?? ''),
+              ),
+              _TextArea(
+                controller: _historicoCtrl,
+                hint: 'Adicionar contato realizado',
+                maxLines: 2,
+              ),
+              const SizedBox(height: AppSpacing.x5),
+              const Text('Tarefas', style: AppTypography.h3),
+              const SizedBox(height: AppSpacing.x2),
+              ...lead.tarefas.map(
+                (item) => _HistoryRow(text: item['titulo']?.toString() ?? ''),
+              ),
+              AppTextField(
+                controller: _tarefaCtrl,
+                hint: 'Adicionar tarefa',
+              ),
+              if ((lead.motivoPerda ?? '').isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.x5),
+                AppCard(
+                  borderColor: AppColors.danger.withValues(alpha: 0.3),
+                  child: Text(
+                    'Motivo de perda: ${lead.motivoPerda}',
+                    style: AppTypography.bodySmall
+                        .copyWith(color: AppColors.danger),
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.x5),
+              if (_saving)
+                const Center(child: CircularProgressIndicator())
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppSecondaryButton(
+                        label: 'Cancelar',
+                        fullWidth: true,
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(
+                      child: AppPrimaryButton(
+                        label: 'Salvar',
+                        fullWidth: true,
+                        onPressed: _save,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
+}
+
+class _MiniLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _MiniLine({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.x1),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: context.colors.textMuted),
+          const SizedBox(width: AppSpacing.x1),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTypography.caption
+                  .copyWith(color: context.colors.textSecondary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoryRow extends StatelessWidget {
+  final String text;
+
+  const _HistoryRow({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    if (text.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.x2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.circle, size: 6, color: context.colors.textMuted),
+          const SizedBox(width: AppSpacing.x2),
+          Expanded(child: Text(text, style: AppTypography.bodySmall)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            message,
+            style: AppTypography.caption
+                .copyWith(color: context.colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.x3),
+          AppSecondaryButton(onPressed: onRetry, label: 'Tentar novamente'),
+        ],
+      ),
+    );
+  }
+}
+
+class _TextArea extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final int maxLines;
+
+  const _TextArea({
+    required this.controller,
+    required this.hint,
+    this.maxLines = 3,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      style: AppTypography.bodyMedium,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: context.colors.bgInput,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: BorderSide(color: context.colors.borderSubtle),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: BorderSide(color: context.colors.borderSubtle),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.primary),
+        ),
+      ),
+    );
+  }
+}
+
+class _CrmStage {
+  final String id;
+  final String label;
+
+  const _CrmStage(this.id, this.label);
 }

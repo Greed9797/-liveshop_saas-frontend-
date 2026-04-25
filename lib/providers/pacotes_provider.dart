@@ -50,6 +50,7 @@ class PacotesNotifier extends AsyncNotifier<List<Pacote>> {
                   descricao: p.descricao,
                   valor: p.valor,
                   horasIncluidas: p.horasIncluidas,
+                  comissaoPct: p.comissaoPct,
                   ativo: false,
                 )
               : p)

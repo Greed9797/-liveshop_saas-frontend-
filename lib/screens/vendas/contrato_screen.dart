@@ -43,16 +43,18 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
   Future<void> _criarContrato() async {
     final clienteId = _clienteId;
     if (clienteId == null || _contratoId != null) return;
-    final valorFixo = double.tryParse(_valorCtrl.text.replaceAll(',', '.')) ?? 0;
+    final valorFixo =
+        double.tryParse(_valorCtrl.text.replaceAll(',', '.')) ?? 0;
     final comissaoPct = double.tryParse(_comissaoCtrl.text) ?? 0;
     setState(() => _loading = true);
     try {
-      final result = await ref.read(contratosProvider.notifier).criarComDetalhes(
-        clienteId: clienteId,
-        valorFixo: valorFixo,
-        comissaoPct: comissaoPct,
-        pacoteId: _selectedPacote?.id,
-      );
+      final result =
+          await ref.read(contratosProvider.notifier).criarComDetalhes(
+                clienteId: clienteId,
+                valorFixo: valorFixo,
+                comissaoPct: comissaoPct,
+                pacoteId: _selectedPacote?.id,
+              );
       if (mounted) {
         setState(() {
           _contratoId = result['id'] as String;
@@ -64,8 +66,8 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Erro ao criar contrato: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao criar contrato: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -92,9 +94,9 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
     setState(() => _loading = true);
     try {
       final result = await ref.read(contratosProvider.notifier).assinarDigital(
-        id: contratoId,
-        signatureBase64: base64,
-      );
+            id: contratoId,
+            signatureBase64: base64,
+          );
       if (!mounted) return;
       Navigator.pushNamed(context, AppRoutes.analiseCredito, arguments: {
         'contratoId': contratoId,
@@ -104,7 +106,8 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao assinar: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erro ao assinar: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -114,15 +117,20 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
   Future<void> _enviarWhatsApp() async {
     final clienteId = _clienteId ?? '';
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Link copiado: https://liveshop.app/assinar/$clienteId')),
+      SnackBar(
+          content:
+              Text('Link copiado: https://liveshop.app/assinar/$clienteId')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final clienteId = _clienteId;
-    final clientes = ref.watch(clientesProvider).valueOrNull ?? const <Cliente>[];
-    final pacotes = ref.watch(pacotesProvider).valueOrNull
+    final clientes =
+        ref.watch(clientesProvider).valueOrNull ?? const <Cliente>[];
+    final pacotes = ref
+            .watch(pacotesProvider)
+            .valueOrNull
             ?.where((p) => p.ativo)
             .toList() ??
         const <Pacote>[];
@@ -130,12 +138,17 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
     Cliente? cliente;
     if (clienteId != null) {
       for (final c in clientes) {
-        if (c.id == clienteId) { cliente = c; break; }
+        if (c.id == clienteId) {
+          cliente = c;
+          break;
+        }
       }
     }
 
     final valorDisplay =
-        _selectedPacote?.valor.toStringAsFixed(2) ?? _valorCtrl.text;
+        _selectedPacote?.valorFixo.toStringAsFixed(2) ?? _valorCtrl.text;
+    final comissaoDisplay =
+        _selectedPacote?.comissaoPct.toStringAsFixed(2) ?? _comissaoCtrl.text;
 
     return AppScaffold(
       currentRoute: AppRoutes.vendas,
@@ -181,7 +194,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                         'O presente contrato tem por objeto a prestação de serviços de transmissão ao vivo (Livelab) pela CONTRATADA, conforme plano escolhido, com vigência de 12 (doze) meses a partir da data de assinatura.\n\n'
                         'Cláusula 1ª — DAS OBRIGAÇÕES DA CONTRATADA\nA CONTRATADA se compromete a disponibilizar cabine, equipamentos, apresentador e suporte técnico para realização das transmissões conforme cronograma acordado.\n\n'
                         'Cláusula 2ª — DAS OBRIGAÇÕES DO CONTRATANTE\nO CONTRATANTE se compromete ao pagamento das mensalidades nas datas acordadas e ao fornecimento dos produtos para transmissão.\n\n'
-                        'Cláusula 3ª — DO VALOR\nO valor mensal acordado é de R\$ $valorDisplay, vencendo todo dia 10 de cada mês.',
+                        'Cláusula 3ª — DO VALOR\nO valor mensal mínimo acordado é de R\$ $valorDisplay, vencendo todo dia 10 de cada mês. A cobrança variável corresponde a $comissaoDisplay% sobre o faturamento apurado nas lives. Enquanto a variável não superar o fixo, cobra-se o fixo; quando superar, cobra-se o valor variável.',
                         style: AppTypography.caption.copyWith(height: 1.6),
                       ),
                       const SizedBox(height: AppSpacing.x10),
@@ -194,14 +207,12 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                         height: 64,
                         decoration: BoxDecoration(
                           border: Border.all(color: context.colors.textMuted),
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.sm),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: Center(
-                          child: Text(
-                              '(clique em "Assinar Agora" →)',
-                              style: AppTypography.caption
-                                  .copyWith(color: context.colors.textSecondary)),
+                          child: Text('(clique em "Assinar Agora" →)',
+                              style: AppTypography.caption.copyWith(
+                                  color: context.colors.textSecondary)),
                         ),
                       ),
                     ],
@@ -222,7 +233,8 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                         .copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: AppSpacing.x3),
                 if (pacotes.isEmpty)
-                  Text('Nenhum pacote cadastrado.\nConfigure em Configurações → Pacotes.',
+                  Text(
+                      'Nenhum pacote cadastrado.\nConfigure em Configurações → Pacotes.',
                       style: AppTypography.caption
                           .copyWith(color: context.colors.textSecondary))
                 else
@@ -233,7 +245,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                         .map((p) => DropdownMenuItem(
                               value: p.id,
                               child: Text(
-                                  '${p.nome} — R\$ ${p.valor.toStringAsFixed(0)}',
+                                  '${p.nome} — R\$ ${p.valorFixo.toStringAsFixed(0)} + ${p.comissaoPct.toStringAsFixed(1)}%',
                                   style: AppTypography.bodySmall),
                             ))
                         .toList(),
@@ -242,9 +254,8 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                       final p = pacotes.firstWhere((p) => p.id == id);
                       setState(() {
                         _selectedPacote = p;
-                        _valorCtrl.text = p.valor.toStringAsFixed(2);
-                        _comissaoCtrl.text =
-                            p.comissaoPct.toStringAsFixed(2);
+                        _valorCtrl.text = p.valorFixo.toStringAsFixed(2);
+                        _comissaoCtrl.text = p.comissaoPct.toStringAsFixed(2);
                       });
                     },
                   ),
@@ -282,14 +293,14 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                 const SizedBox(height: AppSpacing.x3),
                 AppTextField(
                   controller: _valorCtrl,
-                  hint: 'Valor fixo R\$',
+                  hint: 'Valor mensal mínimo R\$',
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                 ),
                 const SizedBox(height: AppSpacing.x2),
                 AppTextField(
                   controller: _comissaoCtrl,
-                  hint: 'Comissão %',
+                  hint: '% sobre faturamento',
                   keyboardType: TextInputType.number,
                 ),
                 const Spacer(),
@@ -358,7 +369,8 @@ class _SignatureDialogState extends State<_SignatureDialog> {
   Future<void> _confirmar() async {
     if (_ctrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Desenhe sua assinatura antes de confirmar')),
+        const SnackBar(
+            content: Text('Desenhe sua assinatura antes de confirmar')),
       );
       return;
     }
@@ -382,7 +394,9 @@ class _SignatureDialogState extends State<_SignatureDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Desenhe sua assinatura abaixo:', style: AppTypography.label.copyWith(color: context.colors.textSecondary)),
+            Text('Desenhe sua assinatura abaixo:',
+                style: AppTypography.label
+                    .copyWith(color: context.colors.textSecondary)),
             const SizedBox(height: AppSpacing.x2),
             Container(
               decoration: BoxDecoration(
@@ -412,7 +426,8 @@ class _SignatureDialogState extends State<_SignatureDialog> {
                   onChanged: (v) => setState(() => _acceptedTerms = v ?? false),
                 ),
                 Expanded(
-                  child: Text('Li e aceito os termos do contrato de parceria Livelab',
+                  child: Text(
+                      'Li e aceito os termos do contrato de parceria Livelab',
                       style: AppTypography.caption),
                 ),
               ],

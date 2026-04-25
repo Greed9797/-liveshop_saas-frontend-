@@ -6,6 +6,7 @@ import '../screens/admin_master/master_crm_screen.dart';
 import '../screens/admin_master/master_dashboard_screen.dart';
 import '../screens/admin_master/master_units_screen.dart';
 import '../screens/analytics/analytics_dashboard_screen.dart';
+import '../screens/apresentadoras/apresentadoras_screen.dart';
 import '../screens/auditoria/analise_credito_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/boletos/boletos_screen.dart';
@@ -23,7 +24,6 @@ import '../screens/painel_cliente/carteira_clientes_screen.dart';
 import '../screens/painel_cliente/cliente_dashboard_screen.dart';
 import '../screens/painel_cliente/cliente_screen.dart';
 import '../screens/recomendacoes/recomendacoes_screen.dart';
-import '../screens/solicitacoes/solicitacoes_screen.dart';
 import '../screens/vendas/analise_financeira_screen.dart';
 import '../screens/vendas/analise_vendas_screen.dart';
 import '../screens/vendas/cadastro_cliente_screen.dart';
@@ -67,16 +67,52 @@ class AppRoutes {
   static const configuracoes = '/configuracoes';
   static const solicitacoes = '/solicitacoes';
   static const agendamentos = '/agendamentos';
+  static const apresentadoras = '/apresentadoras';
   static const analyticsDashboard = '/analytics-dashboard';
+
+  static const Set<String> _internalRoles = {
+    'franqueado',
+    'gerente',
+    'gerente_comercial',
+    'financeiro',
+    'operacional',
+  };
+  static const Set<String> _commercialRoles = {
+    'franqueado',
+    'gerente',
+    'gerente_comercial',
+  };
+  static const Set<String> _financeRoles = {
+    'franqueado',
+    'gerente',
+    'financeiro',
+  };
+  static const Set<String> _opsRoles = {
+    'franqueado',
+    'gerente',
+    'operacional',
+  };
+  static const Set<String> _cabineRoles = {
+    'franqueado',
+    'gerente',
+    'operacional',
+    'apresentador',
+    'apresentadora',
+  };
 
   static String routeForRole(String? role) {
     switch (role) {
       case 'franqueador_master':
+      case 'admin_master':
         return masterDashboard;
       case 'franqueado':
       case 'gerente':
+      case 'gerente_comercial':
+      case 'financeiro':
+      case 'operacional':
         return home;
       case 'apresentador':
+      case 'apresentadora':
         return cabines;
       case 'cliente_parceiro':
         return cliente;
@@ -100,7 +136,7 @@ class AppRoutes {
       case home:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _internalRoles,
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
             child: HomeScreen(),
@@ -112,7 +148,7 @@ class AppRoutes {
       case vendas:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: VendasScreen(),
@@ -123,7 +159,7 @@ class AppRoutes {
       case cadastroCliente:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: CadastroClienteScreen(),
@@ -134,7 +170,7 @@ class AppRoutes {
       case contrato:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: ContratoScreen(),
@@ -145,7 +181,7 @@ class AppRoutes {
       case analise:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: AnaliseVendasScreen(),
@@ -156,7 +192,7 @@ class AppRoutes {
       case analiseCredito:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _financeRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: AnaliseFinanceiraScreen(),
@@ -167,7 +203,7 @@ class AppRoutes {
       case financeiro:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _financeRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: FinanceiroScreen(),
@@ -178,7 +214,7 @@ class AppRoutes {
       case cabines:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente', 'apresentador'},
+            allowedRoles: _cabineRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: CabinesScreen(),
@@ -266,7 +302,7 @@ class AppRoutes {
       case clienteCabines:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _commercialRoles,
             fallbackRoute: clienteDashboard,
             unauthenticatedRoute: login,
             child: CabinesScreen(),
@@ -288,7 +324,7 @@ class AppRoutes {
       case leads:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: LeadsScreen(),
@@ -299,7 +335,12 @@ class AppRoutes {
       case boletos:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente', 'cliente_parceiro'},
+            allowedRoles: {
+              'franqueado',
+              'gerente',
+              'financeiro',
+              'cliente_parceiro'
+            },
             fallbackRoute: login,
             unauthenticatedRoute: login,
             child: BoletosScreen(),
@@ -310,7 +351,7 @@ class AppRoutes {
       case excelencia:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: {'franqueado', 'gerente', 'gerente_comercial'},
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: ExcelenciaScreen(),
@@ -321,7 +362,7 @@ class AppRoutes {
       case recomendacoes:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: RecomendacoesScreen(),
@@ -336,7 +377,11 @@ class AppRoutes {
             allowedRoles: {
               'franqueado',
               'gerente',
+              'gerente_comercial',
+              'financeiro',
+              'operacional',
               'apresentador',
+              'apresentadora',
               'cliente_parceiro'
             },
             fallbackRoute: login,
@@ -349,7 +394,7 @@ class AppRoutes {
       case carteiraClientes:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: CarteiraClientesScreen(),
@@ -361,7 +406,7 @@ class AppRoutes {
       case clientesLeads:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: ClientesLeadsScreen(),
@@ -383,7 +428,7 @@ class AppRoutes {
       case configuracoes:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master', 'franqueado', 'gerente'},
+            allowedRoles: {'franqueador_master', 'franqueado'},
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: ConfiguracoesScreen(),
@@ -395,10 +440,21 @@ class AppRoutes {
       case solicitacoes:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: _opsRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: SolicitacoesScreen(),
+            child: CabinesScreen(initialTab: 1),
+          ),
+          settings: settings,
+        );
+
+      case apresentadoras:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: _opsRoles,
+            fallbackRoute: home,
+            unauthenticatedRoute: login,
+            child: ApresentadorasScreen(),
           ),
           settings: settings,
         );
@@ -406,7 +462,12 @@ class AppRoutes {
       case analyticsDashboard:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueado', 'gerente'},
+            allowedRoles: {
+              'franqueado',
+              'gerente',
+              'gerente_comercial',
+              'financeiro'
+            },
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: AnalyticsDashboardScreen(),
@@ -433,7 +494,13 @@ class AppRoutes {
           }
           return buildPremiumRoute(
             child: RoleRouteGuard(
-              allowedRoles: const {'franqueado', 'gerente', 'apresentador'},
+              allowedRoles: const {
+                'franqueado',
+                'gerente',
+                'operacional',
+                'apresentador',
+                'apresentadora',
+              },
               fallbackRoute: home,
               unauthenticatedRoute: login,
               child: CabineDetailScreen(
@@ -464,7 +531,13 @@ class AppRoutes {
           }
           return buildPremiumRoute(
             child: RoleRouteGuard(
-              allowedRoles: const {'franqueado', 'gerente', 'apresentador'},
+              allowedRoles: const {
+                'franqueado',
+                'gerente',
+                'operacional',
+                'apresentador',
+                'apresentadora',
+              },
               fallbackRoute: clienteDashboard,
               unauthenticatedRoute: login,
               child: CabineDetailScreen(

@@ -17,15 +17,19 @@ import '../../widgets/cabine_card.dart';
 import '../../widgets/responsive_grid.dart';
 import '../../widgets/reservar_cabine_modal.dart';
 import '../../widgets/status_badge.dart';
+import '../solicitacoes/solicitacoes_screen.dart';
 
 class CabinesScreen extends ConsumerStatefulWidget {
-  const CabinesScreen({super.key});
+  final int initialTab;
+
+  const CabinesScreen({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<CabinesScreen> createState() => _CabinesScreenState();
 }
 
-class _CabinesScreenState extends ConsumerState<CabinesScreen> {
+class _CabinesScreenState extends ConsumerState<CabinesScreen>
+    with SingleTickerProviderStateMixin {
   static const _desktopBreakpoint = 950.0;
 
   static const _statusFilters = [
@@ -36,13 +40,25 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
   ];
 
   final TextEditingController _searchController = TextEditingController();
+  late final TabController _tabController;
   String _statusFilter = 'todos';
   String _searchQuery = '';
   String? _selectedCabineId;
   String? _selectedContratoId;
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTab.clamp(0, 1),
+    );
+  }
+
+  @override
   void dispose() {
+    _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -211,7 +227,7 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
               decoration: const InputDecoration(
                 prefixText: '@',
                 hintText: 'username',
-                labelText: 'Username do apresentador no TikTok',
+                labelText: 'Username da marca no TikTok',
               ),
             ),
             actions: [
@@ -285,6 +301,96 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
     final cabinesAsync = ref.watch(cabinesProvider);
     final filaAsync = ref.watch(filaAtivacaoProvider);
 
+    final cabinesBody = LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
+
+        return cabinesAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                    'Erro ao carregar cabines: ${ApiService.extractErrorMessage(error)}'),
+                const SizedBox(height: AppSpacing.x3),
+                AppSecondaryButton(
+                  onPressed: () => ref.read(cabinesProvider.notifier).refresh(),
+                  label: 'Tentar novamente',
+                ),
+              ],
+            ),
+          ),
+          data: (cabines) {
+            _syncSelectedCabine(cabines, isDesktop: isDesktop);
+            final filteredCabines = _applyFilters(cabines);
+            final metrics = _CabinesMetrics.from(
+              cabines,
+              audienciaTotal: _sumLiveAudienceFromSse(cabines),
+            );
+            final selectedCabine = _findSelectedCabine(cabines);
+            final fila = filaAsync.valueOrNull ?? const <FilaAtivacaoItem>[];
+            final selectedContrato = _findSelectedContrato(fila);
+
+            final mainArea = _MainOperationalArea(
+              metrics: metrics,
+              cabines: filteredCabines,
+              statusFilter: _statusFilter,
+              searchController: _searchController,
+              selectedCabineId: _selectedCabineId,
+              selectedContrato: selectedContrato,
+              isDesktop: isDesktop,
+              onOpenQueue: _openFilaAtivacaoSheet,
+              onRefresh: () => ref.read(cabinesProvider.notifier).refresh(),
+              onSearchChanged: (value) => setState(() => _searchQuery = value),
+              onFilterChanged: (value) => setState(() => _statusFilter = value),
+              onClearSelectedContrato: selectedContrato == null
+                  ? null
+                  : () => setState(() => _selectedContratoId = null),
+              onCabineTap: (cabine) =>
+                  _handleCabineTap(cabine, isDesktop: isDesktop),
+              onCabineDoubleTap: _handleCabineDoubleTap,
+              onReservar: (cabine) =>
+                  _reservarCabine(cabine, isDesktop: isDesktop),
+              onIniciarLive: _iniciarLive,
+              onLiberar: _liberarCabine,
+              onEditTiktokUsername: _showTiktokDialog,
+            );
+
+            if (!isDesktop) return mainArea;
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: mainArea),
+                const SizedBox(width: AppSpacing.x4),
+                SizedBox(
+                  width: 380,
+                  child: _SidebarContent(
+                    selectedCabine: selectedCabine,
+                    selectedContrato: selectedContrato,
+                    filaAsync: filaAsync,
+                    onContratoSelected: (contrato) =>
+                        setState(() => _selectedContratoId = contrato.id),
+                    onClearContrato: selectedContrato == null
+                        ? null
+                        : () => setState(() => _selectedContratoId = null),
+                    onOpenAnalyticalDetail: selectedCabine == null
+                        ? null
+                        : () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.cabineDetail,
+                              arguments: selectedCabine,
+                            ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
     return AppScreenScaffold(
       currentRoute: AppRoutes.cabines,
       title: 'Painel de Cabines',
@@ -292,97 +398,31 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen> {
       titleSerif: true,
       subtitle:
           'Visão operacional da unidade: ao vivo, reservadas e rendimento.',
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
-
-          return cabinesAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                      'Erro ao carregar cabines: ${ApiService.extractErrorMessage(error)}'),
-                  const SizedBox(height: AppSpacing.x3),
-                  AppSecondaryButton(
-                    onPressed: () =>
-                        ref.read(cabinesProvider.notifier).refresh(),
-                    label: 'Tentar novamente',
-                  ),
-                ],
-              ),
+      child: Column(
+        children: [
+          Material(
+            color: context.colors.bgCard,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: context.colors.textSecondary,
+              indicatorColor: AppColors.primary,
+              tabs: const [
+                Tab(text: 'Cabines'),
+                Tab(text: 'Agendamentos'),
+              ],
             ),
-            data: (cabines) {
-              _syncSelectedCabine(cabines, isDesktop: isDesktop);
-              final filteredCabines = _applyFilters(cabines);
-              final metrics = _CabinesMetrics.from(
-                cabines,
-                audienciaTotal: _sumLiveAudienceFromSse(cabines),
-              );
-              final selectedCabine = _findSelectedCabine(cabines);
-              final fila = filaAsync.valueOrNull ?? const <FilaAtivacaoItem>[];
-              final selectedContrato = _findSelectedContrato(fila);
-
-              final mainArea = _MainOperationalArea(
-                metrics: metrics,
-                cabines: filteredCabines,
-                statusFilter: _statusFilter,
-                searchController: _searchController,
-                selectedCabineId: _selectedCabineId,
-                selectedContrato: selectedContrato,
-                isDesktop: isDesktop,
-                onOpenQueue: _openFilaAtivacaoSheet,
-                onRefresh: () => ref.read(cabinesProvider.notifier).refresh(),
-                onSearchChanged: (value) =>
-                    setState(() => _searchQuery = value),
-                onFilterChanged: (value) =>
-                    setState(() => _statusFilter = value),
-                onClearSelectedContrato: selectedContrato == null
-                    ? null
-                    : () => setState(() => _selectedContratoId = null),
-                onCabineTap: (cabine) =>
-                    _handleCabineTap(cabine, isDesktop: isDesktop),
-                onCabineDoubleTap: _handleCabineDoubleTap,
-                onReservar: (cabine) =>
-                    _reservarCabine(cabine, isDesktop: isDesktop),
-                onIniciarLive: _iniciarLive,
-                onLiberar: _liberarCabine,
-                onEditTiktokUsername: _showTiktokDialog,
-              );
-
-              if (!isDesktop) return mainArea;
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: mainArea),
-                  const SizedBox(width: AppSpacing.x4),
-                  SizedBox(
-                    width: 380,
-                    child: _SidebarContent(
-                      selectedCabine: selectedCabine,
-                      selectedContrato: selectedContrato,
-                      filaAsync: filaAsync,
-                      onContratoSelected: (contrato) =>
-                          setState(() => _selectedContratoId = contrato.id),
-                      onClearContrato: selectedContrato == null
-                          ? null
-                          : () => setState(() => _selectedContratoId = null),
-                      onOpenAnalyticalDetail: selectedCabine == null
-                          ? null
-                          : () => Navigator.pushNamed(
-                                context,
-                                AppRoutes.cabineDetail,
-                                arguments: selectedCabine,
-                              ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-        },
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                cabinesBody,
+                const SolicitacoesScreen(embedded: true),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -704,7 +744,8 @@ class _FeaturedKpiCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.x1),
           Text(
             sub,
-            style: AppTypography.caption.copyWith(color: context.colors.textMuted),
+            style:
+                AppTypography.caption.copyWith(color: context.colors.textMuted),
           ),
         ],
       ),
@@ -816,8 +857,9 @@ class _ChipWithCount extends StatelessWidget {
                 label,
                 style: AppTypography.caption.copyWith(
                   fontWeight: FontWeight.w600,
-                  color:
-                      active ? AppColors.textOnPrimary : context.colors.textPrimary,
+                  color: active
+                      ? AppColors.textOnPrimary
+                      : context.colors.textPrimary,
                 ),
               ),
               const SizedBox(width: 6),
@@ -856,7 +898,7 @@ class _SelectedContractBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.link_rounded, color: AppColors.primary),
+          const Icon(Icons.link_rounded, color: AppColors.primary),
           const SizedBox(width: AppSpacing.x3),
           Expanded(
             child: Column(
@@ -1311,13 +1353,13 @@ class _QueuePanel extends StatelessWidget {
                                     color: context.colors.textPrimary)),
                             const SizedBox(height: AppSpacing.x1),
                             Text(item.localizacao,
-                                style:
-                                    TextStyle(color: context.colors.textSecondary)),
+                                style: TextStyle(
+                                    color: context.colors.textSecondary)),
                             const SizedBox(height: AppSpacing.x2),
                             Text(
                               'Contrato ${item.id.substring(0, 8)} • Fixo R\$ ${item.valorFixo.toStringAsFixed(2)}',
-                              style: AppTypography.caption
-                                  .copyWith(color: context.colors.textSecondary),
+                              style: AppTypography.caption.copyWith(
+                                  color: context.colors.textSecondary),
                             ),
                           ],
                         ),
@@ -1548,7 +1590,8 @@ class _InfoLine extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
-                  fontWeight: FontWeight.w600, color: context.colors.textPrimary),
+                  fontWeight: FontWeight.w600,
+                  color: context.colors.textPrimary),
             ),
           ),
         ],
@@ -1799,13 +1842,13 @@ class _FilaAtivacaoBottomSheet extends ConsumerWidget {
                                     .copyWith(fontWeight: FontWeight.w700)),
                             const SizedBox(height: AppSpacing.x1),
                             Text(item.localizacao,
-                                style: AppTypography.bodySmall
-                                    .copyWith(color: context.colors.textSecondary)),
+                                style: AppTypography.bodySmall.copyWith(
+                                    color: context.colors.textSecondary)),
                             const SizedBox(height: AppSpacing.x2),
                             Text(
                               'Contrato ${item.id.substring(0, 8)} • Fixo R\$ ${item.valorFixo.toStringAsFixed(2)} • Comissão ${item.comissaoPct.toStringAsFixed(0)}%',
-                              style: AppTypography.caption
-                                  .copyWith(color: context.colors.textSecondary),
+                              style: AppTypography.caption.copyWith(
+                                  color: context.colors.textSecondary),
                             ),
                           ],
                         ),

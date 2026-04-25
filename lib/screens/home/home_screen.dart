@@ -1,24 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shimmer/shimmer.dart';
-import '../../widgets/app_scaffold.dart';
-import '../../widgets/excelencia_card.dart';
-import '../../widgets/nps_gauge.dart';
-import '../../widgets/chamados_card.dart';
-import '../../widgets/ranking_destaque.dart';
-import '../../providers/dashboard_provider.dart';
-import '../../models/dashboard.dart';
-import '../../routes/app_routes.dart';
+import 'package:intl/intl.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
 import '../../design_system/design_system.dart' hide AppCard;
+import '../../models/dashboard.dart';
+import '../../providers/dashboard_provider.dart';
+import '../../routes/app_routes.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/metric_card.dart';
 
-String _formatFaturamento(double value) {
-  if (value >= 1000000) return 'R\$ ${(value / 1000000).toStringAsFixed(1)}M';
-  if (value >= 1000) return 'R\$ ${(value / 1000).toStringAsFixed(1)}k';
-  return 'R\$ ${value.toStringAsFixed(0)}';
-}
+final _brl = NumberFormat.currency(
+  locale: 'pt_BR',
+  symbol: 'R\$',
+  decimalDigits: 0,
+);
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -27,22 +23,23 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashAsync = ref.watch(dashboardProvider);
 
-    return AppScaffold(
+    return AppScreenScaffold(
       currentRoute: AppRoutes.home,
+      title: 'Home',
+      subtitle: 'Visão executiva da unidade.',
+      actions: [
+        IconButton(
+          tooltip: 'Atualizar',
+          icon: const Icon(Icons.refresh),
+          color: context.colors.textSecondary,
+          onPressed: () => ref.read(dashboardProvider.notifier).refresh(),
+        ),
+      ],
       child: dashAsync.when(
-        loading: () => const _HomeShimmerLoader(),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Erro ao carregar dashboard: $e'),
-              const SizedBox(height: 12),
-              AppSecondaryButton(
-                onPressed: () => ref.read(dashboardProvider.notifier).refresh(),
-                label: 'Tentar novamente',
-              ),
-            ],
-          ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => _HomeError(
+          error: e,
+          onRetry: () => ref.read(dashboardProvider.notifier).refresh(),
         ),
         data: (dashboard) => _HomeContent(dashboard: dashboard),
       ),
@@ -52,41 +49,31 @@ class HomeScreen extends ConsumerWidget {
 
 class _HomeContent extends StatelessWidget {
   final DashboardData dashboard;
+
   const _HomeContent({required this.dashboard});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWideLayout = constraints.maxWidth >= AppBreakpoints.tablet;
-        final responsivePadding = constraints.maxWidth >= AppBreakpoints.desktop
+        final padding = constraints.maxWidth >= AppBreakpoints.desktop
             ? AppSpacing.x8
-            : constraints.maxWidth >= AppBreakpoints.tablet
-                ? AppSpacing.x6
-                : AppSpacing.x4;
+            : AppSpacing.x4;
 
-        return CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: EdgeInsets.all(responsivePadding),
-              sliver: SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.all(AppSpacing.x6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: const Color(0xFFEAEAEA)),
-                    gradient: const LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [Color(0xFFF1EFEE), Color(0xFFFCD7C5)],
-                    ),
-                  ),
-                  child: isWideLayout
-                      ? _DesktopLayout(dashboard: dashboard)
-                      : _MobileLayout(dashboard: dashboard),
-                ),
-              ),
-            ),
+        return ListView(
+          padding: EdgeInsets.all(padding),
+          children: [
+            const _SectionTitle(title: 'Visão executiva'),
+            const SizedBox(height: AppSpacing.x3),
+            _ExecutiveKpis(dashboard: dashboard),
+            const SizedBox(height: AppSpacing.x6),
+            const _SectionTitle(title: 'Operação imediata'),
+            const SizedBox(height: AppSpacing.x3),
+            _OperationBand(dashboard: dashboard),
+            const SizedBox(height: AppSpacing.x6),
+            const _SectionTitle(title: 'Alertas'),
+            const SizedBox(height: AppSpacing.x3),
+            _AlertsBand(dashboard: dashboard),
           ],
         );
       },
@@ -94,513 +81,306 @@ class _HomeContent extends StatelessWidget {
   }
 }
 
-// ─── KPI ROW ──────────────────────────────────────────────────────────────────
-
-class _KpiRow extends StatelessWidget {
+class _ExecutiveKpis extends StatelessWidget {
   final DashboardData dashboard;
-  const _KpiRow({required this.dashboard});
+
+  const _ExecutiveKpis({required this.dashboard});
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final isMobile = width < AppBreakpoints.mobile;
-
     final cards = [
       MetricCard(
-        label: 'GMV do Mês',
-        value: _formatFaturamento(dashboard.gmvLivesMes),
+        label: 'GMV do mês',
+        value: _brl.format(dashboard.gmvMes),
         icon: PhosphorIcons.currencyCircleDollar(),
-        subtitle: '${dashboard.livesMes} lives encerradas',
+        subtitle: 'Resultado consolidado',
       ),
       MetricCard(
-        label: 'Clientes Ativos',
+        label: 'Pipeline aberto',
+        value: '${dashboard.pipelineAberto}',
+        icon: PhosphorIcons.funnel(),
+        subtitle: 'leads ativos',
+      ),
+      MetricCard(
+        label: 'Valor do pipeline',
+        value: _brl.format(dashboard.valorPipeline),
+        icon: PhosphorIcons.chartLineUp(),
+        subtitle: 'oportunidades abertas',
+      ),
+      MetricCard(
+        label: 'Clientes ativos',
         value: '${dashboard.clientesAtivos}',
         icon: PhosphorIcons.usersThree(),
-        subtitle: '+${dashboard.novosClientes} novos',
-      ),
-      MetricCard(
-        label: 'Lives no Mês',
-        value: '${dashboard.livesMes}',
-        icon: PhosphorIcons.broadcast(),
-        subtitle: '${dashboard.mediaViewers} viewers médio',
-      ),
-      MetricCard(
-        label: 'Contratos em Análise',
-        value: '${dashboard.contratosAnalise}',
-        icon: PhosphorIcons.fileText(),
-        subtitle: dashboard.boletosVencidos > 0
-            ? '${dashboard.boletosVencidos} boletos vencidos'
-            : null,
-        deltaPositive: dashboard.boletosVencidos > 0 ? false : null,
+        subtitle: 'contratos ativos',
       ),
     ];
 
-    if (isMobile) {
-      // Agrupar em pares de 2 — IntrinsicHeight garante mesma altura
-      // por linha sem cortar conteúdo
-      return Column(
-        children: [
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: cards[0]),
-                const SizedBox(width: AppSpacing.x4),
-                Expanded(child: cards[1]),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.x4),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: cards[2]),
-                const SizedBox(width: AppSpacing.x4),
-                Expanded(child: cards[3]),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
+    return _ResponsiveGrid(children: cards);
+  }
+}
 
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: cards[0]),
-          const SizedBox(width: AppSpacing.x4),
-          Expanded(child: cards[1]),
-          const SizedBox(width: AppSpacing.x4),
-          Expanded(child: cards[2]),
-          const SizedBox(width: AppSpacing.x4),
-          Expanded(child: cards[3]),
-        ],
-      ),
+class _OperationBand extends StatelessWidget {
+  final DashboardData dashboard;
+
+  const _OperationBand({required this.dashboard});
+
+  @override
+  Widget build(BuildContext context) {
+    final proximas = dashboard.proximasLivesDia;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 980;
+        final cards = [
+          _InfoPanel(
+            icon: PhosphorIcons.calendarBlank(),
+            title: 'Agendamentos da semana',
+            value: '${dashboard.agendamentosSemana}',
+            detail: 'lives aprovadas ou em fila',
+          ),
+          _InfoPanel(
+            icon: PhosphorIcons.videoCamera(),
+            title: 'Ocupação hoje',
+            value:
+                '${dashboard.ocupacaoCabinesHoje.aoVivo}/${dashboard.ocupacaoCabinesHoje.operacionais}',
+            detail: 'cabines ao vivo agora',
+            progress: dashboard.ocupacaoCabinesHoje.percentual,
+          ),
+          _NextLivesPanel(lives: proximas),
+        ];
+
+        if (!isWide) {
+          return Column(
+            children: cards
+                .map((card) => Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.x3),
+                      child: card,
+                    ))
+                .toList(),
+          );
+        }
+
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: cards[0]),
+              const SizedBox(width: AppSpacing.x3),
+              Expanded(child: cards[1]),
+              const SizedBox(width: AppSpacing.x3),
+              Expanded(flex: 2, child: cards[2]),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-// ─── LAYOUT DESKTOP ───────────────────────────────────────────────────────────
-
-class _DesktopLayout extends StatelessWidget {
+class _AlertsBand extends StatelessWidget {
   final DashboardData dashboard;
-  const _DesktopLayout({required this.dashboard});
+
+  const _AlertsBand({required this.dashboard});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return _ResponsiveGrid(
       children: [
-        _KpiRow(dashboard: dashboard),
-        const SizedBox(height: AppSpacing.x4),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Coluna esquerda: excelência
-            Expanded(
-              flex: 5,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const ExcelenciaCard(),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.x4),
-            // Coluna direita: cabines + NPS/chamados + ranking
-            Expanded(
-              flex: 7,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (dashboard.cabines.isNotEmpty)
-                    _CabinesMiniGrid(
-                        cabines: dashboard.cabines, isLargeScreen: true)
-                  else
-                    const _CabinesEmptyCard(),
-                  const SizedBox(height: AppSpacing.x4),
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Expanded(
-                          child: NpsGauge(score: 9.8),
-                        ),
-                        const SizedBox(width: AppSpacing.x4),
-                        Expanded(
-                          flex: 2,
-                          child:
-                              ChamadosCard(count: dashboard.contratosAnalise),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.x4),
-                  RankingDestaque(
-                    rankings: dashboard.rankingDia
-                        .take(3)
-                        .map((e) => {'nome': e.nome})
-                        .toList(),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        _AlertCard(
+          label: 'Inadimplentes',
+          value: '${dashboard.inadimplentes}',
+          tone: dashboard.inadimplentes > 0 ? _AlertTone.danger : _AlertTone.ok,
+        ),
+        _AlertCard(
+          label: 'Contratos aguardando assinatura',
+          value: '${dashboard.contratosAguardandoAssinatura}',
+          tone: dashboard.contratosAguardandoAssinatura > 0
+              ? _AlertTone.warning
+              : _AlertTone.ok,
+        ),
+        _AlertCard(
+          label: 'Leads parados',
+          value: '${dashboard.leadsParados}',
+          tone: dashboard.leadsParados > 0 ? _AlertTone.warning : _AlertTone.ok,
+        ),
+        _AlertCard(
+          label: 'Conflitos de agenda',
+          value: '${dashboard.conflitosAgenda}',
+          tone:
+              dashboard.conflitosAgenda > 0 ? _AlertTone.danger : _AlertTone.ok,
         ),
       ],
     );
   }
 }
 
-// ─── LAYOUT MOBILE ────────────────────────────────────────────────────────────
+class _NextLivesPanel extends StatelessWidget {
+  final List<ProximaLiveDia> lives;
 
-class _MobileLayout extends StatelessWidget {
-  final DashboardData dashboard;
-  const _MobileLayout({required this.dashboard});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _KpiRow(dashboard: dashboard),
-        const SizedBox(height: AppSpacing.x4),
-        if (dashboard.cabines.isNotEmpty)
-          _CabinesMiniGrid(cabines: dashboard.cabines, isLargeScreen: false)
-        else
-          const _CabinesEmptyCard(),
-        const SizedBox(height: AppSpacing.x4),
-        RankingDestaque(
-          rankings: dashboard.rankingDia
-              .take(3)
-              .map((e) => {'nome': e.nome})
-              .toList(),
-        ),
-        const SizedBox(height: AppSpacing.x4),
-        const NpsGauge(score: 9.8),
-        const SizedBox(height: AppSpacing.x4),
-        const ExcelenciaCard(),
-      ],
-    );
-  }
-}
-
-// ─── WIDGETS INTERNOS ─────────────────────────────────────────────────────────
-
-class _CabinesEmptyCard extends StatelessWidget {
-  const _CabinesEmptyCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 120,
-      decoration: BoxDecoration(
-        color: context.colors.bgPage,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: context.colors.borderSubtle),
-      ),
-      child: Center(
-        child: Text('Nenhuma cabine configurada',
-            style: AppTypography.label.copyWith(color: context.colors.textMuted)),
-      ),
-    );
-  }
-}
-
-class _CabinesMiniGrid extends StatelessWidget {
-  final List<CabineStatus> cabines;
-  final bool isLargeScreen;
-  const _CabinesMiniGrid({required this.cabines, required this.isLargeScreen});
+  const _NextLivesPanel({required this.lives});
 
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.x4),
-      borderColor: Colors.transparent,
-      boxShadow: AppShadows.sm,
+      padding: const EdgeInsets.all(AppSpacing.x5),
+      borderColor: context.colors.borderSubtle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(PhosphorIcons.videoCamera(),
-                  size: 18, color: context.colors.textSecondary),
+              Icon(PhosphorIcons.broadcast(),
+                  size: 20, color: AppColors.primary),
               const SizedBox(width: AppSpacing.x2),
               Text(
-                'Cabines',
+                'Próximas lives do dia',
                 style: AppTypography.bodyLarge.copyWith(
-                  color: context.colors.textSecondary,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(width: AppSpacing.x2),
-              _LiveBadge(
-                  liveCount:
-                      cabines.where((c) => c.status == 'ao_vivo').length),
-              const Spacer(),
             ],
           ),
           const SizedBox(height: AppSpacing.x4),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isLargeScreen ? 5 : 4,
-              crossAxisSpacing: AppSpacing.x2,
-              mainAxisSpacing: AppSpacing.x2,
-              childAspectRatio: 1.15,
-            ),
-            itemCount: cabines.length,
-            itemBuilder: (_, i) => _CabineMiniTile(cabine: cabines[i]),
-          ),
-          const SizedBox(height: AppSpacing.x4),
-          InkWell(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            onTap: () => Navigator.pushNamed(context, AppRoutes.cabines),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
-              decoration: BoxDecoration(
-                color: context.colors.bgMuted,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+          if (lives.isEmpty)
+            Text(
+              'Nenhuma live restante hoje.',
+              style: AppTypography.bodySmall.copyWith(
+                color: context.colors.textSecondary,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Ver tudo',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: context.colors.textMuted,
+            )
+          else
+            ...lives.take(4).map(
+                  (live) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.x3),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 56,
+                          child: Text(
+                            _formatHour(live.horaInicio),
+                            style: AppTypography.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            '${live.clienteNome} · Cabine ${live.cabineNumero}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: context.colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.x2),
-                  Icon(PhosphorIcons.arrowRight(),
-                      size: 16, color: context.colors.textMuted),
-                ],
-              ),
-            ),
-          ),
+                ),
         ],
       ),
     );
   }
 }
 
-class _LiveBadge extends StatelessWidget {
-  final int liveCount;
-  const _LiveBadge({required this.liveCount});
-
-  @override
-  Widget build(BuildContext context) {
-    if (liveCount == 0) return const SizedBox.shrink();
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: AppSpacing.x2, vertical: 2),
-      decoration: BoxDecoration(
-        color: AppColors.success.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-                color: AppColors.success, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: AppSpacing.x1),
-          Text(
-            '$liveCount AO VIVO',
-            style: AppTypography.caption.copyWith(
-                fontSize: 9,
-                color: AppColors.success,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CabineMiniTile extends StatelessWidget {
-  final CabineStatus cabine;
-  const _CabineMiniTile({required this.cabine});
-
-  void _showDetails(BuildContext context) {
-    final statusLabel = switch (cabine.status) {
-      'ao_vivo' => 'AO VIVO',
-      'reservada' => 'RESERVADA',
-      'ativa' => 'ATIVA',
-      'disponivel' => 'DISPONÍVEL',
-      'manutencao' => 'MANUTENÇÃO',
-      _ => cabine.status.toUpperCase(),
-    };
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (sheetCtx) => Padding(
-        padding: const EdgeInsets.all(AppSpacing.x4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  'Cabine ${cabine.numero}',
-                  style:
-                      AppTypography.h3.copyWith(color: sheetCtx.colors.textPrimary),
-                ),
-                const SizedBox(width: AppSpacing.x2),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.x2, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: cabine.status == 'ao_vivo'
-                        ? AppColors.success.withValues(alpha: 0.15)
-                        : sheetCtx.colors.borderSubtle,
-                    borderRadius: BorderRadius.circular(AppRadius.full),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    style: AppTypography.caption.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: cabine.status == 'ao_vivo'
-                          ? AppColors.success
-                          : sheetCtx.colors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.x3),
-            _DetailRow(
-                icon: PhosphorIcons.user(),
-                label: 'Cliente',
-                value: cabine.clienteNome ?? '—'),
-            _DetailRow(
-                icon: PhosphorIcons.currencyDollar(),
-                label: 'GMV',
-                value: 'R\$ ${cabine.gmvAtual.toStringAsFixed(2)}'),
-            _DetailRow(
-                icon: PhosphorIcons.eye(),
-                label: 'Viewers',
-                value: '${cabine.viewerCount}'),
-            if (cabine.duracaoMin > 0)
-              _DetailRow(
-                  icon: PhosphorIcons.timer(),
-                  label: 'Duração',
-                  value: '${cabine.duracaoMin} min'),
-            const SizedBox(height: AppSpacing.x3),
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, AppRoutes.cabines);
-                },
-                child: const Text('Ver detalhes completos'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Heatmap: intensidade laranja por status (mais ativo = mais escuro)
-    final isEmpty = cabine.status == 'disponivel' && cabine.clienteNome == null;
-
-    final (Color bgColor, Color textColor) = switch (cabine.status) {
-      'ao_vivo' => (AppColors.primary, Colors.white),
-      'reservada' => (context.colors.bgMuted, context.colors.textMuted),
-      'ativa' => (context.colors.bgMuted, AppColors.primaryHover),
-      'disponivel' => (context.colors.bgMuted, context.colors.textMuted),
-      'manutencao' => (context.colors.borderSubtle, context.colors.textSecondary),
-      _ => (context.colors.bgMuted, context.colors.textMuted),
-    };
-
-    final showName = cabine.clienteNome != null &&
-        (cabine.status == 'ao_vivo' || cabine.status == 'reservada');
-
-    return GestureDetector(
-      onTap: () => _showDetails(context),
-      child: Container(
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (isEmpty)
-              Text(
-                '+',
-                style: AppTypography.h3.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.w400,
-                ),
-              )
-            else
-              Text(
-                'Cabine ${cabine.numero.toString().padLeft(2, '0')}',
-                style: AppTypography.bodySmall
-                    .copyWith(color: textColor, fontWeight: FontWeight.w500),
-              ),
-            if (showName)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Text(
-                  cabine.clienteNome!,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 8,
-                    color: textColor.withValues(alpha: 0.85),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
+class _InfoPanel extends StatelessWidget {
   final IconData icon;
+  final String title;
+  final String value;
+  final String detail;
+  final double? progress;
+
+  const _InfoPanel({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.detail,
+    this.progress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.x5),
+      borderColor: context.colors.borderSubtle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 22, color: AppColors.primary),
+          const SizedBox(height: AppSpacing.x4),
+          Text(title, style: AppTypography.bodyMedium),
+          const SizedBox(height: AppSpacing.x2),
+          Text(value, style: AppTypography.h2),
+          const SizedBox(height: AppSpacing.x1),
+          Text(
+            detail,
+            style: AppTypography.caption.copyWith(
+              color: context.colors.textSecondary,
+            ),
+          ),
+          if (progress != null) ...[
+            const SizedBox(height: AppSpacing.x4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: context.colors.bgMuted,
+                valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+enum _AlertTone { ok, warning, danger }
+
+class _AlertCard extends StatelessWidget {
   final String label;
   final String value;
-  const _DetailRow(
-      {required this.icon, required this.label, required this.value});
+  final _AlertTone tone;
+
+  const _AlertCard({
+    required this.label,
+    required this.value,
+    required this.tone,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    final color = switch (tone) {
+      _AlertTone.ok => AppColors.success,
+      _AlertTone.warning => AppColors.warning,
+      _AlertTone.danger => AppColors.danger,
+    };
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.x5),
+      borderColor: color.withValues(alpha: 0.25),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: context.colors.textMuted),
-          const SizedBox(width: AppSpacing.x2),
-          Text('$label: ',
-              style: AppTypography.caption.copyWith(
-                  color: context.colors.textSecondary, fontWeight: FontWeight.w600)),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(PhosphorIcons.warningCircle(), color: color, size: 20),
+          ),
+          const SizedBox(width: AppSpacing.x3),
           Expanded(
-            child: Text(value,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.caption
-                    .copyWith(color: context.colors.textPrimary)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppTypography.bodySmall),
+                const SizedBox(height: AppSpacing.x1),
+                Text(value, style: AppTypography.h3.copyWith(color: color)),
+              ],
+            ),
           ),
         ],
       ),
@@ -608,52 +388,83 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-// ─── SHIMMER LOADER ───────────────────────────────────────────────────────────
+class _ResponsiveGrid extends StatelessWidget {
+  final List<Widget> children;
 
-class _HomeShimmerLoader extends StatelessWidget {
-  const _HomeShimmerLoader();
+  const _ResponsiveGrid({required this.children});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final responsivePadding = constraints.maxWidth >= AppBreakpoints.desktop
-            ? AppSpacing.x8
+        final columns = constraints.maxWidth >= AppBreakpoints.desktop
+            ? 4
             : constraints.maxWidth >= AppBreakpoints.tablet
-                ? AppSpacing.x6
-                : AppSpacing.x4;
+                ? 2
+                : 1;
 
-        return Padding(
-          padding: EdgeInsets.all(responsivePadding),
-          child: Shimmer.fromColors(
-            baseColor: context.colors.borderSubtle,
-            highlightColor: context.colors.bgPage,
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: Container(
-                    height: 400,
-                    decoration: BoxDecoration(
-                        color: context.colors.bgCard,
-                        borderRadius: BorderRadius.circular(AppRadius.lg)),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.x4),
-                Expanded(
-                  flex: 7,
-                  child: Container(
-                    height: 400,
-                    decoration: BoxDecoration(
-                        color: context.colors.bgCard,
-                        borderRadius: BorderRadius.circular(AppRadius.lg)),
-                  ),
-                ),
-              ],
-            ),
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: children.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: AppSpacing.x3,
+            mainAxisSpacing: AppSpacing.x3,
+            childAspectRatio: columns == 1 ? 2.4 : 1.55,
           ),
+          itemBuilder: (_, index) => children[index],
         );
       },
     );
   }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+
+  const _SectionTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title.toUpperCase(),
+      style: AppTypography.caption.copyWith(
+        color: context.colors.textMuted,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.3,
+      ),
+    );
+  }
+}
+
+class _HomeError extends StatelessWidget {
+  final Object error;
+  final VoidCallback onRetry;
+
+  const _HomeError({required this.error, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Erro ao carregar dashboard: $error',
+            style: AppTypography.bodySmall.copyWith(
+              color: context.colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.x3),
+          AppSecondaryButton(label: 'Tentar novamente', onPressed: onRetry),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatHour(String raw) {
+  if (raw.length >= 5) return raw.substring(0, 5);
+  return raw;
 }

@@ -1,6 +1,7 @@
 class ConfiguracoesFranquia {
   final String id;
   final String nome;
+  final String? apelido;
   final String? logoUrl;
   final String? asaasApiKeyHidden;
   final bool hasAsaas;
@@ -12,6 +13,7 @@ class ConfiguracoesFranquia {
   const ConfiguracoesFranquia({
     required this.id,
     required this.nome,
+    this.apelido,
     this.logoUrl,
     this.asaasApiKeyHidden,
     required this.hasAsaas,
@@ -21,15 +23,19 @@ class ConfiguracoesFranquia {
     this.metaDiariaGmv = 10000,
   });
 
-  factory ConfiguracoesFranquia.fromJson(Map<String, dynamic> j) => ConfiguracoesFranquia(
-    id: j['id'] as String,
-    nome: j['nome'] as String,
-    logoUrl: j['logo_url'] as String?,
-    asaasApiKeyHidden: j['asaas_api_key_hidden'] as String?,
-    hasAsaas: (j['has_asaas'] as bool?) ?? false,
-    asaasWalletId: j['asaas_wallet_id'] as String?,
-    hasTiktok: (j['has_tiktok'] as bool?) ?? false,
-    tiktokShopId: j['tiktok_shop_id'] as String?,
-    metaDiariaGmv: (j['meta_diaria_gmv'] as num?)?.toDouble() ?? 10000,
-  );
+  String get nomeExibicao => apelido?.isNotEmpty == true ? apelido! : nome;
+
+  factory ConfiguracoesFranquia.fromJson(Map<String, dynamic> j) =>
+      ConfiguracoesFranquia(
+        id: j['id'] as String,
+        nome: j['nome'] as String,
+        apelido: j['apelido'] as String?,
+        logoUrl: j['logo_url'] as String?,
+        asaasApiKeyHidden: j['asaas_api_key_hidden'] as String?,
+        hasAsaas: (j['has_asaas'] as bool?) ?? false,
+        asaasWalletId: j['asaas_wallet_id'] as String?,
+        hasTiktok: (j['has_tiktok'] as bool?) ?? false,
+        tiktokShopId: j['tiktok_shop_id'] as String?,
+        metaDiariaGmv: (j['meta_diaria_gmv'] as num?)?.toDouble() ?? 10000,
+      );
 }

@@ -68,7 +68,56 @@ class RankingEntry {
       );
 }
 
+class OcupacaoCabinesHoje {
+  final int aoVivo;
+  final int operacionais;
+
+  const OcupacaoCabinesHoje({
+    required this.aoVivo,
+    required this.operacionais,
+  });
+
+  factory OcupacaoCabinesHoje.fromJson(Map<String, dynamic>? j) =>
+      OcupacaoCabinesHoje(
+        aoVivo: int.tryParse('${j?['ao_vivo'] ?? 0}') ?? 0,
+        operacionais: int.tryParse('${j?['operacionais'] ?? 0}') ?? 0,
+      );
+
+  double get percentual =>
+      operacionais <= 0 ? 0 : (aoVivo / operacionais).clamp(0, 1).toDouble();
+}
+
+class ProximaLiveDia {
+  final String id;
+  final String data;
+  final String horaInicio;
+  final String horaFim;
+  final int cabineNumero;
+  final String clienteNome;
+
+  const ProximaLiveDia({
+    required this.id,
+    required this.data,
+    required this.horaInicio,
+    required this.horaFim,
+    required this.cabineNumero,
+    required this.clienteNome,
+  });
+
+  factory ProximaLiveDia.fromJson(Map<String, dynamic> j) => ProximaLiveDia(
+        id: j['id']?.toString() ?? '',
+        data: j['data_solicitada']?.toString() ?? '',
+        horaInicio: j['hora_inicio']?.toString() ?? '',
+        horaFim: j['hora_fim']?.toString() ?? '',
+        cabineNumero: int.tryParse('${j['cabine_numero'] ?? 0}') ?? 0,
+        clienteNome: j['cliente_nome']?.toString() ?? 'Cliente',
+      );
+}
+
 class DashboardData {
+  final double gmvMes;
+  final int pipelineAberto;
+  final double valorPipeline;
   final double fatTotal;
   final double fatBruto;
   final double fatLiquido;
@@ -88,11 +137,21 @@ class DashboardData {
   final int contratosAnalise;
   final int boletosVencidos;
   final int leadsDisponiveis;
+  final int agendamentosSemana;
+  final OcupacaoCabinesHoje ocupacaoCabinesHoje;
+  final List<ProximaLiveDia> proximasLivesDia;
+  final int inadimplentes;
+  final int contratosAguardandoAssinatura;
+  final int leadsParados;
+  final int conflitosAgenda;
 
   // Ranking do Dia
   final List<RankingEntry> rankingDia;
 
   const DashboardData({
+    required this.gmvMes,
+    required this.pipelineAberto,
+    required this.valorPipeline,
     required this.fatTotal,
     required this.fatBruto,
     required this.fatLiquido,
@@ -106,10 +165,26 @@ class DashboardData {
     required this.contratosAnalise,
     required this.boletosVencidos,
     required this.leadsDisponiveis,
+    required this.agendamentosSemana,
+    required this.ocupacaoCabinesHoje,
+    required this.proximasLivesDia,
+    required this.inadimplentes,
+    required this.contratosAguardandoAssinatura,
+    required this.leadsParados,
+    required this.conflitosAgenda,
     required this.rankingDia,
   });
 
   factory DashboardData.fromJson(Map<String, dynamic> j) => DashboardData(
+        gmvMes: j['gmv_mes'] == null
+            ? double.tryParse('${j['gmv_lives_mes'] ?? 0}') ?? 0.0
+            : double.tryParse(j['gmv_mes'].toString()) ?? 0.0,
+        pipelineAberto: j['pipeline_aberto'] == null
+            ? int.tryParse('${j['leads_disponiveis'] ?? 0}') ?? 0
+            : int.tryParse(j['pipeline_aberto'].toString()) ?? 0,
+        valorPipeline: j['valor_pipeline'] == null
+            ? 0.0
+            : double.tryParse(j['valor_pipeline'].toString()) ?? 0.0,
         fatTotal: j['fat_total'] == null
             ? 0.0
             : double.tryParse(j['fat_total'].toString()) ?? 0.0,
@@ -146,6 +221,24 @@ class DashboardData {
         leadsDisponiveis: j['leads_disponiveis'] == null
             ? 0
             : int.tryParse(j['leads_disponiveis'].toString()) ?? 0,
+        agendamentosSemana: j['agendamentos_semana'] == null
+            ? 0
+            : int.tryParse(j['agendamentos_semana'].toString()) ?? 0,
+        ocupacaoCabinesHoje: OcupacaoCabinesHoje.fromJson(
+          j['ocupacao_cabines_hoje'] is Map
+              ? Map<String, dynamic>.from(j['ocupacao_cabines_hoje'] as Map)
+              : null,
+        ),
+        proximasLivesDia: (j['proximas_lives_dia'] as List?)
+                ?.map((e) => ProximaLiveDia.fromJson(
+                    Map<String, dynamic>.from(e as Map)))
+                .toList() ??
+            [],
+        inadimplentes: int.tryParse('${j['inadimplentes'] ?? 0}') ?? 0,
+        contratosAguardandoAssinatura:
+            int.tryParse('${j['contratos_aguardando_assinatura'] ?? 0}') ?? 0,
+        leadsParados: int.tryParse('${j['leads_parados'] ?? 0}') ?? 0,
+        conflitosAgenda: int.tryParse('${j['conflitos_agenda'] ?? 0}') ?? 0,
         cabines: (j['cabines'] as List?)
                 ?.map((e) => CabineStatus.fromJson(e as Map<String, dynamic>))
                 .toList() ??

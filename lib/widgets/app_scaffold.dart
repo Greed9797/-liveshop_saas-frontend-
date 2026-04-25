@@ -95,10 +95,15 @@ class AppScaffold extends ConsumerWidget {
 
     final boletosAsync = ref.watch(boletosProvider);
     final authState = ref.watch(authProvider);
-    final isFranqueadorMaster = authState.user?.papel == 'franqueador_master';
-    final isClienteParceiro = authState.user?.papel == 'cliente_parceiro';
-    final isApresentador = authState.user?.papel == 'apresentador';
-    final isGerente = authState.user?.papel == 'gerente';
+    final papel = authState.user?.papel;
+    final isFranqueadorMaster =
+        papel == 'franqueador_master' || papel == 'admin_master';
+    final isClienteParceiro = papel == 'cliente_parceiro';
+    final isApresentador = papel == 'apresentador' || papel == 'apresentadora';
+    final isGerente = papel == 'gerente';
+    final isGerenteComercial = papel == 'gerente_comercial' || isGerente;
+    final isFinanceiro = papel == 'financeiro';
+    final isOperacional = papel == 'operacional';
     final displayName = authState.user?.nome ?? userName ?? 'Livelab';
     final boletosCount = boletosAsync.valueOrNull
             ?.where((b) => b.status == 'vencido' || b.status == 'pendente')
@@ -124,6 +129,9 @@ class AppScaffold extends ConsumerWidget {
                   isClienteParceiro,
                   isApresentador,
                   isGerente,
+                  isGerenteComercial: isGerenteComercial,
+                  isFinanceiro: isFinanceiro,
+                  isOperacional: isOperacional,
                   compact: isTablet,
                 ),
                 Expanded(
@@ -138,6 +146,9 @@ class AppScaffold extends ConsumerWidget {
                         isClienteParceiro: isClienteParceiro,
                         isApresentador: isApresentador,
                         isGerente: isGerente,
+                        isGerenteComercial: isGerenteComercial,
+                        isFinanceiro: isFinanceiro,
+                        isOperacional: isOperacional,
                       ),
                       Expanded(child: child),
                     ],
@@ -158,6 +169,9 @@ class AppScaffold extends ConsumerWidget {
                 isClienteParceiro: isClienteParceiro,
                 isApresentador: isApresentador,
                 isGerente: isGerente,
+                isGerenteComercial: isGerenteComercial,
+                isFinanceiro: isFinanceiro,
+                isOperacional: isOperacional,
               ),
               Expanded(child: child),
             ],
@@ -165,8 +179,16 @@ class AppScaffold extends ConsumerWidget {
         },
       ),
       drawer: MediaQuery.of(context).size.width < 800
-          ? _buildDrawer(context, boletosCount, isFranqueadorMaster,
-              isClienteParceiro, isApresentador, isGerente)
+          ? _buildDrawer(
+              context,
+              boletosCount,
+              isFranqueadorMaster,
+              isClienteParceiro,
+              isApresentador,
+              isGerente,
+              isGerenteComercial,
+              isFinanceiro,
+              isOperacional)
           : null,
     );
   }
@@ -180,6 +202,9 @@ class AppScaffold extends ConsumerWidget {
     required bool isClienteParceiro,
     required bool isApresentador,
     required bool isGerente,
+    required bool isGerenteComercial,
+    required bool isFinanceiro,
+    required bool isOperacional,
   }) {
     return Container(
       width: double.infinity,
@@ -228,15 +253,15 @@ class AppScaffold extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    isClienteParceiro
-                        ? 'Cliente Parceiro'
-                        : isFranqueadorMaster
-                            ? 'Franqueador Master'
-                            : isApresentador
-                                ? 'Apresentador'
-                                : isGerente
-                                    ? 'Gerente'
-                                    : 'Franqueado Livelab',
+                    _roleLabel(
+                      isFranqueadorMaster: isFranqueadorMaster,
+                      isClienteParceiro: isClienteParceiro,
+                      isApresentador: isApresentador,
+                      isGerente: isGerente,
+                      isGerenteComercial: isGerenteComercial,
+                      isFinanceiro: isFinanceiro,
+                      isOperacional: isOperacional,
+                    ),
                     style: AppTypography.caption
                         .copyWith(color: context.colors.textSecondary),
                     maxLines: 1,
@@ -292,6 +317,25 @@ class AppScaffold extends ConsumerWidget {
     );
   }
 
+  String _roleLabel({
+    required bool isFranqueadorMaster,
+    required bool isClienteParceiro,
+    required bool isApresentador,
+    required bool isGerente,
+    required bool isGerenteComercial,
+    required bool isFinanceiro,
+    required bool isOperacional,
+  }) {
+    if (isClienteParceiro) return 'Cliente Parceiro';
+    if (isFranqueadorMaster) return 'Franqueador Master';
+    if (isApresentador) return 'Apresentadora';
+    if (isFinanceiro) return 'Financeiro';
+    if (isOperacional) return 'Operacional';
+    if (isGerenteComercial) return 'Gerente Comercial';
+    if (isGerente) return 'Gerente';
+    return 'Franqueado Livelab';
+  }
+
   Widget _buildDrawer(
     BuildContext context,
     int boletosCount,
@@ -299,14 +343,17 @@ class AppScaffold extends ConsumerWidget {
     bool isClienteParceiro,
     bool isApresentador,
     bool isGerente,
+    bool isGerenteComercial,
+    bool isFinanceiro,
+    bool isOperacional,
   ) {
     return Drawer(
       backgroundColor: context.colors.bgSidebar,
       child: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 32.0),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32.0),
               child: _Logo(),
             ),
             Divider(color: context.colors.borderSubtle, height: 1),
@@ -318,6 +365,9 @@ class AppScaffold extends ConsumerWidget {
               isClienteParceiro: isClienteParceiro,
               isApresentador: isApresentador,
               isGerente: isGerente,
+              isGerenteComercial: isGerenteComercial,
+              isFinanceiro: isFinanceiro,
+              isOperacional: isOperacional,
             )),
           ],
         ),
@@ -332,6 +382,9 @@ class AppScaffold extends ConsumerWidget {
     bool isClienteParceiro,
     bool isApresentador,
     bool isGerente, {
+    bool isGerenteComercial = false,
+    bool isFinanceiro = false,
+    bool isOperacional = false,
     bool compact = false,
   }) {
     return Container(
@@ -366,6 +419,9 @@ class AppScaffold extends ConsumerWidget {
             isClienteParceiro: isClienteParceiro,
             isApresentador: isApresentador,
             isGerente: isGerente,
+            isGerenteComercial: isGerenteComercial,
+            isFinanceiro: isFinanceiro,
+            isOperacional: isOperacional,
             compact: compact,
           )),
         ],
@@ -381,6 +437,9 @@ class _MenuContent extends ConsumerWidget {
   final bool isClienteParceiro;
   final bool isApresentador;
   final bool isGerente;
+  final bool isGerenteComercial;
+  final bool isFinanceiro;
+  final bool isOperacional;
   final bool compact;
 
   const _MenuContent({
@@ -390,6 +449,9 @@ class _MenuContent extends ConsumerWidget {
     required this.isClienteParceiro,
     required this.isApresentador,
     required this.isGerente,
+    required this.isGerenteComercial,
+    required this.isFinanceiro,
+    required this.isOperacional,
     this.compact = false,
   });
 
@@ -453,7 +515,17 @@ class _MenuContent extends ConsumerWidget {
             ? AppRoutes.cabines
             : AppRoutes.home;
 
-    final items = <_MenuItem>[
+    final isInternal = !isClienteParceiro && !isApresentador;
+    final canUseCommercial = isInternal && !isFinanceiro && !isOperacional;
+    final canUseOps = isInternal && !isFinanceiro && !isGerenteComercial;
+    final canUseFinance = isInternal && !isGerenteComercial && !isOperacional;
+    final canManageSettings = isInternal &&
+        !isGerente &&
+        !isGerenteComercial &&
+        !isFinanceiro &&
+        !isOperacional;
+
+    final items = <Widget>[
       _MenuItem(
         icon: PhosphorIcons.house(),
         label: isApresentador ? 'Cabines' : 'Home',
@@ -477,33 +549,55 @@ class _MenuContent extends ConsumerWidget {
           compact: compact,
         ),
       ],
-      if (!isClienteParceiro && !isApresentador)
-        _MenuItem(
-          icon: PhosphorIcons.videoCamera(),
-          label: 'Cabines',
-          route: AppRoutes.cabines,
-          isSelected: currentRoute == AppRoutes.cabines,
-          compact: compact,
-        ),
-      if (!isClienteParceiro && !isApresentador)
-        _MenuItem(
-          icon: PhosphorIcons.calendarBlank(),
-          label: 'Agendamentos',
-          route: AppRoutes.agendamentos,
-          isSelected: currentRoute == AppRoutes.agendamentos ||
-              currentRoute == AppRoutes.solicitacoes,
-          compact: compact,
-        ),
-      if (!isClienteParceiro && !isApresentador)
+      if (canUseCommercial && !compact) const _MenuSectionLabel('Comercial'),
+      if (canUseCommercial)
         _MenuItem(
           icon: PhosphorIcons.shoppingCart(),
-          label: 'Comercial',
+          label: 'CRM',
           route: AppRoutes.comercial,
           isSelected: currentRoute == AppRoutes.comercial ||
               currentRoute == AppRoutes.vendas,
           compact: compact,
         ),
-      if (!isClienteParceiro && !isApresentador && !isGerente)
+      if (canUseCommercial)
+        _MenuItem(
+          icon: PhosphorIcons.lightbulb(),
+          label: 'Indicações',
+          route: AppRoutes.recomendacoes,
+          isSelected: currentRoute == AppRoutes.recomendacoes,
+          compact: compact,
+        ),
+      if (canUseCommercial)
+        _MenuItem(
+          icon: PhosphorIcons.usersThree(),
+          label: 'Clientes',
+          route: AppRoutes.clientes,
+          isSelected: currentRoute == AppRoutes.clientes ||
+              currentRoute == AppRoutes.clientesLeads,
+          compact: compact,
+        ),
+      if (canUseOps && !compact) const _MenuSectionLabel('Cabines'),
+      if (canUseOps)
+        _MenuItem(
+          icon: PhosphorIcons.videoCamera(),
+          label: 'Cabines',
+          route: AppRoutes.cabines,
+          isSelected: currentRoute == AppRoutes.cabines ||
+              currentRoute == AppRoutes.agendamentos ||
+              currentRoute == AppRoutes.solicitacoes,
+          compact: compact,
+        ),
+      if (isInternal && !compact) const _MenuSectionLabel('Administrativo'),
+      if (canUseOps && !compact) const _MenuSectionLabel('Pessoas'),
+      if (canUseOps)
+        _MenuItem(
+          icon: PhosphorIcons.identificationCard(),
+          label: 'Apresentadoras',
+          route: AppRoutes.apresentadoras,
+          isSelected: currentRoute == AppRoutes.apresentadoras,
+          compact: compact,
+        ),
+      if (canUseFinance)
         _MenuItem(
           icon: PhosphorIcons.wallet(),
           label: 'Financeiro',
@@ -512,7 +606,7 @@ class _MenuContent extends ConsumerWidget {
           badge: boletosCount > 0 ? '$boletosCount' : null,
           compact: compact,
         ),
-      if (!isClienteParceiro)
+      if (isInternal && !isOperacional)
         _MenuItem(
           icon: PhosphorIcons.chartLineUp(),
           label: 'Analytics',
@@ -529,23 +623,6 @@ class _MenuContent extends ConsumerWidget {
           badge: boletosCount > 0 ? '$boletosCount' : null,
           compact: compact,
         ),
-      if (!isClienteParceiro && !isApresentador)
-        _MenuItem(
-          icon: PhosphorIcons.usersThree(),
-          label: 'Clientes',
-          route: AppRoutes.clientes,
-          isSelected: currentRoute == AppRoutes.clientes ||
-              currentRoute == AppRoutes.clientesLeads,
-          compact: compact,
-        ),
-      if (!isClienteParceiro && !isApresentador)
-        _MenuItem(
-          icon: PhosphorIcons.star(),
-          label: 'Programa de Excelência',
-          route: AppRoutes.excelencia,
-          isSelected: currentRoute == AppRoutes.excelencia,
-          compact: compact,
-        ),
       _MenuItem(
         icon: PhosphorIcons.bookOpen(),
         label: 'Base de Conhecimento',
@@ -554,15 +631,7 @@ class _MenuContent extends ConsumerWidget {
             currentRoute == AppRoutes.manuais,
         compact: compact,
       ),
-      if (!isClienteParceiro && !isApresentador)
-        _MenuItem(
-          icon: PhosphorIcons.handshake(),
-          label: 'Recomendações',
-          route: AppRoutes.recomendacoes,
-          isSelected: currentRoute == AppRoutes.recomendacoes,
-          compact: compact,
-        ),
-      if (!isClienteParceiro && !isApresentador && !isGerente)
+      if (canManageSettings)
         _MenuItem(
           icon: PhosphorIcons.gear(),
           label: 'Configurações',
@@ -582,6 +651,28 @@ class _MenuContent extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.only(top: 8, bottom: 8),
       children: items,
+    );
+  }
+}
+
+class _MenuSectionLabel extends StatelessWidget {
+  final String label;
+
+  const _MenuSectionLabel(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 18, 16, 6),
+      child: Text(
+        label.toUpperCase(),
+        style: AppTypography.caption.copyWith(
+          color: context.colors.textMuted,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.4,
+        ),
+      ),
     );
   }
 }
@@ -645,7 +736,7 @@ class _MenuItem extends StatelessWidget {
                         child: Container(
                           width: 8,
                           height: 8,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: AppColors.primary,
                             shape: BoxShape.circle,
                           ),
@@ -700,7 +791,7 @@ class _MenuItem extends StatelessWidget {
               trailing: badge != null
                   ? Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                           color: AppColors.primary, shape: BoxShape.circle),
                       child: Text(badge!,
                           style: const TextStyle(

@@ -14,6 +14,7 @@ class Cliente {
   final String? cidade;
   final String? estado;
   final String? siga;
+  final double metaDiariaGmv;
   // Horas do contrato ativo (null = sem contrato com horas)
   final double? horasContratadas;
   final double? horasRestantes;
@@ -33,30 +34,37 @@ class Cliente {
     this.cidade,
     this.estado,
     this.siga,
+    this.metaDiariaGmv = 0,
     this.horasContratadas,
     this.horasRestantes,
   });
 
   factory Cliente.fromJson(Map<String, dynamic> j) => Cliente(
-    id:       j['id'] as String,
-    nome:     j['nome'] as String,
-    celular:  j['celular'] as String,
-    email:    j['email'] as String?,
-    status:   j['status'] as String,
-    lat:      j['lat'] == null ? null : double.tryParse(j['lat'].toString()),
-    lng:      j['lng'] == null ? null : double.tryParse(j['lng'].toString()),
-    fatAnual: j['fat_anual'] == null ? 0.0 : double.tryParse(j['fat_anual'].toString()) ?? 0.0,
-    nicho:    j['nicho'] as String?,
-    score:    j['score'] == null ? 0 : int.tryParse(j['score'].toString()) ?? 0,
-    cep:      j['cep'] as String?,
-    cidade:   j['cidade'] as String?,
-    estado:   j['estado'] as String?,
-    siga:     j['siga'] as String?,
-    horasContratadas: j['horas_contratadas'] == null
-        ? null
-        : double.tryParse(j['horas_contratadas'].toString()),
-    horasRestantes: j['horas_restantes'] == null
-        ? null
-        : double.tryParse(j['horas_restantes'].toString()),
-  );
+        id: j['id'] as String,
+        nome: j['nome'] as String,
+        celular: j['celular'] as String,
+        email: j['email'] as String?,
+        status: j['status'] as String,
+        lat: j['lat'] == null ? null : double.tryParse(j['lat'].toString()),
+        lng: j['lng'] == null ? null : double.tryParse(j['lng'].toString()),
+        fatAnual: j['fat_anual'] == null
+            ? 0.0
+            : double.tryParse(j['fat_anual'].toString()) ?? 0.0,
+        nicho: j['nicho'] as String?,
+        score:
+            j['score'] == null ? 0 : int.tryParse(j['score'].toString()) ?? 0,
+        cep: j['cep'] as String?,
+        cidade: j['cidade'] as String?,
+        estado: j['estado'] as String?,
+        siga: j['siga'] as String?,
+        metaDiariaGmv: j['meta_diaria_gmv'] == null
+            ? 0
+            : double.tryParse(j['meta_diaria_gmv'].toString()) ?? 0,
+        horasContratadas: j['horas_contratadas'] == null
+            ? null
+            : double.tryParse(j['horas_contratadas'].toString()),
+        horasRestantes: j['horas_restantes'] == null
+            ? null
+            : double.tryParse(j['horas_restantes'].toString()),
+      );
 }

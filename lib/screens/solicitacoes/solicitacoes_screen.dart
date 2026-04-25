@@ -9,7 +9,9 @@ import '../../services/api_service.dart';
 import '../../widgets/solicitacao_card.dart';
 
 class SolicitacoesScreen extends ConsumerStatefulWidget {
-  const SolicitacoesScreen({super.key});
+  final bool embedded;
+
+  const SolicitacoesScreen({super.key, this.embedded = false});
 
   @override
   ConsumerState<SolicitacoesScreen> createState() => _SolicitacoesScreenState();
@@ -101,189 +103,193 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
             .length ??
         0;
 
+    final content = Column(
+      children: [
+        // ── KPI Strip ──
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x4, AppSpacing.x4, AppSpacing.x4, 0),
+          child: LayoutBuilder(
+            builder: (ctx, constraints) {
+              final isNarrow = constraints.maxWidth < 600;
+              if (isNarrow) {
+                return Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: KpiAccentCard(
+                            label: 'Aguardando você',
+                            value: '$pendentesCount',
+                            sub: 'agendamentos pendentes',
+                            accentTop: true,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.x3),
+                        Expanded(
+                          child: KpiAccentCard(
+                            label: 'Aprovadas hoje',
+                            value: '$aprovadasHoje',
+                            sub: 'neste dia',
+                            valueColor: AppColors.success,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.x3),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: KpiAccentCard(
+                            label: 'Recusadas',
+                            value: '$recusadasCount',
+                            sub: 'total',
+                            valueColor: AppColors.danger,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.x3),
+                        const Expanded(child: SizedBox()),
+                      ],
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(
+                    child: KpiAccentCard(
+                      label: 'Aguardando você',
+                      value: '$pendentesCount',
+                      sub: 'agendamentos pendentes',
+                      accentTop: true,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x3),
+                  Expanded(
+                    child: KpiAccentCard(
+                      label: 'Aprovadas hoje',
+                      value: '$aprovadasHoje',
+                      sub: 'neste dia',
+                      valueColor: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x3),
+                  Expanded(
+                    child: KpiAccentCard(
+                      label: 'Recusadas',
+                      value: '$recusadasCount',
+                      sub: 'total',
+                      valueColor: AppColors.danger,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x3),
+                  const Expanded(
+                      child: KpiAccentCard(
+                    label: 'Tempo médio',
+                    value: '—',
+                    sub: 'para resposta',
+                  )),
+                ],
+              );
+            },
+          ),
+        ),
+
+        // ── Barra de abas ──
+        Material(
+          color: context.colors.bgCard,
+          elevation: 1,
+          child: TabBar(
+            controller: _tabController,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: context.colors.textSecondary,
+            indicatorColor: AppColors.primary,
+            tabs: [
+              Tab(
+                icon: const Icon(Icons.pending_actions_outlined, size: 18),
+                text: pendentesCount > 0
+                    ? 'Pendentes ($pendentesCount)'
+                    : 'Pendentes',
+              ),
+              const Tab(
+                icon: Icon(Icons.list_alt_outlined, size: 18),
+                text: 'Todas',
+              ),
+            ],
+          ),
+        ),
+
+        // ── Conteúdo ──
+        Expanded(
+          child: solicitacoesAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.x6),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 48, color: AppColors.danger),
+                    const SizedBox(height: AppSpacing.x3),
+                    Text(ApiService.extractErrorMessage(error),
+                        textAlign: TextAlign.center),
+                    const SizedBox(height: AppSpacing.x2),
+                    AppSecondaryButton(
+                      onPressed: () =>
+                          ref.read(solicitacoesProvider.notifier).refresh(),
+                      label: 'Tentar novamente',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            data: (solicitacoes) {
+              final pendentes =
+                  solicitacoes.where((s) => s.status == 'pendente').toList();
+
+              return TabBarView(
+                controller: _tabController,
+                children: [
+                  // Tab 0: Pendentes
+                  _SolicitacoesLista(
+                    items: pendentes,
+                    emptyIcon: Icons.check_circle_outline_rounded,
+                    emptyMessage: 'Nenhum agendamento pendente',
+                    showActions: true,
+                    onAprovar: _aprovar,
+                    onRecusar: _recusar,
+                    onRefresh: () =>
+                        ref.read(solicitacoesProvider.notifier).refresh(),
+                  ),
+                  // Tab 1: Todas
+                  _SolicitacoesLista(
+                    items: solicitacoes,
+                    emptyIcon: Icons.inbox_outlined,
+                    emptyMessage: 'Nenhum agendamento registrado',
+                    showActions: false,
+                    onAprovar: _aprovar,
+                    onRecusar: _recusar,
+                    onRefresh: () =>
+                        ref.read(solicitacoesProvider.notifier).refresh(),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+
+    if (widget.embedded) return content;
+
     return AppScreenScaffold(
       currentRoute: AppRoutes.agendamentos,
       title: 'Agendamentos de Lives',
       eyebrow: 'Agenda operacional',
       titleSerif: true,
       subtitle: 'Aprove, recuse e acompanhe pedidos de horário dos clientes.',
-      child: Column(
-        children: [
-          // ── KPI Strip ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.x4, AppSpacing.x4, AppSpacing.x4, 0),
-            child: LayoutBuilder(
-              builder: (ctx, constraints) {
-                final isNarrow = constraints.maxWidth < 600;
-                if (isNarrow) {
-                  return Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: KpiAccentCard(
-                              label: 'Aguardando você',
-                              value: '$pendentesCount',
-                              sub: 'agendamentos pendentes',
-                              accentTop: true,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.x3),
-                          Expanded(
-                            child: KpiAccentCard(
-                              label: 'Aprovadas hoje',
-                              value: '$aprovadasHoje',
-                              sub: 'neste dia',
-                              valueColor: AppColors.success,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.x3),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: KpiAccentCard(
-                              label: 'Recusadas',
-                              value: '$recusadasCount',
-                              sub: 'total',
-                              valueColor: AppColors.danger,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.x3),
-                          const Expanded(child: SizedBox()),
-                        ],
-                      ),
-                    ],
-                  );
-                }
-                return Row(
-                  children: [
-                    Expanded(
-                      child: KpiAccentCard(
-                        label: 'Aguardando você',
-                        value: '$pendentesCount',
-                        sub: 'agendamentos pendentes',
-                        accentTop: true,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.x3),
-                    Expanded(
-                      child: KpiAccentCard(
-                        label: 'Aprovadas hoje',
-                        value: '$aprovadasHoje',
-                        sub: 'neste dia',
-                        valueColor: AppColors.success,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.x3),
-                    Expanded(
-                      child: KpiAccentCard(
-                        label: 'Recusadas',
-                        value: '$recusadasCount',
-                        sub: 'total',
-                        valueColor: AppColors.danger,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.x3),
-                    const Expanded(
-                        child: KpiAccentCard(
-                      label: 'Tempo médio',
-                      value: '—',
-                      sub: 'para resposta',
-                    )),
-                  ],
-                );
-              },
-            ),
-          ),
-
-          // ── Barra de abas ──
-          Material(
-            color: context.colors.bgCard,
-            elevation: 1,
-            child: TabBar(
-              controller: _tabController,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: context.colors.textSecondary,
-              indicatorColor: AppColors.primary,
-              tabs: [
-                Tab(
-                  icon: const Icon(Icons.pending_actions_outlined, size: 18),
-                  text: pendentesCount > 0
-                      ? 'Pendentes ($pendentesCount)'
-                      : 'Pendentes',
-                ),
-                const Tab(
-                  icon: Icon(Icons.list_alt_outlined, size: 18),
-                  text: 'Todas',
-                ),
-              ],
-            ),
-          ),
-
-          // ── Conteúdo ──
-          Expanded(
-            child: solicitacoesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.x6),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: AppColors.danger),
-                      const SizedBox(height: AppSpacing.x3),
-                      Text(ApiService.extractErrorMessage(error),
-                          textAlign: TextAlign.center),
-                      const SizedBox(height: AppSpacing.x2),
-                      AppSecondaryButton(
-                        onPressed: () =>
-                            ref.read(solicitacoesProvider.notifier).refresh(),
-                        label: 'Tentar novamente',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              data: (solicitacoes) {
-                final pendentes =
-                    solicitacoes.where((s) => s.status == 'pendente').toList();
-
-                return TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // Tab 0: Pendentes
-                    _SolicitacoesLista(
-                      items: pendentes,
-                      emptyIcon: Icons.check_circle_outline_rounded,
-                      emptyMessage: 'Nenhum agendamento pendente',
-                      showActions: true,
-                      onAprovar: _aprovar,
-                      onRecusar: _recusar,
-                      onRefresh: () =>
-                          ref.read(solicitacoesProvider.notifier).refresh(),
-                    ),
-                    // Tab 1: Todas
-                    _SolicitacoesLista(
-                      items: solicitacoes,
-                      emptyIcon: Icons.inbox_outlined,
-                      emptyMessage: 'Nenhum agendamento registrado',
-                      showActions: false,
-                      onAprovar: _aprovar,
-                      onRecusar: _recusar,
-                      onRefresh: () =>
-                          ref.read(solicitacoesProvider.notifier).refresh(),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+      child: content,
     );
   }
 }
@@ -407,6 +413,7 @@ class _SolicitacoesLista extends StatelessWidget {
             hora: '${req.horaInicioDisplay} – ${req.horaFimDisplay}',
             duracao: req.observacao ?? '',
             solicitadoPor: req.solicitanteNome,
+            apresentadoraNome: req.apresentadoraNome,
             status: req.status,
             onApprove: showActions ? () => onAprovar(req.id) : () {},
             onReject: showActions ? () => onRecusar(req.id) : () {},

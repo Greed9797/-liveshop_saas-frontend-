@@ -12,7 +12,8 @@ class Cabine {
   final double gmvAtual;
   final DateTime? iniciadoEm;
   final String? nome;
-  final String? tamanho;
+  final String? dimensoes;
+  final String? cor;
   final String? descricao;
   final String? tiktokUsername;
   final int likesCount;
@@ -34,7 +35,8 @@ class Cabine {
     this.gmvAtual = 0,
     this.iniciadoEm,
     this.nome,
-    this.tamanho,
+    this.dimensoes,
+    this.cor,
     this.descricao,
     this.tiktokUsername,
     this.likesCount = 0,
@@ -63,14 +65,15 @@ class Cabine {
             ? DateTime.parse(j['iniciado_em'] as String)
             : null,
         nome: j['nome'] as String?,
-        tamanho: j['tamanho'] as String?,
+        dimensoes: (j['dimensoes'] ?? j['tamanho']) as String?,
+        cor: j['cor'] as String?,
         descricao: j['descricao'] as String?,
         tiktokUsername: j['tiktok_username'] as String?,
-        likesCount:    (j['likes_count']    as num? ?? 0).toInt(),
+        likesCount: (j['likes_count'] as num? ?? 0).toInt(),
         commentsCount: (j['comments_count'] as num? ?? 0).toInt(),
-        sharesCount:   (j['shares_count']   as num? ?? 0).toInt(),
+        sharesCount: (j['shares_count'] as num? ?? 0).toInt(),
         giftsDiamonds: (j['gifts_diamonds'] as num? ?? 0).toInt(),
-        totalOrders:   (j['total_orders']   as num? ?? 0).toInt(),
+        totalOrders: (j['total_orders'] as num? ?? 0).toInt(),
       );
 
   Map<String, dynamic> toCardMap() => {

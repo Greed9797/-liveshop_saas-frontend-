@@ -31,6 +31,15 @@ class _RoleRouteGuardState extends ConsumerState<RoleRouteGuard> {
   // (franqueador_master, franqueado, gerente, apresentador, cliente_parceiro).
   static String _homeForRole(String papel) => AppRoutes.routeForRole(papel);
 
+  static Set<String> _expandAllowed(Set<String> roles) {
+    final expanded = {...roles};
+    if (expanded.contains('franqueador_master')) expanded.add('admin_master');
+    if (expanded.contains('admin_master')) expanded.add('franqueador_master');
+    if (expanded.contains('gerente')) expanded.add('gerente_comercial');
+    if (expanded.contains('apresentador')) expanded.add('apresentadora');
+    return expanded;
+  }
+
   void _scheduleRedirect(String route) {
     if (_redirectScheduled) return;
     _redirectScheduled = true;
@@ -62,7 +71,7 @@ class _RoleRouteGuardState extends ConsumerState<RoleRouteGuard> {
       );
     }
 
-    if (!widget.allowedRoles.contains(user.papel)) {
+    if (!_expandAllowed(widget.allowedRoles).contains(user.papel)) {
       // Redireciona direto para a home do papel atual — sem encadear
       // redirects entre rotas protegidas que quebra em Flutter Web.
       _scheduleRedirect(_homeForRole(user.papel));

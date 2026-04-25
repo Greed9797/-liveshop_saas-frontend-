@@ -34,6 +34,49 @@ class LeadsNotifier extends AsyncNotifier<List<Lead>> {
     // Recarrega para pegar com dados atualizados
     state = await AsyncValue.guard(_fetch);
   }
+
+  Future<Lead> criar(Map<String, dynamic> data) async {
+    final resp = await ApiService.post('/leads', data: data);
+    final lead = Lead.fromJson(resp.data as Map<String, dynamic>);
+    state = AsyncData([lead, ...state.valueOrNull ?? []]);
+    return lead;
+  }
+
+  Future<Lead> atualizar(String id, Map<String, dynamic> data) async {
+    final resp = await ApiService.patch('/leads/$id', data: data);
+    final updated = Lead.fromJson(resp.data as Map<String, dynamic>);
+    state = AsyncData(
+      (state.valueOrNull ?? [])
+          .map((lead) => lead.id == id ? updated : lead)
+          .toList(),
+    );
+    return updated;
+  }
+
+  Future<Lead> moverEtapa(
+    String id,
+    String etapa, {
+    String? motivoPerda,
+  }) async {
+    final resp = await ApiService.patch('/leads/$id/etapa', data: {
+      'crm_etapa': etapa,
+      if (motivoPerda != null) 'motivo_perda': motivoPerda,
+    });
+    final updated = Lead.fromJson(resp.data as Map<String, dynamic>);
+    state = AsyncData(
+      (state.valueOrNull ?? [])
+          .map((lead) => lead.id == id ? updated : lead)
+          .toList(),
+    );
+    return updated;
+  }
+
+  Future<void> ganhar(String id, Map<String, dynamic> data) async {
+    await ApiService.post('/leads/$id/ganhar', data: data);
+    state = AsyncData(
+      (state.valueOrNull ?? []).where((lead) => lead.id != id).toList(),
+    );
+  }
 }
 
 final leadsProvider =

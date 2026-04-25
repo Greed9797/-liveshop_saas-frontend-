@@ -8,6 +8,7 @@ class SolicitacaoCard extends StatelessWidget {
   final String hora;
   final String duracao;
   final String solicitadoPor;
+  final String? apresentadoraNome;
   final String status;
   final VoidCallback onApprove;
   final VoidCallback onReject;
@@ -20,6 +21,7 @@ class SolicitacaoCard extends StatelessWidget {
     required this.hora,
     required this.duracao,
     required this.solicitadoPor,
+    this.apresentadoraNome,
     required this.status,
     required this.onApprove,
     required this.onReject,
@@ -47,19 +49,23 @@ class SolicitacaoCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: context.colors.primarySoftBg,
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Text(
                   'CABINE $cabineNumero',
-                  style: AppTypography.caption.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+                  style: AppTypography.caption.copyWith(
+                      color: AppColors.primary, fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(width: AppSpacing.x3),
               Expanded(
-                child: Text(clienteNome, style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                child: Text(clienteNome,
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600)),
               ),
               AppBadge(label: badgeLabel, type: badgeType, showDot: false),
             ],
@@ -67,17 +73,35 @@ class SolicitacaoCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.x3),
           Row(
             children: [
-              Icon(Icons.calendar_today_outlined, size: 14, color: context.colors.textMuted),
+              Icon(Icons.calendar_today_outlined,
+                  size: 14, color: context.colors.textMuted),
               const SizedBox(width: 4),
-              Text('$data às $hora', style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
+              Text('$data às $hora',
+                  style: AppTypography.caption
+                      .copyWith(color: context.colors.textMuted)),
               const SizedBox(width: AppSpacing.x3),
-              Icon(Icons.timer_outlined, size: 14, color: context.colors.textMuted),
+              Icon(Icons.timer_outlined,
+                  size: 14, color: context.colors.textMuted),
               const SizedBox(width: 4),
-              Text(duracao, style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
+              Text(duracao,
+                  style: AppTypography.caption
+                      .copyWith(color: context.colors.textMuted)),
               const SizedBox(width: AppSpacing.x3),
-              Icon(Icons.person_outline, size: 14, color: context.colors.textMuted),
+              Icon(Icons.person_outline,
+                  size: 14, color: context.colors.textMuted),
               const SizedBox(width: 4),
-              Text(solicitadoPor, style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
+              Text(solicitadoPor,
+                  style: AppTypography.caption
+                      .copyWith(color: context.colors.textMuted)),
+              if ((apresentadoraNome ?? '').isNotEmpty) ...[
+                const SizedBox(width: AppSpacing.x3),
+                Icon(Icons.badge_outlined,
+                    size: 14, color: context.colors.textMuted),
+                const SizedBox(width: 4),
+                Text(apresentadoraNome!,
+                    style: AppTypography.caption
+                        .copyWith(color: context.colors.textMuted)),
+              ],
             ],
           ),
           if (isPendente) ...[

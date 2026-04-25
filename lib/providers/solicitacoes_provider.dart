@@ -18,6 +18,7 @@ class SolicitacaoFranqueador {
   final int cabineNumero;
   final String clienteNome;
   final String solicitanteNome;
+  final String? apresentadoraNome;
 
   const SolicitacaoFranqueador({
     required this.id,
@@ -31,6 +32,7 @@ class SolicitacaoFranqueador {
     required this.cabineNumero,
     required this.clienteNome,
     required this.solicitanteNome,
+    this.apresentadoraNome,
   });
 
   factory SolicitacaoFranqueador.fromJson(Map<String, dynamic> j) =>
@@ -46,6 +48,7 @@ class SolicitacaoFranqueador {
         cabineNumero: (j['cabine_numero'] as num).toInt(),
         clienteNome: j['cliente_nome'] as String,
         solicitanteNome: j['solicitante_nome'] as String,
+        apresentadoraNome: j['apresentadora_nome'] as String?,
       );
 
   String get horaInicioDisplay =>

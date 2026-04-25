@@ -35,6 +35,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   final _pacNomeCtrl = TextEditingController();
   final _pacDescCtrl = TextEditingController();
   final _pacValorCtrl = TextEditingController();
+  final _pacComissaoCtrl = TextEditingController();
   final _pacHorasCtrl = TextEditingController();
   bool _pacLoading = false;
 
@@ -228,11 +229,13 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     _pacNomeCtrl.dispose();
     _pacDescCtrl.dispose();
     _pacValorCtrl.dispose();
+    _pacComissaoCtrl.dispose();
     _pacHorasCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _salvar(Map<String, dynamic> payload, VoidCallback onFinish) async {
+  Future<void> _salvar(
+      Map<String, dynamic> payload, VoidCallback onFinish) async {
     try {
       await ref.read(configuracoesProvider.notifier).atualizar(payload);
       if (!mounted) return;
@@ -254,13 +257,17 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     final sheetNav = Navigator.of(sheetCtx);
 
     if (nome.isEmpty) {
-      sheetMessenger.showSnackBar(const SnackBar(content: Text('Nome é obrigatório')));
+      sheetMessenger
+          .showSnackBar(const SnackBar(content: Text('Nome é obrigatório')));
       return;
     }
-    final valor = double.tryParse(_pacValorCtrl.text.replaceAll(',', '.'));
-    final horas = double.tryParse(_pacHorasCtrl.text);
-    if (valor == null || horas == null) {
-      sheetMessenger.showSnackBar(const SnackBar(content: Text('Informe valor e horas válidos')));
+    final valorFixo = double.tryParse(_pacValorCtrl.text.replaceAll(',', '.'));
+    final comissaoPct =
+        double.tryParse(_pacComissaoCtrl.text.replaceAll(',', '.'));
+    final horas = double.tryParse(_pacHorasCtrl.text.replaceAll(',', '.'));
+    if (valorFixo == null || comissaoPct == null || horas == null) {
+      sheetMessenger.showSnackBar(const SnackBar(
+          content: Text('Informe fixo, percentual e horas válidos')));
       return;
     }
 
@@ -269,13 +276,17 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       final payload = {
         'nome': nome,
         if (_pacDescCtrl.text.isNotEmpty) 'descricao': _pacDescCtrl.text,
-        'valor': valor,
+        'valor_fixo': valorFixo,
+        'valor': valorFixo,
+        'comissao_pct': comissaoPct,
         'horas_incluidas': horas,
       };
       if (_editingPacote == null) {
         await ref.read(pacotesProvider.notifier).criar(payload);
       } else {
-        await ref.read(pacotesProvider.notifier).atualizar(_editingPacote!.id, payload);
+        await ref
+            .read(pacotesProvider.notifier)
+            .atualizar(_editingPacote!.id, payload);
       }
       if (!mounted) return;
       sheetNav.pop();
@@ -283,7 +294,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
           const SnackBar(content: Text('Pacote salvo com sucesso!')));
     } catch (e) {
       if (!mounted) return;
-      sheetMessenger.showSnackBar(SnackBar(content: Text(ApiService.extractErrorMessage(e))));
+      sheetMessenger.showSnackBar(
+          SnackBar(content: Text(ApiService.extractErrorMessage(e))));
     } finally {
       if (mounted) setState(() => _pacLoading = false);
     }
@@ -294,7 +306,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       _editingPacote = pacote;
       _pacNomeCtrl.text = pacote?.nome ?? '';
       _pacDescCtrl.text = pacote?.descricao ?? '';
-      _pacValorCtrl.text = pacote?.valor.toStringAsFixed(2) ?? '';
+      _pacValorCtrl.text = pacote?.valorFixo.toStringAsFixed(2) ?? '';
+      _pacComissaoCtrl.text = pacote?.comissaoPct.toStringAsFixed(2) ?? '';
       _pacHorasCtrl.text = pacote?.horasIncluidas.toStringAsFixed(0) ?? '';
     });
     showModalBottomSheet(
@@ -308,7 +321,9 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       builder: (_) => StatefulBuilder(
         builder: (ctx, setModal) => Padding(
           padding: EdgeInsets.fromLTRB(
-            AppSpacing.x5, AppSpacing.x2, AppSpacing.x5,
+            AppSpacing.x5,
+            AppSpacing.x2,
+            AppSpacing.x5,
             AppSpacing.x5 + MediaQuery.of(ctx).viewInsets.bottom,
           ),
           child: Column(
@@ -316,22 +331,37 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(pacote == null ? 'Novo Pacote' : 'Editar Pacote',
-                  style: AppTypography.h2.copyWith(fontWeight: FontWeight.w700)),
+                  style:
+                      AppTypography.h2.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: AppSpacing.x4),
               AppTextField(controller: _pacNomeCtrl, hint: 'Nome do pacote *'),
               const SizedBox(height: AppSpacing.x3),
-              AppTextField(controller: _pacDescCtrl, hint: 'Descrição (opcional)'),
+              AppTextField(
+                  controller: _pacDescCtrl, hint: 'Descrição (opcional)'),
+              const SizedBox(height: AppSpacing.x3),
+              AppTextField(
+                controller: _pacValorCtrl,
+                hint: 'Valor mensal mínimo (fixo) R\$',
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+              ),
               const SizedBox(height: AppSpacing.x3),
               Row(
                 children: [
-                  Expanded(child: AppTextField(
-                    controller: _pacValorCtrl, hint: 'Valor mensal R\$',
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  Expanded(
+                      child: AppTextField(
+                    controller: _pacComissaoCtrl,
+                    hint: '% sobre faturamento',
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                   )),
                   const SizedBox(width: AppSpacing.x3),
-                  Expanded(child: AppTextField(
-                    controller: _pacHorasCtrl, hint: 'Horas incluídas',
-                    keyboardType: TextInputType.number,
+                  Expanded(
+                      child: AppTextField(
+                    controller: _pacHorasCtrl,
+                    hint: 'Horas incluídas',
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                   )),
                 ],
               ),
@@ -341,13 +371,17 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
               else
                 Row(
                   children: [
-                    Expanded(child: AppSecondaryButton(
-                      label: 'Cancelar', fullWidth: true,
+                    Expanded(
+                        child: AppSecondaryButton(
+                      label: 'Cancelar',
+                      fullWidth: true,
                       onPressed: () => Navigator.pop(ctx),
                     )),
                     const SizedBox(width: AppSpacing.x3),
-                    Expanded(child: AppPrimaryButton(
-                      label: 'Salvar', fullWidth: true,
+                    Expanded(
+                        child: AppPrimaryButton(
+                      label: 'Salvar',
+                      fullWidth: true,
                       onPressed: () => _salvarPacote(ctx),
                     )),
                   ],
@@ -363,7 +397,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   Future<void> _mostrarFormCabine(BuildContext context) async {
     final nomeCtrl = TextEditingController();
     final descCtrl = TextEditingController();
-    String? tamanhoSelecionado;
+    final dimensoesCtrl = TextEditingController();
+    final corCtrl = TextEditingController();
     int quantidade = 1;
     bool saving = false;
 
@@ -373,7 +408,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       builder: (dialogContext) {
         return StatefulBuilder(builder: (ctx, setDialogState) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.xl)),
             title: Text('Nova Cabine', style: AppTypography.h3),
             content: SizedBox(
               width: 380,
@@ -383,40 +419,53 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                 children: [
                   AppTextField(controller: nomeCtrl, hint: 'Nome da cabine *'),
                   const SizedBox(height: AppSpacing.x3),
-                  AppDropdown<String>(
-                    value: tamanhoSelecionado, hint: 'Tamanho *',
-                    items: ['P', 'M', 'G', 'GG'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                    onChanged: (v) => setDialogState(() => tamanhoSelecionado = v),
+                  AppTextField(
+                    controller: dimensoesCtrl,
+                    hint: 'Dimensões livres (ex: 3m x 4m)',
                   ),
                   const SizedBox(height: AppSpacing.x3),
-                  AppTextField(controller: descCtrl, hint: 'Descrição (opcional)'),
+                  AppTextField(
+                    controller: corCtrl,
+                    hint: 'Cor da cabine (opcional)',
+                  ),
+                  const SizedBox(height: AppSpacing.x3),
+                  AppTextField(
+                      controller: descCtrl, hint: 'Descrição (opcional)'),
                   const SizedBox(height: AppSpacing.x3),
                   Row(
                     children: [
                       Text('Quantidade:', style: AppTypography.bodySmall),
                       const Spacer(),
-                      IconButton(icon: const Icon(Icons.remove_rounded, size: 18),
-                          onPressed: quantidade > 1 ? () => setDialogState(() => quantidade--) : null),
-                      Text('$quantidade', style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
-                      IconButton(icon: const Icon(Icons.add_rounded, size: 18),
-                          onPressed: quantidade < 10 ? () => setDialogState(() => quantidade++) : null),
+                      IconButton(
+                          icon: const Icon(Icons.remove_rounded, size: 18),
+                          onPressed: quantidade > 1
+                              ? () => setDialogState(() => quantidade--)
+                              : null),
+                      Text('$quantidade',
+                          style: AppTypography.bodyMedium
+                              .copyWith(fontWeight: FontWeight.w600)),
+                      IconButton(
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          onPressed: quantidade < 10
+                              ? () => setDialogState(() => quantidade++)
+                              : null),
                     ],
                   ),
                 ],
               ),
             ),
             actions: [
-              AppSecondaryButton(label: 'Cancelar', onPressed: () => Navigator.of(dialogContext).pop()),
+              AppSecondaryButton(
+                  label: 'Cancelar',
+                  onPressed: () => Navigator.of(dialogContext).pop()),
               AppPrimaryButton(
-                label: 'Salvar', isLoading: saving,
+                label: 'Salvar',
+                isLoading: saving,
                 onPressed: () async {
                   final nome = nomeCtrl.text.trim();
                   if (nome.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Informe o nome da cabine')));
-                    return;
-                  }
-                  if (tamanhoSelecionado == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selecione o tamanho da cabine')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Informe o nome da cabine')));
                     return;
                   }
                   setDialogState(() => saving = true);
@@ -424,12 +473,18 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                   int criadas = 0;
                   String? lastError;
                   for (int i = 0; i < quantidade; i++) {
-                    final nomeFinal = quantidade > 1 ? '$nome ${(i + 1).toString().padLeft(2, '0')}' : nome;
+                    final nomeFinal = quantidade > 1
+                        ? '$nome ${(i + 1).toString().padLeft(2, '0')}'
+                        : nome;
                     try {
                       await notifier.criar({
                         'nome': nomeFinal,
-                        'tamanho': tamanhoSelecionado,
-                        if (descCtrl.text.trim().isNotEmpty) 'descricao': descCtrl.text.trim(),
+                        if (dimensoesCtrl.text.trim().isNotEmpty)
+                          'dimensoes': dimensoesCtrl.text.trim(),
+                        if (corCtrl.text.trim().isNotEmpty)
+                          'cor': corCtrl.text.trim(),
+                        if (descCtrl.text.trim().isNotEmpty)
+                          'descricao': descCtrl.text.trim(),
                       });
                       criadas++;
                     } catch (e) {
@@ -441,11 +496,14 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                   Navigator.of(dialogContext).pop();
                   if (lastError != null && criadas < quantidade) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(criadas == 0 ? lastError : '$criadas de $quantidade cabine${quantidade > 1 ? 's' : ''} criada${criadas > 1 ? 's' : ''}. Erro: $lastError'),
+                      content: Text(criadas == 0
+                          ? lastError
+                          : '$criadas de $quantidade cabine${quantidade > 1 ? 's' : ''} criada${criadas > 1 ? 's' : ''}. Erro: $lastError'),
                     ));
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('$criadas cabine${criadas > 1 ? 's' : ''} criada${criadas > 1 ? 's' : ''} com sucesso!')));
+                        content: Text(
+                            '$criadas cabine${criadas > 1 ? 's' : ''} criada${criadas > 1 ? 's' : ''} com sucesso!')));
                   }
                   if (criadas == 0) setDialogState(() => saving = false);
                 },
@@ -457,26 +515,35 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     );
 
     nomeCtrl.dispose();
+    dimensoesCtrl.dispose();
+    corCtrl.dispose();
     descCtrl.dispose();
   }
 
   Future<void> _confirmarDeletar(BuildContext context, Cabine cabine) async {
-    final nomeCabine = cabine.nome ?? 'Cabine ${cabine.numero.toString().padLeft(2, '0')}';
+    final nomeCabine =
+        cabine.nome ?? 'Cabine ${cabine.numero.toString().padLeft(2, '0')}';
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl)),
         title: Text('Deletar Cabine?', style: AppTypography.h3),
         content: Text(
           'Tem certeza que deseja deletar $nomeCabine? Esta ação não pode ser desfeita.',
           style: AppTypography.bodySmall,
         ),
         actions: [
-          AppSecondaryButton(label: 'Cancelar', onPressed: () => Navigator.of(dialogContext).pop(false)),
+          AppSecondaryButton(
+              label: 'Cancelar',
+              onPressed: () => Navigator.of(dialogContext).pop(false)),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: AppColors.textOnPrimary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md))),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                foregroundColor: AppColors.textOnPrimary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md))),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Deletar'),
           ),
@@ -497,21 +564,28 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       final msg = ApiService.extractErrorMessage(e);
 
       // Cabine tem contrato vinculado — oferecer opção de liberar e deletar
-      if (msg.toLowerCase().contains('libere') || msg.toLowerCase().contains('contrato')) {
+      if (msg.toLowerCase().contains('libere') ||
+          msg.toLowerCase().contains('contrato')) {
         final force = await showDialog<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.xl)),
             title: Text('Cabine com contrato ativo', style: AppTypography.h3),
             content: Text(
               '$nomeCabine está vinculada a um contrato. Ao liberar e deletar, o vínculo será removido e a cabine ficará disponível momentaneamente antes de ser excluída.',
               style: AppTypography.bodySmall,
             ),
             actions: [
-              AppSecondaryButton(label: 'Cancelar', onPressed: () => Navigator.of(dialogContext).pop(false)),
+              AppSecondaryButton(
+                  label: 'Cancelar',
+                  onPressed: () => Navigator.of(dialogContext).pop(false)),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: AppColors.textOnPrimary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md))),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.danger,
+                    foregroundColor: AppColors.textOnPrimary,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md))),
                 onPressed: () => Navigator.of(dialogContext).pop(true),
                 child: const Text('Liberar e Deletar'),
               ),
@@ -524,31 +598,41 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
           await ApiService.patch('/cabines/${cabine.id}/liberar');
           await ref.read(cabinesProvider.notifier).deletar(cabine.id);
           if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('$nomeCabine liberada e deletada com sucesso!')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('$nomeCabine liberada e deletada com sucesso!')));
         } catch (e2) {
           if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiService.extractErrorMessage(e2))));
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(ApiService.extractErrorMessage(e2))));
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(msg)));
       }
     }
   }
 
-  Future<void> _confirmarRemoverUsuario(BuildContext context, Usuario usuario) async {
+  Future<void> _confirmarRemoverUsuario(
+      BuildContext context, Usuario usuario) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl)),
         title: Text('Remover Usuário?', style: AppTypography.h3),
-        content: Text('Tem certeza que deseja remover ${usuario.nome}? Esta ação não pode ser desfeita.',
+        content: Text(
+            'Tem certeza que deseja remover ${usuario.nome}? Esta ação não pode ser desfeita.',
             style: AppTypography.bodySmall),
         actions: [
-          AppSecondaryButton(label: 'Cancelar', onPressed: () => Navigator.of(dialogContext).pop(false)),
+          AppSecondaryButton(
+              label: 'Cancelar',
+              onPressed: () => Navigator.of(dialogContext).pop(false)),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: AppColors.textOnPrimary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md))),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                foregroundColor: AppColors.textOnPrimary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md))),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Remover'),
           ),
@@ -561,10 +645,12 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     try {
       await ref.read(usuariosProvider.notifier).remover(usuario.id);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${usuario.nome} removido com sucesso!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${usuario.nome} removido com sucesso!')));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiService.extractErrorMessage(e))));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiService.extractErrorMessage(e))));
     }
   }
 
@@ -580,7 +666,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       builder: (dialogContext) {
         return StatefulBuilder(builder: (ctx, setDialogState) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.xl)),
             title: Text('Convidar Usuário', style: AppTypography.h3),
             content: SizedBox(
               width: 380,
@@ -590,46 +677,63 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                 children: [
                   AppTextField(controller: nomeCtrl, hint: 'Nome completo *'),
                   const SizedBox(height: AppSpacing.x3),
-                  AppTextField(controller: emailCtrl, hint: 'E-mail *', keyboardType: TextInputType.emailAddress),
+                  AppTextField(
+                      controller: emailCtrl,
+                      hint: 'E-mail *',
+                      keyboardType: TextInputType.emailAddress),
                   const SizedBox(height: AppSpacing.x3),
                   AppDropdown<String>(
-                    value: papelSelecionado, hint: 'Papel *',
+                    value: papelSelecionado,
+                    hint: 'Papel *',
                     items: const [
-                      DropdownMenuItem(value: 'gerente', child: Text('Gerente')),
-                      DropdownMenuItem(value: 'apresentador', child: Text('Apresentador')),
+                      DropdownMenuItem(
+                          value: 'gerente', child: Text('Gerente')),
+                      DropdownMenuItem(
+                          value: 'apresentador', child: Text('Apresentador')),
                     ],
-                    onChanged: (v) => setDialogState(() => papelSelecionado = v),
+                    onChanged: (v) =>
+                        setDialogState(() => papelSelecionado = v),
                   ),
                 ],
               ),
             ),
             actions: [
-              AppSecondaryButton(label: 'Cancelar', onPressed: () => Navigator.of(dialogContext).pop()),
+              AppSecondaryButton(
+                  label: 'Cancelar',
+                  onPressed: () => Navigator.of(dialogContext).pop()),
               AppPrimaryButton(
-                label: 'Convidar', isLoading: saving,
+                label: 'Convidar',
+                isLoading: saving,
                 onPressed: () async {
                   final nome = nomeCtrl.text.trim();
                   final email = emailCtrl.text.trim();
                   if (nome.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Informe o nome')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Informe o nome')));
                     return;
                   }
                   if (email.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Informe o e-mail')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Informe o e-mail')));
                     return;
                   }
                   if (papelSelecionado == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selecione o papel')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Selecione o papel')));
                     return;
                   }
                   setDialogState(() => saving = true);
                   try {
-                    final result = await ref.read(usuariosProvider.notifier).convidar({
-                      'nome': nome, 'email': email, 'papel': papelSelecionado,
+                    final result =
+                        await ref.read(usuariosProvider.notifier).convidar({
+                      'nome': nome,
+                      'email': email,
+                      'papel': papelSelecionado,
                     });
                     if (!context.mounted) return;
                     Navigator.of(dialogContext).pop();
-                    final senhaTemp = result['senha_temporaria'] as String? ?? '';
+                    final senhaTemp =
+                        result['senha_temporaria'] as String? ?? '';
                     if (context.mounted) {
                       showDialog<void>(
                         context: context,
@@ -649,10 +753,12 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                                   ),
                                   const SizedBox(height: AppSpacing.x3),
                                   Container(
-                                    padding: const EdgeInsets.all(AppSpacing.x3),
+                                    padding:
+                                        const EdgeInsets.all(AppSpacing.x3),
                                     decoration: BoxDecoration(
                                       color: context.colors.bgMuted,
-                                      borderRadius: BorderRadius.circular(AppRadius.md),
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.md),
                                     ),
                                     child: Row(
                                       children: [
@@ -661,7 +767,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                                             revealPassword
                                                 ? senhaTemp
                                                 : _maskSecret(senhaTemp),
-                                            style: AppTypography.bodyMedium.copyWith(
+                                            style: AppTypography.bodyMedium
+                                                .copyWith(
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -707,7 +814,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                     }
                   } catch (e) {
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiService.extractErrorMessage(e))));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(ApiService.extractErrorMessage(e))));
                     setDialogState(() => saving = false);
                   }
                 },
@@ -724,13 +832,20 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
 
   Widget _buildContent(dynamic conf) {
     switch (_selectedSection) {
-      case 0: return _buildGeral(conf);
-      case 1: return _buildFinanceiro(conf);
-      case 2: return _buildIntegravel(conf);
-      case 3: return _buildSeguranca();
-      case 4: return _buildPacotes();
-      case 5: return _buildCabines();
-      default: return _buildGeral(conf);
+      case 0:
+        return _buildGeral(conf);
+      case 1:
+        return _buildFinanceiro(conf);
+      case 2:
+        return _buildIntegravel(conf);
+      case 3:
+        return _buildSeguranca();
+      case 4:
+        return _buildPacotes();
+      case 5:
+        return _buildCabines();
+      default:
+        return _buildGeral(conf);
     }
   }
 
@@ -755,38 +870,45 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
               width: 220,
               decoration: BoxDecoration(
                 color: context.colors.bgPage,
-                border: Border(right: BorderSide(color: context.colors.borderSubtle)),
+                border: Border(
+                    right: BorderSide(color: context.colors.borderSubtle)),
               ),
               child: Column(
                 children: [
                   const SizedBox(height: AppSpacing.x5),
                   _NavItem(
-                    icon: Icons.settings_outlined, label: 'Geral',
+                    icon: Icons.settings_outlined,
+                    label: 'Geral',
                     isActive: _selectedSection == 0,
                     onTap: () => setState(() => _selectedSection = 0),
                   ),
                   _NavItem(
-                    icon: Icons.account_balance_wallet_outlined, label: 'Financeiro',
+                    icon: Icons.account_balance_wallet_outlined,
+                    label: 'Financeiro',
                     isActive: _selectedSection == 1,
                     onTap: () => setState(() => _selectedSection = 1),
                   ),
                   _NavItem(
-                    icon: Icons.link, label: 'Integrações',
+                    icon: Icons.link,
+                    label: 'Integrações',
                     isActive: _selectedSection == 2,
                     onTap: () => setState(() => _selectedSection = 2),
                   ),
                   _NavItem(
-                    icon: Icons.security_outlined, label: 'Segurança',
+                    icon: Icons.security_outlined,
+                    label: 'Segurança',
                     isActive: _selectedSection == 3,
                     onTap: () => setState(() => _selectedSection = 3),
                   ),
                   _NavItem(
-                    icon: Icons.inventory_2_outlined, label: 'Pacotes',
+                    icon: Icons.inventory_2_outlined,
+                    label: 'Pacotes',
                     isActive: _selectedSection == 4,
                     onTap: () => setState(() => _selectedSection = 4),
                   ),
                   _NavItem(
-                    icon: Icons.video_camera_front_outlined, label: 'Cabines',
+                    icon: Icons.video_camera_front_outlined,
+                    label: 'Cabines',
                     isActive: _selectedSection == 5,
                     onTap: () => setState(() => _selectedSection = 5),
                   ),
@@ -836,7 +958,10 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                       children: [
                         Expanded(child: Text(title, style: AppTypography.h3)),
                         if (!isEditing)
-                          IconButton(icon: Icon(Icons.edit_rounded, color: context.colors.textSecondary), onPressed: onEdit),
+                          IconButton(
+                              icon: Icon(Icons.edit_rounded,
+                                  color: context.colors.textSecondary),
+                              onPressed: onEdit),
                       ],
                     ),
                     const Divider(height: 32),
@@ -846,7 +971,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          AppSecondaryButton(onPressed: onCancel, label: 'Cancelar'),
+                          AppSecondaryButton(
+                              onPressed: onCancel, label: 'Cancelar'),
                           const SizedBox(width: AppSpacing.x2),
                           AppPrimaryButton(onPressed: onSave, label: 'Salvar'),
                         ],
@@ -863,14 +989,20 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   }
 
   Widget _field(String label, TextEditingController ctrl,
-      {bool enabled = true, bool obscureText = false, TextInputType? keyboardType}) {
+      {bool enabled = true,
+      bool obscureText = false,
+      TextInputType? keyboardType}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.x4),
       child: Opacity(
         opacity: enabled ? 1.0 : 0.6,
         child: IgnorePointer(
           ignoring: !enabled,
-          child: AppTextField(controller: ctrl, obscureText: obscureText, keyboardType: keyboardType, hint: label),
+          child: AppTextField(
+              controller: ctrl,
+              obscureText: obscureText,
+              keyboardType: keyboardType,
+              hint: label),
         ),
       ),
     );
@@ -886,11 +1018,14 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
           children: [
             Text('ID da Franquia', style: AppTypography.caption),
             const SizedBox(height: AppSpacing.x2),
-            const AppBadge(label: 'ID não carregado', type: AppBadgeType.warning),
+            const AppBadge(
+                label: 'ID não carregado', type: AppBadgeType.warning),
             const SizedBox(height: AppSpacing.x2),
             AppSecondaryButton(
-              label: 'Recarregar', icon: Icons.refresh,
-              onPressed: () => ref.read(configuracoesProvider.notifier).refresh(),
+              label: 'Recarregar',
+              icon: Icons.refresh,
+              onPressed: () =>
+                  ref.read(configuracoesProvider.notifier).refresh(),
             ),
           ],
         ),
@@ -904,21 +1039,33 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
           Text('ID da Franquia', style: AppTypography.caption),
           const SizedBox(height: AppSpacing.x2),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4, vertical: AppSpacing.x3),
-            decoration: BoxDecoration(color: context.colors.bgPage, borderRadius: BorderRadius.circular(AppRadius.sm),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.x4, vertical: AppSpacing.x3),
+            decoration: BoxDecoration(
+                color: context.colors.bgPage,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 border: Border.all(color: context.colors.borderSubtle)),
             child: Row(
               children: [
-                Expanded(child: Text(id, style: AppTypography.bodySmall.copyWith(
-                    color: context.colors.textSecondary, fontFamily: 'monospace'), overflow: TextOverflow.ellipsis)),
+                Expanded(
+                    child: Text(id,
+                        style: AppTypography.bodySmall.copyWith(
+                            color: context.colors.textSecondary,
+                            fontFamily: 'monospace'),
+                        overflow: TextOverflow.ellipsis)),
                 IconButton(
-                  icon: const Icon(Icons.copy_rounded, size: 16), color: context.colors.textMuted,
-                  tooltip: 'Copiar ID', padding: EdgeInsets.zero, constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  color: context.colors.textMuted,
+                  tooltip: 'Copiar ID',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                   onPressed: () async {
                     final success = await ClipboardService.copy(id);
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(success ? 'ID copiado!' : 'Falha ao copiar — copie manualmente: $id')));
+                        content: Text(success
+                            ? 'ID copiado!'
+                            : 'Falha ao copiar — copie manualmente: $id')));
                   },
                 ),
               ],
@@ -930,7 +1077,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   }
 
   Future<void> _pickAndUploadLogo() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (picked == null) return;
 
     final bytes = await picked.readAsBytes();
@@ -950,9 +1098,12 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
         _ => DioMediaType('image', 'jpeg'),
       };
       final formData = FormData.fromMap({
-        'file': MultipartFile.fromBytes(bytes, filename: name, contentType: mediaType),
+        'file': MultipartFile.fromBytes(bytes,
+            filename: name, contentType: mediaType),
       });
-      final resp = await ApiService.post<Map<String, dynamic>>('/configuracoes/logo', data: formData);
+      final resp = await ApiService.post<Map<String, dynamic>>(
+          '/configuracoes/logo',
+          data: formData);
       final url = (resp.data as Map<String, dynamic>)['url'] as String;
       if (!mounted) return;
       setState(() => _logoCtrl.text = url);
@@ -980,15 +1131,18 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
           Text('Logotipo', style: AppTypography.caption),
           const SizedBox(height: AppSpacing.x2),
           GestureDetector(
-            onTap: _isEditingGeral && !_uploadingLogo ? _pickAndUploadLogo : null,
+            onTap:
+                _isEditingGeral && !_uploadingLogo ? _pickAndUploadLogo : null,
             child: SizedBox(
-              width: 120, height: 120,
+              width: 120,
+              height: 120,
               child: _uploadingLogo
                   ? Container(
                       decoration: BoxDecoration(
                         color: context.colors.bgPage,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: context.colors.borderSubtle, width: 2),
+                        border: Border.all(
+                            color: context.colors.borderSubtle, width: 2),
                       ),
                       child: const Center(child: CircularProgressIndicator()),
                     )
@@ -999,26 +1153,42 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                             fit: StackFit.expand,
                             children: [
                               hasPreview
-                                  ? Image.memory(_pickedImageBytes!, fit: BoxFit.cover)
-                                  : Image.network(url, fit: BoxFit.cover,
+                                  ? Image.memory(_pickedImageBytes!,
+                                      fit: BoxFit.cover)
+                                  : Image.network(url,
+                                      fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => Container(
-                                        decoration: BoxDecoration(
-                                          color: context.colors.bgPage,
-                                          borderRadius: BorderRadius.circular(16),
-                                          border: Border.all(color: context.colors.borderSubtle, width: 2),
-                                        ),
-                                        child: Center(child: Icon(Icons.broken_image_outlined, size: 32, color: context.colors.textMuted)),
-                                      )),
+                                            decoration: BoxDecoration(
+                                              color: context.colors.bgPage,
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: Border.all(
+                                                  color: context
+                                                      .colors.borderSubtle,
+                                                  width: 2),
+                                            ),
+                                            child: Center(
+                                                child: Icon(
+                                                    Icons.broken_image_outlined,
+                                                    size: 32,
+                                                    color: context
+                                                        .colors.textMuted)),
+                                          )),
                               if (_isEditingGeral)
                                 Positioned(
-                                  bottom: 6, right: 6,
+                                  bottom: 6,
+                                  right: 6,
                                   child: Container(
-                                    width: 26, height: 26,
+                                    width: 26,
+                                    height: 26,
                                     decoration: BoxDecoration(
-                                      color: context.colors.textPrimary.withValues(alpha: 0.55),
+                                      color: context.colors.textPrimary
+                                          .withValues(alpha: 0.55),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
-                                    child: const Icon(Icons.edit_rounded, size: 14, color: AppColors.textOnPrimary),
+                                    child: const Icon(Icons.edit_rounded,
+                                        size: 14,
+                                        color: AppColors.textOnPrimary),
                                   ),
                                 ),
                             ],
@@ -1029,21 +1199,30 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                             color: context.colors.bgPage,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: _isEditingGeral ? AppColors.primary : context.colors.borderSubtle,
+                              color: _isEditingGeral
+                                  ? AppColors.primary
+                                  : context.colors.borderSubtle,
                               width: 2,
                             ),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_photo_alternate_outlined, size: 32,
-                                  color: _isEditingGeral ? AppColors.primary : context.colors.textMuted),
+                              Icon(Icons.add_photo_alternate_outlined,
+                                  size: 32,
+                                  color: _isEditingGeral
+                                      ? AppColors.primary
+                                      : context.colors.textMuted),
                               const SizedBox(height: AppSpacing.x1),
                               Text(
-                                _isEditingGeral ? 'Toque para adicionar' : 'Sem logo',
+                                _isEditingGeral
+                                    ? 'Toque para adicionar'
+                                    : 'Sem logo',
                                 style: AppTypography.caption.copyWith(
                                   fontSize: 11,
-                                  color: _isEditingGeral ? AppColors.primary : context.colors.textMuted,
+                                  color: _isEditingGeral
+                                      ? AppColors.primary
+                                      : context.colors.textMuted,
                                 ),
                               ),
                             ],
@@ -1055,7 +1234,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.x1),
               child: Text('JPEG, PNG ou WebP • máx. 5 MB',
-                  style: AppTypography.caption.copyWith(color: context.colors.textMuted, fontSize: 11)),
+                  style: AppTypography.caption
+                      .copyWith(color: context.colors.textMuted, fontSize: 11)),
             ),
         ],
       ),
@@ -1066,7 +1246,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
 
   Widget _buildGeral(dynamic conf) {
     if (!_isEditingGeral) {
-      _nomeCtrl.text = conf.nome;
+      _nomeCtrl.text = conf.nomeExibicao;
       _logoCtrl.text = conf.logoUrl ?? '';
       _metaCtrl.text = conf.metaDiariaGmv.toStringAsFixed(0);
     }
@@ -1078,19 +1258,22 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
         _isEditingGeral = false;
         _pickedImageBytes = null;
       }),
-      onSave: () => _salvar({
-        'nome': _nomeCtrl.text,
-        'logo_url': _logoCtrl.text.isEmpty ? null : _logoCtrl.text,
-        'meta_diaria_gmv': double.tryParse(_metaCtrl.text) ?? 10000,
-      }, () => setState(() {
-        _isEditingGeral = false;
-        _pickedImageBytes = null;
-      })),
+      onSave: () => _salvar(
+          {
+            'apelido': _nomeCtrl.text,
+            'logo_url': _logoCtrl.text.isEmpty ? null : _logoCtrl.text,
+            'meta_diaria_gmv': double.tryParse(_metaCtrl.text) ?? 10000,
+          },
+          () => setState(() {
+                _isEditingGeral = false;
+                _pickedImageBytes = null;
+              })),
       children: [
         _idDisplay(conf.id),
-        _field('Nome da Franquia', _nomeCtrl, enabled: _isEditingGeral),
+        _field('Apelido da unidade', _nomeCtrl, enabled: _isEditingGeral),
         _field('Meta Diária de GMV (R\$)', _metaCtrl,
-            enabled: _isEditingGeral, keyboardType: const TextInputType.numberWithOptions(decimal: true)),
+            enabled: _isEditingGeral,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true)),
         _logoUploadArea(),
       ],
     );
@@ -1113,18 +1296,25 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       onCancel: () => setState(() => _isEditingFin = false),
       onSave: _salvarFinanceiroSensivel,
       children: [
-        _field(conf.hasAsaas && !_isEditingFin ? 'API Key (Oculta)' : 'Nova API Key', _asaasKeyCtrl,
-            enabled: _isEditingFin, obscureText: true),
+        _field(
+            conf.hasAsaas && !_isEditingFin
+                ? 'API Key (Oculta)'
+                : 'Nova API Key',
+            _asaasKeyCtrl,
+            enabled: _isEditingFin,
+            obscureText: true),
         _field('Wallet ID', _asaasWalletCtrl, enabled: _isEditingFin),
         if (conf.hasAsaas && !_isEditingFin)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.x4),
             child: Row(
               children: [
-                Icon(Icons.check_circle_rounded, color: AppColors.success, size: 16),
+                Icon(Icons.check_circle_rounded,
+                    color: AppColors.success, size: 16),
                 const SizedBox(width: AppSpacing.x2),
                 Text('Conexão Asaas configurada e protegida.',
-                    style: AppTypography.caption.copyWith(color: AppColors.success, fontWeight: FontWeight.bold)),
+                    style: AppTypography.caption.copyWith(
+                        color: AppColors.success, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -1146,7 +1336,10 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       onEdit: () => setState(() => _isEditingTiktok = true),
       onCancel: () => setState(() => _isEditingTiktok = false),
       onSave: () => _salvar(
-        {if (_tiktokShopCtrl.text.isNotEmpty) 'tiktok_shop_id': _tiktokShopCtrl.text},
+        {
+          if (_tiktokShopCtrl.text.isNotEmpty)
+            'tiktok_shop_id': _tiktokShopCtrl.text
+        },
         () => setState(() => _isEditingTiktok = false),
       ),
       children: [
@@ -1159,28 +1352,38 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Conta TikTok', style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+                    Text('Conta TikTok',
+                        style: AppTypography.caption
+                            .copyWith(color: context.colors.textSecondary)),
                     const SizedBox(height: AppSpacing.x2),
                     tiktokAsync.when(
                       loading: () => const SizedBox(
-                        height: 20, width: 20,
+                        height: 20,
+                        width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
-                      error: (_, __) => const AppBadge(label: 'Erro ao verificar', type: AppBadgeType.warning, showDot: false),
+                      error: (_, __) => const AppBadge(
+                          label: 'Erro ao verificar',
+                          type: AppBadgeType.warning,
+                          showDot: false),
                       data: (s) => s.connected
                           ? AppBadge(
                               label: s.expiresAt != null
-                                  ? 'Conectado · Expira ${s.expiresAt!.day.toString().padLeft(2,'0')}/${s.expiresAt!.month.toString().padLeft(2,'0')}/${s.expiresAt!.year}'
+                                  ? 'Conectado · Expira ${s.expiresAt!.day.toString().padLeft(2, '0')}/${s.expiresAt!.month.toString().padLeft(2, '0')}/${s.expiresAt!.year}'
                                   : 'Conectado',
                               type: AppBadgeType.success,
                             )
-                          : const AppBadge(label: 'Desconectado', type: AppBadgeType.danger, showDot: false),
+                          : const AppBadge(
+                              label: 'Desconectado',
+                              type: AppBadgeType.danger,
+                              showDot: false),
                     ),
                     if (tiktok?.userId != null)
                       Padding(
                         padding: const EdgeInsets.only(top: AppSpacing.x1),
                         child: Text('ID: ${tiktok!.userId}',
-                            style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
+                            style: AppTypography.caption
+                                .copyWith(color: context.colors.textMuted)),
                       ),
                   ],
                 ),
@@ -1189,7 +1392,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                 TextButton.icon(
                   icon: Icon(Icons.link_off, size: 16, color: AppColors.danger),
                   label: Text('Desconectar',
-                      style: AppTypography.caption.copyWith(color: AppColors.danger)),
+                      style: AppTypography.caption
+                          .copyWith(color: AppColors.danger)),
                   onPressed: () async {
                     await ref.read(tiktokStatusProvider.notifier).disconnect();
                     ref.invalidate(configuracoesProvider);
@@ -1208,9 +1412,14 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
               child: OutlinedButton.icon(
                 onPressed: _isConnectingTiktok ? null : _conectarTikTok,
                 icon: _isConnectingTiktok
-                    ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.open_in_new, size: 16),
-                label: Text(_isConnectingTiktok ? 'Aguardando autorização...' : 'Conectar com TikTok'),
+                label: Text(_isConnectingTiktok
+                    ? 'Aguardando autorização...'
+                    : 'Conectar com TikTok'),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   side: const BorderSide(color: Color(0xFF010101)),
@@ -1265,7 +1474,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       },
       onSave: _salvarNovaSenha,
       children: [
-        _field('Nova Senha', _senhaCtrl, enabled: _isEditingSeguranca, obscureText: true),
+        _field('Nova Senha', _senhaCtrl,
+            enabled: _isEditingSeguranca, obscureText: true),
       ],
     );
   }
@@ -1289,39 +1499,58 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: Text('Pacotes de Serviço', style: AppTypography.h3)),
-                        AppPrimaryButton(label: 'Novo Pacote', icon: Icons.add, onPressed: () => _abrirFormPacote()),
+                        Expanded(
+                            child: Text('Pacotes de Serviço',
+                                style: AppTypography.h3)),
+                        AppPrimaryButton(
+                            label: 'Novo Pacote',
+                            icon: Icons.add,
+                            onPressed: () => _abrirFormPacote()),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.x2),
                     Text('Defina os pacotes que serão oferecidos aos clientes.',
-                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+                        style: AppTypography.caption
+                            .copyWith(color: context.colors.textSecondary)),
                     const Divider(height: 32),
                     pacotesAsync.when(
-                      loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Center(child: Text(ApiService.extractErrorMessage(e))),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(
+                          child: Text(ApiService.extractErrorMessage(e))),
                       data: (pacotes) {
-                        if (pacotes.isEmpty) return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: AppSpacing.x6),
-                            child: Column(
-                              children: [
-                                Icon(Icons.inventory_2_outlined, size: 40, color: context.colors.textMuted),
-                                const SizedBox(height: AppSpacing.x3),
-                                Text('Nenhum pacote cadastrado.',
-                                    style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
-                              ],
+                        if (pacotes.isEmpty)
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: AppSpacing.x6),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.inventory_2_outlined,
+                                      size: 40,
+                                      color: context.colors.textMuted),
+                                  const SizedBox(height: AppSpacing.x3),
+                                  Text('Nenhum pacote cadastrado.',
+                                      style: AppTypography.bodySmall.copyWith(
+                                          color: context.colors.textSecondary)),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
+                          );
                         return Column(
-                          children: pacotes.map((p) => _PacoteItem(
-                            pacote: p,
-                            onEdit: () => _abrirFormPacote(p),
-                            onDesativar: p.ativo
-                                ? () async { await ref.read(pacotesProvider.notifier).desativar(p.id); }
-                                : null,
-                          )).toList(),
+                          children: pacotes
+                              .map((p) => _PacoteItem(
+                                    pacote: p,
+                                    onEdit: () => _abrirFormPacote(p),
+                                    onDesativar: p.ativo
+                                        ? () async {
+                                            await ref
+                                                .read(pacotesProvider.notifier)
+                                                .desativar(p.id);
+                                          }
+                                        : null,
+                                  ))
+                              .toList(),
                         );
                       },
                     ),
@@ -1354,37 +1583,57 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                   children: [
                     Text('Minhas Cabines', style: AppTypography.h3),
                     const SizedBox(height: AppSpacing.x2),
-                    Text('Configure o nome, tamanho e descrição de cada cabine da sua unidade.',
-                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+                    Text(
+                        'Configure o nome, dimensões, cor e descrição de cada cabine da sua unidade.',
+                        style: AppTypography.caption
+                            .copyWith(color: context.colors.textSecondary)),
                     const Divider(height: 32),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        AppPrimaryButton(label: 'Nova Cabine', icon: Icons.add_rounded, onPressed: () => _mostrarFormCabine(context)),
+                        AppPrimaryButton(
+                            label: 'Nova Cabine',
+                            icon: Icons.add_rounded,
+                            onPressed: () => _mostrarFormCabine(context)),
                         const SizedBox(height: AppSpacing.x4),
                         cabinesAsync.when(
-                          loading: () => const Center(child: CircularProgressIndicator()),
-                          error: (e, _) => Center(child: Text(ApiService.extractErrorMessage(e))),
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
+                          error: (e, _) => Center(
+                              child: Text(ApiService.extractErrorMessage(e))),
                           data: (cabines) {
-                            if (cabines.isEmpty) return Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: AppSpacing.x6),
-                                child: Text('Nenhuma cabine encontrada.',
-                                    style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
-                              ),
-                            );
+                            if (cabines.isEmpty)
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: AppSpacing.x6),
+                                  child: Text('Nenhuma cabine encontrada.',
+                                      style: AppTypography.bodySmall.copyWith(
+                                          color: context.colors.textSecondary)),
+                                ),
+                              );
                             return Column(
-                              children: cabines.map((c) => _CabineConfigItem(
-                                cabine: c,
-                                onSave: (nome, tamanho, descricao) async {
-                                  await ref.read(cabinesProvider.notifier).atualizarCabine(c.id, {
-                                    if (nome.isNotEmpty) 'nome': nome,
-                                    if (tamanho.isNotEmpty) 'tamanho': tamanho,
-                                    if (descricao.isNotEmpty) 'descricao': descricao,
-                                  });
-                                },
-                                onDelete: () => _confirmarDeletar(context, c),
-                              )).toList(),
+                              children: cabines
+                                  .map((c) => _CabineConfigItem(
+                                        cabine: c,
+                                        onSave: (nome, dimensoes, cor,
+                                            descricao) async {
+                                          await ref
+                                              .read(cabinesProvider.notifier)
+                                              .atualizarCabine(c.id, {
+                                            if (nome.isNotEmpty) 'nome': nome,
+                                            'dimensoes': dimensoes.isEmpty
+                                                ? null
+                                                : dimensoes,
+                                            'cor': cor.isEmpty ? null : cor,
+                                            if (descricao.isNotEmpty)
+                                              'descricao': descricao,
+                                          });
+                                        },
+                                        onDelete: () =>
+                                            _confirmarDeletar(context, c),
+                                      ))
+                                  .toList(),
                             );
                           },
                         ),
@@ -1409,26 +1658,38 @@ class _NavItem extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
 
-  const _NavItem({required this.icon, required this.label, required this.isActive, required this.onTap});
+  const _NavItem(
+      {required this.icon,
+      required this.label,
+      required this.isActive,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4, vertical: AppSpacing.x3),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.x4, vertical: AppSpacing.x3),
         decoration: BoxDecoration(
           color: isActive ? context.colors.primarySoftBg : Colors.transparent,
-          border: isActive ? Border(left: BorderSide(color: AppColors.primary, width: 3)) : null,
+          border: isActive
+              ? Border(left: BorderSide(color: AppColors.primary, width: 3))
+              : null,
         ),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: isActive ? AppColors.primary : context.colors.textMuted),
+            Icon(icon,
+                size: 16,
+                color: isActive ? AppColors.primary : context.colors.textMuted),
             const SizedBox(width: AppSpacing.x3),
-            Text(label, style: AppTypography.bodyMedium.copyWith(
-              color: isActive ? AppColors.primary : context.colors.textSecondary,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-            )),
+            Text(label,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: isActive
+                      ? AppColors.primary
+                      : context.colors.textSecondary,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                )),
           ],
         ),
       ),
@@ -1443,7 +1704,8 @@ class _PacoteItem extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback? onDesativar;
 
-  const _PacoteItem({required this.pacote, required this.onEdit, this.onDesativar});
+  const _PacoteItem(
+      {required this.pacote, required this.onEdit, this.onDesativar});
 
   @override
   Widget build(BuildContext context) {
@@ -1463,22 +1725,40 @@ class _PacoteItem extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(pacote.nome, style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                        Text(pacote.nome,
+                            style: AppTypography.bodyMedium
+                                .copyWith(fontWeight: FontWeight.w600)),
                         const SizedBox(width: AppSpacing.x2),
-                        if (!pacote.ativo) const AppBadge(label: 'Inativo', type: AppBadgeType.neutral, showDot: false),
+                        if (!pacote.ativo)
+                          const AppBadge(
+                              label: 'Inativo',
+                              type: AppBadgeType.neutral,
+                              showDot: false),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.x1),
-                    Text('R\$ ${pacote.valor.toStringAsFixed(2)} / mês • ${pacote.horasIncluidas.toStringAsFixed(0)} h incluídas',
-                        style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
-                    if (pacote.descricao != null && pacote.descricao!.isNotEmpty)
-                      Text(pacote.descricao!, style: AppTypography.caption.copyWith(color: context.colors.textMuted)),
+                    Text(
+                        'Fixo R\$ ${pacote.valorFixo.toStringAsFixed(2)} • ${pacote.comissaoPct.toStringAsFixed(2)}% sobre faturamento • ${pacote.horasIncluidas.toStringAsFixed(0)} h',
+                        style: AppTypography.caption
+                            .copyWith(color: context.colors.textSecondary)),
+                    if (pacote.descricao != null &&
+                        pacote.descricao!.isNotEmpty)
+                      Text(pacote.descricao!,
+                          style: AppTypography.caption
+                              .copyWith(color: context.colors.textMuted)),
                   ],
                 ),
               ),
-              IconButton(icon: const Icon(Icons.edit_outlined, size: 18), color: context.colors.textSecondary, onPressed: onEdit),
-              if (onDesativar != null) IconButton(icon: const Icon(Icons.delete_outline, size: 18), color: AppColors.danger,
-                  tooltip: 'Desativar pacote', onPressed: onDesativar),
+              IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  color: context.colors.textSecondary,
+                  onPressed: onEdit),
+              if (onDesativar != null)
+                IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    color: AppColors.danger,
+                    tooltip: 'Desativar pacote',
+                    onPressed: onDesativar),
             ],
           ),
         ),
@@ -1491,10 +1771,16 @@ class _PacoteItem extends StatelessWidget {
 
 class _CabineConfigItem extends StatefulWidget {
   final Cabine cabine;
-  final Future<void> Function(String nome, String tamanho, String descricao) onSave;
+  final Future<void> Function(
+    String nome,
+    String dimensoes,
+    String cor,
+    String descricao,
+  ) onSave;
   final VoidCallback onDelete;
 
-  const _CabineConfigItem({required this.cabine, required this.onSave, required this.onDelete});
+  const _CabineConfigItem(
+      {required this.cabine, required this.onSave, required this.onDelete});
 
   @override
   State<_CabineConfigItem> createState() => _CabineConfigItemState();
@@ -1504,22 +1790,24 @@ class _CabineConfigItemState extends State<_CabineConfigItem> {
   bool _editing = false;
   bool _saving = false;
   late final TextEditingController _nomeCtrl;
-  late final TextEditingController _tamanhoCtrl;
+  late final TextEditingController _dimensoesCtrl;
+  late final TextEditingController _corCtrl;
   late final TextEditingController _descCtrl;
-  static const _tamanhoOptions = ['P', 'M', 'G', 'GG'];
 
   @override
   void initState() {
     super.initState();
     _nomeCtrl = TextEditingController(text: widget.cabine.nome ?? '');
-    _tamanhoCtrl = TextEditingController(text: widget.cabine.tamanho ?? '');
+    _dimensoesCtrl = TextEditingController(text: widget.cabine.dimensoes ?? '');
+    _corCtrl = TextEditingController(text: widget.cabine.cor ?? '');
     _descCtrl = TextEditingController(text: widget.cabine.descricao ?? '');
   }
 
   @override
   void dispose() {
     _nomeCtrl.dispose();
-    _tamanhoCtrl.dispose();
+    _dimensoesCtrl.dispose();
+    _corCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
   }
@@ -1527,12 +1815,14 @@ class _CabineConfigItemState extends State<_CabineConfigItem> {
   Future<void> _salvar() async {
     setState(() => _saving = true);
     try {
-      await widget.onSave(_nomeCtrl.text.trim(), _tamanhoCtrl.text.trim(), _descCtrl.text.trim());
+      await widget.onSave(_nomeCtrl.text.trim(), _dimensoesCtrl.text.trim(),
+          _corCtrl.text.trim(), _descCtrl.text.trim());
       if (!mounted) return;
       setState(() => _editing = false);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiService.extractErrorMessage(e))));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiService.extractErrorMessage(e))));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1555,18 +1845,27 @@ class _CabineConfigItemState extends State<_CabineConfigItem> {
                   radius: 16,
                   backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                   child: Text(widget.cabine.numero.toString().padLeft(2, '0'),
-                      style: AppTypography.caption.copyWith(color: AppColors.primary)),
+                      style: AppTypography.caption
+                          .copyWith(color: AppColors.primary)),
                 ),
                 const SizedBox(width: AppSpacing.x3),
                 Expanded(
-                  child: Text(widget.cabine.nome ?? 'Cabine ${widget.cabine.numero.toString().padLeft(2, '0')}',
-                      style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                  child: Text(
+                      widget.cabine.nome ??
+                          'Cabine ${widget.cabine.numero.toString().padLeft(2, '0')}',
+                      style: AppTypography.bodyMedium
+                          .copyWith(fontWeight: FontWeight.w600)),
                 ),
                 if (!_editing) ...[
-                  IconButton(icon: const Icon(Icons.edit_outlined, size: 18), color: context.colors.textSecondary,
+                  IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      color: context.colors.textSecondary,
                       onPressed: () => setState(() => _editing = true)),
-                  IconButton(icon: const Icon(Icons.delete_outline_rounded, size: 18), color: AppColors.danger,
-                      tooltip: 'Deletar cabine', onPressed: widget.onDelete),
+                  IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                      color: AppColors.danger,
+                      tooltip: 'Deletar cabine',
+                      onPressed: widget.onDelete),
                 ],
               ],
             ),
@@ -1574,35 +1873,39 @@ class _CabineConfigItemState extends State<_CabineConfigItem> {
               const SizedBox(height: AppSpacing.x3),
               AppTextField(controller: _nomeCtrl, hint: 'Nome da cabine'),
               const SizedBox(height: AppSpacing.x2),
-              Row(
-                children: [
-                  Expanded(child: AppTextField(controller: _descCtrl, hint: 'Descrição (opcional)')),
-                  const SizedBox(width: AppSpacing.x2),
-                  SizedBox(
-                    width: 80,
-                    child: AppDropdown<String>(
-                      value: _tamanhoCtrl.text.isEmpty ? null : _tamanhoCtrl.text,
-                      hint: 'Tam.',
-                      items: _tamanhoOptions.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                      onChanged: (v) { if (v != null) _tamanhoCtrl.text = v; },
-                    ),
-                  ),
-                ],
-              ),
+              AppTextField(
+                  controller: _dimensoesCtrl,
+                  hint: 'Dimensões livres (ex: 3m x 4m)'),
+              const SizedBox(height: AppSpacing.x2),
+              AppTextField(controller: _corCtrl, hint: 'Cor (opcional)'),
+              const SizedBox(height: AppSpacing.x2),
+              AppTextField(controller: _descCtrl, hint: 'Descrição (opcional)'),
               const SizedBox(height: AppSpacing.x3),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  AppSecondaryButton(onPressed: () => setState(() => _editing = false), label: 'Cancelar'),
+                  AppSecondaryButton(
+                      onPressed: () => setState(() => _editing = false),
+                      label: 'Cancelar'),
                   const SizedBox(width: AppSpacing.x2),
-                  AppPrimaryButton(label: 'Salvar', isLoading: _saving, onPressed: _salvar),
+                  AppPrimaryButton(
+                      label: 'Salvar', isLoading: _saving, onPressed: _salvar),
                 ],
               ),
-            ] else if (widget.cabine.tamanho != null || widget.cabine.descricao != null) ...[
+            ] else if (widget.cabine.dimensoes != null ||
+                widget.cabine.cor != null ||
+                widget.cabine.descricao != null) ...[
               const SizedBox(height: AppSpacing.x1),
-              Text([if (widget.cabine.tamanho != null) 'Tamanho: ${widget.cabine.tamanho}',
-                  if (widget.cabine.descricao != null) widget.cabine.descricao!].join(' • '),
-                  style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
+              Text(
+                  [
+                    if (widget.cabine.dimensoes != null)
+                      'Dimensões: ${widget.cabine.dimensoes}',
+                    if (widget.cabine.cor != null) 'Cor: ${widget.cabine.cor}',
+                    if (widget.cabine.descricao != null)
+                      widget.cabine.descricao!
+                  ].join(' • '),
+                  style: AppTypography.caption
+                      .copyWith(color: context.colors.textSecondary)),
             ],
           ],
         ),
