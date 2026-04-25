@@ -1080,6 +1080,35 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     );
   }
 
+  Widget _readOnlyRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.x4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTypography.caption),
+          const SizedBox(height: AppSpacing.x2),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.x4, vertical: AppSpacing.x3),
+            decoration: BoxDecoration(
+              color: context.colors.bgPage,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: context.colors.borderSubtle),
+            ),
+            child: Text(
+              value.isNotEmpty ? value : '—',
+              style: AppTypography.bodyMedium.copyWith(
+                color: context.colors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _pickAndUploadLogo() async {
     final picked = await ImagePicker()
         .pickImage(source: ImageSource.gallery, imageQuality: 85);
@@ -1287,6 +1316,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                   })),
           children: [
             _idDisplay(conf.id),
+            _readOnlyRow('Nome oficial da unidade', conf.nome),
             _field('Apelido da unidade', _nomeCtrl, enabled: _isEditingGeral),
             _field('Meta Diária de GMV (R\$)', _metaCtrl,
                 enabled: _isEditingGeral,

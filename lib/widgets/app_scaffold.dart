@@ -567,6 +567,7 @@ class _MenuContent extends ConsumerWidget {
           isSelected: currentRoute == AppRoutes.recomendacoes,
           compact: compact,
         ),
+      if (canUseCommercial && !compact) const _MenuSectionLabel('Clientes'),
       if (canUseCommercial)
         _MenuItem(
           icon: PhosphorIcons.usersThree(),

@@ -108,6 +108,12 @@ class _ExecutiveKpis extends StatelessWidget {
         subtitle: 'oportunidades abertas',
       ),
       MetricCard(
+        label: 'Taxa de conversão',
+        value: '${dashboard.taxaConversao.toStringAsFixed(1)}%',
+        icon: PhosphorIcons.arrowsLeftRight(),
+        subtitle: 'leads fechados → ganho',
+      ),
+      MetricCard(
         label: 'Clientes ativos',
         value: '${dashboard.clientesAtivos}',
         icon: PhosphorIcons.usersThree(),

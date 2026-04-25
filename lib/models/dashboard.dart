@@ -145,6 +145,9 @@ class DashboardData {
   final int leadsParados;
   final int conflitosAgenda;
 
+  // Taxa de conversão (ganhos / fechados × 100)
+  final double taxaConversao;
+
   // Ranking do Dia
   final List<RankingEntry> rankingDia;
 
@@ -172,6 +175,7 @@ class DashboardData {
     required this.contratosAguardandoAssinatura,
     required this.leadsParados,
     required this.conflitosAgenda,
+    this.taxaConversao = 0,
     required this.rankingDia,
   });
 
@@ -239,6 +243,9 @@ class DashboardData {
             int.tryParse('${j['contratos_aguardando_assinatura'] ?? 0}') ?? 0,
         leadsParados: int.tryParse('${j['leads_parados'] ?? 0}') ?? 0,
         conflitosAgenda: int.tryParse('${j['conflitos_agenda'] ?? 0}') ?? 0,
+        taxaConversao: j['taxa_conversao'] == null
+            ? 0.0
+            : double.tryParse(j['taxa_conversao'].toString()) ?? 0.0,
         cabines: (j['cabines'] as List?)
                 ?.map((e) => CabineStatus.fromJson(e as Map<String, dynamic>))
                 .toList() ??
