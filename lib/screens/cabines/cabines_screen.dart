@@ -1086,6 +1086,7 @@ class _SidebarContent extends ConsumerWidget {
                   _SelectedCabinePanel(
                     cabine: cabine,
                     detailAsync: detailAsync,
+                    filaAsync: filaAsync,
                     onOpenAnalyticalDetail: onOpenAnalyticalDetail,
                   ),
                   const SizedBox(height: AppSpacing.x4),
@@ -1110,11 +1111,13 @@ class _SidebarContent extends ConsumerWidget {
 class _SelectedCabinePanel extends ConsumerWidget {
   final Cabine? cabine;
   final AsyncValue<CabineDetailState> detailAsync;
+  final AsyncValue<List<FilaAtivacaoItem>> filaAsync;
   final VoidCallback? onOpenAnalyticalDetail;
 
   const _SelectedCabinePanel({
     required this.cabine,
     required this.detailAsync,
+    required this.filaAsync,
     this.onOpenAnalyticalDetail,
   });
 
@@ -1201,6 +1204,22 @@ class _SelectedCabinePanel extends ConsumerWidget {
                         label: 'Tempo no ar',
                         value: _formatDuracao(
                             DateTime.now().difference(cabine!.iniciadoEm!)),
+                      ),
+                    ],
+                    if (cabine!.status == 'ao_vivo') ...[
+                      Builder(
+                        builder: (context) {
+                          final fila = filaAsync.valueOrNull;
+                          if (fila == null || fila.isEmpty) {
+                            return const _InfoLine(
+                                label: 'Próximo na fila', value: '—');
+                          }
+                          final proximo = fila.first;
+                          return _InfoLine(
+                            label: 'Próximo na fila',
+                            value: proximo.clienteNome,
+                          );
+                        },
                       ),
                     ],
                     const SizedBox(height: 12),

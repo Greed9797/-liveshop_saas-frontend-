@@ -55,6 +55,68 @@ class ClientesLeadsScreen extends ConsumerWidget {
   }
 }
 
+// ── Kanban phase definition ───────────────────────────────────────────────────
+
+class _KanbanPhase {
+  final String id;
+  final String label;
+  final Color color;
+  final List<Cliente> clients;
+
+  const _KanbanPhase({
+    required this.id,
+    required this.label,
+    required this.color,
+    required this.clients,
+  });
+}
+
+List<_KanbanPhase> _buildPhases(List<Cliente> all) {
+  return [
+    _KanbanPhase(
+      id: 'onboarding',
+      label: 'Onboarding',
+      color: AppColors.info,
+      clients: all.where((c) => c.status == 'onboarding').toList(),
+    ),
+    _KanbanPhase(
+      id: 'satisfeito',
+      label: 'Ativo: Satisfeito',
+      color: AppColors.success,
+      clients: all
+          .where((c) => c.status == 'ativo' && c.score >= 70)
+          .toList(),
+    ),
+    _KanbanPhase(
+      id: 'alerta',
+      label: 'Ativo: Alerta',
+      color: AppColors.warning,
+      clients: all
+          .where((c) => c.status == 'ativo' && c.score >= 30 && c.score < 70)
+          .toList(),
+    ),
+    _KanbanPhase(
+      id: 'churn',
+      label: 'Risco de Churn',
+      color: AppColors.danger,
+      clients: all
+          .where((c) => c.status == 'ativo' && c.score < 30)
+          .toList(),
+    ),
+    _KanbanPhase(
+      id: 'inativo',
+      label: 'Inadimplente / Cancelado',
+      color: AppColors.textMuted,
+      clients: all
+          .where((c) =>
+              c.status == 'inadimplente' || c.status == 'cancelado')
+          .toList(),
+    ),
+  ];
+}
+
+// ── Content widget ────────────────────────────────────────────────────────────
+
 class _ClientesContent extends StatefulWidget {
   final List<Cliente> clientes;
 
@@ -65,7 +127,6 @@ class _ClientesContent extends StatefulWidget {
 }
 
 class _ClientesContentState extends State<_ClientesContent> {
-  String _statusFilter = 'todos';
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
 
@@ -77,15 +138,12 @@ class _ClientesContentState extends State<_ClientesContent> {
 
   List<Cliente> get _allClientes => widget.clientes;
 
-  List<Cliente> get _filtered {
-    return _allClientes.where((c) {
-      final matchesStatus =
-          _statusFilter == 'todos' || c.status == _statusFilter;
-      final q = _searchQuery.toLowerCase();
-      final matchesSearch = q.isEmpty ||
-          c.nome.toLowerCase().contains(q) ||
+  List<Cliente> _applySearch(List<Cliente> source) {
+    final q = _searchQuery.toLowerCase();
+    if (q.isEmpty) return source;
+    return source.where((c) {
+      return c.nome.toLowerCase().contains(q) ||
           c.celular.toLowerCase().contains(q);
-      return matchesStatus && matchesSearch;
     }).toList();
   }
 
@@ -98,7 +156,15 @@ class _ClientesContentState extends State<_ClientesContent> {
     final cancelados =
         _allClientes.where((c) => c.status == 'cancelado').length;
 
-    final filtered = _filtered;
+    // Build phases from the full list, then apply search to each
+    final phases = _buildPhases(_allClientes).map((phase) {
+      return _KanbanPhase(
+        id: phase.id,
+        label: phase.label,
+        color: phase.color,
+        clients: _applySearch(phase.clients),
+      );
+    }).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,125 +207,142 @@ class _ClientesContentState extends State<_ClientesContent> {
           prefixIcon: Icons.search,
           onChanged: (v) => setState(() => _searchQuery = v),
         ),
-        const SizedBox(height: AppSpacing.x3),
-
-        // ── Status filter chips ───────────────────────────────────────
-        Wrap(
-          spacing: AppSpacing.x2,
-          runSpacing: AppSpacing.x2,
-          children: [
-            _StatusChip(
-              label: 'Todos',
-              count: _allClientes.length,
-              selected: _statusFilter == 'todos',
-              onTap: () => setState(() => _statusFilter = 'todos'),
-            ),
-            _StatusChip(
-              label: 'Ativos',
-              count: ativos,
-              selected: _statusFilter == 'ativo',
-              onTap: () => setState(() => _statusFilter = 'ativo'),
-            ),
-            _StatusChip(
-              label: 'Inadimplentes',
-              count: inadimplentes,
-              selected: _statusFilter == 'inadimplente',
-              onTap: () => setState(() => _statusFilter = 'inadimplente'),
-            ),
-            _StatusChip(
-              label: 'Cancelados',
-              count: cancelados,
-              selected: _statusFilter == 'cancelado',
-              onTap: () => setState(() => _statusFilter = 'cancelado'),
-            ),
-          ],
-        ),
         const SizedBox(height: AppSpacing.x4),
 
-        // ── List ──────────────────────────────────────────────────────
-        Expanded(
-          child: _allClientes.isEmpty
-              ? Center(
-                  child: Text(
-                    'Nenhum cliente convertido encontrado.',
-                    style: AppTypography.bodyMedium
-                        .copyWith(color: context.colors.textSecondary),
-                  ),
-                )
-              : filtered.isEmpty
-                  ? Center(
-                      child: Text(
-                        'Nenhum resultado para os filtros aplicados.',
-                        style: AppTypography.bodyMedium
-                            .copyWith(color: context.colors.textSecondary),
-                      ),
-                    )
-                  : ListView.separated(
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: AppSpacing.x3),
-                      itemBuilder: (context, index) =>
-                          _ClienteCard(cliente: filtered[index]),
-                    ),
-        ),
+        // ── Kanban board ──────────────────────────────────────────────
+        if (_allClientes.isEmpty)
+          Expanded(
+            child: Center(
+              child: Text(
+                'Nenhum cliente convertido encontrado.',
+                style: AppTypography.bodyMedium
+                    .copyWith(color: context.colors.textSecondary),
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: phases.map((phase) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.x4),
+                    child: _KanbanColumn(phase: phase),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
       ],
     );
   }
 }
 
-// ── Status pill chip ──────────────────────────────────────────────────────────
+// ── Kanban column ─────────────────────────────────────────────────────────────
 
-class _StatusChip extends StatelessWidget {
-  final String label;
-  final int count;
-  final bool selected;
-  final VoidCallback onTap;
+class _KanbanColumn extends StatelessWidget {
+  final _KanbanPhase phase;
 
-  const _StatusChip({
-    required this.label,
-    required this.count,
-    required this.selected,
-    required this.onTap,
-  });
+  const _KanbanColumn({required this.phase});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.x3,
-          vertical: AppSpacing.x1 + 2,
-        ),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primary.withValues(alpha: 0.12)
-              : context.colors.bgMuted,
-          border: Border.all(
-            color: selected ? AppColors.primary : context.colors.borderSubtle,
-            width: selected ? 1.5 : 1,
+    return SizedBox(
+      width: 280,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x3,
+              vertical: AppSpacing.x2,
+            ),
+            decoration: BoxDecoration(
+              color: phase.color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: phase.color.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    phase.label,
+                    style: AppTypography.caption.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: phase.color,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.x2,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: phase.color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                  ),
+                  child: Text(
+                    '${phase.clients.length}',
+                    style: AppTypography.caption.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: phase.color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
-        child: Text(
-          '$label ($count)',
-          style: AppTypography.caption.copyWith(
-            color: selected ? AppColors.primary : context.colors.textSecondary,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          const SizedBox(height: AppSpacing.x3),
+
+          // Cards list (scrollable vertically within the column)
+          Flexible(
+            child: phase.clients.isEmpty
+                ? Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.x4),
+                    decoration: BoxDecoration(
+                      color: context.colors.bgMuted,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: context.colors.borderSubtle,
+                      ),
+                    ),
+                    child: Text(
+                      'Nenhum cliente',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.caption.copyWith(
+                        color: context.colors.textMuted,
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    shrinkWrap: true,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: phase.clients.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: AppSpacing.x3),
+                    itemBuilder: (context, index) =>
+                        _KanbanCard(cliente: phase.clients[index]),
+                  ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-// ── Cliente card ──────────────────────────────────────────────────────────────
+// ── Kanban card ───────────────────────────────────────────────────────────────
 
-class _ClienteCard extends StatelessWidget {
+class _KanbanCard extends StatelessWidget {
   final Cliente cliente;
 
-  const _ClienteCard({required this.cliente});
+  const _KanbanCard({required this.cliente});
 
   static final _currencyFmt = NumberFormat.currency(
     locale: 'pt_BR',
@@ -269,94 +352,94 @@ class _ClienteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasHoras = cliente.horasContratadas != null;
     final hasFat = cliente.fatAnual > 0;
 
+    final locationNicho = [
+      if ((cliente.cidade ?? '').isNotEmpty)
+        '${cliente.cidade}${cliente.estado != null ? '/${cliente.estado}' : ''}',
+      if ((cliente.nicho ?? '').isNotEmpty) cliente.nicho!,
+    ].join(' · ');
+
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.x4),
+      padding: const EdgeInsets.all(AppSpacing.x3),
       borderColor: context.colors.borderSubtle,
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: _statusColor.withValues(alpha: 0.12),
+          // Name + status badge
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  cliente.nome,
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              AppBadge(label: _statusLabel, type: _badgeType),
+            ],
+          ),
+
+          // City + nicho
+          if (locationNicho.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.x1),
+            Text(
+              locationNicho,
+              style: AppTypography.caption
+                  .copyWith(color: context.colors.textSecondary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+
+          // Fat. anual
+          if (hasFat) ...[
+            const SizedBox(height: AppSpacing.x1),
+            Text(
+              'Fat. anual: ${_currencyFmt.format(cliente.fatAnual)}',
+              style: AppTypography.caption.copyWith(
+                color: context.colors.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+
+          const SizedBox(height: AppSpacing.x2),
+
+          // Score chip
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x2,
+              vertical: 2,
+            ),
+            decoration: BoxDecoration(
+              color: _scoreColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              border: Border.all(
+                color: _scoreColor.withValues(alpha: 0.3),
+              ),
+            ),
             child: Text(
-              cliente.nome.isEmpty ? '?' : cliente.nome[0].toUpperCase(),
-              style: AppTypography.bodyMedium.copyWith(
-                color: _statusColor,
+              'Score: ${cliente.score}',
+              style: AppTypography.caption.copyWith(
+                color: _scoreColor,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.x4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Name row
-                Text(
-                  cliente.nome,
-                  style: AppTypography.bodyLarge
-                      .copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: AppSpacing.x1),
-                // Contact/location row
-                Text(
-                  [
-                    if ((cliente.email ?? '').isNotEmpty) cliente.email!,
-                    cliente.celular,
-                    if ((cliente.cidade ?? '').isNotEmpty)
-                      '${cliente.cidade}${cliente.estado != null ? '/${cliente.estado}' : ''}',
-                  ].join(' • '),
-                  style: AppTypography.caption
-                      .copyWith(color: context.colors.textSecondary),
-                ),
-                // Fat. anual
-                if (hasFat) ...[
-                  const SizedBox(height: AppSpacing.x1),
-                  Text(
-                    'Fat. anual: ${_currencyFmt.format(cliente.fatAnual)}',
-                    style: AppTypography.caption.copyWith(
-                      color: context.colors.textMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                // Horas
-                if (hasHoras) ...[
-                  const SizedBox(height: AppSpacing.x1),
-                  Text(
-                    '${_horasLabel(cliente.horasContratadas!)} contratadas'
-                    ' • ${_horasLabel(cliente.horasRestantes ?? 0)} restantes',
-                    style: AppTypography.caption.copyWith(
-                      color: context.colors.textMuted,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.x3),
-          AppBadge(label: _statusLabel, type: _badgeType),
         ],
       ),
     );
   }
 
-  String _horasLabel(double h) {
-    final intH = h.truncate();
-    final mins = ((h - intH) * 60).round();
-    if (mins == 0) return '${intH}h';
-    return '${intH}h ${mins}min';
+  Color get _scoreColor {
+    if (cliente.score >= 70) return AppColors.success;
+    if (cliente.score >= 30) return AppColors.warning;
+    return AppColors.danger;
   }
-
-  Color get _statusColor => switch (cliente.status) {
-        'ativo' => AppColors.success,
-        'inadimplente' => AppColors.danger,
-        'cancelado' => AppColors.textMuted,
-        _ => AppColors.textMuted,
-      };
 
   AppBadgeType get _badgeType => switch (cliente.status) {
         'ativo' => AppBadgeType.success,
@@ -366,8 +449,9 @@ class _ClienteCard extends StatelessWidget {
 
   String get _statusLabel => switch (cliente.status) {
         'ativo' => 'ATIVO',
-        'inadimplente' => 'INADIMPLENTE',
+        'inadimplente' => 'INADIMP.',
         'cancelado' => 'CANCELADO',
+        'onboarding' => 'ONBOARDING',
         _ => cliente.status.toUpperCase(),
       };
 }

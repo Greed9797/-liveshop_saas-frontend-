@@ -409,6 +409,10 @@ class _SolicitacoesListaState extends State<_SolicitacoesLista> {
   final _dataCtrl = TextEditingController();
   final _cabineCtrl = TextEditingController();
 
+  // ── Bulk selection ──
+  final Set<String> _selected = {};
+  bool _selectionMode = false;
+
   static final _dateDisplay = DateFormat('dd/MM/yyyy');
   static final _dateParser = DateFormat('yyyy-MM-dd');
 
@@ -461,6 +465,29 @@ class _SolicitacoesListaState extends State<_SolicitacoesLista> {
     });
   }
 
+  void _exitSelectionMode() {
+    setState(() {
+      _selectionMode = false;
+      _selected.clear();
+    });
+  }
+
+  Future<void> _bulkAprovar() async {
+    final ids = List<String>.from(_selected);
+    for (final id in ids) {
+      await widget.onAprovar(id);
+    }
+    _exitSelectionMode();
+  }
+
+  Future<void> _bulkRecusar() async {
+    final ids = List<String>.from(_selected);
+    for (final id in ids) {
+      widget.onRecusar(id);
+    }
+    _exitSelectionMode();
+  }
+
   @override
   Widget build(BuildContext context) {
     final filtered = _filtered;
@@ -498,6 +525,60 @@ class _SolicitacoesListaState extends State<_SolicitacoesLista> {
           onLimpar: _limparFiltros,
         ),
 
+        // ── Bulk selection banner ──
+        if (widget.showActions && _selectionMode) ...[
+          Container(
+            color: context.colors.bgMuted,
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.x4, vertical: AppSpacing.x2),
+            child: Row(
+              children: [
+                Text(
+                  '${_selected.length} selecionado${_selected.length == 1 ? '' : 's'}',
+                  style: AppTypography.bodySmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: context.colors.textPrimary),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: _selected.isEmpty ? null : _bulkAprovar,
+                  icon: const Icon(Icons.check_circle_outline,
+                      size: 16, color: AppColors.success),
+                  label: const Text('Aprovar todos',
+                      style: TextStyle(color: AppColors.success)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.x2),
+                    visualDensity: VisualDensity.compact,
+                    textStyle: AppTypography.bodySmall,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.x2),
+                TextButton.icon(
+                  onPressed: _selected.isEmpty ? null : _bulkRecusar,
+                  icon: const Icon(Icons.cancel_outlined,
+                      size: 16, color: AppColors.danger),
+                  label: const Text('Recusar todos',
+                      style: TextStyle(color: AppColors.danger)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.x2),
+                    visualDensity: VisualDensity.compact,
+                    textStyle: AppTypography.bodySmall,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.x2),
+                IconButton(
+                  tooltip: 'Cancelar seleção',
+                  onPressed: _exitSelectionMode,
+                  icon: const Icon(Icons.close, size: 18),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+          ),
+        ],
+
         // ── List or empty-filtered state ──
         Expanded(
           child: filtered.isEmpty
@@ -533,7 +614,9 @@ class _SolicitacoesListaState extends State<_SolicitacoesLista> {
                         const SizedBox(height: AppSpacing.x3),
                     itemBuilder: (ctx, i) {
                       final req = filtered[i];
-                      return SolicitacaoCard(
+                      final isSelected = _selected.contains(req.id);
+
+                      final card = SolicitacaoCard(
                         cabineNumero:
                             req.cabineNumero.toString().padLeft(2, '0'),
                         clienteNome: req.clienteNome,
@@ -544,11 +627,80 @@ class _SolicitacoesListaState extends State<_SolicitacoesLista> {
                         solicitadoPor: req.solicitanteNome,
                         apresentadoraNome: req.apresentadoraNome,
                         status: req.status,
-                        onApprove:
-                            widget.showActions ? () => widget.onAprovar(req.id) : () {},
-                        onReject:
-                            widget.showActions ? () => widget.onRecusar(req.id) : () {},
+                        onApprove: widget.showActions && !_selectionMode
+                            ? () => widget.onAprovar(req.id)
+                            : () {},
+                        onReject: widget.showActions && !_selectionMode
+                            ? () => widget.onRecusar(req.id)
+                            : () {},
                         showStatusBadge: !widget.showActions,
+                      );
+
+                      if (!widget.showActions) return card;
+
+                      return GestureDetector(
+                        onLongPress: () {
+                          if (!_selectionMode) {
+                            setState(() {
+                              _selectionMode = true;
+                              _selected.add(req.id);
+                            });
+                          }
+                        },
+                        onTap: _selectionMode
+                            ? () {
+                                setState(() {
+                                  if (isSelected) {
+                                    _selected.remove(req.id);
+                                  } else {
+                                    _selected.add(req.id);
+                                  }
+                                });
+                              }
+                            : null,
+                        child: Stack(
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              decoration: isSelected
+                                  ? BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                          AppRadius.lg),
+                                      border: Border.all(
+                                          color: AppColors.primary
+                                              .withValues(alpha: 0.5),
+                                          width: 2),
+                                    )
+                                  : null,
+                              child: card,
+                            ),
+                            if (_selectionMode)
+                              Positioned(
+                                top: AppSpacing.x2,
+                                left: AppSpacing.x2,
+                                child: IgnorePointer(
+                                  child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : context.colors.bgCard,
+                                      border: Border.all(
+                                          color: AppColors.primary,
+                                          width: 2),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: isSelected
+                                        ? const Icon(Icons.check,
+                                            size: 14,
+                                            color: Colors.white)
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       );
                     },
                   ),
