@@ -5,10 +5,12 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import '../providers/configuracoes_provider.dart';
 import '../providers/theme_mode_provider.dart';
 import '../routes/app_routes.dart';
 import '../design_system/design_system.dart';
 import '../providers/boletos_provider.dart';
+import 'user_logo_widget.dart';
 
 class AppScaffold extends ConsumerWidget {
   final Widget child;
@@ -109,6 +111,7 @@ class AppScaffold extends ConsumerWidget {
             ?.where((b) => b.status == 'vencido' || b.status == 'pendente')
             .length ??
         0;
+    final logoUrl = ref.watch(configuracoesProvider).valueOrNull?.logoUrl;
 
     return Scaffold(
       backgroundColor: context.colors.bgPage,
@@ -133,6 +136,8 @@ class AppScaffold extends ConsumerWidget {
                   isFinanceiro: isFinanceiro,
                   isOperacional: isOperacional,
                   compact: isTablet,
+                  logoUrl: logoUrl,
+                  displayName: displayName,
                 ),
                 Expanded(
                   child: Column(
@@ -386,6 +391,8 @@ class AppScaffold extends ConsumerWidget {
     bool isFinanceiro = false,
     bool isOperacional = false,
     bool compact = false,
+    String? logoUrl,
+    String displayName = '',
   }) {
     return Container(
       width: compact ? 68 : 220,
@@ -400,15 +407,27 @@ class AppScaffold extends ConsumerWidget {
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 32.0),
+              padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: compact
-                  ? CircleAvatar(
-                      radius: 22,
-                      backgroundColor: context.colors.bgMuted,
-                      child:
-                          Icon(PhosphorIcons.house(), color: AppColors.primary),
+                  ? UserLogoWidget(
+                      logoUrl: logoUrl,
+                      displayName: displayName,
+                      size: 44,
                     )
-                  : const _Logo(),
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const _Logo(),
+                        if (logoUrl != null && logoUrl.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          UserLogoWidget(
+                            logoUrl: logoUrl,
+                            displayName: displayName,
+                            size: 48,
+                          ),
+                        ],
+                      ],
+                    ),
             ),
           ),
           Expanded(

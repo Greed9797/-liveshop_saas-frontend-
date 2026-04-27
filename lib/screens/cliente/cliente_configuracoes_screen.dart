@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../design_system/design_system.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
+import '../../widgets/user_logo_widget.dart';
 
 // ─── Providers ────────────────────────────────────────────────────────────────
 
@@ -36,6 +37,11 @@ class _ClienteConfiguracoesScreenState
 
   bool _savingPassword = false;
 
+  // Logo / favicon
+  final _siteCtrl = TextEditingController();
+  String? _clienteLogoUrl;
+  bool _fetchingLogo = false;
+
   @override
   void initState() {
     super.initState();
@@ -47,7 +53,36 @@ class _ClienteConfiguracoesScreenState
     _senhaAtualCtrl.dispose();
     _novaSenhaCtrl.dispose();
     _confirmaSenhaCtrl.dispose();
+    _siteCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _buscarLogoFavicon() async {
+    final site = _siteCtrl.text.trim();
+    if (site.isEmpty) {
+      _snack('Informe a URL do site.');
+      return;
+    }
+    setState(() => _fetchingLogo = true);
+    try {
+      final resp = await ApiService.post<Map<String, dynamic>>(
+        '/clientes/logo/favicon',
+        data: {'website_url': site},
+      );
+      final url = (resp.data as Map<String, dynamic>)['logo_url'] as String?;
+      if (url == null || url.isEmpty) {
+        _snack('Logo não encontrado para este site.');
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _clienteLogoUrl = url);
+      _snack('Logo atualizado!');
+    } catch (e) {
+      if (!mounted) return;
+      _snack(ApiService.extractErrorMessage(e));
+    } finally {
+      if (mounted) setState(() => _fetchingLogo = false);
+    }
   }
 
   PasswordStrength _strength(String pwd) {
@@ -180,9 +215,15 @@ class _ClienteConfiguracoesScreenState
       padding: const EdgeInsets.all(AppSpacing.x4),
       children: [
         _SectionCard(
+          icon: Icons.image_outlined,
+          title: 'Logo da Empresa',
+          child: _buildLogoSection(),
+        ),
+        const SizedBox(height: AppSpacing.x4),
+        _SectionCard(
           icon: Icons.lock_outline_rounded,
-          title: 'Minha Conta',
-          child: _buildMinhaConta(),
+          title: 'Alterar Senha',
+          child: _buildSenhaSection(),
         ),
         const SizedBox(height: AppSpacing.x4),
         _SectionCard(
@@ -215,43 +256,91 @@ class _ClienteConfiguracoesScreenState
 
   // ─── Minha Conta ────────────────────────────────────────────────────────────
 
-  Widget _buildMinhaConta() {
-    return _PanelScaffold(
-      title: 'Alterar Senha',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _PasswordField(
-            controller: _senhaAtualCtrl,
-            hint: 'Senha atual *',
-          ),
-          const SizedBox(height: AppSpacing.x3),
-          _PasswordField(
-            controller: _novaSenhaCtrl,
-            hint: 'Nova senha *',
-          ),
-          if (_novaSenhaCtrl.text.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.x2),
-            _PasswordStrengthBar(strength: _strength(_novaSenhaCtrl.text)),
-            const SizedBox(height: AppSpacing.x3),
-          ] else ...[
-            const SizedBox(height: AppSpacing.x3),
-          ],
-          _PasswordField(
-            controller: _confirmaSenhaCtrl,
-            hint: 'Confirmar nova senha *',
-          ),
-          const SizedBox(height: AppSpacing.x6),
-          Align(
-            alignment: Alignment.centerRight,
-            child: AppPrimaryButton(
-              label: 'Salvar senha',
-              isLoading: _savingPassword,
-              onPressed: _salvarSenha,
+  Widget _buildLogoSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_clienteLogoUrl != null) ...[
+          Center(
+            child: UserLogoWidget(
+              logoUrl: _clienteLogoUrl,
+              displayName: '',
+              size: 64,
             ),
           ),
+          const SizedBox(height: AppSpacing.x4),
         ],
-      ),
+        Text(
+          'Site da empresa',
+          style: AppTypography.caption
+              .copyWith(color: context.colors.textSecondary),
+        ),
+        const SizedBox(height: AppSpacing.x2),
+        Row(
+          children: [
+            Expanded(
+              child: AppTextField(
+                controller: _siteCtrl,
+                hint: 'https://minhaempresa.com.br',
+                keyboardType: TextInputType.url,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.x3),
+            AppPrimaryButton(
+              label: 'Buscar logo',
+              isLoading: _fetchingLogo,
+              onPressed: _fetchingLogo ? null : _buscarLogoFavicon,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSenhaSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _PasswordField(
+          controller: _senhaAtualCtrl,
+          hint: 'Senha atual *',
+        ),
+        const SizedBox(height: AppSpacing.x3),
+        _PasswordField(
+          controller: _novaSenhaCtrl,
+          hint: 'Nova senha *',
+        ),
+        if (_novaSenhaCtrl.text.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.x2),
+          _PasswordStrengthBar(strength: _strength(_novaSenhaCtrl.text)),
+          const SizedBox(height: AppSpacing.x3),
+        ] else ...[
+          const SizedBox(height: AppSpacing.x3),
+        ],
+        _PasswordField(
+          controller: _confirmaSenhaCtrl,
+          hint: 'Confirmar nova senha *',
+        ),
+        const SizedBox(height: AppSpacing.x6),
+        Align(
+          alignment: Alignment.centerRight,
+          child: AppPrimaryButton(
+            label: 'Salvar senha',
+            isLoading: _savingPassword,
+            onPressed: _salvarSenha,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMinhaConta() {
+    return Column(
+      children: [
+        _PanelScaffold(title: 'Logo da Empresa', child: _buildLogoSection()),
+        const SizedBox(height: AppSpacing.x4),
+        _PanelScaffold(title: 'Alterar Senha', child: _buildSenhaSection()),
+      ],
     );
   }
 

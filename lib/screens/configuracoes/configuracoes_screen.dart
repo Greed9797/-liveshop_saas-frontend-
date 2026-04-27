@@ -1,10 +1,9 @@
-import 'dart:typed_data';
+import 'dart:html' as html;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/cabine.dart';
@@ -50,7 +49,6 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   bool _isEditingSeguranca = false;
 
   bool _uploadingLogo = false;
-  Uint8List? _pickedImageBytes;
 
   String _maskSecret(String value) {
     if (value.isEmpty) return 'Nao informada';
@@ -1002,26 +1000,29 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   }
 
   Future<void> _pickAndUploadLogo() async {
-    final picked = await ImagePicker()
-        .pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (picked == null) return;
+    final input = html.FileUploadInputElement()
+      ..accept = 'image/png,image/jpeg,image/webp'
+      ..click();
 
-    final bytes = await picked.readAsBytes();
-    setState(() {
-      _pickedImageBytes = bytes;
-      _uploadingLogo = true;
-    });
+    await input.onChange.first;
+    final file = input.files?.first;
+    if (file == null) return;
+
+    final reader = html.FileReader();
+    reader.readAsArrayBuffer(file);
+    await reader.onLoad.first;
+    final bytes = reader.result as List<int>;
+
+    setState(() => _uploadingLogo = true);
 
     try {
-      final name = picked.name.isNotEmpty ? picked.name : 'logo.jpg';
-      final ext = name.split('.').last.toLowerCase();
-      final mediaType = switch (ext) {
-        'jpg' || 'jpeg' => DioMediaType('image', 'jpeg'),
-        'png' => DioMediaType('image', 'png'),
-        'webp' => DioMediaType('image', 'webp'),
-        'gif' => DioMediaType('image', 'gif'),
-        _ => DioMediaType('image', 'jpeg'),
-      };
+      final name = file.name.isNotEmpty ? file.name : 'logo.jpg';
+      final mimeType = file.type.isNotEmpty ? file.type : 'image/jpeg';
+      final parts = mimeType.split('/');
+      final mediaType = DioMediaType(
+        parts.isNotEmpty ? parts[0] : 'image',
+        parts.length > 1 ? parts[1] : 'jpeg',
+      );
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(bytes,
             filename: name, contentType: mediaType),
@@ -1034,7 +1035,6 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       setState(() => _logoCtrl.text = url);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _pickedImageBytes = null);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(ApiService.extractErrorMessage(e))),
       );
@@ -1046,7 +1046,6 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   Widget _logoUploadArea() {
     final url = _logoCtrl.text.trim();
     final hasUrl = url.isNotEmpty;
-    final hasPreview = _pickedImageBytes != null;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.x4),
@@ -1071,34 +1070,31 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                       ),
                       child: const Center(child: CircularProgressIndicator()),
                     )
-                  : hasPreview || hasUrl
+                  : hasUrl
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(16),
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              hasPreview
-                                  ? Image.memory(_pickedImageBytes!,
-                                      fit: BoxFit.cover)
-                                  : Image.network(url,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Container(
-                                            decoration: BoxDecoration(
-                                              color: context.colors.bgPage,
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                              border: Border.all(
-                                                  color: context
-                                                      .colors.borderSubtle,
-                                                  width: 2),
-                                            ),
-                                            child: Center(
-                                                child: Icon(
-                                                    Icons.broken_image_outlined,
-                                                    size: 32,
-                                                    color: context
-                                                        .colors.textMuted)),
-                                          )),
+                              Image.network(url,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                        decoration: BoxDecoration(
+                                          color: context.colors.bgPage,
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          border: Border.all(
+                                              color:
+                                                  context.colors.borderSubtle,
+                                              width: 2),
+                                        ),
+                                        child: Center(
+                                            child: Icon(
+                                                Icons.broken_image_outlined,
+                                                size: 32,
+                                                color:
+                                                    context.colors.textMuted)),
+                                      )),
                               if (_isEditingGeral)
                                 Positioned(
                                   bottom: 6,
@@ -1141,7 +1137,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                               const SizedBox(height: AppSpacing.x1),
                               Text(
                                 _isEditingGeral
-                                    ? 'Toque para adicionar'
+                                    ? 'Clique para adicionar'
                                     : 'Sem logo',
                                 style: AppTypography.caption.copyWith(
                                   fontSize: 11,
@@ -1186,7 +1182,6 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
           onEdit: () => setState(() => _isEditingGeral = true),
           onCancel: () => setState(() {
             _isEditingGeral = false;
-            _pickedImageBytes = null;
           }),
           onSave: () => _salvar(
               {
@@ -1204,7 +1199,6 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
               },
               () => setState(() {
                     _isEditingGeral = false;
-                    _pickedImageBytes = null;
                   })),
           children: [
             _idDisplay(conf.id),
