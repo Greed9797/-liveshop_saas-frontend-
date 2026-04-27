@@ -404,6 +404,33 @@ class ClienteLivesResponse {
   }
 }
 
+class ProximaLive {
+  final String id;
+  final DateTime? data;
+  final String? horaInicio;
+  final String? horaFim;
+  final int cabineNumero;
+  final String status;
+
+  const ProximaLive({
+    required this.id,
+    this.data,
+    this.horaInicio,
+    this.horaFim,
+    required this.cabineNumero,
+    required this.status,
+  });
+
+  factory ProximaLive.fromJson(Map<String, dynamic> j) => ProximaLive(
+        id: j['id']?.toString() ?? '',
+        data: j['data'] is String ? DateTime.tryParse(j['data']) : null,
+        horaInicio: j['hora_inicio']?.toString(),
+        horaFim: j['hora_fim']?.toString(),
+        cabineNumero: _toInt(j['cabine_numero']),
+        status: j['status']?.toString() ?? 'pendente',
+      );
+}
+
 class ClienteDashboard {
   final ClientePeriod periodo;
   final double faturamentoMes;
@@ -420,6 +447,18 @@ class ClienteDashboard {
   final int shares;
   final int pedidos;
   final int totalLives;
+
+  // New unified dashboard fields
+  final double gmvTotal;
+  final int totalPedidos;
+  final double ticketMedio;
+  final double metaGmv;
+  final double pctMeta;
+  final double gmvFaltante;
+  final double projecaoMes;
+  final String statusMeta;
+  final List<ProximaLive> proximasLives;
+  final int pendentesAprovacao;
 
   final LiveAtiva? liveAtiva;
   final List<ProdutoVendido> maisVendidos;
@@ -447,6 +486,16 @@ class ClienteDashboard {
     required this.shares,
     required this.pedidos,
     required this.totalLives,
+    required this.gmvTotal,
+    required this.totalPedidos,
+    required this.ticketMedio,
+    required this.metaGmv,
+    required this.pctMeta,
+    required this.gmvFaltante,
+    required this.projecaoMes,
+    required this.statusMeta,
+    required this.proximasLives,
+    required this.pendentesAprovacao,
     this.liveAtiva,
     required this.maisVendidos,
     this.rankingDia,
@@ -470,12 +519,18 @@ class ClienteDashboard {
       return horasMes * valor / horasIncluidas;
     }();
 
+    final gmvTotal = _toDouble(
+      j['gmv_total'] ?? j['gmv_mes'] ?? j['faturamento_mes'],
+    );
+    final totalPedidos = _toInt(j['total_pedidos'] ?? j['pedidos']);
+    final ticketMedio = _toDouble(j['ticket_medio']);
+
     return ClienteDashboard(
       periodo: ClientePeriod(
         mes: _toInt(periodoJson?['mes']),
         ano: _toInt(periodoJson?['ano']),
       ),
-      faturamentoMes: _toDouble(j['gmv_mes'] ?? j['faturamento_mes']),
+      faturamentoMes: _toDouble(j['gmv_mes'] ?? j['faturamento_mes'] ?? j['gmv_total']),
       crescimentoPct: _toInt(j['crescimento_pct']),
       volumeVendas: _toInt(j['itens_vendidos'] ?? j['volume_vendas']),
       lucroEstimado: _toDouble(j['lucro_estimado']),
@@ -491,6 +546,19 @@ class ClienteDashboard {
       shares: _toInt(j['shares']),
       pedidos: _toInt(j['pedidos']),
       totalLives: _toInt(j['total_lives']),
+      gmvTotal: gmvTotal,
+      totalPedidos: totalPedidos,
+      ticketMedio: ticketMedio,
+      metaGmv: _toDouble(j['meta_gmv']),
+      pctMeta: _toDouble(j['pct_meta']),
+      gmvFaltante: _toDouble(j['gmv_faltante']),
+      projecaoMes: _toDouble(j['projecao_mes']),
+      statusMeta: j['status_meta']?.toString() ?? 'dentro_do_ritmo',
+      proximasLives: (j['proximas_lives'] as List?)
+              ?.map((e) => ProximaLive.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      pendentesAprovacao: _toInt(j['pendentes_aprovacao']),
       liveAtiva: j['live_ativa'] != null
           ? LiveAtiva.fromJson((j['live_ativa'] as Map).cast<String, dynamic>())
           : null,
@@ -535,21 +603,28 @@ class ClienteDashboard {
   }
 }
 
+/// Provider for currently selected period string (hoje|7dias|30dias|mes_atual).
+final clientePeriodStringProvider = StateProvider<String>((_) => 'mes_atual');
+
 class ClienteDashboardNotifier extends AsyncNotifier<ClienteDashboard> {
   Timer? _timer;
 
-  void _configurePolling(ClientePeriod period, ClienteDashboard dashboard) {
+  void _configurePolling(
+    ClientePeriod period,
+    String periodoStr,
+    ClienteDashboard dashboard,
+  ) {
     _timer?.cancel();
     final interval =
         dashboard.liveAtiva != null ? _clienteLivePolling : _clienteIdlePolling;
 
     _timer = Timer.periodic(interval, (_) async {
       try {
-        final newData = await _fetch(period);
+        final newData = await _fetch(period, periodoStr);
         if (state.hasValue) {
           state = AsyncValue.data(newData);
         }
-        _configurePolling(period, newData);
+        _configurePolling(period, periodoStr, newData);
       } catch (e) {
         debugPrint('Erro no polling do cliente: $e');
       }
@@ -559,33 +634,56 @@ class ClienteDashboardNotifier extends AsyncNotifier<ClienteDashboard> {
   @override
   Future<ClienteDashboard> build() async {
     final period = ref.watch(clientePeriodProvider);
-    final data = await _fetch(period);
+    final periodoStr = ref.watch(clientePeriodStringProvider);
+    final data = await _fetch(period, periodoStr);
 
-    _configurePolling(period, data);
+    _configurePolling(period, periodoStr, data);
 
     ref.onDispose(() => _timer?.cancel());
     return data;
   }
 
-  Future<ClienteDashboard> _fetch(ClientePeriod period) async {
+  Future<ClienteDashboard> _fetch(
+    ClientePeriod period,
+    String periodoStr,
+  ) async {
     final resp = await ApiService.get(
-      '/cliente/dashboard?mes=${period.mes}&ano=${period.ano}',
+      '/cliente/dashboard',
+      params: {
+        'periodo': periodoStr,
+        'mes': '${period.mes}',
+        'ano': '${period.ano}',
+      },
     );
     return ClienteDashboard.fromJson(resp.data as Map<String, dynamic>);
   }
 
   Future<void> refresh() async {
     final period = ref.read(clientePeriodProvider);
+    final periodoStr = ref.read(clientePeriodStringProvider);
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetch(period));
+    state = await AsyncValue.guard(() => _fetch(period, periodoStr));
     final current = state.valueOrNull;
     if (current != null) {
-      _configurePolling(period, current);
+      _configurePolling(period, periodoStr, current);
     }
+  }
+
+  Future<void> fetchPeriodo(String periodoStr) async {
+    ref.read(clientePeriodStringProvider.notifier).state = periodoStr;
+    // build() re-runs automatically via ref.watch
   }
 
   void setPeriodo(ClientePeriod period) {
     ref.read(clientePeriodProvider.notifier).state = period;
+  }
+
+  Future<void> updateMeta(int ano, int mes, double metaGmv) async {
+    await ApiService.patch(
+      '/cliente/meta',
+      data: {'ano': ano, 'mes': mes, 'meta_gmv': metaGmv},
+    );
+    await refresh();
   }
 }
 

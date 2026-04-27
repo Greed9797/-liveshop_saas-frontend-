@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../design_system/design_system.dart';
 import '../../providers/cliente_dashboard_provider.dart'
@@ -8,29 +9,49 @@ import '../../providers/cliente_dashboard_provider.dart'
         ClienteDashboard,
         ClientePeriod,
         HorarioVenda,
+        ProximaLive,
         SerieMensal,
         clienteDashboardProvider,
-        clientePeriodProvider;
+        clientePeriodProvider,
+        clientePeriodStringProvider;
 import '../../providers/cliente_lives_provider.dart'
     show ClienteLive, ClienteLivesResponse, clienteLivesProvider;
 import '../../routes/app_routes.dart';
 import '../../widgets/metric_card.dart';
 
+// ---------------------------------------------------------------------------
+// Formatters
+// ---------------------------------------------------------------------------
+final _currency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+final _dateWeekday = DateFormat('dd/MM (EEE)', 'pt_BR');
+final _time = DateFormat('HH:mm', 'pt_BR');
+final _periodFormat = DateFormat.yMMMM('pt_BR');
+
+// ---------------------------------------------------------------------------
+// Root screen
+// ---------------------------------------------------------------------------
 class ClienteDashboardScreen extends ConsumerWidget {
   const ClienteDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final period = ref.watch(clientePeriodProvider);
+    final periodoStr = ref.watch(clientePeriodStringProvider);
     final dashAsync = ref.watch(clienteDashboardProvider);
     final livesAsync = ref.watch(clienteLivesProvider);
 
     return AppScreenScaffold(
-      currentRoute: AppRoutes.clienteDashboard,
-      eyebrow: 'DASHBOARD',
-      title: 'Dashboard do Parceiro',
-      subtitle: 'KPIs detalhados e desempenho por live',
-      actions: [_DashboardPeriodSelector(period: period)],
+      currentRoute: AppRoutes.cliente,
+      eyebrow: 'PAINEL DO PARCEIRO',
+      title: 'Minha Loja',
+      subtitle: 'Visão geral da performance de lives',
+      titleSerif: true,
+      actions: [
+        _PeriodTabs(
+          selected: periodoStr,
+          period: period,
+        ),
+      ],
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.x6),
         child: dashAsync.when(
@@ -40,7 +61,7 @@ class ClienteDashboardScreen extends ConsumerWidget {
               child: CircularProgressIndicator(),
             ),
           ),
-          error: (error, _) => _DashboardErrorState(error: error),
+          error: (error, _) => _ErrorState(error: error),
           data: (dashboard) => _DashboardContent(
             dashboard: dashboard,
             livesAsync: livesAsync,
@@ -51,6 +72,143 @@ class ClienteDashboardScreen extends ConsumerWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Period tabs
+// ---------------------------------------------------------------------------
+class _PeriodTabs extends ConsumerWidget {
+  final String selected;
+  final ClientePeriod period;
+
+  const _PeriodTabs({required this.selected, required this.period});
+
+  static const _tabs = [
+    ('hoje', 'Hoje'),
+    ('7dias', '7 dias'),
+    ('30dias', '30 dias'),
+    ('mes_atual', 'Mês atual'),
+    ('personalizado', 'Personalizado'),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return AppCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x2,
+        vertical: AppSpacing.x1,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ..._tabs.map((tab) {
+            final isSelected = tab.$1 == selected;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                onTap: () => _onTap(context, ref, tab.$1),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.x3,
+                    vertical: AppSpacing.x2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Text(
+                    tab.$2,
+                    style: AppTypography.caption.copyWith(
+                      color: isSelected
+                          ? Colors.white
+                          : AppColors.textSecondary,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+          const SizedBox(width: AppSpacing.x2),
+          // Month navigator (only visible for mes_atual / personalizado)
+          if (selected == 'mes_atual' || selected == 'personalizado') ...[
+            IconButton(
+              tooltip: 'Mês anterior',
+              iconSize: 18,
+              onPressed: () => ref
+                  .read(clienteDashboardProvider.notifier)
+                  .setPeriodo(period.previous()),
+              icon: const Icon(Icons.chevron_left_rounded),
+            ),
+            SizedBox(
+              width: 120,
+              child: Text(
+                _periodFormat.format(DateTime(period.ano, period.mes)),
+                textAlign: TextAlign.center,
+                style: AppTypography.caption.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Próximo mês',
+              iconSize: 18,
+              onPressed: () => ref
+                  .read(clienteDashboardProvider.notifier)
+                  .setPeriodo(period.next()),
+              icon: const Icon(Icons.chevron_right_rounded),
+            ),
+          ],
+          IconButton(
+            tooltip: 'Atualizar',
+            iconSize: 18,
+            onPressed: () =>
+                ref.read(clienteDashboardProvider.notifier).refresh(),
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onTap(BuildContext context, WidgetRef ref, String periodoStr) {
+    if (periodoStr == 'personalizado') {
+      // Show date range picker — temporarily uses 30dias backend
+      _showDateRangePicker(context, ref);
+      return;
+    }
+    ref.read(clientePeriodStringProvider.notifier).state = periodoStr;
+  }
+
+  Future<void> _showDateRangePicker(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final now = DateTime.now();
+    final range = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      initialDateRange: DateTimeRange(
+        start: now.subtract(const Duration(days: 30)),
+        end: now,
+      ),
+      locale: const Locale('pt', 'BR'),
+    );
+    if (range != null) {
+      // Backend custom period not yet implemented — fall back to 30dias
+      ref.read(clientePeriodStringProvider.notifier).state = 'personalizado';
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main content
+// ---------------------------------------------------------------------------
 class _DashboardContent extends StatelessWidget {
   final ClienteDashboard dashboard;
   final AsyncValue<ClienteLivesResponse> livesAsync;
@@ -62,96 +220,34 @@ class _DashboardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final invested = dashboard.valorInvestidoMes > 0
-        ? dashboard.valorInvestidoMes
-        : dashboard.valorInvestidoLives;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Active live banner
         if (dashboard.liveAtiva != null) ...[
           _ActiveLiveCard(dashboard: dashboard),
           const SizedBox(height: AppSpacing.x6),
         ],
-        Wrap(
-          spacing: AppSpacing.x4,
-          runSpacing: AppSpacing.x4,
-          children: [
-            _MetricBox(
-              child: MetricCard(
-                label: 'GMV',
-                value: _Formatters.currency.format(dashboard.faturamentoMes),
-                icon: Icons.payments_rounded,
-                iconColor: AppColors.primary,
-                subtitle: '${dashboard.totalLives} lives no período',
-              ),
-            ),
-            _MetricBox(
-              child: MetricCard(
-                label: 'ITENS VENDIDOS',
-                value: '${dashboard.volumeVendas}',
-                icon: Icons.inventory_2_rounded,
-                iconColor: AppColors.info,
-                subtitle: '${dashboard.pedidos} pedidos',
-              ),
-            ),
-            _MetricBox(
-              child: MetricCard(
-                label: 'LIVES',
-                value: '${dashboard.totalLives}',
-                icon: Icons.live_tv_rounded,
-                iconColor: AppColors.primaryLight,
-                subtitle: '${dashboard.horasLive.toStringAsFixed(1)} horas',
-              ),
-            ),
-            _MetricBox(
-              child: MetricCard(
-                label: 'ROAS',
-                value: dashboard.roas.toStringAsFixed(2),
-                icon: Icons.show_chart_rounded,
-                iconColor: AppColors.success,
-                subtitle: 'GMV por valor investido',
-              ),
-            ),
-            _MetricBox(
-              child: MetricCard(
-                label: 'VALOR INVESTIDO',
-                value: _Formatters.currency.format(invested),
-                icon: Icons.savings_rounded,
-                iconColor: AppColors.warning,
-                subtitle: 'Custo proporcional do período',
-              ),
-            ),
-            _MetricBox(
-              child: MetricCard(
-                label: 'VIEWERS',
-                value: '${dashboard.viewers}',
-                icon: Icons.visibility_rounded,
-                iconColor: AppColors.info,
-                subtitle: 'Audiência acumulada',
-              ),
-            ),
-            _MetricBox(
-              child: MetricCard(
-                label: 'COMENTÁRIOS',
-                value: '${dashboard.comentarios}',
-                icon: Icons.forum_rounded,
-                iconColor: AppColors.primaryLight,
-                subtitle: '${dashboard.likes} likes no período',
-              ),
-            ),
-            _MetricBox(
-              child: MetricCard(
-                label: 'SHARES',
-                value: '${dashboard.shares}',
-                icon: Icons.share_rounded,
-                iconColor: AppColors.lilac,
-                subtitle: 'Pedidos: ${dashboard.pedidos}',
-              ),
-            ),
-          ],
-        ),
+
+        // Block 1 — KPI Cards
+        _KpiGrid(dashboard: dashboard),
         const SizedBox(height: AppSpacing.x8),
+
+        // Block 2 — Meta e Projeção
+        _MetaCard(dashboard: dashboard),
+        const SizedBox(height: AppSpacing.x8),
+
+        // Block 7 — Próximas Lives
+        _ProximasLivesCard(lives: dashboard.proximasLives),
+        const SizedBox(height: AppSpacing.x8),
+
+        // Block 8 — Pendências
+        if (dashboard.pendentesAprovacao > 0) ...[
+          _PendenciasCard(count: dashboard.pendentesAprovacao),
+          const SizedBox(height: AppSpacing.x8),
+        ],
+
+        // Analytics detail (from existing dashboard)
         LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 1160;
@@ -171,7 +267,6 @@ class _DashboardContent extends StatelessWidget {
                 ],
               );
             }
-
             return Column(
               children: [
                 _SalesWindowsCard(horarios: dashboard.melhoresHorariosVenda),
@@ -182,8 +277,8 @@ class _DashboardContent extends StatelessWidget {
           },
         ),
         const SizedBox(height: AppSpacing.x8),
-        _InsightGrid(dashboard: dashboard),
-        const SizedBox(height: AppSpacing.x8),
+
+        // Detailed lives section
         livesAsync.when(
           loading: () => const _SectionLoading(
             title: 'Lives detalhadas',
@@ -195,59 +290,544 @@ class _DashboardContent extends StatelessWidget {
           ),
           data: (response) => _DetailedLivesSection(response: response),
         ),
+        const SizedBox(height: AppSpacing.x8),
+
+        // Block 9 — Nova Live CTA
+        _NovaLiveCta(),
       ],
     );
   }
 }
 
-class _DashboardPeriodSelector extends ConsumerWidget {
-  static final DateFormat _periodFormat = DateFormat.yMMMM('pt_BR');
+// ---------------------------------------------------------------------------
+// Block 1 — KPI Grid
+// ---------------------------------------------------------------------------
+class _KpiGrid extends StatelessWidget {
+  final ClienteDashboard dashboard;
 
-  final ClientePeriod period;
+  const _KpiGrid({required this.dashboard});
 
-  const _DashboardPeriodSelector({required this.period});
+  @override
+  Widget build(BuildContext context) {
+    final ticketDisplay = dashboard.totalPedidos == 0
+        ? '–'
+        : _currency.format(dashboard.ticketMedio);
+
+    return Wrap(
+      spacing: AppSpacing.x4,
+      runSpacing: AppSpacing.x4,
+      children: [
+        _KpiCard(
+          value: _currency.format(dashboard.gmvTotal),
+          label: 'Faturamento do período',
+          color: AppColors.primary,
+        ),
+        _KpiCard(
+          value: '${dashboard.totalLives}',
+          label: 'Lives realizadas',
+          color: AppColors.info,
+        ),
+        _KpiCard(
+          value: '${dashboard.horasLive.toStringAsFixed(1)}h',
+          label: 'Horas no ar',
+          color: AppColors.success,
+        ),
+        _KpiCard(
+          value: ticketDisplay,
+          label: 'Ticket médio',
+          color: AppColors.warning,
+        ),
+      ],
+    );
+  }
+}
+
+class _KpiCard extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color color;
+
+  const _KpiCard({
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 220,
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpacing.x5),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: AppTypography.h2.copyWith(
+                color: color,
+                fontSize: 24,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.x1),
+            Text(
+              label,
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Block 2 — Meta e Projeção
+// ---------------------------------------------------------------------------
+class _MetaCard extends ConsumerWidget {
+  final ClienteDashboard dashboard;
+
+  const _MetaCard({required this.dashboard});
+
+  Color _barColor(String status) {
+    switch (status) {
+      case 'acima_da_meta':
+        return AppColors.success;
+      case 'dentro_do_ritmo':
+        return AppColors.primary;
+      case 'abaixo_do_ritmo':
+        return AppColors.warning;
+      case 'critico':
+        return AppColors.danger;
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'acima_da_meta':
+        return 'Acima da meta';
+      case 'dentro_do_ritmo':
+        return 'No ritmo';
+      case 'abaixo_do_ritmo':
+        return 'Abaixo do ritmo';
+      case 'critico':
+        return 'Crítico';
+      default:
+        return 'No ritmo';
+    }
+  }
+
+  Color _statusBgColor(String status) {
+    switch (status) {
+      case 'acima_da_meta':
+        return AppColors.successBg;
+      case 'dentro_do_ritmo':
+        return AppColors.primarySoft;
+      case 'abaixo_do_ritmo':
+        return AppColors.warningBg;
+      case 'critico':
+        return AppColors.dangerBg;
+      default:
+        return AppColors.primarySoft;
+    }
+  }
+
+  Color _statusTextColor(String status) {
+    switch (status) {
+      case 'acima_da_meta':
+        return AppColors.success;
+      case 'dentro_do_ritmo':
+        return AppColors.primary;
+      case 'abaixo_do_ritmo':
+        return AppColors.warning;
+      case 'critico':
+        return AppColors.danger;
+      default:
+        return AppColors.primary;
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final label = _periodFormat.format(DateTime(period.ano, period.mes));
+    final progress = (dashboard.pctMeta / 100).clamp(0.0, 1.0);
+    final barColor = _barColor(dashboard.statusMeta);
+    final metaAtingida = dashboard.pctMeta >= 100;
 
     return AppCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.x2,
-        vertical: AppSpacing.x1,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.all(AppSpacing.x6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(
-            tooltip: 'Mês anterior',
-            onPressed: () => ref
-                .read(clienteDashboardProvider.notifier)
-                .setPeriodo(period.previous()),
-            icon: const Icon(Icons.chevron_left_rounded),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Meta do Mês',
+                      style: AppTypography.bodyLarge.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.x1),
+                    Text(
+                      '${_currency.format(dashboard.gmvTotal)} de ${_currency.format(dashboard.metaGmv)}',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Editar meta',
+                onPressed: () => _showMetaDialog(context, ref, dashboard),
+                icon: Icon(
+                  PhosphorIcons.pencilSimple(),
+                  size: 18,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: AppSpacing.x4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.full),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 12,
+              backgroundColor: AppColors.borderLight,
+              valueColor: AlwaysStoppedAnimation<Color>(barColor),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.x3),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.x3,
+                  vertical: AppSpacing.x1,
+                ),
+                decoration: BoxDecoration(
+                  color: _statusBgColor(dashboard.statusMeta),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                ),
+                child: Text(
+                  _statusLabel(dashboard.statusMeta),
+                  style: AppTypography.caption.copyWith(
+                    color: _statusTextColor(dashboard.statusMeta),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                metaAtingida
+                    ? 'Meta atingida!'
+                    : 'Falta ${_currency.format(dashboard.gmvFaltante)}',
+                style: AppTypography.bodySmall.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: metaAtingida ? AppColors.success : AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          if (dashboard.projecaoMes > 0) ...[
+            const SizedBox(height: AppSpacing.x2),
+            Text(
+              'Projeção: ${_currency.format(dashboard.projecaoMes)}',
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showMetaDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ClienteDashboard dashboard,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => _MetaEditDialog(dashboard: dashboard, ref: ref),
+    );
+  }
+}
+
+class _MetaEditDialog extends StatefulWidget {
+  final ClienteDashboard dashboard;
+  final WidgetRef ref;
+
+  const _MetaEditDialog({required this.dashboard, required this.ref});
+
+  @override
+  State<_MetaEditDialog> createState() => _MetaEditDialogState();
+}
+
+class _MetaEditDialogState extends State<_MetaEditDialog> {
+  late final TextEditingController _ctrl;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.dashboard.metaGmv;
+    _ctrl = TextEditingController(
+      text: existing > 0 ? existing.toStringAsFixed(2) : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final value = double.tryParse(_ctrl.text.replaceAll(',', '.'));
+    if (value == null || value <= 0) return;
+    setState(() => _saving = true);
+    try {
+      final period = widget.ref.read(clientePeriodProvider);
+      await widget.ref
+          .read(clienteDashboardProvider.notifier)
+          .updateMeta(period.ano, period.mes, value);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao salvar meta: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final period = widget.ref.read(clientePeriodProvider);
+    final monthLabel =
+        _periodFormat.format(DateTime(period.ano, period.mes));
+
+    return AlertDialog(
+      title: const Text('Definir meta de GMV'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            monthLabel,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.x4),
+          TextField(
+            controller: _ctrl,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Meta de GMV (R\$)',
+              prefixText: 'R\$ ',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: _saving ? null : _save,
+          child: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Block 7 — Próximas Lives
+// ---------------------------------------------------------------------------
+class _ProximasLivesCard extends ConsumerWidget {
+  final List<ProximaLive> lives;
+
+  const _ProximasLivesCard({required this.lives});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.x6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                PhosphorIcons.calendarBlank(),
+                size: 18,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              Expanded(
+                child: Text(
+                  'Próximas Lives',
+                  style: AppTypography.bodyLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.x4),
+          if (lives.isEmpty)
+            Column(
+              children: [
+                Text(
+                  'Nenhuma live agendada',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.x4),
+                OutlinedButton.icon(
+                  onPressed: () => _onSolicitarLive(context),
+                  icon: Icon(PhosphorIcons.plus(), size: 16),
+                  label: const Text('Solicitar nova live'),
+                ),
+              ],
+            )
+          else
+            Column(
+              children: lives
+                  .map((live) => _ProximaLiveRow(live: live))
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _onSolicitarLive(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Em breve')),
+    );
+  }
+}
+
+class _ProximaLiveRow extends StatelessWidget {
+  final ProximaLive live;
+
+  const _ProximaLiveRow({required this.live});
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'aprovada':
+        return AppColors.success;
+      default:
+        return AppColors.warning;
+    }
+  }
+
+  Color _statusBgColor(String status) {
+    switch (status) {
+      case 'aprovada':
+        return AppColors.successBg;
+      default:
+        return AppColors.warningBg;
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'aprovada':
+        return 'Aprovada';
+      default:
+        return 'Pendente';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = live.data != null
+        ? _dateWeekday.format(live.data!)
+        : '–';
+    final timeStr = (live.horaInicio != null && live.horaFim != null)
+        ? '${live.horaInicio} – ${live.horaFim}'
+        : live.horaInicio ?? '–';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2),
+      child: Row(
+        children: [
           SizedBox(
-            width: 140,
+            width: 110,
             child: Text(
-              label,
-              textAlign: TextAlign.center,
+              dateStr,
               style: AppTypography.bodySmall.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          IconButton(
-            tooltip: 'Próximo mês',
-            onPressed: () => ref
-                .read(clienteDashboardProvider.notifier)
-                .setPeriodo(period.next()),
-            icon: const Icon(Icons.chevron_right_rounded),
+          Expanded(
+            child: Text(
+              timeStr,
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
-          IconButton(
-            tooltip: 'Atualizar',
-            onPressed: () =>
-                ref.read(clienteDashboardProvider.notifier).refresh(),
-            icon: const Icon(Icons.refresh_rounded),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x2,
+              vertical: 2,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.bgMuted,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Text(
+              'Cabine ${live.cabineNumero.toString().padLeft(2, '0')}',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.x3),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x2,
+              vertical: 2,
+            ),
+            decoration: BoxDecoration(
+              color: _statusBgColor(live.status),
+              borderRadius: BorderRadius.circular(AppRadius.full),
+            ),
+            child: Text(
+              _statusLabel(live.status),
+              style: AppTypography.caption.copyWith(
+                color: _statusColor(live.status),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -255,6 +835,78 @@ class _DashboardPeriodSelector extends ConsumerWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Block 8 — Pendências
+// ---------------------------------------------------------------------------
+class _PendenciasCard extends StatelessWidget {
+  final int count;
+
+  const _PendenciasCard({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.x4),
+      decoration: BoxDecoration(
+        color: AppColors.warningBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.warning.withOpacity(0.4)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            PhosphorIcons.warning(),
+            color: AppColors.warning,
+            size: 20,
+          ),
+          const SizedBox(width: AppSpacing.x3),
+          Expanded(
+            child: Text(
+              'Você tem $count live(s) aguardando confirmação da unidade.',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.warningFg,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Block 9 — Nova Live CTA
+// ---------------------------------------------------------------------------
+class _NovaLiveCta extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Em breve')),
+          );
+        },
+        icon: Icon(PhosphorIcons.plus(), size: 18),
+        label: const Text('Solicitar nova live'),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
+          side: const BorderSide(color: AppColors.primary),
+          foregroundColor: AppColors.primary,
+          textStyle: AppTypography.bodySmall.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Active Live Banner (preserved from dashboard)
+// ---------------------------------------------------------------------------
 class _ActiveLiveCard extends StatelessWidget {
   final ClienteDashboard dashboard;
 
@@ -313,7 +965,7 @@ class _ActiveLiveCard extends StatelessWidget {
               _LivePulseMetric(
                 icon: Icons.payments_rounded,
                 label: 'GMV atual',
-                value: _Formatters.currency.format(live.gmvAtual),
+                value: _currency.format(live.gmvAtual),
               ),
               _LivePulseMetric(
                 icon: Icons.visibility_rounded,
@@ -395,17 +1047,9 @@ class _LivePulseMetric extends StatelessWidget {
   }
 }
 
-class _MetricBox extends StatelessWidget {
-  final Widget child;
-
-  const _MetricBox({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(width: 220, child: child);
-  }
-}
-
+// ---------------------------------------------------------------------------
+// Analytics — Sales Windows
+// ---------------------------------------------------------------------------
 class _SalesWindowsCard extends StatelessWidget {
   final List<HorarioVenda> horarios;
 
@@ -451,10 +1095,7 @@ class _HorarioRow extends StatelessWidget {
   final HorarioVenda horario;
   final double maxGmv;
 
-  const _HorarioRow({
-    required this.horario,
-    required this.maxGmv,
-  });
+  const _HorarioRow({required this.horario, required this.maxGmv});
 
   @override
   Widget build(BuildContext context) {
@@ -486,7 +1127,7 @@ class _HorarioRow extends StatelessWidget {
         SizedBox(
           width: 96,
           child: Text(
-            _Formatters.currency.format(horario.gmvTotal),
+            _currency.format(horario.gmvTotal),
             textAlign: TextAlign.right,
             style: AppTypography.bodySmall.copyWith(
               fontWeight: FontWeight.w600,
@@ -498,6 +1139,9 @@ class _HorarioRow extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Analytics — Monthly Series
+// ---------------------------------------------------------------------------
 class _MonthlySeriesCard extends StatelessWidget {
   final List<SerieMensal> series;
 
@@ -536,10 +1180,7 @@ class _MonthlySeriesCard extends StatelessWidget {
             ...visible.map(
               (item) => Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.x4),
-                child: _MonthlySeriesRow(
-                  item: item,
-                  maxGmv: maxGmv,
-                ),
+                child: _MonthlySeriesRow(item: item, maxGmv: maxGmv),
               ),
             ),
         ],
@@ -552,10 +1193,7 @@ class _MonthlySeriesRow extends StatelessWidget {
   final SerieMensal item;
   final double maxGmv;
 
-  const _MonthlySeriesRow({
-    required this.item,
-    required this.maxGmv,
-  });
+  const _MonthlySeriesRow({required this.item, required this.maxGmv});
 
   @override
   Widget build(BuildContext context) {
@@ -576,7 +1214,7 @@ class _MonthlySeriesRow extends StatelessWidget {
               ),
             ),
             Text(
-              _Formatters.currency.format(item.gmvTotal),
+              _currency.format(item.gmvTotal),
               style: AppTypography.bodySmall.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -605,110 +1243,17 @@ class _MonthlySeriesRow extends StatelessWidget {
   }
 }
 
-class _InsightGrid extends StatelessWidget {
-  final ClienteDashboard dashboard;
+// ---------------------------------------------------------------------------
+// Detailed Lives Section (preserved)
+// ---------------------------------------------------------------------------
+class _MetricBox extends StatelessWidget {
+  final Widget child;
 
-  const _InsightGrid({required this.dashboard});
-
-  @override
-  Widget build(BuildContext context) {
-    final bestMonth = dashboard.seriesMensais.fold<SerieMensal?>(
-      null,
-      (best, current) {
-        if (best == null || current.gmvTotal > best.gmvTotal) {
-          return current;
-        }
-        return best;
-      },
-    );
-    final gmvPerLive = dashboard.totalLives == 0
-        ? 0.0
-        : dashboard.faturamentoMes / dashboard.totalLives;
-    final ordersPerLive = dashboard.totalLives == 0
-        ? 0.0
-        : dashboard.pedidos / dashboard.totalLives;
-    final engagementTotal =
-        dashboard.comentarios + dashboard.likes + dashboard.shares;
-
-    return Wrap(
-      spacing: AppSpacing.x4,
-      runSpacing: AppSpacing.x4,
-      children: [
-        _InsightCard(
-          icon: Icons.rocket_launch_rounded,
-          title: 'Pico do período',
-          value: bestMonth == null
-              ? _Formatters.currency.format(0)
-              : _Formatters.currency.format(bestMonth.gmvTotal),
-          description: bestMonth == null
-              ? 'Sem pico identificado na série mensal.'
-              : 'Melhor mês: ${bestMonth.mes.toString().padLeft(2, '0')}/${bestMonth.ano}.',
-        ),
-        _InsightCard(
-          icon: Icons.bar_chart_rounded,
-          title: 'GMV por live',
-          value: _Formatters.currency.format(gmvPerLive),
-          description:
-              '${dashboard.totalLives} lives, média de ${ordersPerLive.toStringAsFixed(1)} pedidos por live.',
-        ),
-        _InsightCard(
-          icon: Icons.groups_rounded,
-          title: 'Engajamento',
-          value: '$engagementTotal',
-          description:
-              '${dashboard.likes} likes, ${dashboard.shares} shares e ${dashboard.comentarios} comentários.',
-        ),
-        _InsightCard(
-          icon: Icons.visibility_rounded,
-          title: 'Audiência média',
-          value: dashboard.totalLives == 0
-              ? '0'
-              : (dashboard.viewers / dashboard.totalLives).toStringAsFixed(0),
-          description: '${dashboard.viewers} viewers acumulados no período.',
-        ),
-      ],
-    );
-  }
-}
-
-class _InsightCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-  final String description;
-
-  const _InsightCard({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.description,
-  });
+  const _MetricBox({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 270,
-      child: AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SectionTitle(icon: icon, title: title, subtitle: null),
-            const SizedBox(height: AppSpacing.x4),
-            Text(
-              value,
-              style: AppTypography.h2.copyWith(fontSize: 28),
-            ),
-            const SizedBox(height: AppSpacing.x2),
-            Text(
-              description,
-              style: AppTypography.bodySmall.copyWith(
-                color: context.colors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return SizedBox(width: 220, child: child);
   }
 }
 
@@ -764,7 +1309,7 @@ class _DetailedLivesSection extends StatelessWidget {
             _MetricBox(
               child: MetricCard(
                 label: 'INVESTIDO',
-                value: _Formatters.currency.format(resumo.valorInvestidoLives),
+                value: _currency.format(resumo.valorInvestidoLives),
                 icon: Icons.savings_rounded,
                 iconColor: AppColors.warning,
                 subtitle: 'ROAS ${resumo.roas.toStringAsFixed(2)}',
@@ -805,7 +1350,8 @@ class _LiveDetailCard extends StatelessWidget {
     final startedAt = live.iniciadoEm == null
         ? 'Sem início'
         : _dateFormat.format(live.iniciadoEm!.toLocal());
-    final statusLabel = live.encerradoEm == null ? 'em andamento' : 'encerrada';
+    final statusLabel =
+        live.encerradoEm == null ? 'em andamento' : 'encerrada';
 
     return AppCard(
       child: Column(
@@ -861,7 +1407,7 @@ class _LiveDetailCard extends StatelessWidget {
               _LiveMetric(label: 'Duração', value: '${live.duracaoMin} min'),
               _LiveMetric(
                 label: 'GMV',
-                value: _Formatters.currency.format(live.gmv),
+                value: _currency.format(live.gmv),
                 highlight: true,
               ),
               _LiveMetric(label: 'Itens', value: '${live.itensVendidos}'),
@@ -876,7 +1422,7 @@ class _LiveDetailCard extends StatelessWidget {
               _LiveMetric(label: 'ROAS', value: live.roas.toStringAsFixed(2)),
               _LiveMetric(
                 label: 'Investido',
-                value: _Formatters.currency.format(live.valorInvestido),
+                value: _currency.format(live.valorInvestido),
               ),
             ],
           ),
@@ -948,6 +1494,9 @@ class _LiveMetric extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Shared sub-widgets
+// ---------------------------------------------------------------------------
 class _SectionTitle extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -1021,10 +1570,7 @@ class _SectionLoading extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _SectionLoading({
-    required this.title,
-    required this.subtitle,
-  });
+  const _SectionLoading({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -1049,10 +1595,7 @@ class _SectionError extends StatelessWidget {
   final String title;
   final String message;
 
-  const _SectionError({
-    required this.title,
-    required this.message,
-  });
+  const _SectionError({required this.title, required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -1078,10 +1621,10 @@ class _SectionError extends StatelessWidget {
   }
 }
 
-class _DashboardErrorState extends ConsumerWidget {
+class _ErrorState extends ConsumerWidget {
   final Object error;
 
-  const _DashboardErrorState({required this.error});
+  const _ErrorState({required this.error});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1115,10 +1658,4 @@ class _DashboardErrorState extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _Formatters {
-  static final NumberFormat currency = NumberFormat.simpleCurrency(
-    locale: 'pt_BR',
-  );
 }

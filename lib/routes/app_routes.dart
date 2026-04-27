@@ -12,9 +12,11 @@ import '../screens/auth/login_screen.dart';
 import '../screens/boletos/boletos_screen.dart';
 import '../screens/cabines/cabine_detail_screen.dart';
 import '../screens/cabines/cabines_screen.dart';
+import '../screens/cliente/cliente_agenda_screen.dart';
 import '../screens/cliente/cliente_ao_vivo_screen.dart';
 import '../screens/cliente/cliente_configuracoes_screen.dart';
 import '../screens/cliente/cliente_historico_screen.dart';
+import '../screens/cliente/cliente_lives_screen.dart';
 import '../screens/clientes/clientes_leads_screen.dart';
 import '../screens/configuracoes/configuracoes_screen.dart';
 import '../screens/excelencia/excelencia_screen.dart';
@@ -24,7 +26,6 @@ import '../screens/leads/leads_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
 import '../screens/painel_cliente/carteira_clientes_screen.dart';
 import '../screens/painel_cliente/cliente_dashboard_screen.dart';
-import '../screens/painel_cliente/cliente_screen.dart';
 import '../screens/recomendacoes/recomendacoes_screen.dart';
 import '../screens/vendas/analise_financeira_screen.dart';
 import '../screens/vendas/analise_vendas_screen.dart';
@@ -73,6 +74,8 @@ class AppRoutes {
   static const apresentadoras = '/apresentadoras';
   static const analyticsDashboard = '/analytics-dashboard';
   static const clienteConfiguracoes = '/cliente/configuracoes';
+  static const clienteLives = '/cliente/lives';
+  static const clienteAgenda = '/cliente/agenda';
 
   static const Set<String> _internalRoles = {
     'franqueado',
@@ -287,7 +290,7 @@ class AppRoutes {
             allowedRoles: {'cliente_parceiro'},
             fallbackRoute: login,
             unauthenticatedRoute: login,
-            child: ClienteScreen(),
+            child: ClienteDashboardScreen(),
           ),
           settings: settings,
         );
@@ -321,6 +324,28 @@ class AppRoutes {
             fallbackRoute: cliente,
             unauthenticatedRoute: login,
             child: ClienteConfiguracoesScreen(),
+          ),
+          settings: settings,
+        );
+
+      case clienteLives:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'cliente_parceiro'},
+            fallbackRoute: login,
+            unauthenticatedRoute: login,
+            child: ClienteLivesScreen(),
+          ),
+          settings: settings,
+        );
+
+      case clienteAgenda:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'cliente_parceiro'},
+            fallbackRoute: login,
+            unauthenticatedRoute: login,
+            child: ClienteAgendaScreen(),
           ),
           settings: settings,
         );
