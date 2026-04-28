@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../routes/app_routes.dart';
-import '../../../widgets/app_scaffold.dart';
 import '../../core/responsive.dart';
 import '../../theme/tokens.dart';
 import '../../theme/livelab_theme.dart';
+import '../../widgets/livelab_scaffold.dart';
 import '../../widgets/ll_button.dart';
 import 'cabines_models.dart';
 import 'cabines_repository.dart';
@@ -32,10 +32,15 @@ class _CabinesScreenState extends State<CabinesScreen> {
     _future = widget.repository.fetchAll();
   }
 
+  void _refresh() {
+    setState(() => _future = widget.repository.fetchAll());
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
+    return LivelabScaffold(
       currentRoute: AppRoutes.cabines,
+      onRefresh: _refresh,
       child: FutureBuilder<List<Cabin>>(
         future: _future,
         builder: (c, snap) {

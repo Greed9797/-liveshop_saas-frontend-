@@ -13,23 +13,45 @@ class HeroStrip extends StatelessWidget {
     final t = context.llTokens;
     final pct = hero.totalCabins > 0 ? (hero.liveCount / hero.totalCabins).clamp(0.0, 1.0) : 0.0;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 22),
-      decoration: BoxDecoration(
-        color: t.bgElev1,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: t.primarySoft),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            t.primary.withValues(alpha: 0.16),
-            t.primary.withValues(alpha: 0.04),
-          ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: t.bgElev1,
+          border: Border.all(color: t.primarySoft),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              t.primary.withValues(alpha: 0.16),
+              t.primary.withValues(alpha: 0.04),
+            ],
+          ),
+          boxShadow: t.shadowCard,
         ),
-        boxShadow: t.shadowCard,
-      ),
-      child: LayoutBuilder(builder: (c, box) {
+        child: Stack(
+          children: [
+            // Radial corner glow
+            Positioned(
+              top: -190,
+              right: -38,
+              child: IgnorePointer(
+                child: Container(
+                  width: 380,
+                  height: 380,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [t.primary.withValues(alpha: 0.18), Colors.transparent],
+                      stops: const [0.0, 0.6],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 22),
+              child: LayoutBuilder(builder: (c, box) {
         final stack = box.maxWidth < 720;
         if (stack) {
           return Column(
@@ -58,6 +80,10 @@ class HeroStrip extends StatelessWidget {
           ],
         );
       }),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

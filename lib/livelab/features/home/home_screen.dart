@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../routes/app_routes.dart';
-import '../../../widgets/app_scaffold.dart';
 import '../../core/responsive.dart';
 import '../../theme/tokens.dart';
 import '../../theme/livelab_theme.dart';
+import '../../widgets/livelab_scaffold.dart';
 import 'home_models.dart';
 import 'home_repository.dart';
 import 'widgets/hero_strip.dart';
@@ -37,8 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
+    return LivelabScaffold(
       currentRoute: AppRoutes.home,
+      onRefresh: _refresh,
       child: FutureBuilder<HomeData>(
         future: _future,
         builder: (c, snap) {
@@ -65,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         r.isMobile ? 16 : 28,
-        20,
+        16,
         r.isMobile ? 16 : 28,
         28,
       ),
@@ -132,12 +133,12 @@ class _HomeScreenState extends State<HomeScreen> {
               TextSpan(
                 text: 'Visão',
                 style: TextStyle(
-                  color: t.primary,
+                  color: t.textPrimary,
                   fontFamily: 'serif',
                   fontStyle: FontStyle.italic,
                   fontSize: 32,
                   fontWeight: FontWeight.w400,
-                  letterSpacing: -0.6,
+                  letterSpacing: -0.9,
                 ),
               ),
               TextSpan(
