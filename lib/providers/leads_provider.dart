@@ -58,17 +58,10 @@ class LeadsNotifier extends AsyncNotifier<List<Lead>> {
     String etapa, {
     String? motivoPerda,
   }) async {
-    final resp = await ApiService.patch('/leads/$id/etapa', data: {
+    return atualizar(id, {
       'crm_etapa': etapa,
       if (motivoPerda != null) 'motivo_perda': motivoPerda,
     });
-    final updated = Lead.fromJson(resp.data as Map<String, dynamic>);
-    state = AsyncData(
-      (state.valueOrNull ?? [])
-          .map((lead) => lead.id == id ? updated : lead)
-          .toList(),
-    );
-    return updated;
   }
 
   Future<void> ganhar(String id, Map<String, dynamic> data) async {
