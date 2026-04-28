@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_mode_provider.dart';
 import '../../routes/app_routes.dart';
@@ -124,10 +125,10 @@ class LivelabScaffold extends ConsumerWidget {
     if (isCliente) {
       return [
         LivelabNavSection(items: [
-          LivelabNavItem(label: 'Home', icon: Icons.home_outlined, route: AppRoutes.cliente),
-          LivelabNavItem(label: 'Lives', icon: Icons.videocam_outlined, route: AppRoutes.clienteLives),
-          LivelabNavItem(label: 'Histórico', icon: Icons.history, route: AppRoutes.clienteHistorico),
-          LivelabNavItem(label: 'Configurações', icon: Icons.settings_outlined, route: AppRoutes.clienteConfiguracoes),
+          LivelabNavItem(label: 'Home', icon: PhosphorIcons.house(), route: AppRoutes.cliente),
+          LivelabNavItem(label: 'Lives', icon: PhosphorIcons.videoCamera(), route: AppRoutes.clienteLives),
+          LivelabNavItem(label: 'Histórico', icon: PhosphorIcons.clockCounterClockwise(), route: AppRoutes.clienteHistorico),
+          LivelabNavItem(label: 'Configurações', icon: PhosphorIcons.gear(), route: AppRoutes.clienteConfiguracoes),
         ]),
       ];
     }
@@ -135,8 +136,8 @@ class LivelabScaffold extends ConsumerWidget {
     if (isApresentador) {
       return [
         LivelabNavSection(items: [
-          LivelabNavItem(label: 'Cabines', icon: Icons.videocam_outlined, route: AppRoutes.cabines),
-          LivelabNavItem(label: 'Base', icon: Icons.menu_book_outlined, route: AppRoutes.manuais),
+          LivelabNavItem(label: 'Cabines', icon: PhosphorIcons.videoCamera(), route: AppRoutes.cabines),
+          LivelabNavItem(label: 'Base', icon: PhosphorIcons.book(), route: AppRoutes.manuais),
         ]),
       ];
     }
@@ -144,10 +145,10 @@ class LivelabScaffold extends ConsumerWidget {
     if (isMaster) {
       return [
         LivelabNavSection(items: [
-          LivelabNavItem(label: 'Home', icon: Icons.home_outlined, route: AppRoutes.masterDashboard),
-          LivelabNavItem(label: 'Unidades', icon: Icons.apartment_outlined, route: AppRoutes.masterUnits),
-          LivelabNavItem(label: 'Consolidado', icon: Icons.bar_chart, route: AppRoutes.masterConsolidated),
-          LivelabNavItem(label: 'CRM', icon: Icons.shopping_cart_outlined, route: AppRoutes.masterCrm),
+          LivelabNavItem(label: 'Home', icon: PhosphorIcons.house(), route: AppRoutes.masterDashboard),
+          LivelabNavItem(label: 'Unidades', icon: PhosphorIcons.buildings(), route: AppRoutes.masterUnits),
+          LivelabNavItem(label: 'Consolidado', icon: PhosphorIcons.chartBar(), route: AppRoutes.masterConsolidated),
+          LivelabNavItem(label: 'CRM', icon: PhosphorIcons.shoppingCart(), route: AppRoutes.masterCrm),
         ]),
       ];
     }
@@ -155,21 +156,21 @@ class LivelabScaffold extends ConsumerWidget {
     // franqueado / gerente default
     return [
       LivelabNavSection(items: [
-        LivelabNavItem(label: 'Home', icon: Icons.home_outlined, route: AppRoutes.home),
+        LivelabNavItem(label: 'Home', icon: PhosphorIcons.house(), route: AppRoutes.home),
       ]),
       LivelabNavSection(label: 'Comercial', items: [
-        LivelabNavItem(label: 'CRM', icon: Icons.shopping_cart_outlined, route: AppRoutes.leads),
-        LivelabNavItem(label: 'Clientes', icon: Icons.people_alt_outlined, route: AppRoutes.clientes),
+        LivelabNavItem(label: 'CRM', icon: PhosphorIcons.shoppingCart(), route: AppRoutes.leads),
+        LivelabNavItem(label: 'Clientes', icon: PhosphorIcons.users(), route: AppRoutes.clientes),
       ]),
       LivelabNavSection(label: 'Cabines', items: [
-        LivelabNavItem(label: 'Cabines', icon: Icons.videocam_outlined, route: AppRoutes.cabines, dot: true),
+        LivelabNavItem(label: 'Cabines', icon: PhosphorIcons.videoCamera(), route: AppRoutes.cabines, dot: true),
       ]),
       LivelabNavSection(label: 'Pessoas', items: [
-        LivelabNavItem(label: 'Apresentadoras', icon: Icons.mic_none_outlined, route: AppRoutes.apresentadoras),
-        LivelabNavItem(label: 'Financeiro', icon: Icons.account_balance_wallet_outlined, route: AppRoutes.financeiro, dot: true),
-        LivelabNavItem(label: 'Analytics', icon: Icons.bar_chart, route: AppRoutes.analyticsDashboard),
-        LivelabNavItem(label: 'Base', icon: Icons.menu_book_outlined, route: AppRoutes.manuais),
-        LivelabNavItem(label: 'Config', icon: Icons.settings_outlined, route: AppRoutes.configuracoes),
+        LivelabNavItem(label: 'Apresentadoras', icon: PhosphorIcons.microphone(), route: AppRoutes.apresentadoras),
+        LivelabNavItem(label: 'Financeiro', icon: PhosphorIcons.wallet(), route: AppRoutes.financeiro, dot: true),
+        LivelabNavItem(label: 'Analytics', icon: PhosphorIcons.chartLine(), route: AppRoutes.analyticsDashboard),
+        LivelabNavItem(label: 'Base', icon: PhosphorIcons.book(), route: AppRoutes.manuais),
+        LivelabNavItem(label: 'Config', icon: PhosphorIcons.gear(), route: AppRoutes.configuracoes),
       ]),
     ];
   }
@@ -231,7 +232,7 @@ class _Rail extends StatelessWidget {
             ),
           ),
           _RailItem(
-            icon: Icons.logout,
+            icon: PhosphorIcons.signOut(),
             label: 'Sair',
             active: false,
             dot: false,
