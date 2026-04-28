@@ -1,5 +1,9 @@
 // Public surface for the Livelab feature pack.
 
+export 'app/livelab_app.dart';
+export 'app/livelab_router.dart';
+export 'app/livelab_shell.dart';
+
 export 'theme/tokens.dart';
 export 'theme/livelab_theme.dart';
 export 'theme/theme_controller.dart';

@@ -8,7 +8,6 @@ class LlTokens extends ThemeExtension<LlTokens> {
   const LlTokens({
     required this.primary,
     required this.primarySoft,
-    required this.primarySofter,
     required this.primaryHover,
     required this.bgBase,
     required this.bgElev1,
@@ -33,7 +32,6 @@ class LlTokens extends ThemeExtension<LlTokens> {
 
   final Color primary;
   final Color primarySoft;
-  final Color primarySofter;
   final Color primaryHover;
   final Color bgBase;
   final Color bgElev1;
@@ -58,7 +56,6 @@ class LlTokens extends ThemeExtension<LlTokens> {
   static const dark = LlTokens(
     primary: Color(0xFFFF6A2F),
     primarySoft: Color(0x33FF6A2F),
-    primarySofter: Color(0x1FFF6A2F),
     primaryHover: Color(0xFFFF8A5C),
     bgBase: Color(0xFF0E0E10),
     bgElev1: Color(0xFF161618),
@@ -86,7 +83,6 @@ class LlTokens extends ThemeExtension<LlTokens> {
   static const light = LlTokens(
     primary: Color(0xFFE85A1F),
     primarySoft: Color(0x1FE85A1F),
-    primarySofter: Color(0xFFFFF3EC),
     primaryHover: Color(0xFFD14A14),
     bgBase: Color(0xFFFAFAFA),
     bgElev1: Color(0xFFFFFFFF),
@@ -115,7 +111,6 @@ class LlTokens extends ThemeExtension<LlTokens> {
   LlTokens copyWith({
     Color? primary,
     Color? primarySoft,
-    Color? primarySofter,
     Color? primaryHover,
     Color? bgBase,
     Color? bgElev1,
@@ -140,7 +135,6 @@ class LlTokens extends ThemeExtension<LlTokens> {
     return LlTokens(
       primary: primary ?? this.primary,
       primarySoft: primarySoft ?? this.primarySoft,
-      primarySofter: primarySofter ?? this.primarySofter,
       primaryHover: primaryHover ?? this.primaryHover,
       bgBase: bgBase ?? this.bgBase,
       bgElev1: bgElev1 ?? this.bgElev1,
@@ -170,7 +164,6 @@ class LlTokens extends ThemeExtension<LlTokens> {
     return LlTokens(
       primary: Color.lerp(primary, other.primary, t)!,
       primarySoft: Color.lerp(primarySoft, other.primarySoft, t)!,
-      primarySofter: Color.lerp(primarySofter, other.primarySofter, t)!,
       primaryHover: Color.lerp(primaryHover, other.primaryHover, t)!,
       bgBase: Color.lerp(bgBase, other.bgBase, t)!,
       bgElev1: Color.lerp(bgElev1, other.bgElev1, t)!,

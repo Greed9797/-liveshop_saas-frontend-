@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../services/api_service.dart';
 import 'home_models.dart';
@@ -9,124 +10,178 @@ abstract class HomeRepository {
 /// Real implementation — fetches from GET /v1/home/dashboard.
 class ApiHomeRepository implements HomeRepository {
   static final _brl = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 0);
-  static final _compact = NumberFormat.compactCurrency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 1);
 
-  static String _fmt(num v) => v >= 10000 ? _compact.format(v) : _brl.format(v);
-  static String _fmtInt(num v) => v >= 1000 ? '${(v / 1000).toStringAsFixed(1)}k' : v.toStringAsFixed(0);
+  static String _fmtMoney(num v) => _brl.format(v);
 
   @override
   Future<HomeData> fetch() async {
     final raw = (await ApiService.get<Map<String, dynamic>>('/home/dashboard')).data!;
 
-    // --- KPIs (faturamento + resumo_mes) ---
     final fat = raw['faturamento'] as Map<String, dynamic>? ?? {};
     final resumo = raw['resumo_mes'] as Map<String, dynamic>? ?? {};
     final gmvMes = (resumo['gmv_lives_mes'] as num? ?? 0).toDouble();
     final taxaConv = (raw['taxa_conversao'] as num? ?? 0).toDouble();
-    final mediaView = (resumo['media_viewers'] as num? ?? 0).toDouble();
+    final livesMes = (resumo['lives_mes'] as num? ?? 0).toInt();
 
+    final cabinesRaw = raw['cabines'] as List<dynamic>? ?? [];
+    final liveCabines = cabinesRaw.where((c) => (c['status'] as String? ?? '') == 'ao_vivo').toList();
+    final viewersTotal = liveCabines.fold<int>(0, (a, c) => a + ((c['viewer_count'] as num? ?? 0).toInt()));
+    final salesTotal = liveCabines.fold<double>(0, (a, c) => a + ((c['gmv_atual'] as num? ?? 0).toDouble()));
+    final totalCabines = cabinesRaw.length;
+
+    // Hero
+    final hero = HeroSummary(
+      liveCount: liveCabines.length,
+      totalCabins: totalCabines,
+      gmvMes: _fmtMoney(gmvMes),
+      gmvDelta: '',
+      gmvDeltaPositive: true,
+      gmvSpark: const [],
+      viewersNow: viewersTotal,
+      salesNow: salesTotal,
+      peakOfDay: viewersTotal > 0,
+    );
+
+    // Lives ao vivo → upcoming list (status = now)
+    final upcoming = <UpcomingLive>[];
+    for (final c in liveCabines) {
+      final dMin = (c['duracao_min'] as num? ?? 0).toInt();
+      final h = dMin ~/ 60;
+      final m = dMin % 60;
+      final dur = h > 0 ? '${h}h ${m.toString().padLeft(2, '0')}min' : '${m}min';
+      final timeFmt = DateTime.now();
+      final hh = timeFmt.hour.toString().padLeft(2, '0');
+      final mm = timeFmt.minute.toString().padLeft(2, '0');
+      upcoming.add(UpcomingLive(
+        time: '$hh:$mm',
+        client: (c['cliente_nome'] as String? ?? '').isEmpty ? '—' : c['cliente_nome'] as String,
+        cabin: (c['numero'] as num? ?? 0).toInt(),
+        presenter: c['apresentador'] as String? ?? '—',
+        duration: dur,
+        status: UpcomingStatus.now,
+        viewers: (c['viewer_count'] as num? ?? 0).toInt(),
+      ));
+    }
+
+    // KPIs (executive view)
+    final clientesAtivos = (resumo['clientes_ativos'] as num? ?? 0).toInt();
+    final pipeline = (resumo['pipeline_aberto'] as num? ?? 0).toDouble();
     final kpis = <HomeKpi>[
       HomeKpi(
         label: 'GMV do mês',
-        value: _fmt(gmvMes),
+        value: _fmtMoney(gmvMes),
         delta: '',
         deltaPositive: true,
-        spark: const [],
+        icon: Icons.attach_money,
+        primaryIcon: true,
+        footnote: 'vs mês anterior',
       ),
       HomeKpi(
-        label: 'Lives no mês',
-        value: '${resumo['lives_mes'] ?? 0}',
+        label: 'Pipeline aberto',
+        value: _fmtMoney(pipeline),
         delta: '',
         deltaPositive: true,
-        spark: const [],
+        icon: Icons.filter_alt_outlined,
+        footnote: 'oportunidades em aberto',
       ),
       HomeKpi(
-        label: 'Espectadores médios',
-        value: _fmtInt(mediaView),
-        delta: '',
-        deltaPositive: true,
-        spark: const [],
-      ),
-      HomeKpi(
-        label: 'Conversão',
+        label: 'Taxa de conversão',
         value: '${taxaConv.toStringAsFixed(1)}%',
         delta: '',
         deltaPositive: taxaConv >= 0,
-        spark: const [],
+        icon: Icons.bar_chart,
+        footnote: 'últimos 90 dias',
+      ),
+      HomeKpi(
+        label: 'Clientes ativos',
+        value: '$clientesAtivos',
+        delta: '',
+        deltaPositive: true,
+        icon: Icons.people_alt_outlined,
+        footnote: 'contratos faturando',
       ),
     ];
 
-    // --- Lives ao vivo (cabines com status "ao_vivo") ---
-    final cabinesRaw = raw['cabines'] as List<dynamic>? ?? [];
-    final lives = cabinesRaw
-        .where((c) => (c['status'] as String? ?? '') == 'ao_vivo')
-        .map((c) {
-          final dMin = (c['duracao_min'] as num? ?? 0).toInt();
-          final h = dMin ~/ 60;
-          final m = dMin % 60;
-          final dur = h > 0 ? '${h}h ${m.toString().padLeft(2, '0')}min' : '${m}min';
-          return LiveNow(
-            cabin: (c['numero'] as num? ?? 0).toInt(),
-            client: c['cliente_nome'] as String? ?? '',
-            presenter: c['apresentador'] as String? ?? '',
-            viewers: (c['viewer_count'] as num? ?? 0).toInt(),
-            gmv: (c['gmv_atual'] as num? ?? 0).toDouble(),
-            duration: dur,
-          );
-        })
-        .toList();
-
-    // --- Alertas ---
+    // Alerts
     final alertasRaw = raw['alertas'] as Map<String, dynamic>? ?? {};
     final alerts = <HomeAlert>[];
     final inadimp = (alertasRaw['inadimplentes'] as num? ?? 0).toInt();
     final contratos = (alertasRaw['contratos_aguardando_assinatura'] as num? ?? 0).toInt();
-    final agendamentos = (alertasRaw['agendamentos_semana'] as num? ?? 0).toInt();
-    final leadsParados = (alertasRaw['leads_parados'] as num? ?? 0).toInt();
     final conflitos = (alertasRaw['conflitos_agenda'] as num? ?? 0).toInt();
+    final leadsParados = (alertasRaw['leads_parados'] as num? ?? 0).toInt();
 
-    if (inadimp > 0) {
-      alerts.add(HomeAlert(
-        title: '$inadimp cliente${inadimp > 1 ? 's' : ''} inadimplente${inadimp > 1 ? 's' : ''}',
-        subtitle: 'Requer atenção financeira',
-        severity: HomeAlertSeverity.danger,
-      ));
-    }
     if (contratos > 0) {
       alerts.add(HomeAlert(
-        title: '$contratos contrato${contratos > 1 ? 's' : ''} aguardando assinatura',
-        subtitle: 'Pendente de aprovação',
+        title: 'Contratos aguardando assinatura',
+        subtitle: 'há mais de 5 dias úteis',
         severity: HomeAlertSeverity.warning,
+        count: contratos,
       ));
     }
-    if (agendamentos > 0) {
+    if (inadimp > 0) {
       alerts.add(HomeAlert(
-        title: '$agendamentos agendamento${agendamentos > 1 ? 's' : ''} esta semana',
-        subtitle: 'Verifique a agenda',
-        severity: HomeAlertSeverity.info,
+        title: 'Boletos vencidos',
+        subtitle: 'requer atenção financeira',
+        severity: HomeAlertSeverity.danger,
+        count: inadimp,
       ));
     }
+    alerts.add(HomeAlert(
+      title: 'Conflitos de agenda',
+      subtitle: conflitos == 0 ? 'tudo limpo nas próximas 48h' : '$conflitos conflito${conflitos > 1 ? 's' : ''}',
+      severity: conflitos == 0 ? HomeAlertSeverity.success : HomeAlertSeverity.danger,
+      count: conflitos,
+    ));
     if (leadsParados > 0) {
       alerts.add(HomeAlert(
-        title: '$leadsParados lead${leadsParados > 1 ? 's' : ''} parado${leadsParados > 1 ? 's' : ''}',
-        subtitle: 'Retome o contato',
+        title: 'Leads parados',
+        subtitle: 'retome o contato',
         severity: HomeAlertSeverity.warning,
-      ));
-    }
-    if (conflitos > 0) {
-      alerts.add(HomeAlert(
-        title: '$conflitos conflito${conflitos > 1 ? 's' : ''} na agenda',
-        subtitle: 'Verifique e resolva',
-        severity: HomeAlertSeverity.danger,
+        count: leadsParados,
       ));
     }
 
+    // CTAs
+    final freeCabines = cabinesRaw.where((c) => (c['status'] as String? ?? '') == 'livre').length;
+    final ctas = <CtaItem>[
+      CtaItem(
+        icon: Icons.bolt,
+        title: 'Iniciar live agora',
+        subtitle: freeCabines > 0 ? '$freeCabines cabines disponíveis' : 'sem cabines livres',
+        primary: true,
+      ),
+      CtaItem(
+        icon: Icons.notifications_active_outlined,
+        title: 'Aprovar solicitações',
+        subtitle: 'aguardando você',
+        count: contratos,
+      ),
+      CtaItem(
+        icon: Icons.attach_money,
+        title: 'Boletos a vencer',
+        subtitle: 'próximos 7 dias',
+        count: (alertasRaw['boletos_proximos'] as num? ?? 0).toInt(),
+      ),
+      CtaItem(
+        icon: Icons.people_alt_outlined,
+        title: 'Leads quentes',
+        subtitle: 'fit ≥ 80',
+        count: (alertasRaw['leads_quentes'] as num? ?? 0).toInt(),
+      ),
+    ];
+
+    // touch unused vars to keep linter happy (reserved for future use)
+    fat.length;
+    livesMes.toString();
+
     return HomeData(
+      hero: hero,
+      ctas: ctas,
       kpis: kpis,
-      lives: lives,
-      upcoming: const [], // endpoint doesn't provide upcoming — future work
-      ranking: const [],  // endpoint doesn't provide ranking — future work
       alerts: alerts,
+      upcoming: upcoming,
+      ranking: const [],
+      lives: const [],
     );
   }
 }
@@ -138,28 +193,138 @@ class MockHomeRepository implements HomeRepository {
     return _seed;
   }
 
-  static const _seed = HomeData(
-    kpis: [
-      HomeKpi(label: 'GMV de hoje', value: 'R\$ 142.840', delta: '+18% vs ontem', deltaPositive: true,
-          spark: [12, 18, 14, 22, 26, 31, 28, 34, 42, 38, 46, 52]),
-      HomeKpi(label: 'Pedidos', value: '1.842', delta: '+12% vs ontem', deltaPositive: true,
-          spark: [8, 12, 10, 18, 22, 24, 28, 32, 30, 36, 40, 44]),
-      HomeKpi(label: 'Espectadores únicos', value: '38.4k', delta: '+24% vs ontem', deltaPositive: true,
-          spark: [10, 14, 18, 16, 22, 28, 34, 30, 38, 44, 48, 52]),
-      HomeKpi(label: 'Conversão', value: '4.8%', delta: '-0.3% vs ontem', deltaPositive: false,
-          spark: [42, 44, 40, 46, 48, 44, 42, 40, 38, 42, 44, 40]),
+  static const _sparkData = <double>[42, 48, 52, 49, 58, 65, 72, 68, 80, 84, 78, 92, 88, 95, 102, 98, 110, 124];
+
+  static final HomeData _seed = HomeData(
+    hero: const HeroSummary(
+      liveCount: 5,
+      totalCabins: 11,
+      gmvMes: 'R\$ 124.402',
+      gmvDelta: '+18,4%',
+      gmvDeltaPositive: true,
+      gmvSpark: _sparkData,
+      nextLiveTime: '15:00',
+      nextLiveCabin: 'Cabine 03',
+      nextLiveClient: 'Loja Fashion Demo',
+      nextLiveStartsIn: 'em 28 minutos',
+      viewersNow: 3842,
+      salesNow: 18290,
+      peakOfDay: true,
+    ),
+    ctas: [
+      CtaItem(
+        icon: Icons.bolt,
+        title: 'Iniciar live agora',
+        subtitle: 'Cabine 07 disponível',
+        primary: true,
+      ),
+      CtaItem(
+        icon: Icons.notifications_active_outlined,
+        title: 'Aprovar solicitações',
+        subtitle: 'aguardando você',
+        count: 4,
+      ),
+      CtaItem(
+        icon: Icons.attach_money,
+        title: 'Boletos a vencer',
+        subtitle: 'próximos 7 dias',
+        count: 3,
+      ),
+      CtaItem(
+        icon: Icons.people_alt_outlined,
+        title: 'Leads quentes',
+        subtitle: 'fit ≥ 80',
+        count: 7,
+      ),
     ],
-    lives: [
-      LiveNow(cabin: 1, client: 'Loja Fashion Demo', presenter: 'Camila Moura', viewers: 3842, gmv: 18290, duration: '1h 24min'),
-      LiveNow(cabin: 2, client: 'Beauty Trend', presenter: 'Rafael Torres', viewers: 1208, gmv: 9420, duration: '42min'),
-      LiveNow(cabin: 4, client: 'Urban Co', presenter: 'Bia Santos', viewers: 612, gmv: 4180, duration: '18min'),
-      LiveNow(cabin: 6, client: 'Glow Beauty', presenter: 'Júlia Reis', viewers: 408, gmv: 2890, duration: '12min'),
-      LiveNow(cabin: 8, client: 'Fit Style', presenter: 'Marina P.', viewers: 892, gmv: 6240, duration: '1h 02min'),
+    kpis: [
+      HomeKpi(
+        label: 'GMV do mês',
+        value: 'R\$ 124.402',
+        delta: '+18,4%',
+        deltaPositive: true,
+        icon: Icons.attach_money,
+        primaryIcon: true,
+        footnote: 'vs mês anterior',
+      ),
+      HomeKpi(
+        label: 'Pipeline aberto',
+        value: 'R\$ 48.620',
+        delta: '',
+        deltaPositive: true,
+        icon: Icons.filter_alt_outlined,
+        footnote: '12 oportunidades · 7 quentes',
+      ),
+      HomeKpi(
+        label: 'Taxa de conversão',
+        value: '62,4%',
+        delta: '+4,1pp',
+        deltaPositive: true,
+        icon: Icons.bar_chart,
+        footnote: 'últimos 90 dias',
+      ),
+      HomeKpi(
+        label: 'Clientes ativos',
+        value: '12',
+        delta: '',
+        deltaPositive: true,
+        icon: Icons.people_alt_outlined,
+        footnote: 'contratos faturando',
+      ),
+    ],
+    alerts: [
+      HomeAlert(
+        title: 'Contratos aguardando assinatura',
+        subtitle: 'há mais de 5 dias úteis',
+        severity: HomeAlertSeverity.warning,
+        count: 12,
+      ),
+      HomeAlert(
+        title: 'Boletos vencidos',
+        subtitle: 'R\$ 75 em atraso · 7 dias',
+        severity: HomeAlertSeverity.danger,
+        count: 1,
+      ),
+      HomeAlert(
+        title: 'Conflitos de agenda',
+        subtitle: 'tudo limpo nas próximas 48h',
+        severity: HomeAlertSeverity.success,
+        count: 0,
+      ),
     ],
     upcoming: [
-      UpcomingLive(time: '15:00', client: 'Beauty Trend', cabin: 3, presenter: 'Rafael T.', duration: '2h'),
-      UpcomingLive(time: '17:00', client: 'Moda Express', cabin: 2, presenter: 'Ana Lima', duration: '90min'),
-      UpcomingLive(time: '19:30', client: 'Urban Co · prime time', cabin: 7, presenter: 'Camila M.', duration: '2h'),
+      UpcomingLive(
+        time: '14:32',
+        client: 'Loja Fashion Demo',
+        cabin: 1,
+        presenter: 'Camila M.',
+        viewers: 3842,
+        status: UpcomingStatus.now,
+      ),
+      UpcomingLive(
+        time: '15:00',
+        client: 'Beauty Trend',
+        cabin: 3,
+        presenter: 'Rafael T.',
+        duration: '2h',
+        status: UpcomingStatus.warming,
+      ),
+      UpcomingLive(
+        time: '17:00',
+        client: 'Moda Express',
+        cabin: 2,
+        presenter: 'Ana Lima',
+        duration: '90min',
+        status: UpcomingStatus.scheduled,
+      ),
+      UpcomingLive(
+        time: '19:30',
+        client: 'Urban Co · prime time',
+        cabin: 7,
+        presenter: 'Camila M.',
+        duration: '2h',
+        status: UpcomingStatus.scheduled,
+      ),
     ],
     ranking: [
       RankingEntry(position: 1, name: 'Camila Moura', lives: 4, orders: 1842, gmv: 38420),
@@ -167,11 +332,6 @@ class MockHomeRepository implements HomeRepository {
       RankingEntry(position: 3, name: 'Ana Lima', lives: 2, orders: 892, gmv: 18640),
       RankingEntry(position: 4, name: 'Bia Santos', lives: 2, orders: 612, gmv: 12380),
       RankingEntry(position: 5, name: 'Júlia Reis', lives: 1, orders: 408, gmv: 7920),
-    ],
-    alerts: [
-      HomeAlert(title: 'Cabine 10 em manutenção', subtitle: 'Retorno previsto às 16:00', severity: HomeAlertSeverity.warning),
-      HomeAlert(title: '4 reservas pendentes', subtitle: 'Aguardando aprovação', severity: HomeAlertSeverity.info),
-      HomeAlert(title: 'Pico de tráfego em Cabine 01', subtitle: '3.8k espectadores · +120% no último 5min', severity: HomeAlertSeverity.info),
     ],
   );
 }

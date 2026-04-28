@@ -76,7 +76,7 @@ class CabinFilterBar extends StatelessWidget {
     final entries = <(CabinStatus?, String)>[
       (null, 'Todas'),
       (CabinStatus.live, 'Ao vivo'),
-      (CabinStatus.busy, 'Reservadas'),
+      (CabinStatus.busy, 'Preparando'),
       (CabinStatus.free, 'Livres'),
       (CabinStatus.maint, 'Manutenção'),
     ];

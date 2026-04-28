@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/app_screen_scaffold.dart';
 import '../../../routes/app_routes.dart';
+import '../../../widgets/app_scaffold.dart';
 import '../../core/responsive.dart';
 import '../../theme/tokens.dart';
 import '../../theme/livelab_theme.dart';
 import 'home_models.dart';
 import 'home_repository.dart';
-import 'widgets/pulse_strip.dart';
-import 'widgets/live_now_panel.dart';
+import 'widgets/hero_strip.dart';
+import 'widgets/cta_strip.dart';
+import 'widgets/kpi_grid.dart';
+import 'widgets/alerts_row.dart';
 import 'widgets/upcoming_panel.dart';
 import 'widgets/ranking_panel.dart';
-import 'widgets/alerts_panel.dart';
+import 'widgets/section_label.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.repository});
@@ -29,9 +31,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _future = widget.repository.fetch();
   }
 
+  void _refresh() {
+    setState(() => _future = widget.repository.fetch());
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AppScreenScaffold(
+    return AppScaffold(
       currentRoute: AppRoutes.home,
       child: FutureBuilder<HomeData>(
         future: _future,
@@ -56,53 +62,67 @@ class _HomeScreenState extends State<HomeScreen> {
     final r = LlResponsive.of(context);
     final twoCol = !r.isMobile;
 
-    final left = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        LiveNowPanel(lives: d.lives),
-        const SizedBox(height: LlSpacing.md),
-        UpcomingPanel(upcoming: d.upcoming),
-      ],
-    );
-
-    final right = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AlertsPanel(alerts: d.alerts),
-        const SizedBox(height: LlSpacing.md),
-        RankingPanel(entries: d.ranking),
-      ],
-    );
-
     return SingleChildScrollView(
-      padding: EdgeInsets.all(r.isMobile ? LlSpacing.lg : LlSpacing.xl),
+      padding: EdgeInsets.fromLTRB(
+        r.isMobile ? 16 : 28,
+        20,
+        r.isMobile ? 16 : 28,
+        28,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _header(t),
-          const SizedBox(height: LlSpacing.lg),
-          PulseStrip(kpis: d.kpis),
-          const SizedBox(height: LlSpacing.lg),
+          _pageHeader(t),
+          const SizedBox(height: 18),
+          HeroStrip(hero: d.hero),
+          const SizedBox(height: 18),
+          CtaStrip(items: d.ctas),
+          const SizedBox(height: 22),
+          SectionLabel(
+            label: 'Visão executiva',
+            trailing: SectionAllLink(label: 'Ver detalhado', onTap: _refresh),
+          ),
+          const SizedBox(height: 8),
+          KpiGrid(kpis: d.kpis),
+          const SizedBox(height: 22),
+          const SectionLabel(label: 'Atenção imediata'),
+          const SizedBox(height: 8),
+          AlertsRow(alerts: d.alerts),
+          const SizedBox(height: 18),
           if (twoCol)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 3, child: left),
-                const SizedBox(width: LlSpacing.lg),
-                Expanded(flex: 2, child: right),
+                Expanded(
+                  flex: 14,
+                  child: UpcomingPanel(
+                    upcoming: d.upcoming,
+                    liveCount: d.upcoming.where((u) => u.status == UpcomingStatus.now).length,
+                    totalScheduled: d.upcoming.length,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  flex: 10,
+                  child: RankingPanel(entries: d.ranking),
+                ),
               ],
             )
           else ...[
-            left,
-            const SizedBox(height: LlSpacing.lg),
-            right,
+            UpcomingPanel(
+              upcoming: d.upcoming,
+              liveCount: d.upcoming.where((u) => u.status == UpcomingStatus.now).length,
+              totalScheduled: d.upcoming.length,
+            ),
+            const SizedBox(height: 14),
+            RankingPanel(entries: d.ranking),
           ],
         ],
       ),
     );
   }
 
-  Widget _header(LlTokens t) {
+  Widget _pageHeader(LlTokens t) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -112,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
               TextSpan(
                 text: 'Visão',
                 style: TextStyle(
-                  color: t.textPrimary,
+                  color: t.primary,
                   fontFamily: 'serif',
                   fontStyle: FontStyle.italic,
                   fontSize: 32,
@@ -124,9 +144,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 text: ' da unidade',
                 style: TextStyle(
                   color: t.textPrimary,
-                  fontSize: 28,
+                  fontSize: 32,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: -0.6,
+                  letterSpacing: -0.9,
                 ),
               ),
             ],

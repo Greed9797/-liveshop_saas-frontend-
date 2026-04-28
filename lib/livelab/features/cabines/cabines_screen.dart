@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/app_screen_scaffold.dart';
 import '../../../routes/app_routes.dart';
+import '../../../widgets/app_scaffold.dart';
 import '../../core/responsive.dart';
 import '../../theme/tokens.dart';
+import '../../theme/livelab_theme.dart';
+import '../../widgets/ll_button.dart';
 import 'cabines_models.dart';
 import 'cabines_repository.dart';
 import 'widgets/cabin_card.dart';
 import 'widgets/cabin_filter_bar.dart';
-import 'widgets/kpi_strip.dart';
-import 'widgets/cabin_focus_panel.dart';
-import 'widgets/activation_queue_panel.dart';
+import 'widgets/occupancy_panel.dart';
+import 'widgets/schedule_timeline.dart';
+import 'widgets/quick_actions_panel.dart';
 
 class CabinesScreen extends StatefulWidget {
   const CabinesScreen({super.key, required this.repository});
@@ -32,19 +34,8 @@ class _CabinesScreenState extends State<CabinesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScreenScaffold(
+    return AppScaffold(
       currentRoute: AppRoutes.cabines,
-      eyebrow: 'Operação ao vivo',
-      title: 'Painel de Cabines',
-      titleSerif: true,
-      subtitle: 'Visão operacional em tempo real da sua unidade — do raio-X de cada cabine ao GMV consolidado.',
-      actions: [
-        IconButton(
-          onPressed: () => setState(() => _future = widget.repository.fetchAll()),
-          icon: const Icon(Icons.refresh_rounded, size: 18),
-          tooltip: 'Atualizar',
-        ),
-      ],
       child: FutureBuilder<List<Cabin>>(
         future: _future,
         builder: (c, snap) {
@@ -56,7 +47,9 @@ class _CabinesScreenState extends State<CabinesScreen> {
               ),
             );
           }
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
           return _content(snap.data!);
         },
       ),
@@ -64,6 +57,7 @@ class _CabinesScreenState extends State<CabinesScreen> {
   }
 
   Widget _content(List<Cabin> all) {
+    final t = context.llTokens;
     final r = LlResponsive.of(context);
     final filtered = all.applyFilter(_filters);
     final counts = <CabinStatus?, int>{
@@ -74,11 +68,7 @@ class _CabinesScreenState extends State<CabinesScreen> {
       CabinStatus.maint: all.where((c) => c.status == CabinStatus.maint).length,
     };
 
-    final selectedCabin = _selected != null
-        ? all.where((c) => c.number == _selected).firstOrNull
-        : all.firstOrNull;
-
-    return LayoutBuilder(builder: (_, box) {
+    return LayoutBuilder(builder: (c, box) {
       final cols = r.isMobile ? 1 : (r.isTablet ? 3 : (box.maxWidth > 1600 ? 4 : 3));
       final showRail = !r.isMobile;
 
@@ -90,15 +80,15 @@ class _CabinesScreenState extends State<CabinesScreen> {
           crossAxisCount: cols,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          mainAxisExtent: 220,
+          mainAxisExtent: 360,
         ),
         itemCount: filtered.length,
         itemBuilder: (_, i) {
-          final cabin = filtered[i];
+          final c = filtered[i];
           return CabinCard(
-            cabin: cabin,
-            selected: _selected == cabin.number,
-            onTap: () => setState(() => _selected = cabin.number),
+            cabin: c,
+            selected: _selected == c.number,
+            onTap: () => setState(() => _selected = c.number),
           );
         },
       );
@@ -106,9 +96,31 @@ class _CabinesScreenState extends State<CabinesScreen> {
       final rail = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CabinFocusPanel(cabin: selectedCabin),
+          OccupancyPanel(cabins: all),
           const SizedBox(height: LlSpacing.md),
-          ActivationQueuePanel(entries: widget.repository.queue),
+          ScheduleTimeline(entries: _scheduleEntries(all)),
+          const SizedBox(height: LlSpacing.md),
+          QuickActionsPanel(
+            actions: [
+              QuickAction(
+                icon: Icons.bolt,
+                title: 'Iniciar nova live',
+                subtitle: '${counts[CabinStatus.free]} cabines disponíveis',
+              ),
+              const QuickAction(
+                icon: Icons.notifications_active,
+                title: 'Aprovar reservas',
+                subtitle: '4 pendentes',
+              ),
+              QuickAction(
+                icon: Icons.settings,
+                iconColor: t.warning,
+                iconBg: t.warningSoft,
+                title: 'Agendar manutenção',
+                subtitle: 'Cabine 10 retorna às 16:00',
+              ),
+            ],
+          ),
         ],
       );
 
@@ -117,7 +129,7 @@ class _CabinesScreenState extends State<CabinesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            KpiStrip(cabins: all),
+            _header(t, all),
             const SizedBox(height: LlSpacing.lg),
             CabinFilterBar(
               filters: _filters,
@@ -143,5 +155,70 @@ class _CabinesScreenState extends State<CabinesScreen> {
         ),
       );
     });
+  }
+
+  Widget _header(LlTokens t, List<Cabin> all) {
+    final live = all.where((c) => c.status == CabinStatus.live).length;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Cabines',
+                      style: TextStyle(
+                        color: t.textPrimary,
+                        fontFamily: 'serif',
+                        fontStyle: FontStyle.italic,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -0.6,
+                      ),
+                    ),
+                    TextSpan(
+                      text: ' ao vivo',
+                      style: TextStyle(
+                        color: t.textPrimary,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${all.length} cabines · $live transmitindo agora · ocupação em tempo real',
+                style: TextStyle(color: t.textMuted, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        const LlButton(label: 'Iniciar nova live', icon: Icons.bolt),
+      ],
+    );
+  }
+
+  List<ScheduleEntry> _scheduleEntries(List<Cabin> all) {
+    final live = all.where((c) => c.status == CabinStatus.live).map((c) => c.number).toList();
+    return [
+      ScheduleEntry(
+        time: '14:30',
+        title: '${live.length} lives em curso',
+        subtitle: 'Cabines ${live.join(", ")}',
+        now: true,
+      ),
+      const ScheduleEntry(time: '15:00', title: 'Beauty Trend · Pré-live', subtitle: 'Cabine 03 · Rafael T. · 2h'),
+      const ScheduleEntry(time: '15:30', title: 'Tech Mode', subtitle: 'Cabine 09 · 90min'),
+      const ScheduleEntry(time: '16:00', title: 'Cabine 10 retoma', subtitle: 'Manutenção concluída'),
+      const ScheduleEntry(time: '16:30', title: 'Loja Fashion Demo', subtitle: 'Cabine 05 · Camila M.'),
+      const ScheduleEntry(time: '17:00', title: 'Moda Express', subtitle: 'Cabine 02 · Ana Lima'),
+    ];
   }
 }
