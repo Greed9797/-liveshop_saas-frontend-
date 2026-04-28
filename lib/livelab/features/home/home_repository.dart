@@ -17,21 +17,26 @@ class ApiHomeRepository implements HomeRepository {
   Future<HomeData> fetch() async {
     final raw = (await ApiService.get<Map<String, dynamic>>('/home/dashboard')).data!;
 
-    final fat = raw['faturamento'] as Map<String, dynamic>? ?? {};
-    final resumo = raw['resumo_mes'] as Map<String, dynamic>? ?? {};
-    final gmvMes = (resumo['gmv_lives_mes'] as num? ?? 0).toDouble();
+    // Backend retorna campos no root. Suporta também versão aninhada (resumo_mes/alertas).
+    final resumo = raw['resumo_mes'] as Map<String, dynamic>? ?? raw;
+    final alertasRaw = raw['alertas'] as Map<String, dynamic>? ?? raw;
+
+    final gmvMes = (resumo['gmv_lives_mes'] as num? ?? raw['gmv_mes'] as num? ?? 0).toDouble();
     final taxaConv = (raw['taxa_conversao'] as num? ?? 0).toDouble();
-    final livesMes = (resumo['lives_mes'] as num? ?? 0).toInt();
+    final pipeline = (resumo['pipeline_aberto'] as num? ?? raw['pipeline_aberto'] as num? ?? raw['valor_pipeline'] as num? ?? 0).toDouble();
+    final clientesAtivos = (resumo['clientes_ativos'] as num? ?? raw['clientes_ativos'] as num? ?? 0).toInt();
 
     final cabinesRaw = raw['cabines'] as List<dynamic>? ?? [];
     final liveCabines = cabinesRaw.where((c) => (c['status'] as String? ?? '') == 'ao_vivo').toList();
     final viewersTotal = liveCabines.fold<int>(0, (a, c) => a + ((c['viewer_count'] as num? ?? 0).toInt()));
     final salesTotal = liveCabines.fold<double>(0, (a, c) => a + ((c['gmv_atual'] as num? ?? 0).toDouble()));
-    final totalCabines = cabinesRaw.length;
+    final ocupacao = raw['ocupacao_cabines_hoje'] as Map<String, dynamic>? ?? {};
+    final totalCabines = (ocupacao['operacionais'] as num? ?? cabinesRaw.length).toInt();
+    final aoVivoCount = (ocupacao['ao_vivo'] as num? ?? liveCabines.length).toInt();
 
     // Hero
     final hero = HeroSummary(
-      liveCount: liveCabines.length,
+      liveCount: aoVivoCount,
       totalCabins: totalCabines,
       gmvMes: _fmtMoney(gmvMes),
       gmvDelta: '',
@@ -64,8 +69,6 @@ class ApiHomeRepository implements HomeRepository {
     }
 
     // KPIs (executive view)
-    final clientesAtivos = (resumo['clientes_ativos'] as num? ?? 0).toInt();
-    final pipeline = (resumo['pipeline_aberto'] as num? ?? 0).toDouble();
     final kpis = <HomeKpi>[
       HomeKpi(
         label: 'GMV do mês',
@@ -103,12 +106,11 @@ class ApiHomeRepository implements HomeRepository {
     ];
 
     // Alerts
-    final alertasRaw = raw['alertas'] as Map<String, dynamic>? ?? {};
     final alerts = <HomeAlert>[];
-    final inadimp = (alertasRaw['inadimplentes'] as num? ?? 0).toInt();
-    final contratos = (alertasRaw['contratos_aguardando_assinatura'] as num? ?? 0).toInt();
-    final conflitos = (alertasRaw['conflitos_agenda'] as num? ?? 0).toInt();
-    final leadsParados = (alertasRaw['leads_parados'] as num? ?? 0).toInt();
+    final inadimp = (alertasRaw['inadimplentes'] as num? ?? raw['inadimplentes'] as num? ?? raw['boletos_vencidos'] as num? ?? 0).toInt();
+    final contratos = (alertasRaw['contratos_aguardando_assinatura'] as num? ?? raw['contratos_aguardando_assinatura'] as num? ?? 0).toInt();
+    final conflitos = (alertasRaw['conflitos_agenda'] as num? ?? raw['conflitos_agenda'] as num? ?? 0).toInt();
+    final leadsParados = (alertasRaw['leads_parados'] as num? ?? raw['leads_parados'] as num? ?? 0).toInt();
 
     if (contratos > 0) {
       alerts.add(HomeAlert(
@@ -142,7 +144,10 @@ class ApiHomeRepository implements HomeRepository {
     }
 
     // CTAs
-    final freeCabines = cabinesRaw.where((c) => (c['status'] as String? ?? '') == 'livre').length;
+    final freeCabines = cabinesRaw.where((c) {
+      final s = c['status'] as String? ?? '';
+      return s == 'livre' || s == 'disponivel';
+    }).length;
     final ctas = <CtaItem>[
       CtaItem(
         icon: Icons.bolt,
@@ -160,19 +165,15 @@ class ApiHomeRepository implements HomeRepository {
         icon: Icons.attach_money,
         title: 'Boletos a vencer',
         subtitle: 'próximos 7 dias',
-        count: (alertasRaw['boletos_proximos'] as num? ?? 0).toInt(),
+        count: (alertasRaw['boletos_proximos'] as num? ?? raw['boletos_vencidos'] as num? ?? 0).toInt(),
       ),
       CtaItem(
         icon: Icons.people_alt_outlined,
         title: 'Leads quentes',
         subtitle: 'fit ≥ 80',
-        count: (alertasRaw['leads_quentes'] as num? ?? 0).toInt(),
+        count: (alertasRaw['leads_quentes'] as num? ?? raw['leads_disponiveis'] as num? ?? 0).toInt(),
       ),
     ];
-
-    // touch unused vars to keep linter happy (reserved for future use)
-    fat.length;
-    livesMes.toString();
 
     return HomeData(
       hero: hero,
