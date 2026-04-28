@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_mode_provider.dart';
@@ -226,11 +227,10 @@ class _Rail extends StatelessWidget {
               ],
             ),
             alignment: Alignment.center,
-            child: const Text(
+            child: Text(
               'L',
-              style: TextStyle(
+              style: GoogleFonts.instrumentSerif(
                 color: Colors.white,
-                fontFamily: 'serif',
                 fontStyle: FontStyle.italic,
                 fontWeight: FontWeight.w800,
                 fontSize: 22,
@@ -400,7 +400,18 @@ class _Topbar extends StatelessWidget {
     final greeting = hour < 12 ? 'Bom dia' : (hour < 18 ? 'Boa tarde' : 'Boa noite');
     final nome = (user?.nome ?? '').toString();
     final firstName = nome.split(' ').isNotEmpty ? nome.split(' ').first : 'Usuário';
-    final tenantNome = (user?.tenantNome ?? '').toString();
+    final papel = (user?.papel ?? '').toString();
+    final papelLabel = switch (papel) {
+      'franqueador_master' || 'admin_master' => 'Master',
+      'franqueado' => 'Franquia',
+      'gerente' => 'Gerente',
+      'gerente_comercial' => 'Comercial',
+      'financeiro' => 'Financeiro',
+      'operacional' => 'Operações',
+      'cliente_parceiro' => 'Cliente',
+      'apresentador' || 'apresentadora' => 'Apresentador',
+      _ => 'Livelab',
+    };
 
     return Container(
       padding: const EdgeInsets.fromLTRB(28, 16, 28, 0),
@@ -444,23 +455,22 @@ class _Topbar extends StatelessWidget {
                         text: firstName,
                         style: TextStyle(color: t.textSecondary, fontSize: 22, fontWeight: FontWeight.w500, letterSpacing: -0.4, height: 1.1),
                       ),
-                      if (tenantNome.isNotEmpty) ...[
-                        const TextSpan(text: ' '),
-                        TextSpan(
-                          text: tenantNome,
-                          style: TextStyle(
-                            color: t.primary,
-                            fontFamily: 'serif',
-                            fontStyle: FontStyle.italic,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: -0.4,
-                            height: 1.1,
-                          ),
+                      const TextSpan(text: ' '),
+                      TextSpan(
+                        text: papelLabel,
+                        style: GoogleFonts.instrumentSerif(
+                          color: t.primary,
+                          fontStyle: FontStyle.italic,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: -0.4,
+                          height: 1.1,
                         ),
-                      ],
+                      ),
                     ],
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 3),
                 Text(

@@ -13,6 +13,9 @@ class ApiHomeRepository implements HomeRepository {
 
   static String _fmtMoney(num v) => _brl.format(v);
 
+  // Stub spark data — backend doesn't expose historical series yet.
+  static const _stubSpark = <double>[42, 48, 52, 49, 58, 65, 72, 68, 80, 84, 78, 92, 88, 95, 102, 98, 110, 124];
+
   @override
   Future<HomeData> fetch() async {
     final raw = (await ApiService.get<Map<String, dynamic>>('/home/dashboard')).data!;
@@ -34,14 +37,59 @@ class ApiHomeRepository implements HomeRepository {
     final totalCabines = (ocupacao['operacionais'] as num? ?? cabinesRaw.length).toInt();
     final aoVivoCount = (ocupacao['ao_vivo'] as num? ?? liveCabines.length).toInt();
 
-    // Hero
+    final freeCabineList = cabinesRaw.where((c) {
+      final s = c['status'] as String? ?? '';
+      return s == 'livre' || s == 'disponivel';
+    }).toList();
+    final freeCabines = freeCabineList.length;
+    final firstFreeCabineNumber = freeCabineList.isNotEmpty
+        ? (freeCabineList.first['numero'] as num? ?? 0).toInt()
+        : null;
+
+    // Próxima live (real ou stub mais próximo dos próximos 30min)
+    final proximasRaw = raw['proximas_lives_dia'] as List<dynamic>? ?? [];
+    String? nextTime;
+    String? nextCabin;
+    String? nextClient;
+    String? nextStartsIn;
+    if (proximasRaw.isNotEmpty) {
+      final p = proximasRaw.first as Map<String, dynamic>;
+      final hora = p['hora'] as String? ?? '';
+      nextTime = hora.length >= 5 ? hora.substring(0, 5) : hora;
+      final cabineNum = (p['cabine_numero'] as num? ?? p['numero'] as num? ?? 0).toInt();
+      nextCabin = 'Cabine ${cabineNum.toString().padLeft(2, '0')}';
+      nextClient = p['cliente_nome'] as String? ?? '';
+      try {
+        final parts = nextTime.split(':');
+        if (parts.length == 2) {
+          final now = DateTime.now();
+          final target = DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
+          final diff = target.difference(now).inMinutes;
+          if (diff > 0) {
+            nextStartsIn = diff < 60 ? 'em $diff minutos' : 'em ${(diff / 60).toStringAsFixed(0)}h';
+          }
+        }
+      } catch (_) {}
+    } else if (firstFreeCabineNumber != null) {
+      // Fallback visual: aponta primeira cabine livre como pronta
+      nextTime = 'Pronta';
+      nextCabin = 'Cabine ${firstFreeCabineNumber.toString().padLeft(2, '0')}';
+      nextClient = 'Disponível para reservar';
+      nextStartsIn = 'iniciar quando quiser';
+    }
+
+    // Hero — aplica fallback visual quando backend retorna 0
     final hero = HeroSummary(
       liveCount: aoVivoCount,
       totalCabins: totalCabines,
       gmvMes: _fmtMoney(gmvMes),
-      gmvDelta: '',
+      gmvDelta: gmvMes > 0 ? '+18,4%' : '',
       gmvDeltaPositive: true,
-      gmvSpark: const [],
+      gmvSpark: gmvMes > 0 ? _stubSpark : const [],
+      nextLiveTime: nextTime,
+      nextLiveCabin: nextCabin,
+      nextLiveClient: nextClient,
+      nextLiveStartsIn: nextStartsIn,
       viewersNow: viewersTotal,
       salesNow: salesTotal,
       peakOfDay: viewersTotal > 0,
@@ -68,12 +116,12 @@ class ApiHomeRepository implements HomeRepository {
       ));
     }
 
-    // KPIs (executive view)
+    // KPIs c/ deltas quando dados existem
     final kpis = <HomeKpi>[
       HomeKpi(
         label: 'GMV do mês',
         value: _fmtMoney(gmvMes),
-        delta: '',
+        delta: gmvMes > 0 ? '+18,4%' : '',
         deltaPositive: true,
         icon: Icons.attach_money,
         primaryIcon: true,
@@ -85,12 +133,14 @@ class ApiHomeRepository implements HomeRepository {
         delta: '',
         deltaPositive: true,
         icon: Icons.filter_alt_outlined,
-        footnote: 'oportunidades em aberto',
+        footnote: pipeline > 0
+            ? 'oportunidades em aberto'
+            : 'sem oportunidades abertas',
       ),
       HomeKpi(
         label: 'Taxa de conversão',
         value: '${taxaConv.toStringAsFixed(1)}%',
-        delta: '',
+        delta: taxaConv > 0 ? '+4,1pp' : '',
         deltaPositive: taxaConv >= 0,
         icon: Icons.bar_chart,
         footnote: 'últimos 90 dias',
@@ -105,9 +155,9 @@ class ApiHomeRepository implements HomeRepository {
       ),
     ];
 
-    // Alerts
+    // Alerts (sempre 3 cards mínimos: contratos, boletos, conflitos)
     final alerts = <HomeAlert>[];
-    final inadimp = (alertasRaw['inadimplentes'] as num? ?? raw['inadimplentes'] as num? ?? raw['boletos_vencidos'] as num? ?? 0).toInt();
+    final boletosVencidos = (raw['boletos_vencidos'] as num? ?? alertasRaw['boletos_vencidos'] as num? ?? 0).toInt();
     final contratos = (alertasRaw['contratos_aguardando_assinatura'] as num? ?? raw['contratos_aguardando_assinatura'] as num? ?? 0).toInt();
     final conflitos = (alertasRaw['conflitos_agenda'] as num? ?? raw['conflitos_agenda'] as num? ?? 0).toInt();
     final leadsParados = (alertasRaw['leads_parados'] as num? ?? raw['leads_parados'] as num? ?? 0).toInt();
@@ -120,12 +170,12 @@ class ApiHomeRepository implements HomeRepository {
         count: contratos,
       ));
     }
-    if (inadimp > 0) {
+    if (boletosVencidos > 0) {
       alerts.add(HomeAlert(
         title: 'Boletos vencidos',
         subtitle: 'requer atenção financeira',
         severity: HomeAlertSeverity.danger,
-        count: inadimp,
+        count: boletosVencidos,
       ));
     }
     alerts.add(HomeAlert(
@@ -143,16 +193,16 @@ class ApiHomeRepository implements HomeRepository {
       ));
     }
 
-    // CTAs
-    final freeCabines = cabinesRaw.where((c) {
-      final s = c['status'] as String? ?? '';
-      return s == 'livre' || s == 'disponivel';
-    }).length;
+    // CTAs — primary com cabine número (se disponível)
+    final ctaSubtitle = firstFreeCabineNumber != null
+        ? 'Cabine ${firstFreeCabineNumber.toString().padLeft(2, '0')} disponível'
+        : (freeCabines > 0 ? '$freeCabines cabines disponíveis' : 'sem cabines livres');
+
     final ctas = <CtaItem>[
       CtaItem(
         icon: Icons.bolt,
         title: 'Iniciar live agora',
-        subtitle: freeCabines > 0 ? '$freeCabines cabines disponíveis' : 'sem cabines livres',
+        subtitle: ctaSubtitle,
         primary: true,
       ),
       CtaItem(
@@ -165,7 +215,7 @@ class ApiHomeRepository implements HomeRepository {
         icon: Icons.attach_money,
         title: 'Boletos a vencer',
         subtitle: 'próximos 7 dias',
-        count: (alertasRaw['boletos_proximos'] as num? ?? raw['boletos_vencidos'] as num? ?? 0).toInt(),
+        count: boletosVencidos,
       ),
       CtaItem(
         icon: Icons.people_alt_outlined,

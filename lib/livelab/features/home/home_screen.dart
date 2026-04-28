@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../routes/app_routes.dart';
 import '../../core/responsive.dart';
 import '../../theme/tokens.dart';
@@ -132,13 +133,12 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               TextSpan(
                 text: 'Visão',
-                style: TextStyle(
+                style: GoogleFonts.instrumentSerif(
                   color: t.textPrimary,
-                  fontFamily: 'serif',
                   fontStyle: FontStyle.italic,
-                  fontSize: 32,
+                  fontSize: 36,
                   fontWeight: FontWeight.w400,
-                  letterSpacing: -0.9,
+                  letterSpacing: -1,
                 ),
               ),
               TextSpan(

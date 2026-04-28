@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../routes/app_routes.dart';
 import '../../core/responsive.dart';
 import '../../theme/tokens.dart';
@@ -176,13 +177,12 @@ class _CabinesScreenState extends State<CabinesScreen> {
                   children: [
                     TextSpan(
                       text: 'Cabines',
-                      style: TextStyle(
+                      style: GoogleFonts.instrumentSerif(
                         color: t.textPrimary,
-                        fontFamily: 'serif',
                         fontStyle: FontStyle.italic,
-                        fontSize: 32,
+                        fontSize: 36,
                         fontWeight: FontWeight.w400,
-                        letterSpacing: -0.6,
+                        letterSpacing: -1,
                       ),
                     ),
                     TextSpan(

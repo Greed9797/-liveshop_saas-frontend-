@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/tokens.dart';
 import '../../../theme/livelab_theme.dart';
 import '../../../core/format.dart';
@@ -89,13 +90,12 @@ class _CabinCardState extends State<CabinCard> {
       children: [
         Text(
           c.number.toString().padLeft(2, '0'),
-          style: TextStyle(
+          style: GoogleFonts.instrumentSerif(
             color: c.status == CabinStatus.live
                 ? t.primary
                 : c.status == CabinStatus.maint
                     ? t.textFaint
                     : t.textPrimary,
-            fontFamily: 'serif',
             fontStyle: FontStyle.italic,
             fontSize: 32,
             fontWeight: FontWeight.w400,
