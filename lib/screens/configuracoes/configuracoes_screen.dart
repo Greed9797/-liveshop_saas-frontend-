@@ -1,6 +1,5 @@
-import 'dart:html' as html;
-
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1000,24 +999,17 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   }
 
   Future<void> _pickAndUploadLogo() async {
-    final input = html.FileUploadInputElement()
-      ..accept = 'image/png,image/jpeg,image/webp'
-      ..click();
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
 
-    await input.onChange.first;
-    final file = input.files?.first;
-    if (file == null) return;
-
-    final reader = html.FileReader();
-    reader.readAsArrayBuffer(file);
-    await reader.onLoad.first;
-    final bytes = reader.result as List<int>;
+    final bytes = await picked.readAsBytes();
+    final name = picked.name.isNotEmpty ? picked.name : 'logo.jpg';
+    final mimeType = picked.mimeType ?? 'image/jpeg';
 
     setState(() => _uploadingLogo = true);
 
     try {
-      final name = file.name.isNotEmpty ? file.name : 'logo.jpg';
-      final mimeType = file.type.isNotEmpty ? file.type : 'image/jpeg';
       final parts = mimeType.split('/');
       final mediaType = DioMediaType(
         parts.isNotEmpty ? parts[0] : 'image',
