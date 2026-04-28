@@ -10,8 +10,12 @@ import '../screens/apresentadoras/apresentadoras_screen.dart';
 import '../screens/auditoria/analise_credito_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/boletos/boletos_screen.dart';
+import '../livelab/features/cabines/cabines_repository.dart';
+import '../livelab/features/cabines/cabines_screen.dart';
+import '../livelab/features/home/home_repository.dart';
+import '../livelab/features/home/home_screen.dart';
 import '../screens/cabines/cabine_detail_screen.dart';
-import '../screens/cabines/cabines_screen.dart';
+import '../screens/solicitacoes/solicitacoes_screen.dart';
 import '../screens/cliente/cliente_agenda_screen.dart';
 import '../screens/cliente/cliente_ao_vivo_screen.dart';
 import '../screens/cliente/cliente_configuracoes_screen.dart';
@@ -21,7 +25,6 @@ import '../screens/clientes/clientes_leads_screen.dart';
 import '../screens/configuracoes/configuracoes_screen.dart';
 import '../screens/excelencia/excelencia_screen.dart';
 import '../screens/financeiro/financeiro_screen.dart';
-import '../screens/home/home_screen.dart';
 import '../screens/leads/leads_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
 import '../screens/painel_cliente/carteira_clientes_screen.dart';
@@ -142,11 +145,11 @@ class AppRoutes {
 
       case home:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
+          child: RoleRouteGuard(
             allowedRoles: _internalRoles,
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: HomeScreen(),
+            child: HomeScreen(repository: ApiHomeRepository()),
           ),
           settings: settings,
         );
@@ -220,11 +223,11 @@ class AppRoutes {
 
       case cabines:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
+          child: RoleRouteGuard(
             allowedRoles: _cabineRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: CabinesScreen(),
+            child: CabinesScreen(repository: ApiCabinesRepository()),
           ),
           settings: settings,
         );
@@ -352,11 +355,11 @@ class AppRoutes {
 
       case clienteCabines:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
+          child: RoleRouteGuard(
             allowedRoles: _commercialRoles,
             fallbackRoute: clienteDashboard,
             unauthenticatedRoute: login,
-            child: CabinesScreen(),
+            child: CabinesScreen(repository: ApiCabinesRepository()),
           ),
           settings: settings,
         );
@@ -488,13 +491,23 @@ class AppRoutes {
         );
 
       case agendamentos:
+        return buildPremiumRoute(
+          child: RoleRouteGuard(
+            allowedRoles: _opsRoles,
+            fallbackRoute: home,
+            unauthenticatedRoute: login,
+            child: CabinesScreen(repository: ApiCabinesRepository()),
+          ),
+          settings: settings,
+        );
+
       case solicitacoes:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
             allowedRoles: _opsRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: CabinesScreen(initialTab: 1),
+            child: SolicitacoesScreen(),
           ),
           settings: settings,
         );

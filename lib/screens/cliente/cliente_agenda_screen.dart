@@ -398,7 +398,7 @@ class _DayTabs extends StatelessWidget {
                   color: isSelected
                       ? AppColors.primary
                       : isToday
-                          ? AppColors.primarySofter
+                          ? context.colors.primarySoftBg
                           : context.colors.bgMuted,
                   borderRadius: BorderRadius.circular(AppRadius.full),
                   border: isToday && !isSelected
@@ -1028,7 +1028,7 @@ class _StepTipo extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.primarySofter
+                    ? context.colors.primarySoftBg
                     : context.colors.bgMuted,
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(

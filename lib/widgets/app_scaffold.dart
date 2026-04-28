@@ -357,9 +357,9 @@ class AppScaffold extends ConsumerWidget {
       child: SafeArea(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32.0),
-              child: _Logo(),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32.0),
+              child: _Logo(suffix: _logoSuffix(isFranqueadorMaster, isClienteParceiro, isApresentador)),
             ),
             Divider(color: context.colors.borderSubtle, height: 1),
             Expanded(
@@ -417,7 +417,7 @@ class AppScaffold extends ConsumerWidget {
                   : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const _Logo(),
+                        _Logo(suffix: _logoSuffix(isFranqueadorMaster, isClienteParceiro, isApresentador)),
                         if (logoUrl != null && logoUrl.isNotEmpty) ...[
                           const SizedBox(height: 12),
                           UserLogoWidget(
@@ -836,11 +836,21 @@ class _MenuItem extends StatelessWidget {
   }
 }
 
+String _logoSuffix(bool isFranqueadorMaster, bool isClienteParceiro, bool isApresentador) {
+  if (isFranqueadorMaster) return 'gestão';
+  if (isClienteParceiro) return 'parceiro';
+  if (isApresentador) return 'apresentador';
+  return 'franqueado';
+}
+
 class _Logo extends StatelessWidget {
-  const _Logo();
+  const _Logo({this.suffix = ''});
+  final String suffix;
 
   @override
   Widget build(BuildContext context) {
+    const fontSize = 22.0;
+    final color = context.colors.textPrimary;
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -850,27 +860,43 @@ class _Logo extends StatelessWidget {
           'Live',
           style: AppTypography.h2.copyWith(
             fontWeight: FontWeight.w800,
-            fontSize: 26,
-            letterSpacing: -0.04,
+            fontSize: fontSize,
+            letterSpacing: -0.5,
+            color: color,
+            height: 1,
           ),
         ),
         Text(
-          'ab',
+          '/lab',
           style: AppTypography.h2.copyWith(
             fontStyle: FontStyle.italic,
-            fontWeight: FontWeight.w800,
-            fontSize: 26,
-            letterSpacing: -0.04,
+            fontWeight: FontWeight.w300,
+            fontSize: fontSize,
+            letterSpacing: -0.3,
+            color: color,
+            height: 1,
           ),
         ),
         Text(
           '.',
           style: AppTypography.h2.copyWith(
-            fontWeight: FontWeight.w800,
-            fontSize: 26,
+            fontWeight: FontWeight.w300,
+            fontSize: fontSize,
             color: AppColors.primary,
+            height: 1,
           ),
         ),
+        if (suffix.isNotEmpty)
+          Text(
+            suffix,
+            style: AppTypography.h2.copyWith(
+              fontWeight: FontWeight.w300,
+              fontSize: fontSize,
+              letterSpacing: -0.3,
+              color: color,
+              height: 1,
+            ),
+          ),
       ],
     );
   }

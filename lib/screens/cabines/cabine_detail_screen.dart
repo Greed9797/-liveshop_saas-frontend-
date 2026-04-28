@@ -15,19 +15,6 @@ import '../../design_system/design_system.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Livelab Rebrand — paleta específica do redesign Livelab Analítico
-// (privada a este arquivo; mantém AppColors do design system global intacto)
-// ═══════════════════════════════════════════════════════════════════════════
-
-class _Livelab {
-  static const primary = Color(0xFFFF5A1F);
-  static const primaryLight = Color(0xFFFF7A42);
-
-  static const success = Color(0xFF1FA968);
-  static const warning = Color(0xFFE08A0B);
-  static const danger = Color(0xFFE04B3C);
-}
 
 enum _Tone { blue, green, orange, pink, red, purple, yellow, cyan }
 
@@ -174,7 +161,7 @@ class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
             child: Text(
               'CABINE $numeroLabel',
               style: const TextStyle(
-                color: _Livelab.primary,
+                color: AppColors.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
@@ -186,9 +173,9 @@ class _CabineDetailScreenState extends ConsumerState<CabineDetailScreen>
             child: TabBar(
               controller: _tabController,
               isScrollable: false,
-              labelColor: _Livelab.primary,
+              labelColor: AppColors.primary,
               unselectedLabelColor: context.colors.textMuted,
-              indicatorColor: _Livelab.primary,
+              indicatorColor: AppColors.primary,
               indicatorWeight: 2.5,
               indicatorSize: TabBarIndicatorSize.label,
               labelStyle: const TextStyle(
@@ -236,7 +223,7 @@ class _LivelabLoading extends StatelessWidget {
         height: 36,
         child: CircularProgressIndicator(
           strokeWidth: 2.5,
-          valueColor: AlwaysStoppedAnimation(_Livelab.primary),
+          valueColor: AlwaysStoppedAnimation(AppColors.primary),
         ),
       ),
     );
@@ -257,7 +244,7 @@ class _LivelabError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 40, color: _Livelab.danger),
+            const Icon(Icons.error_outline, size: 40, color: AppColors.danger),
             const SizedBox(height: 12),
             Text(
               message,
@@ -271,7 +258,7 @@ class _LivelabError extends StatelessWidget {
             FilledButton(
               onPressed: onRetry,
               style: FilledButton.styleFrom(
-                backgroundColor: _Livelab.primary,
+                backgroundColor: AppColors.primary,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -687,7 +674,7 @@ class _LiveBadgeState extends State<_LiveBadge>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: _Livelab.success.withValues(alpha: 0.14),
+        color: AppColors.success.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -699,7 +686,7 @@ class _LiveBadgeState extends State<_LiveBadge>
               width: 8,
               height: 8,
               decoration: const BoxDecoration(
-                color: _Livelab.success,
+                color: AppColors.success,
                 shape: BoxShape.circle,
               ),
             ),
@@ -711,7 +698,7 @@ class _LiveBadgeState extends State<_LiveBadge>
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
-              color: _Livelab.success,
+              color: AppColors.success,
             ),
           ),
         ],
@@ -836,7 +823,7 @@ class _AudienceCard extends StatelessWidget {
                 runSpacing: 6,
                 children: [
                   _ChipBadge(
-                    color: _Livelab.success,
+                    color: AppColors.success,
                     label: '$current agora',
                     withDot: true,
                   ),
@@ -945,7 +932,7 @@ class _SparklinePainter extends CustomPainter {
     canvas.drawPath(
       linePath,
       Paint()
-        ..color = _Livelab.primary
+        ..color = AppColors.primary
         ..strokeWidth = 2.5
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
@@ -964,7 +951,7 @@ class _SparklinePainter extends CustomPainter {
       peakPoint,
       5,
       Paint()
-        ..color = _Livelab.primary
+        ..color = AppColors.primary
         ..strokeWidth = 2.5
         ..style = PaintingStyle.stroke,
     );
@@ -972,7 +959,7 @@ class _SparklinePainter extends CustomPainter {
       text: TextSpan(
         text: 'pico ${peak.toInt()}',
         style: const TextStyle(
-          color: _Livelab.primary,
+          color: AppColors.primary,
           fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
@@ -988,7 +975,7 @@ class _SparklinePainter extends CustomPainter {
     canvas.drawCircle(
       pts.last,
       4,
-      Paint()..color = _Livelab.success,
+      Paint()..color = AppColors.success,
     );
   }
 
@@ -1131,7 +1118,7 @@ class _TiktokChannelCardState extends ConsumerState<_TiktokChannelCard> {
                   if (has) ...[
                     const SizedBox(width: 8),
                     _ChipBadge(
-                      color: _Livelab.success,
+                      color: AppColors.success,
                       label: 'Monitorado',
                       withDot: true,
                     ),
@@ -1192,7 +1179,7 @@ class _TiktokChannelCardState extends ConsumerState<_TiktokChannelCard> {
             height: 18,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation(_Livelab.primary),
+              valueColor: AlwaysStoppedAnimation(AppColors.primary),
             ),
           )
         else ...[
@@ -1209,7 +1196,7 @@ class _TiktokChannelCardState extends ConsumerState<_TiktokChannelCard> {
           FilledButton(
             onPressed: _save,
             style: FilledButton.styleFrom(
-              backgroundColor: _Livelab.primary,
+              backgroundColor: AppColors.primary,
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               shape: RoundedRectangleBorder(
@@ -1237,10 +1224,10 @@ class _BusinessInfoCard extends StatelessWidget {
     const metaGmv = 5000.0;
     final atingidoPct = metaGmv > 0 ? (gmvAtual / metaGmv * 100).clamp(0, 999) : 0;
     final atingidoColor = atingidoPct >= 100
-        ? _Livelab.success
+        ? AppColors.success
         : atingidoPct >= 60
-            ? _Livelab.warning
-            : _Livelab.danger;
+            ? AppColors.warning
+            : AppColors.danger;
 
     return _LivelabCard(
       padding: const EdgeInsets.all(18),
@@ -1257,7 +1244,7 @@ class _BusinessInfoCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.work_outline_rounded,
-                    size: 18, color: _Livelab.primary),
+                    size: 18, color: AppColors.primary),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -1447,7 +1434,7 @@ class _CloserNotifyCardState extends ConsumerState<_CloserNotifyCard> {
             child: const Text('Cancelar'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: _Livelab.primary),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
             onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
             child: const Text('Enviar'),
           ),
@@ -1473,7 +1460,7 @@ class _CloserNotifyCardState extends ConsumerState<_CloserNotifyCard> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: _Livelab.success,
+          backgroundColor: AppColors.success,
           content: Row(
             children: [
               const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
@@ -1522,7 +1509,7 @@ class _CloserNotifyCardState extends ConsumerState<_CloserNotifyCard> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: _Livelab.primary,
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.chat_bubble_outline_rounded,
@@ -1613,14 +1600,14 @@ class _CloserNotifyCardState extends ConsumerState<_CloserNotifyCard> {
               FilledButton(
                 onPressed: _sending ? null : _sendCustom,
                 style: FilledButton.styleFrom(
-                  backgroundColor: _Livelab.primary,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   elevation: 2,
-                  shadowColor: _Livelab.primary.withValues(alpha: 0.4),
+                  shadowColor: AppColors.primary.withValues(alpha: 0.4),
                 ),
                 child: _sending
                     ? const SizedBox(
@@ -1676,7 +1663,7 @@ class _TemplateChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 14, color: _Livelab.primary),
+              Icon(icon, size: 14, color: AppColors.primary),
               const SizedBox(width: 7),
               Text(
                 label,
@@ -1828,7 +1815,7 @@ class _MelhoresHorariosCard extends StatelessWidget {
                 ),
               ),
               _ChipBadge(
-                color: _Livelab.warning,
+                color: AppColors.warning,
                 label: 'Recomendação',
                 withDot: true,
               ),
@@ -1890,7 +1877,7 @@ class _HorarioBar extends StatelessWidget {
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: FontWeight.w600,
-            color: isBest ? _Livelab.primary : context.colors.textMuted,
+            color: isBest ? AppColors.primary : context.colors.textMuted,
           ),
         ),
         const SizedBox(height: 8),
@@ -1918,8 +1905,8 @@ class _HorarioBar extends StatelessWidget {
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
                                     colors: [
-                                      _Livelab.primary,
-                                      _Livelab.primaryLight,
+                                      AppColors.primary,
+                                      AppColors.primaryLight,
                                     ],
                                   )
                                 : null,
@@ -1947,7 +1934,7 @@ class _HorarioBar extends StatelessWidget {
                               width: 18,
                               height: 18,
                               decoration: const BoxDecoration(
-                                color: _Livelab.primary,
+                                color: AppColors.primary,
                                 shape: BoxShape.circle,
                               ),
                               alignment: Alignment.center,
@@ -1977,7 +1964,7 @@ class _HorarioBar extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: isBest ? FontWeight.w600 : FontWeight.w500,
-            color: isBest ? _Livelab.primary : context.colors.textMuted,
+            color: isBest ? AppColors.primary : context.colors.textMuted,
           ),
         ),
       ],
@@ -2076,7 +2063,7 @@ class _TopClienteRow extends StatelessWidget {
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: isTop ? _Livelab.primary : context.colors.bgMuted,
+              color: isTop ? AppColors.primary : context.colors.bgMuted,
               borderRadius: BorderRadius.circular(10),
             ),
             alignment: Alignment.center,
@@ -2128,7 +2115,7 @@ class _TopClienteRow extends StatelessWidget {
                 minHeight: 6,
                 backgroundColor: context.colors.bgMuted,
                 valueColor: AlwaysStoppedAnimation(
-                  isTop ? _Livelab.primary : context.colors.borderStrong,
+                  isTop ? AppColors.primary : context.colors.borderStrong,
                 ),
               ),
             ),
@@ -2144,7 +2131,7 @@ class _TopClienteRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: isTop ? _Livelab.primary : context.colors.textPrimary,
+                color: isTop ? AppColors.primary : context.colors.textPrimary,
               ),
             ),
           ),
@@ -2227,7 +2214,7 @@ class _LeituraEficienciaCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: _Livelab.primary,
+              color: AppColors.primary,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.auto_awesome_rounded,
@@ -2576,7 +2563,7 @@ class _EvolucaoMensalRow extends StatelessWidget {
                 width: 6,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: isBest ? _Livelab.primary : context.colors.borderStrong,
+                  color: isBest ? AppColors.primary : context.colors.borderStrong,
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
@@ -2611,7 +2598,7 @@ class _EvolucaoMensalRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: isBest ? _Livelab.primary : context.colors.textPrimary,
+                  color: isBest ? AppColors.primary : context.colors.textPrimary,
                 ),
               ),
             ],
@@ -2633,8 +2620,8 @@ class _EvolucaoMensalRow extends StatelessWidget {
                         gradient: isBest
                             ? const LinearGradient(
                                 colors: [
-                                  _Livelab.primary,
-                                  _Livelab.primaryLight,
+                                  AppColors.primary,
+                                  AppColors.primaryLight,
                                 ],
                               )
                             : null,
@@ -2732,7 +2719,7 @@ class _UltimasLivesTable extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: _Livelab.primary,
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
@@ -2922,7 +2909,7 @@ class _EmptyState extends StatelessWidget {
                   color: context.colors.primarySoftBg,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(icon, size: 26, color: _Livelab.primary),
+                child: Icon(icon, size: 26, color: AppColors.primary),
               ),
               const SizedBox(height: 18),
               Text(
@@ -3145,7 +3132,7 @@ class _CloserPopupState extends State<_CloserPopup>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    _Livelab.primary,
+                    AppColors.primary,
                     Color(0xFFFF8C42),
                   ],
                 ),

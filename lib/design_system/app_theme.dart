@@ -3,6 +3,7 @@ import 'app_colors.dart';
 import 'app_colors_theme.dart';
 import 'app_typography.dart';
 import 'app_tokens.dart';
+import '../livelab/theme/tokens.dart';
 
 /// 🎨 Livelab — ThemeData oficial
 ///
@@ -138,7 +139,7 @@ class AppTheme {
         space: 1,
       ),
 
-      extensions: const [AppColorsTheme.light],
+      extensions: const [AppColorsTheme.light, LlTokens.light],
     );
   }
 
@@ -219,7 +220,7 @@ class AppTheme {
         labelSmall: AppTypography.caption.copyWith(color: const Color(0xFF7A7A7A)),
       ),
 
-      extensions: const [AppColorsTheme.dark],
+      extensions: const [AppColorsTheme.dark, LlTokens.dark],
     );
   }
 }
