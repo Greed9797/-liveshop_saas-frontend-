@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../livelab/theme/livelab_theme.dart';
 import '../widgets/app_scaffold.dart';
-import 'design_system.dart';
 
 class AppScreenScaffold extends StatelessWidget {
   final String currentRoute;
@@ -25,23 +25,25 @@ class AppScreenScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.llTokens;
     return AppScaffold(
       currentRoute: currentRoute,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (title != null)
-            _ScreenHeader(
-              title: title!,
-              subtitle: subtitle,
-              actions: actions,
-              eyebrow: eyebrow,
-              titleSerif: titleSerif,
-            ),
-          Expanded(
-            child: AppGradientBackground(child: child),
-          ),
-        ],
+      child: Container(
+        color: t.bgBase,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (title != null)
+              _ScreenHeader(
+                title: title!,
+                subtitle: subtitle,
+                actions: actions,
+                eyebrow: eyebrow,
+                titleSerif: titleSerif,
+              ),
+            Expanded(child: child),
+          ],
+        ),
       ),
     );
   }
@@ -64,18 +66,10 @@ class _ScreenHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.llTokens;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.x6,
-        vertical: AppSpacing.x4,
-      ),
-      decoration: BoxDecoration(
-        color: context.colors.bgCard,
-        border: Border(
-          bottom: BorderSide(color: context.colors.borderSubtle, width: 1),
-        ),
-      ),
+      padding: const EdgeInsets.fromLTRB(28, 16, 28, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -84,45 +78,36 @@ class _ScreenHeader extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 18,
-                  height: 1,
-                  color: AppColors.primary,
-                ),
+                Container(width: 18, height: 1, color: t.primary),
                 const SizedBox(width: 8),
                 Text(
                   eyebrow!.toUpperCase(),
-                  style: AppTypography.caption.copyWith(
+                  style: TextStyle(
+                    color: t.textMuted,
                     fontSize: 11,
-                    letterSpacing: 0.16,
-                    fontWeight: FontWeight.w500,
-                    color: context.colors.textMuted,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.4,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
           ],
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Expanded(
-                child: titleSerif
-                    ? _buildSerifTitle()
-                    : Text(title, style: AppTypography.h2),
-              ),
+              Expanded(child: titleSerif ? _serifTitle(t) : _plainTitle(t)),
               if (actions != null) ...[
-                const SizedBox(width: AppSpacing.x3),
+                const SizedBox(width: 12),
                 ...actions!,
               ],
             ],
           ),
           if (subtitle != null) ...[
-            const SizedBox(height: AppSpacing.x1),
+            const SizedBox(height: 4),
             Text(
               subtitle!,
-              style: AppTypography.caption.copyWith(
-                color: context.colors.textSecondary,
-              ),
+              style: TextStyle(color: t.textMuted, fontSize: 13),
             ),
           ],
         ],
@@ -130,37 +115,50 @@ class _ScreenHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildSerifTitle() {
-    final words = title.split(' ');
-    if (words.isEmpty) return const SizedBox.shrink();
+  Widget _plainTitle(t) {
+    return Text(
+      title,
+      style: TextStyle(
+        color: t.textPrimary,
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.9,
+        height: 1.1,
+      ),
+    );
+  }
 
-    final lastWord = words.last;
-    final rest = words.sublist(0, words.length - 1).join(' ');
+  Widget _serifTitle(t) {
+    final words = title.trim().split(' ');
+    if (words.isEmpty) return const SizedBox.shrink();
+    final firstWord = words.first;
+    final rest = words.sublist(1).join(' ');
 
     return Text.rich(
       TextSpan(
         children: [
-          if (rest.isNotEmpty) ...[
-            TextSpan(
-              text: '$rest ',
-              style: AppTypography.h1.copyWith(
-                fontSize: 34,
-                letterSpacing: -0.03,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
           TextSpan(
-            text: lastWord,
+            text: firstWord,
             style: GoogleFonts.getFont(
               'Instrument Serif',
-              fontSize: 38,
-              letterSpacing: -0.02,
+              fontSize: 32,
+              letterSpacing: -0.6,
               fontWeight: FontWeight.w400,
               fontStyle: FontStyle.italic,
-              color: AppColors.primary,
+              color: t.textPrimary,
             ),
           ),
+          if (rest.isNotEmpty)
+            TextSpan(
+              text: ' $rest',
+              style: TextStyle(
+                color: t.textPrimary,
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.9,
+                height: 1.1,
+              ),
+            ),
         ],
       ),
     );

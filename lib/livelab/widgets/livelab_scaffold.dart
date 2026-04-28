@@ -77,7 +77,8 @@ class LivelabScaffold extends ConsumerWidget {
                   user: auth.user,
                   isDark: isDark,
                   onToggleTheme: () => ref.read(themeModeProvider.notifier).toggle(),
-                  onRefresh: onRefresh,
+                  onRefresh: onRefresh ?? () => _hardRefresh(context),
+                  onBell: () => _openNotifications(context),
                 ),
                 Expanded(child: child),
                 _BottomNav(sections: sections, currentRoute: currentRoute),
@@ -104,7 +105,8 @@ class LivelabScaffold extends ConsumerWidget {
                         user: auth.user,
                         isDark: isDark,
                         onToggleTheme: () => ref.read(themeModeProvider.notifier).toggle(),
-                        onRefresh: onRefresh,
+                        onRefresh: onRefresh ?? () => _hardRefresh(context),
+                        onBell: () => _openNotifications(context),
                       ),
                       Expanded(child: child),
                     ],
@@ -113,6 +115,20 @@ class LivelabScaffold extends ConsumerWidget {
               ],
             ),
         ],
+      ),
+    );
+  }
+
+  void _hardRefresh(BuildContext context) {
+    final route = ModalRoute.of(context)?.settings.name ?? currentRoute;
+    Navigator.of(context).pushReplacementNamed(route);
+  }
+
+  void _openNotifications(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Sem notificações no momento.'),
+        duration: Duration(seconds: 2),
       ),
     );
   }
@@ -368,12 +384,14 @@ class _Topbar extends StatelessWidget {
     required this.isDark,
     required this.onToggleTheme,
     required this.onRefresh,
+    required this.onBell,
   });
 
   final dynamic user; // User?
   final bool isDark;
   final VoidCallback onToggleTheme;
   final VoidCallback? onRefresh;
+  final VoidCallback onBell;
 
   @override
   Widget build(BuildContext context) {
@@ -455,9 +473,9 @@ class _Topbar extends StatelessWidget {
           _ThemeToggle(isDark: isDark, onTap: onToggleTheme),
           const SizedBox(width: 10),
           if (onRefresh != null)
-            _IconButton(icon: Icons.refresh, onTap: onRefresh!),
+            _IconButton(icon: PhosphorIcons.arrowsClockwise(), onTap: onRefresh!),
           const SizedBox(width: 10),
-          _IconButton(icon: Icons.notifications_none, onTap: () {}, dot: true),
+          _IconButton(icon: PhosphorIcons.bell(), onTap: onBell, dot: true),
         ],
       ),
     );
