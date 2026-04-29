@@ -61,8 +61,8 @@ class _ClienteReservasNotifier
   Future<List<ClienteReserva>> build() => _fetch();
 
   Future<List<ClienteReserva>> _fetch() async {
-    final data = await ApiService.get('/cliente/reservas');
-    final list = data as List<dynamic>;
+    final response = await ApiService.get('/cliente/reservas');
+    final list = response.data as List<dynamic>;
     return list.map((e) => ClienteReserva.fromJson(e as Map<String, dynamic>)).toList();
   }
 
