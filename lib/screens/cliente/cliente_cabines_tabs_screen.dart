@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../design_system/app_colors.dart' as ds_colors;
-import '../../design_system/app_colors_theme.dart';
 import '../../design_system/app_tokens.dart' as ds_tokens;
-import '../../design_system/app_typography.dart' as ds_typography;
+import '../../livelab/theme/livelab_theme.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/app_scaffold.dart';
 import 'cliente_agenda_screen.dart';
@@ -39,7 +39,7 @@ class _ClienteCabinesTabsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final t = context.colors;
+    final t = context.llTokens;
 
     return AppScaffold(
       currentRoute: AppRoutes.clienteCabinesTabs,
@@ -49,31 +49,60 @@ class _ClienteCabinesTabsScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              // Header — eyebrow + serif italic title
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  ds_tokens.AppSpacing.x6,
-                  ds_tokens.AppSpacing.x6,
-                  ds_tokens.AppSpacing.x6,
-                  0,
-                ),
+                padding: const EdgeInsets.fromLTRB(28, 16, 28, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'CABINES',
-                      style: ds_typography.AppTypography.caption.copyWith(
-                        color: t.textMuted,
-                        letterSpacing: 1.2,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(width: 18, height: 1, color: t.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          'CABINES',
+                          style: TextStyle(
+                            color: t.textMuted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text.rich(
+                      TextSpan(children: [
+                        TextSpan(
+                          text: 'Minhas',
+                          style: GoogleFonts.getFont(
+                            'Instrument Serif',
+                            fontSize: 32,
+                            letterSpacing: -0.6,
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.italic,
+                            color: t.textPrimary,
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' Lives',
+                          style: TextStyle(
+                            color: t.textPrimary,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.9,
+                            height: 1.1,
+                          ),
+                        ),
+                      ]),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Minhas Lives',
-                      style: ds_typography.AppTypography.h2.copyWith(
-                        color: t.textPrimary,
-                      ),
+                      'Suas transmissões ao vivo',
+                      style: TextStyle(color: t.textMuted, fontSize: 13),
                     ),
+                    const SizedBox(height: 14),
                   ],
                 ),
               ),
@@ -82,9 +111,9 @@ class _ClienteCabinesTabsScreenState
                 controller: _tab,
                 isScrollable: true,
                 tabAlignment: TabAlignment.start,
-                labelColor: ds_colors.AppColors.primary,
-                unselectedLabelColor: t.textSecondary,
-                indicatorColor: ds_colors.AppColors.primary,
+                labelColor: t.primary,
+                unselectedLabelColor: t.textMuted,
+                indicatorColor: t.primary,
                 indicatorWeight: 2,
                 padding: const EdgeInsets.symmetric(
                     horizontal: ds_tokens.AppSpacing.x6),

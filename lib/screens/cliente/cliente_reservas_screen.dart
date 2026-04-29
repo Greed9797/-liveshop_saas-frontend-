@@ -5,7 +5,8 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../design_system/app_colors.dart' as ds_colors;
 import '../../design_system/app_tokens.dart' as ds_tokens;
-import '../../design_system/app_typography.dart' as ds_typography;
+import '../../livelab/theme/livelab_theme.dart';
+import '../../livelab/theme/tokens.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_scaffold.dart';
@@ -115,9 +116,7 @@ class ClienteReservasBody extends ConsumerWidget {
                 children: [
                   Text(
                     ApiService.extractErrorMessage(e),
-                    style: ds_typography.AppTypography.bodyMedium.copyWith(
-                      color: ds_colors.AppColors.textSecondary,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: ds_colors.AppColors.textSecondary),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: ds_tokens.AppSpacing.x4),
@@ -160,13 +159,9 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.llTokens;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        ds_tokens.AppSpacing.x6,
-        ds_tokens.AppSpacing.x6,
-        ds_tokens.AppSpacing.x6,
-        ds_tokens.AppSpacing.x4,
-      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
       child: Row(
         children: [
           Expanded(
@@ -174,38 +169,37 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Minha Agenda',
-                  style: ds_typography.AppTypography.h2.copyWith(
-                    color: ds_colors.AppColors.textPrimary,
+                  'Próximas transmissões',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: t.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Lives solicitadas e confirmadas',
-                  style: ds_typography.AppTypography.bodySmall.copyWith(
-                    color: ds_colors.AppColors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 12, color: t.textMuted),
                 ),
               ],
             ),
           ),
           IconButton(
             onPressed: onRefresh,
-            icon: Icon(PhosphorIcons.arrowClockwise(), size: 20),
-            color: ds_colors.AppColors.textSecondary,
+            icon: Icon(PhosphorIcons.arrowClockwise(), size: 18),
+            color: t.textMuted,
           ),
-          const SizedBox(width: ds_tokens.AppSpacing.x2),
+          const SizedBox(width: 6),
           FilledButton.icon(
             onPressed: onSolicitar,
-            icon: Icon(PhosphorIcons.plusCircle(), size: 16),
+            icon: Icon(PhosphorIcons.plusCircle(), size: 15),
             label: const Text('Solicitar live'),
             style: FilledButton.styleFrom(
-              backgroundColor: ds_colors.AppColors.primary,
+              backgroundColor: t.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: ds_tokens.AppSpacing.x4,
-                vertical: ds_tokens.AppSpacing.x2,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
             ),
           ),
         ],
@@ -225,40 +219,49 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.llTokens;
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            PhosphorIcons.calendarBlank(),
-            size: 48,
-            color: ds_colors.AppColors.textMuted,
-          ),
-          const SizedBox(height: ds_tokens.AppSpacing.x4),
-          Text(
-            'Nenhuma live agendada',
-            style: ds_typography.AppTypography.h3.copyWith(
-              color: ds_colors.AppColors.textSecondary,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: t.bgElev2,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: t.border),
+              ),
+              child: Icon(PhosphorIcons.calendarBlank(), size: 22, color: t.textMuted),
             ),
-          ),
-          const SizedBox(height: ds_tokens.AppSpacing.x2),
-          Text(
-            'Solicite uma live para começar',
-            style: ds_typography.AppTypography.bodySmall.copyWith(
-              color: ds_colors.AppColors.textMuted,
+            const SizedBox(height: 16),
+            Text(
+              'Nenhuma live agendada',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: t.textPrimary),
             ),
-          ),
-          const SizedBox(height: ds_tokens.AppSpacing.x6),
-          FilledButton.icon(
-            onPressed: onSolicitar,
-            icon: Icon(PhosphorIcons.plusCircle(), size: 16),
-            label: const Text('Solicitar live'),
-            style: FilledButton.styleFrom(
-              backgroundColor: ds_colors.AppColors.primary,
-              foregroundColor: Colors.white,
+            const SizedBox(height: 6),
+            Text(
+              'Solicite uma live para começar',
+              style: TextStyle(fontSize: 12, color: t.textMuted),
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: onSolicitar,
+              icon: Icon(PhosphorIcons.plusCircle(), size: 15),
+              label: const Text('Solicitar live'),
+              style: FilledButton.styleFrom(
+                backgroundColor: t.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -273,11 +276,9 @@ class _ReservaCard extends StatelessWidget {
 
   const _ReservaCard({required this.reserva});
 
-  static final DateFormat _dateFmt =
-      DateFormat("EEE, dd/MM/yyyy", 'pt_BR');
-
   @override
   Widget build(BuildContext context) {
+    final t = context.llTokens;
     final statusColor = _statusColor(reserva.status);
     final statusLabel = _statusLabel(reserva.status);
 
@@ -286,74 +287,86 @@ class _ReservaCard extends StatelessWidget {
       parsedDate = DateTime.parse(reserva.data);
     } catch (_) {}
 
-    final dateStr = parsedDate != null ? _dateFmt.format(parsedDate) : reserva.data;
+    final dateLabel = parsedDate != null
+        ? DateFormat("dd/MM", 'pt_BR').format(parsedDate)
+        : reserva.data;
+    final dowLabel = parsedDate != null
+        ? DateFormat("EEE", 'pt_BR').format(parsedDate).toUpperCase()
+        : '';
 
     return Container(
       decoration: BoxDecoration(
-        color: ds_colors.AppColors.bgCard,
-        borderRadius: BorderRadius.circular(ds_tokens.AppRadius.md),
-        border: Border.all(color: ds_colors.AppColors.border),
+        color: t.bgElev1,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: t.border),
       ),
-      padding: const EdgeInsets.all(ds_tokens.AppSpacing.x4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 4,
-            height: 56,
-            decoration: BoxDecoration(
-              color: statusColor,
-              borderRadius: BorderRadius.circular(2),
+          // Time block
+          SizedBox(
+            width: 54,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  reserva.horaInicio,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: t.textPrimary,
+                    letterSpacing: -0.5,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$dowLabel $dateLabel',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: t.textMuted,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: ds_tokens.AppSpacing.x3),
+          // Vertical divider
+          Container(
+            width: 1,
+            height: 36,
+            color: t.border,
+            margin: const EdgeInsets.symmetric(horizontal: 14),
+          ),
+          // Main info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      'Cabine ${reserva.cabineNumero.toString().padLeft(2, '0')}',
-                      style: ds_typography.AppTypography.label.copyWith(
-                        color: ds_colors.AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Spacer(),
-                    _StatusPill(label: statusLabel, color: statusColor),
-                  ],
+                Text(
+                  'Cabine ${reserva.cabineNumero.toString().padLeft(2, '0')}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: t.textPrimary,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(PhosphorIcons.calendarBlank(),
-                        size: 13, color: ds_colors.AppColors.textMuted),
-                    const SizedBox(width: 4),
-                    Text(
-                      dateStr,
-                      style: ds_typography.AppTypography.bodySmall.copyWith(
-                        color: ds_colors.AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(width: ds_tokens.AppSpacing.x3),
-                    Icon(PhosphorIcons.clock(),
-                        size: 13, color: ds_colors.AppColors.textMuted),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${reserva.horaInicio} – ${reserva.horaFim}',
-                      style: ds_typography.AppTypography.bodySmall.copyWith(
-                        color: ds_colors.AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 3),
+                Text(
+                  '${reserva.horaInicio} – ${reserva.horaFim}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: t.textMuted,
+                  ),
                 ),
-                if (reserva.observacoes != null && reserva.observacoes!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                if (reserva.observacoes != null &&
+                    reserva.observacoes!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
                   Text(
                     reserva.observacoes!,
-                    style: ds_typography.AppTypography.caption.copyWith(
-                      color: ds_colors.AppColors.textMuted,
-                    ),
+                    style: TextStyle(fontSize: 11, color: t.textMuted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -361,6 +374,9 @@ class _ReservaCard extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: 12),
+          // Status badge
+          _StatusPill(label: statusLabel, color: statusColor),
         ],
       ),
     );
@@ -395,16 +411,18 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(ds_tokens.AppRadius.full),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        label,
-        style: ds_typography.AppTypography.caption.copyWith(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
           color: color,
-          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
         ),
       ),
     );

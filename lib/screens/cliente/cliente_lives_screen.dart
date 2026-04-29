@@ -57,8 +57,10 @@ class ClienteLivesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScreenScaffold(
       currentRoute: AppRoutes.clienteLives,
-      eyebrow: 'LIVES',
+      eyebrow: 'CABINES',
       title: 'Minhas Lives',
+      titleSerif: true,
+      subtitle: 'Suas transmissões ao vivo',
       child: const ClienteLivesBody(),
     );
   }
