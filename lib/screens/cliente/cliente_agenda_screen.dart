@@ -71,15 +71,39 @@ String _addMinutes(String hhmm, int minutes) {
 // Screen
 // ─────────────────────────────────────────────────────────────────────────────
 
-class ClienteAgendaScreen extends ConsumerStatefulWidget {
+class ClienteAgendaScreen extends ConsumerWidget {
   const ClienteAgendaScreen({super.key});
 
   @override
-  ConsumerState<ClienteAgendaScreen> createState() =>
-      _ClienteAgendaScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    return AppScreenScaffold(
+      currentRoute: AppRoutes.clienteAgenda,
+      eyebrow: 'AGENDA',
+      title: 'Minha Agenda',
+      actions: [
+        IconButton(
+          tooltip: 'Atualizar',
+          onPressed: () => ref.read(clienteAgendaProvider.notifier).refresh(),
+          icon: Icon(
+            PhosphorIcons.arrowClockwise(),
+            color: context.colors.textSecondary,
+          ),
+        ),
+      ],
+      child: const ClienteAgendaBody(),
+    );
+  }
 }
 
-class _ClienteAgendaScreenState extends ConsumerState<ClienteAgendaScreen> {
+// Body reusável em tabs externas
+class ClienteAgendaBody extends ConsumerStatefulWidget {
+  const ClienteAgendaBody({super.key});
+
+  @override
+  ConsumerState<ClienteAgendaBody> createState() => _ClienteAgendaBodyState();
+}
+
+class _ClienteAgendaBodyState extends ConsumerState<ClienteAgendaBody> {
   late DateTime _selectedDay;
 
   @override
@@ -114,21 +138,7 @@ class _ClienteAgendaScreenState extends ConsumerState<ClienteAgendaScreen> {
   Widget build(BuildContext context) {
     final agendaAsync = ref.watch(clienteAgendaProvider);
 
-    return AppScreenScaffold(
-      currentRoute: AppRoutes.clienteAgenda,
-      eyebrow: 'AGENDA',
-      title: 'Minha Agenda',
-      actions: [
-        IconButton(
-          tooltip: 'Atualizar',
-          onPressed: () => ref.read(clienteAgendaProvider.notifier).refresh(),
-          icon: Icon(
-            PhosphorIcons.arrowClockwise(),
-            color: context.colors.textSecondary,
-          ),
-        ),
-      ],
-      child: Stack(
+    return Stack(
         children: [
           Column(
             children: [
@@ -203,8 +213,7 @@ class _ClienteAgendaScreenState extends ConsumerState<ClienteAgendaScreen> {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 
   void _openBottomSheet(

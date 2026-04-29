@@ -18,6 +18,7 @@ import '../screens/cabines/cabine_detail_screen.dart';
 import '../screens/solicitacoes/solicitacoes_screen.dart';
 import '../screens/cliente/cliente_agenda_screen.dart';
 import '../screens/cliente/cliente_ao_vivo_screen.dart';
+import '../screens/cliente/cliente_cabines_tabs_screen.dart';
 import '../screens/cliente/cliente_reservas_screen.dart';
 import '../screens/cliente/cliente_configuracoes_screen.dart';
 import '../screens/cliente/cliente_historico_screen.dart';
@@ -78,6 +79,7 @@ class AppRoutes {
   static const apresentadoras = '/apresentadoras';
   static const analyticsDashboard = '/analytics-dashboard';
   static const clienteConfiguracoes = '/cliente/configuracoes';
+  static const clienteCabinesTabs = '/cliente/cabines';
   static const clienteLives = '/cliente/lives';
   static const clienteAgenda = '/cliente/agenda';
   static const clienteReservas = '/cliente/reservas';
@@ -351,6 +353,17 @@ class AppRoutes {
             fallbackRoute: login,
             unauthenticatedRoute: login,
             child: ClienteAgendaScreen(),
+          ),
+          settings: settings,
+        );
+
+      case clienteCabinesTabs:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'cliente_parceiro'},
+            fallbackRoute: login,
+            unauthenticatedRoute: login,
+            child: ClienteCabinesTabsScreen(),
           ),
           settings: settings,
         );

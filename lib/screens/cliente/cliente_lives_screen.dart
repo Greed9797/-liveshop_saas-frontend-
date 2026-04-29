@@ -50,14 +50,29 @@ class _AppTypography {
 // Main screen
 // ---------------------------------------------------------------------------
 
-class ClienteLivesScreen extends ConsumerStatefulWidget {
+class ClienteLivesScreen extends StatelessWidget {
   const ClienteLivesScreen({super.key});
 
   @override
-  ConsumerState<ClienteLivesScreen> createState() => _ClienteLivesScreenState();
+  Widget build(BuildContext context) {
+    return AppScreenScaffold(
+      currentRoute: AppRoutes.clienteLives,
+      eyebrow: 'LIVES',
+      title: 'Minhas Lives',
+      child: const ClienteLivesBody(),
+    );
+  }
 }
 
-class _ClienteLivesScreenState extends ConsumerState<ClienteLivesScreen>
+// Body reusável em tabs externas
+class ClienteLivesBody extends ConsumerStatefulWidget {
+  const ClienteLivesBody({super.key});
+
+  @override
+  ConsumerState<ClienteLivesBody> createState() => _ClienteLivesBodyState();
+}
+
+class _ClienteLivesBodyState extends ConsumerState<ClienteLivesBody>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
 
@@ -77,11 +92,8 @@ class _ClienteLivesScreenState extends ConsumerState<ClienteLivesScreen>
   Widget build(BuildContext context) {
     final period = ref.watch(clientePeriodProvider);
 
-    return AppScreenScaffold(
-      currentRoute: AppRoutes.clienteLives,
-      eyebrow: 'LIVES',
-      title: 'Minhas Lives',
-      actions: [
+    return Column(
+      children: [
         TabBar(
           controller: _tab,
           isScrollable: true,
@@ -91,20 +103,16 @@ class _ClienteLivesScreenState extends ConsumerState<ClienteLivesScreen>
             Tab(text: 'Histórico'),
           ],
         ),
-      ],
-      child: Column(
-        children: [
-          Expanded(
-            child: TabBarView(
-              controller: _tab,
-              children: [
-                _AoVivoTab(),
-                _HistoricoTab(period: period),
-              ],
-            ),
+        Expanded(
+          child: TabBarView(
+            controller: _tab,
+            children: [
+              _AoVivoTab(),
+              _HistoricoTab(period: period),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -76,66 +76,74 @@ class _ClienteReservasNotifier
 // Screen
 // ---------------------------------------------------------------------------
 
-class ClienteReservasScreen extends ConsumerWidget {
+class ClienteReservasScreen extends StatelessWidget {
   const ClienteReservasScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      currentRoute: AppRoutes.clienteReservas,
+      child: const Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(child: ClienteReservasBody()),
+      ),
+    );
+  }
+}
+
+// Body reusável em tabs externas
+class ClienteReservasBody extends ConsumerWidget {
+  const ClienteReservasBody({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reservasAsync = ref.watch(clienteReservasProvider);
 
-    return AppScaffold(
-      currentRoute: AppRoutes.clienteReservas,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Header(
-                onRefresh: () => ref.read(clienteReservasProvider.notifier).refresh(),
-                onSolicitar: () => Navigator.pushNamed(context, AppRoutes.clienteAgenda),
-              ),
-              Expanded(
-                child: reservasAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          ApiService.extractErrorMessage(e),
-                          style: ds_typography.AppTypography.bodyMedium.copyWith(
-                            color: ds_colors.AppColors.textSecondary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: ds_tokens.AppSpacing.x4),
-                        TextButton.icon(
-                          onPressed: () => ref.read(clienteReservasProvider.notifier).refresh(),
-                          icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
-                          label: const Text('Tentar novamente'),
-                        ),
-                      ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Header(
+          onRefresh: () => ref.read(clienteReservasProvider.notifier).refresh(),
+          onSolicitar: () => Navigator.pushNamed(context, AppRoutes.clienteAgenda),
+        ),
+        Expanded(
+          child: reservasAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    ApiService.extractErrorMessage(e),
+                    style: ds_typography.AppTypography.bodyMedium.copyWith(
+                      color: ds_colors.AppColors.textSecondary,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  data: (reservas) => reservas.isEmpty
-                      ? _EmptyState(
-                          onSolicitar: () =>
-                              Navigator.pushNamed(context, AppRoutes.clienteAgenda),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(ds_tokens.AppSpacing.x6),
-                          itemCount: reservas.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: ds_tokens.AppSpacing.x3),
-                          itemBuilder: (_, i) => _ReservaCard(reserva: reservas[i]),
-                        ),
-                ),
+                  const SizedBox(height: ds_tokens.AppSpacing.x4),
+                  TextButton.icon(
+                    onPressed: () => ref.read(clienteReservasProvider.notifier).refresh(),
+                    icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
+                    label: const Text('Tentar novamente'),
+                  ),
+                ],
               ),
-            ],
+            ),
+            data: (reservas) => reservas.isEmpty
+                ? _EmptyState(
+                    onSolicitar: () =>
+                        Navigator.pushNamed(context, AppRoutes.clienteAgenda),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(ds_tokens.AppSpacing.x6),
+                    itemCount: reservas.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: ds_tokens.AppSpacing.x3),
+                    itemBuilder: (_, i) => _ReservaCard(reserva: reservas[i]),
+                  ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

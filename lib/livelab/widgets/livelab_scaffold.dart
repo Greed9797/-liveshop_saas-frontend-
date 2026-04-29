@@ -8,6 +8,8 @@ import '../../routes/app_routes.dart';
 import '../theme/tokens.dart';
 import '../theme/livelab_theme.dart';
 
+final _sidebarExpandedProvider = StateProvider<bool>((ref) => false);
+
 class LivelabNavItem {
   const LivelabNavItem({
     required this.label,
@@ -92,6 +94,7 @@ class LivelabScaffold extends ConsumerWidget {
                 _Rail(
                   sections: sections,
                   currentRoute: currentRoute,
+                  user: auth.user,
                   onLogout: () async {
                     await ref.read(authProvider.notifier).logout();
                     if (context.mounted) {
@@ -143,10 +146,7 @@ class LivelabScaffold extends ConsumerWidget {
       return [
         LivelabNavSection(items: [
           LivelabNavItem(label: 'Home', icon: PhosphorIcons.house(), route: AppRoutes.cliente),
-          LivelabNavItem(label: 'Lives', icon: PhosphorIcons.videoCamera(), route: AppRoutes.clienteLives),
-          LivelabNavItem(label: 'Agenda', icon: PhosphorIcons.calendarBlank(), route: AppRoutes.clienteReservas),
-          LivelabNavItem(label: 'Solicitar', icon: PhosphorIcons.plusCircle(), route: AppRoutes.clienteAgenda),
-          LivelabNavItem(label: 'Histórico', icon: PhosphorIcons.clockCounterClockwise(), route: AppRoutes.clienteHistorico),
+          LivelabNavItem(label: 'Cabines', icon: PhosphorIcons.videoCamera(), route: AppRoutes.clienteCabinesTabs),
           LivelabNavItem(label: 'Configurações', icon: PhosphorIcons.gear(), route: AppRoutes.clienteConfiguracoes),
         ]),
       ];
@@ -195,65 +195,174 @@ class LivelabScaffold extends ConsumerWidget {
   }
 }
 
-class _Rail extends StatelessWidget {
-  const _Rail({required this.sections, required this.currentRoute, required this.onLogout});
+class _Rail extends ConsumerWidget {
+  const _Rail({
+    required this.sections,
+    required this.currentRoute,
+    required this.onLogout,
+    this.user,
+  });
   final List<LivelabNavSection> sections;
   final String currentRoute;
   final VoidCallback onLogout;
+  final dynamic user;
+
+  static const _collapsedW = 80.0;
+  static const _expandedW = 240.0;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = context.llTokens;
-    return Container(
-      width: 80,
+    final expanded = ref.watch(_sidebarExpandedProvider);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+      width: expanded ? _expandedW : _collapsedW,
       decoration: BoxDecoration(
         color: t.bgElev1,
         border: Border(right: BorderSide(color: t.border)),
       ),
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // brand mark
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [t.primary, const Color(0xFFFF8A3C)],
-              ),
-              boxShadow: [
-                BoxShadow(color: t.primary.withValues(alpha: 0.5), blurRadius: 16, offset: const Offset(0, 6)),
+          // Brand + toggle
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                // Logo mark
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [t.primary, const Color(0xFFFF8A3C)],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                          color: t.primary.withValues(alpha: 0.5),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6)),
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'L',
+                    style: GoogleFonts.instrumentSerif(
+                      color: Colors.white,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 22,
+                    ),
+                  ),
+                ),
+                // Brand name (expanded only)
+                if (expanded) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Livelab',
+                      style: GoogleFonts.instrumentSerif(
+                        color: t.primary,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                      ),
+                      overflow: TextOverflow.clip,
+                    ),
+                  ),
+                ],
+                // Toggle button
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => ref.read(_sidebarExpandedProvider.notifier).state = !expanded,
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      expanded ? PhosphorIcons.caretLeft() : PhosphorIcons.caretRight(),
+                      size: 16,
+                      color: t.textMuted,
+                    ),
+                  ),
+                ),
               ],
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              'L',
-              style: GoogleFonts.instrumentSerif(
-                color: Colors.white,
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w800,
-                fontSize: 22,
-              ),
             ),
           ),
           const SizedBox(height: 18),
+          // Nav items
           Expanded(
             child: SingleChildScrollView(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (final s in sections) ..._section(t, s),
+                  for (final s in sections) ..._section(t, s, expanded),
                 ],
               ),
             ),
           ),
+          // Footer
+          if (expanded && user != null) ...[
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [t.primary, const Color(0xFFFF8A3C)],
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      (user?.nome as String? ?? '?').substring(0, 1).toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          (user?.nome as String? ?? ''),
+                          style: TextStyle(
+                            color: t.textPrimary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        Text(
+                          _papelLabel(user?.papel as String? ?? ''),
+                          style: TextStyle(color: t.textFaint, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           _RailItem(
             icon: PhosphorIcons.signOut(),
             label: 'Sair',
             active: false,
             dot: false,
+            expanded: expanded,
             onTap: onLogout,
           ),
         ],
@@ -261,11 +370,11 @@ class _Rail extends StatelessWidget {
     );
   }
 
-  List<Widget> _section(LlTokens t, LivelabNavSection s) {
+  List<Widget> _section(LlTokens t, LivelabNavSection s, bool expanded) {
     return [
-      if (s.label != null)
+      if (s.label != null && expanded)
         Padding(
-          padding: const EdgeInsets.only(top: 14, bottom: 4),
+          padding: const EdgeInsets.only(left: 16, top: 14, bottom: 4),
           child: Text(
             s.label!.toUpperCase(),
             style: TextStyle(
@@ -281,8 +390,9 @@ class _Rail extends StatelessWidget {
           return _RailItem(
             icon: it.icon,
             label: it.label,
-            active: it.route == _activeMatch(it.route),
+            active: it.route == currentRoute,
             dot: it.dot,
+            expanded: expanded,
             onTap: () {
               if (ModalRoute.of(ctx)?.settings.name != it.route) {
                 Navigator.of(ctx).pushReplacementNamed(it.route);
@@ -293,46 +403,116 @@ class _Rail extends StatelessWidget {
     ];
   }
 
-  String _activeMatch(String route) {
-    return currentRoute == route ? route : '';
+  String _papelLabel(String papel) {
+    return switch (papel) {
+      'franqueado' => 'Franquia',
+      'franqueador_master' => 'Master',
+      'gerente' => 'Gerente',
+      'cliente_parceiro' => 'Cliente',
+      'apresentador' => 'Apresentador',
+      _ => papel,
+    };
   }
 }
 
 class _RailItem extends StatelessWidget {
-  const _RailItem({required this.icon, required this.label, required this.active, required this.dot, required this.onTap});
+  const _RailItem({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.dot,
+    required this.expanded,
+    required this.onTap,
+  });
   final IconData icon;
   final String label;
   final bool active;
   final bool dot;
+  final bool expanded;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final t = context.llTokens;
+
+    final iconWidget = Icon(
+      icon,
+      size: 22,
+      color: active ? t.primary : t.textMuted,
+    );
+
+    final indicator = active
+        ? Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: Container(
+                width: 3,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: t.primary,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(3),
+                    bottomRight: Radius.circular(3),
+                  ),
+                ),
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
+
+    if (expanded) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
+        child: Stack(
+          children: [
+            indicator,
+            Material(
+              color: active ? t.primarySoft : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      iconWidget,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: active ? t.primary : t.textMuted,
+                            fontSize: 14,
+                            fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Collapsed: icon only with tooltip
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          if (active)
-            Positioned(
-              left: -16,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: Container(
-                  width: 3,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: t.primary,
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(3),
-                      bottomRight: Radius.circular(3),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          Positioned(
+            left: -16,
+            top: 0,
+            bottom: 0,
+            child: indicator,
+          ),
           Tooltip(
             message: label,
             waitDuration: const Duration(milliseconds: 600),
@@ -347,13 +527,7 @@ class _RailItem extends StatelessWidget {
                   height: 56,
                   child: Stack(
                     children: [
-                      Center(
-                        child: Icon(
-                          icon,
-                          size: 22,
-                          color: active ? t.primary : t.textMuted,
-                        ),
-                      ),
+                      Center(child: iconWidget),
                       if (dot)
                         Positioned(
                           top: 8,
