@@ -628,7 +628,7 @@ class _ActionButtons extends StatelessWidget {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: () =>
-                Navigator.pushNamed(context, AppRoutes.clienteAgenda),
+                Navigator.pushNamed(context, AppRoutes.clienteReservas),
             icon: Icon(
               PhosphorIcons.calendarBlank(),
               size: 18,

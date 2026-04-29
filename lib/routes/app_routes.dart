@@ -18,6 +18,7 @@ import '../screens/cabines/cabine_detail_screen.dart';
 import '../screens/solicitacoes/solicitacoes_screen.dart';
 import '../screens/cliente/cliente_agenda_screen.dart';
 import '../screens/cliente/cliente_ao_vivo_screen.dart';
+import '../screens/cliente/cliente_reservas_screen.dart';
 import '../screens/cliente/cliente_configuracoes_screen.dart';
 import '../screens/cliente/cliente_historico_screen.dart';
 import '../screens/cliente/cliente_lives_screen.dart';
@@ -79,6 +80,7 @@ class AppRoutes {
   static const clienteConfiguracoes = '/cliente/configuracoes';
   static const clienteLives = '/cliente/lives';
   static const clienteAgenda = '/cliente/agenda';
+  static const clienteReservas = '/cliente/reservas';
 
   static const Set<String> _internalRoles = {
     'franqueado',
@@ -349,6 +351,17 @@ class AppRoutes {
             fallbackRoute: login,
             unauthenticatedRoute: login,
             child: ClienteAgendaScreen(),
+          ),
+          settings: settings,
+        );
+
+      case clienteReservas:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'cliente_parceiro'},
+            fallbackRoute: login,
+            unauthenticatedRoute: login,
+            child: ClienteReservasScreen(),
           ),
           settings: settings,
         );

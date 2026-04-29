@@ -144,6 +144,8 @@ class LivelabScaffold extends ConsumerWidget {
         LivelabNavSection(items: [
           LivelabNavItem(label: 'Home', icon: PhosphorIcons.house(), route: AppRoutes.cliente),
           LivelabNavItem(label: 'Lives', icon: PhosphorIcons.videoCamera(), route: AppRoutes.clienteLives),
+          LivelabNavItem(label: 'Agenda', icon: PhosphorIcons.calendarBlank(), route: AppRoutes.clienteReservas),
+          LivelabNavItem(label: 'Solicitar', icon: PhosphorIcons.plusCircle(), route: AppRoutes.clienteAgenda),
           LivelabNavItem(label: 'Histórico', icon: PhosphorIcons.clockCounterClockwise(), route: AppRoutes.clienteHistorico),
           LivelabNavItem(label: 'Configurações', icon: PhosphorIcons.gear(), route: AppRoutes.clienteConfiguracoes),
         ]),
