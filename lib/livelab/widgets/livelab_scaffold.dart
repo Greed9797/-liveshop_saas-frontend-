@@ -228,41 +228,13 @@ class _Rail extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Brand + toggle
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                // Logo mark
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [t.primary, const Color(0xFFFF8A3C)],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                          color: t.primary.withValues(alpha: 0.5),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6)),
-                    ],
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'L',
-                    style: GoogleFonts.instrumentSerif(
-                      color: Colors.white,
-                      fontStyle: FontStyle.italic,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 22,
-                    ),
-                  ),
-                ),
-                // Brand name (expanded only)
-                if (expanded) ...[
+          if (expanded)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  // Logo mark
+                  _buildLogo(t),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -276,23 +248,30 @@ class _Rail extends ConsumerWidget {
                       overflow: TextOverflow.clip,
                     ),
                   ),
-                ],
-                // Toggle button
-                InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => ref.read(_sidebarExpandedProvider.notifier).state = !expanded,
-                  child: Padding(
-                    padding: const EdgeInsets.all(6),
-                    child: Icon(
-                      expanded ? PhosphorIcons.caretLeft() : PhosphorIcons.caretRight(),
-                      size: 16,
-                      color: t.textMuted,
+                  // Collapse button
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => ref.read(_sidebarExpandedProvider.notifier).state = false,
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(
+                        PhosphorIcons.caretLeft(),
+                        size: 16,
+                        color: t.textMuted,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
+            )
+          else
+            // Collapsed: logo is the expand button
+            Center(
+              child: GestureDetector(
+                onTap: () => ref.read(_sidebarExpandedProvider.notifier).state = true,
+                child: _buildLogo(t),
+              ),
             ),
-          ),
           const SizedBox(height: 18),
           // Nav items
           Expanded(
@@ -401,6 +380,37 @@ class _Rail extends ConsumerWidget {
           );
         }),
     ];
+  }
+
+  Widget _buildLogo(LlTokens t) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [t.primary, const Color(0xFFFF8A3C)],
+        ),
+        boxShadow: [
+          BoxShadow(
+              color: t.primary.withValues(alpha: 0.5),
+              blurRadius: 16,
+              offset: const Offset(0, 6)),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        'L',
+        style: GoogleFonts.instrumentSerif(
+          color: Colors.white,
+          fontStyle: FontStyle.italic,
+          fontWeight: FontWeight.w800,
+          fontSize: 22,
+        ),
+      ),
+    );
   }
 
   String _papelLabel(String papel) {
