@@ -168,6 +168,7 @@ class LivelabScaffold extends ConsumerWidget {
           LivelabNavItem(label: 'Unidades', icon: PhosphorIcons.buildings(), route: AppRoutes.masterUnits),
           LivelabNavItem(label: 'Consolidado', icon: PhosphorIcons.chartBar(), route: AppRoutes.masterConsolidated),
           LivelabNavItem(label: 'CRM', icon: PhosphorIcons.shoppingCart(), route: AppRoutes.masterCrm),
+          LivelabNavItem(label: 'Franqueados', icon: PhosphorIcons.users(), route: AppRoutes.masterFranqueados),
         ]),
       ];
     }
@@ -186,6 +187,7 @@ class LivelabScaffold extends ConsumerWidget {
       ]),
       LivelabNavSection(label: 'Pessoas', items: [
         LivelabNavItem(label: 'Apresentadoras', icon: PhosphorIcons.microphone(), route: AppRoutes.apresentadoras),
+        LivelabNavItem(label: 'Equipe', icon: PhosphorIcons.usersThree(), route: AppRoutes.usuarios),
         LivelabNavItem(label: 'Financeiro', icon: PhosphorIcons.wallet(), route: AppRoutes.financeiro, dot: true),
         LivelabNavItem(label: 'Analytics', icon: PhosphorIcons.chartLine(), route: AppRoutes.analyticsDashboard),
         LivelabNavItem(label: 'Base', icon: PhosphorIcons.book(), route: AppRoutes.manuais),
