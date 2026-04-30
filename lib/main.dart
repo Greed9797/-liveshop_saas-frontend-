@@ -58,7 +58,26 @@ class LiveShopApp extends ConsumerWidget {
           (_) => false,
         );
       }
+      if (next.isAuthenticated) {
+        ref.read(themeModeProvider.notifier).defaultForRole(next.user?.papel);
+      }
+      // Onboarding concluído → navega para a tela principal do papel
+      if (previous?.user?.onboardingCompleted == false &&
+          next.user?.onboardingCompleted == true) {
+        appNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+          AppRoutes.routeForRole(next.user?.papel, onboardingCompleted: true),
+          (_) => false,
+        );
+      }
     });
+
+    if (authState.isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref
+            .read(themeModeProvider.notifier)
+            .defaultForRole(authState.user?.papel);
+      });
+    }
 
     return MaterialApp(
       navigatorKey: appNavigatorKey,
@@ -68,7 +87,10 @@ class LiveShopApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: ref.watch(themeModeProvider),
       initialRoute: authState.isAuthenticated
-          ? AppRoutes.routeForRole(authState.user?.papel)
+          ? AppRoutes.routeForRole(
+              authState.user?.papel,
+              onboardingCompleted: authState.user?.onboardingCompleted ?? true,
+            )
           : AppRoutes.login,
       routes: AppRoutes.routes,
       onGenerateRoute: AppRoutes.onGenerateRoute,

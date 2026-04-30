@@ -125,6 +125,14 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  Future<void> completeOnboarding() async {
+    final user = state.user;
+    if (user == null) return;
+    final updated = user.copyWith(onboardingCompleted: true);
+    await ApiService.saveUser(updated.toJson());
+    state = AuthState(user: updated, lastSensitiveAuthAt: state.lastSensitiveAuthAt);
+  }
+
   Future<void> logout() async {
     // Revogar sessão no servidor ANTES de limpar tokens locais.
     // Garante que o refresh_token seja invalidado mesmo se a limpeza local falhar.

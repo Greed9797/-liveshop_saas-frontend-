@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../design_system/design_system.dart';
+import '../../livelab/theme/livelab_theme.dart';
 import '../../providers/cliente_dashboard_provider.dart'
     show
         ClienteDashboard,
@@ -18,6 +19,7 @@ import '../../providers/cliente_lives_provider.dart'
     show ClienteLive, ClienteLivesResponse, clienteLivesProvider;
 import '../../routes/app_routes.dart';
 import '../../widgets/metric_card.dart';
+import 'dart:math' as math;
 
 // ---------------------------------------------------------------------------
 // Formatters
@@ -91,87 +93,113 @@ class _PeriodTabs extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AppCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.x2,
-        vertical: AppSpacing.x1,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ..._tabs.map((tab) {
-            final isSelected = tab.$1 == selected;
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+    final t = context.llTokens;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: t.bgElev2,
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(color: t.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: _tabs.map((tab) {
+              final isSelected = tab.$1 == selected;
+              return InkWell(
+                borderRadius: BorderRadius.circular(7),
                 onTap: () => _onTap(context, ref, tab.$1),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.x3,
-                    vertical: AppSpacing.x2,
+                    horizontal: 11,
+                    vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primary
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    color: isSelected ? t.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(7),
                   ),
                   child: Text(
                     tab.$2,
-                    style: AppTypography.caption.copyWith(
-                      color: isSelected
-                          ? Colors.white
-                          : AppColors.textSecondary,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isSelected ? Colors.white : t.textMuted,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ),
-              ),
-            );
-          }),
-          const SizedBox(width: AppSpacing.x2),
-          // Month navigator (only visible for mes_atual / personalizado)
-          if (selected == 'mes_atual' || selected == 'personalizado') ...[
-            IconButton(
-              tooltip: 'Mês anterior',
-              iconSize: 18,
-              onPressed: () => ref
-                  .read(clienteDashboardProvider.notifier)
-                  .setPeriodo(period.previous()),
-              icon: const Icon(Icons.chevron_left_rounded),
-            ),
-            SizedBox(
-              width: 120,
-              child: Text(
-                _periodFormat.format(DateTime(period.ano, period.mes)),
-                textAlign: TextAlign.center,
-                style: AppTypography.caption.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            IconButton(
-              tooltip: 'Próximo mês',
-              iconSize: 18,
-              onPressed: () => ref
-                  .read(clienteDashboardProvider.notifier)
-                  .setPeriodo(period.next()),
-              icon: const Icon(Icons.chevron_right_rounded),
-            ),
-          ],
-          IconButton(
-            tooltip: 'Atualizar',
-            iconSize: 18,
-            onPressed: () =>
-                ref.read(clienteDashboardProvider.notifier).refresh(),
-            icon: const Icon(Icons.refresh_rounded),
+              );
+            }).toList(),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 8),
+        if (selected == 'mes_atual' || selected == 'personalizado')
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            decoration: BoxDecoration(
+              color: t.bgElev2,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: t.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  borderRadius: BorderRadius.circular(4),
+                  onTap: () => ref
+                      .read(clienteDashboardProvider.notifier)
+                      .setPeriodo(period.previous()),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child:
+                        Icon(Icons.chevron_left_rounded, size: 16, color: t.textSecondary),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Text(
+                    _periodFormat.format(DateTime(period.ano, period.mes)),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: t.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  borderRadius: BorderRadius.circular(4),
+                  onTap: () => ref
+                      .read(clienteDashboardProvider.notifier)
+                      .setPeriodo(period.next()),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(Icons.chevron_right_rounded,
+                        size: 16, color: t.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(width: 4),
+        InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () =>
+              ref.read(clienteDashboardProvider.notifier).refresh(),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: t.bgElev2,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: t.border),
+            ),
+            child: Icon(Icons.refresh_rounded,
+                size: 16, color: t.textSecondary),
+          ),
+        ),
+      ],
     );
   }
 
@@ -321,21 +349,25 @@ class _KpiGrid extends StatelessWidget {
           value: _currency.format(dashboard.gmvTotal),
           label: 'Faturamento do período',
           color: AppColors.primary,
+          icon: PhosphorIcons.chartLineUp(),
         ),
         _KpiCard(
           value: '${dashboard.totalLives}',
           label: 'Lives realizadas',
           color: AppColors.info,
+          icon: PhosphorIcons.videoCamera(),
         ),
         _KpiCard(
           value: '${dashboard.horasLive.toStringAsFixed(1)}h',
           label: 'Horas no ar',
           color: AppColors.success,
+          icon: PhosphorIcons.clock(),
         ),
         _KpiCard(
           value: ticketDisplay,
           label: 'Ticket médio',
           color: AppColors.warning,
+          icon: PhosphorIcons.tag(),
         ),
       ],
     );
@@ -346,34 +378,58 @@ class _KpiCard extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
+  final IconData? icon;
 
   const _KpiCard({
     required this.value,
     required this.label,
     required this.color,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
+    final t = context.llTokens;
     return SizedBox(
       width: 220,
-      child: AppCard(
-        padding: const EdgeInsets.all(AppSpacing.x5),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          color: t.bgElev2,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: t.border),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 14, color: color),
+                  const SizedBox(width: 6),
+                ],
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: t.textMuted,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             Text(
               value,
-              style: AppTypography.h2.copyWith(
-                color: color,
+              style: TextStyle(
                 fontSize: 24,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.x1),
-            Text(
-              label,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textMuted,
+                fontWeight: FontWeight.w800,
+                color: t.textPrimary,
+                letterSpacing: -0.96,
+                height: 1,
               ),
             ),
           ],
@@ -453,99 +509,158 @@ class _MetaCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.llTokens;
     final progress = (dashboard.pctMeta / 100).clamp(0.0, 1.0);
     final barColor = _barColor(dashboard.statusMeta);
     final metaAtingida = dashboard.pctMeta >= 100;
+    final pctRounded = dashboard.pctMeta.round();
 
-    return AppCard(
+    return Container(
+      decoration: BoxDecoration(
+        color: t.bgElev1,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: t.border),
+      ),
       padding: const EdgeInsets.all(AppSpacing.x6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          SizedBox(
+            width: 88,
+            height: 88,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CustomPaint(
+                  size: const Size(88, 88),
+                  painter: _CircularProgressPainter(
+                    value: progress,
+                    color: barColor,
+                    trackColor: t.border,
+                    stroke: 7,
+                  ),
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Meta do Mês',
-                      style: AppTypography.bodyLarge.copyWith(
-                        fontWeight: FontWeight.w700,
+                      '$pctRounded%',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: t.textPrimary,
+                        letterSpacing: -0.6,
+                        height: 1,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.x1),
+                    const SizedBox(height: 2),
                     Text(
-                      '${_currency.format(dashboard.gmvTotal)} de ${_currency.format(dashboard.metaGmv)}',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
+                      'DA META',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: t.textMuted,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ],
                 ),
-              ),
-              IconButton(
-                tooltip: 'Editar meta',
-                onPressed: () => _showMetaDialog(context, ref, dashboard),
-                icon: Icon(
-                  PhosphorIcons.pencilSimple(),
-                  size: 18,
-                  color: AppColors.textMuted,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.x4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.full),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 12,
-              backgroundColor: AppColors.borderLight,
-              valueColor: AlwaysStoppedAnimation<Color>(barColor),
+              ],
             ),
           ),
-          const SizedBox(height: AppSpacing.x3),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.x3,
-                  vertical: AppSpacing.x1,
+          const SizedBox(width: AppSpacing.x6),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Meta do Mês',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: t.textPrimary,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => _showMetaDialog(context, ref, dashboard),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          PhosphorIcons.pencilSimple(),
+                          size: 16,
+                          color: t.textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                decoration: BoxDecoration(
-                  color: _statusBgColor(dashboard.statusMeta),
-                  borderRadius: BorderRadius.circular(AppRadius.full),
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      _currency.format(dashboard.gmvTotal),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: t.textPrimary,
+                        letterSpacing: -0.6,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '/ ${_currency.format(dashboard.metaGmv)}',
+                      style: TextStyle(fontSize: 12, color: t.textMuted),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  _statusLabel(dashboard.statusMeta),
-                  style: AppTypography.caption.copyWith(
-                    color: _statusTextColor(dashboard.statusMeta),
-                    fontWeight: FontWeight.w700,
-                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _statusTextColor(dashboard.statusMeta)
+                            .withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        _statusLabel(dashboard.statusMeta).toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: _statusTextColor(dashboard.statusMeta),
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        metaAtingida
+                            ? 'Meta atingida!'
+                            : 'Faltam ${_currency.format(dashboard.gmvFaltante)}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: t.textMuted,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const Spacer(),
-              Text(
-                metaAtingida
-                    ? 'Meta atingida!'
-                    : 'Falta ${_currency.format(dashboard.gmvFaltante)}',
-                style: AppTypography.bodySmall.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: metaAtingida ? AppColors.success : AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          if (dashboard.projecaoMes > 0) ...[
-            const SizedBox(height: AppSpacing.x2),
-            Text(
-              'Projeção: ${_currency.format(dashboard.projecaoMes)}',
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textMuted,
-              ),
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -674,44 +789,62 @@ class _ProximasLivesCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.x6),
+    final t = context.llTokens;
+    return Container(
+      decoration: BoxDecoration(
+        color: t.bgElev2,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: t.border),
+      ),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                PhosphorIcons.calendarBlank(),
-                size: 18,
-                color: AppColors.primary,
-              ),
-              const SizedBox(width: AppSpacing.x2),
+              Icon(PhosphorIcons.videoCamera(), size: 14, color: t.primary),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Próximas Lives',
-                  style: AppTypography.bodyLarge.copyWith(
+                  style: TextStyle(
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
+                    color: t.textPrimary,
                   ),
                 ),
               ),
+              Text(
+                lives.isEmpty ? '—' : '${lives.length} agendada${lives.length == 1 ? '' : 's'}',
+                style: TextStyle(fontSize: 11, color: t.textMuted),
+              ),
             ],
           ),
-          const SizedBox(height: AppSpacing.x4),
+          const SizedBox(height: 12),
           if (lives.isEmpty)
             Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Nenhuma live agendada',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 12, color: t.textMuted),
                 ),
-                const SizedBox(height: AppSpacing.x4),
+                const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: () => _onSolicitarLive(context),
-                  icon: Icon(PhosphorIcons.plus(), size: 16),
+                  icon: Icon(PhosphorIcons.plus(), size: 14),
                   label: const Text('Solicitar nova live'),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: t.primary),
+                    foregroundColor: t.primary,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 9),
+                    textStyle: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                  ),
                 ),
               ],
             )
@@ -767,72 +900,75 @@ class _ProximaLiveRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.llTokens;
+    final timeStr = live.horaInicio ?? '–';
     final dateStr = live.data != null
-        ? _dateWeekday.format(live.data!)
-        : '–';
-    final timeStr = (live.horaInicio != null && live.horaFim != null)
-        ? '${live.horaInicio} – ${live.horaFim}'
-        : live.horaInicio ?? '–';
+        ? DateFormat("dd/MM", 'pt_BR').format(live.data!)
+        : '';
+    final cabLabel = 'Cab. ${live.cabineNumero.toString().padLeft(2, '0')}';
+    final subLine = [if (dateStr.isNotEmpty) dateStr, cabLabel].join(' · ');
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 110,
-            child: Text(
-              dateStr,
-              style: AppTypography.bodySmall.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Expanded(
+            width: 44,
             child: Text(
               timeStr,
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: t.textPrimary,
+                letterSpacing: -0.26,
+                height: 1,
               ),
             ),
           ),
+          const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.x2,
-              vertical: 2,
-            ),
+            width: 4,
+            height: 4,
             decoration: BoxDecoration(
-              color: AppColors.bgMuted,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Text(
-              'Cabine ${live.cabineNumero.toString().padLeft(2, '0')}',
-              style: AppTypography.caption.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              color: t.primary,
+              shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: AppSpacing.x3),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.x2,
-              vertical: 2,
-            ),
-            decoration: BoxDecoration(
-              color: _statusBgColor(live.status),
-              borderRadius: BorderRadius.circular(AppRadius.full),
-            ),
-            child: Text(
-              _statusLabel(live.status),
-              style: AppTypography.caption.copyWith(
-                color: _statusColor(live.status),
-                fontWeight: FontWeight.w700,
-              ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  cabLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: t.textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subLine,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: t.textMuted,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+
 }
 
 // ---------------------------------------------------------------------------
@@ -1658,4 +1794,53 @@ class _ErrorState extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _CircularProgressPainter extends CustomPainter {
+  final double value;
+  final Color color;
+  final Color trackColor;
+  final double stroke;
+
+  _CircularProgressPainter({
+    required this.value,
+    required this.color,
+    required this.trackColor,
+    this.stroke = 7,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - stroke) / 2;
+
+    final track = Paint()
+      ..color = trackColor
+      ..strokeWidth = stroke
+      ..style = PaintingStyle.stroke;
+    canvas.drawCircle(center, radius, track);
+
+    if (value <= 0) return;
+
+    final arc = Paint()
+      ..color = color
+      ..strokeWidth = stroke
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final sweep = (value.clamp(0.0, 1.0)) * 2 * math.pi;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      sweep,
+      false,
+      arc,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CircularProgressPainter old) =>
+      old.value != value ||
+      old.color != color ||
+      old.trackColor != trackColor ||
+      old.stroke != stroke;
 }

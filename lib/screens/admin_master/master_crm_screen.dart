@@ -48,7 +48,7 @@ class MasterCrmScreen extends ConsumerWidget {
                           Text('CRM', style: AppTypography.h1),
                           const SizedBox(height: AppSpacing.x1),
                           Text(
-                            'Placeholder pronto para a expansão comercial da franqueadora.',
+                            'Funil comercial calculado a partir dos leads reais da rede.',
                             style: AppTypography.bodyLarge.copyWith(
                               color: context.colors.textSecondary,
                             ),
@@ -66,12 +66,13 @@ class MasterCrmScreen extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.x5),
                 AppCard(
                   color: AppColors.primaryLight,
-                  borderColor: context.colors.primarySoftFg.withValues(alpha: 0.3),
+                  borderColor:
+                      context.colors.primarySoftFg.withValues(alpha: 0.3),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Icon(
-                        Icons.construction_rounded,
+                        Icons.hub_rounded,
                         color: AppColors.primary,
                       ),
                       const SizedBox(width: AppSpacing.x3),
@@ -93,8 +94,8 @@ class MasterCrmScreen extends ConsumerWidget {
                     final cardWidth = constraints.maxWidth >= 1100
                         ? (constraints.maxWidth - (AppSpacing.x3 * 3)) / 4
                         : constraints.maxWidth >= 700
-                        ? (constraints.maxWidth - AppSpacing.x3) / 2
-                        : constraints.maxWidth;
+                            ? (constraints.maxWidth - AppSpacing.x3) / 2
+                            : constraints.maxWidth;
 
                     return Wrap(
                       spacing: AppSpacing.x3,
@@ -153,14 +154,15 @@ class MasterCrmScreen extends ConsumerWidget {
                       children: [
                         SizedBox(
                           width: cardWidth,
-                          child: _PipelinePlaceholderCard(stages: crm.pipeline),
+                          child: _PipelineCard(stages: crm.pipeline),
                         ),
-                        SizedBox(
-                          width: cardWidth,
-                          child: _RecommendedFieldsCard(
-                            fields: crm.recommendedFields,
+                        if (crm.recommendedFields.isNotEmpty)
+                          SizedBox(
+                            width: cardWidth,
+                            child: _RecommendedFieldsCard(
+                              fields: crm.recommendedFields,
+                            ),
                           ),
-                        ),
                       ],
                     );
                   },
@@ -171,7 +173,7 @@ class MasterCrmScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Leitura atual do placeholder',
+                        'Leitura atual do CRM',
                         style: AppTypography.h3,
                       ),
                       const SizedBox(height: AppSpacing.x3),
@@ -190,7 +192,7 @@ class MasterCrmScreen extends ConsumerWidget {
                           _SummaryLine(
                             label: 'Modo',
                             value: crm.isPlaceholder
-                                ? 'Placeholder ativo'
+                                ? 'Sem integração'
                                 : 'Integrado',
                           ),
                         ],
@@ -207,10 +209,10 @@ class MasterCrmScreen extends ConsumerWidget {
   }
 }
 
-class _PipelinePlaceholderCard extends StatelessWidget {
+class _PipelineCard extends StatelessWidget {
   final List<MasterPipelineStage> stages;
 
-  const _PipelinePlaceholderCard({required this.stages});
+  const _PipelineCard({required this.stages});
 
   @override
   Widget build(BuildContext context) {
@@ -218,10 +220,10 @@ class _PipelinePlaceholderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Pipeline sugerida', style: AppTypography.h3),
+          Text('Pipeline do CRM', style: AppTypography.h3),
           const SizedBox(height: AppSpacing.x1),
           Text(
-            'Estrutura visual pronta para receber os dados reais depois.',
+            'Contagem e valor potencial por etapa.',
             style: AppTypography.bodySmall,
           ),
           const SizedBox(height: AppSpacing.x4),
@@ -252,7 +254,7 @@ class _PipelinePlaceholderCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      '${stage.count}',
+                      '${stage.count} · ${_crmMoney(stage.value)}',
                       style: AppTypography.caption.copyWith(
                         color: context.colors.textPrimary,
                       ),
@@ -282,7 +284,7 @@ class _RecommendedFieldsCard extends StatelessWidget {
           Text('Campos básicos do CRM', style: AppTypography.h3),
           const SizedBox(height: AppSpacing.x1),
           Text(
-            'Modelagem mínima para plugar o backend real sem retrabalho.',
+            'Campos sugeridos pelo backend para completar a operação comercial.',
             style: AppTypography.bodySmall,
           ),
           const SizedBox(height: AppSpacing.x4),
@@ -332,7 +334,8 @@ class _SummaryLine extends StatelessWidget {
           const SizedBox(height: AppSpacing.x1),
           Text(
             value,
-            style: AppTypography.bodyMedium.copyWith(color: context.colors.textPrimary),
+            style: AppTypography.bodyMedium
+                .copyWith(color: context.colors.textPrimary),
           ),
         ],
       ),
@@ -360,7 +363,7 @@ class _CrmErrorState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.x3),
             Text(
-              'Não foi possível carregar o CRM placeholder.',
+              'Não foi possível carregar o CRM.',
               style: AppTypography.h3,
               textAlign: TextAlign.center,
             ),
