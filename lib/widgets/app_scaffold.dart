@@ -166,6 +166,13 @@ class _MenuContent extends ConsumerWidget {
           compact: compact,
         ),
         _MenuItem(
+          icon: PhosphorIcons.users(),
+          label: 'Franqueados',
+          route: AppRoutes.masterFranqueados,
+          isSelected: currentRoute == AppRoutes.masterFranqueados,
+          compact: compact,
+        ),
+        _MenuItem(
           icon: PhosphorIcons.gear(),
           label: 'Configurações',
           route: AppRoutes.configuracoes,
@@ -272,6 +279,14 @@ class _MenuContent extends ConsumerWidget {
           label: 'Apresentadoras',
           route: AppRoutes.apresentadoras,
           isSelected: currentRoute == AppRoutes.apresentadoras,
+          compact: compact,
+        ),
+      if (canManageSettings)
+        _MenuItem(
+          icon: PhosphorIcons.users(),
+          label: 'Equipe',
+          route: AppRoutes.usuarios,
+          isSelected: currentRoute == AppRoutes.usuarios,
           compact: compact,
         ),
       if (canUseFinance)

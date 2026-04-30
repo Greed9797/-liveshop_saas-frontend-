@@ -8,8 +8,11 @@ class UsuariosNotifier extends AsyncNotifier<List<Usuario>> {
     return _fetch();
   }
 
-  Future<List<Usuario>> _fetch() async {
-    final resp = await ApiService.get('/usuarios');
+  Future<List<Usuario>> _fetch({String? papel, bool? ativo}) async {
+    final params = <String, dynamic>{};
+    if (papel != null) params['papel'] = papel;
+    if (ativo != null) params['ativo'] = ativo.toString();
+    final resp = await ApiService.get('/usuarios', params: params);
     return (resp.data as List)
         .map((j) => Usuario.fromJson(j as Map<String, dynamic>))
         .toList();
@@ -20,16 +23,47 @@ class UsuariosNotifier extends AsyncNotifier<List<Usuario>> {
     state = await AsyncValue.guard(_fetch);
   }
 
+  // Retorna o usuário criado + senha_temporaria
   Future<Map<String, dynamic>> convidar(Map<String, dynamic> payload) async {
     final resp = await ApiService.post('/usuarios/convidar', data: payload);
     await refresh();
     return resp.data as Map<String, dynamic>;
   }
 
-  Future<void> remover(String id) async {
-    await ApiService.delete('/usuarios/$id');
-    state = AsyncData(state.valueOrNull?.where((u) => u.id != id).toList() ?? []);
+  Future<Usuario> atualizar(String id, Map<String, dynamic> payload) async {
+    final resp = await ApiService.patch('/usuarios/$id', data: payload);
+    final updated = Usuario.fromJson(resp.data as Map<String, dynamic>);
+    state = AsyncData(
+      state.valueOrNull?.map((u) => u.id == id ? updated : u).toList() ?? [updated],
+    );
+    return updated;
   }
+
+  // Retorna nova senha_temporaria
+  Future<String> resetSenha(String id) async {
+    final resp = await ApiService.post('/usuarios/$id/reset-senha', data: {});
+    return (resp.data as Map<String, dynamic>)['senha_temporaria'] as String;
+  }
+
+  // Soft delete — marca ativo=false
+  Future<void> desativar(String id) async {
+    await ApiService.delete('/usuarios/$id');
+    state = AsyncData(
+      state.valueOrNull?.map((u) => u.id == id ? _inativo(u) : u).toList() ?? [],
+    );
+  }
+
+  Usuario _inativo(Usuario u) => Usuario(
+        id: u.id,
+        nome: u.nome,
+        email: u.email,
+        papel: u.papel,
+        ativo: false,
+        createdAt: u.createdAt,
+        criadoPor: u.criadoPor,
+        clienteId: u.clienteId,
+        apresentadoraId: u.apresentadoraId,
+      );
 }
 
 final usuariosProvider =

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/cabine.dart';
-import '../screens/admin_master/master_consolidated_screen.dart';
-import '../screens/admin_master/master_crm_screen.dart';
-import '../screens/admin_master/master_dashboard_screen.dart';
-import '../screens/admin_master/master_units_screen.dart';
+import '../screens/onboarding/onboarding_screen.dart';
+import '../screens/usuarios/usuarios_screen.dart';
+import '../screens/admin_master/master_franqueados_screen.dart';
 import '../screens/analytics/analytics_dashboard_screen.dart';
 import '../screens/apresentadoras/apresentadoras_screen.dart';
 import '../screens/auditoria/analise_credito_screen.dart';
@@ -23,6 +22,8 @@ import '../screens/cliente/cliente_reservas_screen.dart';
 import '../screens/cliente/cliente_configuracoes_screen.dart';
 import '../screens/cliente/cliente_historico_screen.dart';
 import '../screens/cliente/cliente_lives_screen.dart';
+import '../livelab_v2/admin_v2_routes.dart';
+import '../livelab_v2/cliente_v2_routes.dart';
 import '../screens/clientes/clientes_leads_screen.dart';
 import '../screens/configuracoes/configuracoes_screen.dart';
 import '../screens/excelencia/excelencia_screen.dart';
@@ -83,6 +84,9 @@ class AppRoutes {
   static const clienteLives = '/cliente/lives';
   static const clienteAgenda = '/cliente/agenda';
   static const clienteReservas = '/cliente/reservas';
+  static const onboarding = '/onboarding';
+  static const usuarios = '/usuarios';
+  static const masterFranqueados = '/master/franqueados';
 
   static const Set<String> _internalRoles = {
     'franqueado',
@@ -114,7 +118,7 @@ class AppRoutes {
     'apresentadora',
   };
 
-  static String routeForRole(String? role) {
+  static String routeForRole(String? role, {bool onboardingCompleted = true}) {
     switch (role) {
       case 'franqueador_master':
       case 'admin_master':
@@ -129,7 +133,7 @@ class AppRoutes {
       case 'apresentadora':
         return cabines;
       case 'cliente_parceiro':
-        return cliente;
+        return onboardingCompleted ? cliente : onboarding;
       default:
         return login;
     }
@@ -242,7 +246,7 @@ class AppRoutes {
             allowedRoles: {'franqueador_master'},
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: MasterDashboardScreen(),
+            child: MasterHomeV2(),
           ),
           settings: settings,
         );
@@ -253,7 +257,7 @@ class AppRoutes {
             allowedRoles: {'franqueador_master'},
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: MasterDashboardScreen(),
+            child: MasterHomeV2(),
           ),
           settings: settings,
         );
@@ -264,7 +268,7 @@ class AppRoutes {
             allowedRoles: {'franqueador_master'},
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: MasterUnitsScreen(),
+            child: MasterUnidadesV2(),
           ),
           settings: settings,
         );
@@ -275,7 +279,7 @@ class AppRoutes {
             allowedRoles: {'franqueador_master'},
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: MasterConsolidatedScreen(),
+            child: MasterConsolidadoV2(),
           ),
           settings: settings,
         );
@@ -286,7 +290,7 @@ class AppRoutes {
             allowedRoles: {'franqueador_master'},
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: MasterCrmScreen(),
+            child: MasterCrmV2(),
           ),
           settings: settings,
         );
@@ -297,7 +301,7 @@ class AppRoutes {
             allowedRoles: {'cliente_parceiro'},
             fallbackRoute: login,
             unauthenticatedRoute: login,
-            child: ClienteDashboardScreen(),
+            child: ClienteHomeV2(),
           ),
           settings: settings,
         );
@@ -330,7 +334,7 @@ class AppRoutes {
             allowedRoles: {'cliente_parceiro'},
             fallbackRoute: cliente,
             unauthenticatedRoute: login,
-            child: ClienteConfiguracoesScreen(),
+            child: ClienteConfigV2(),
           ),
           settings: settings,
         );
@@ -363,7 +367,7 @@ class AppRoutes {
             allowedRoles: {'cliente_parceiro'},
             fallbackRoute: login,
             unauthenticatedRoute: login,
-            child: ClienteCabinesTabsScreen(),
+            child: ClienteCabinesV2(),
           ),
           settings: settings,
         );
@@ -396,7 +400,7 @@ class AppRoutes {
             allowedRoles: {'cliente_parceiro'},
             fallbackRoute: login,
             unauthenticatedRoute: login,
-            child: ClienteDashboardScreen(),
+            child: ClienteHomeV2(),
           ),
           settings: settings,
         );
@@ -638,6 +642,34 @@ class AppRoutes {
             settings: settings,
           );
         }
+
+      case onboarding:
+        return buildPremiumRoute(
+          child: const OnboardingScreen(),
+          settings: settings,
+        );
+
+      case usuarios:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'franqueado'},
+            fallbackRoute: home,
+            unauthenticatedRoute: login,
+            child: UsuariosScreen(),
+          ),
+          settings: settings,
+        );
+
+      case masterFranqueados:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'franqueador_master'},
+            fallbackRoute: masterDashboard,
+            unauthenticatedRoute: login,
+            child: MasterFranqueadosScreen(),
+          ),
+          settings: settings,
+        );
 
       default:
         return null;

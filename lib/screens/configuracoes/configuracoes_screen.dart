@@ -536,7 +536,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     if (confirmed != true) return;
     if (!context.mounted) return;
     try {
-      await ref.read(usuariosProvider.notifier).remover(usuario.id);
+      await ref.read(usuariosProvider.notifier).desativar(usuario.id);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${usuario.nome} removido com sucesso!')));
