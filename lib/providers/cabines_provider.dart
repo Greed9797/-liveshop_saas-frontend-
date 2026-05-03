@@ -82,6 +82,17 @@ class CabinesNotifier extends AsyncNotifier<List<Cabine>> {
     await refresh();
   }
 
+  Future<String> registrarLiveManual(Map<String, dynamic> payload) async {
+    final r = await ApiService.post('/lives/manual', data: payload);
+    await refresh();
+    return r.data['id'] as String;
+  }
+
+  Future<void> editarLive(String liveId, Map<String, dynamic> payload) async {
+    await ApiService.patch('/lives/$liveId', data: payload);
+    await refresh();
+  }
+
   Future<void> atualizarCabine(String cabineId, Map<String, dynamic> data) async {
     await ApiService.patch('/cabines/$cabineId', data: data);
     await refresh();

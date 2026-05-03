@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
 import '../../models/cabine.dart';
 import '../../models/fila_ativacao_item.dart';
+import '../lives/registrar_live_manual_dialog.dart';
 import '../../models/franqueado_analytics_resumo.dart';
 import '../../providers/cabines/cabine_detail_provider.dart';
 import '../../providers/analytics_provider.dart';
@@ -172,6 +175,13 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen>
         SnackBar(content: Text(ApiService.extractErrorMessage(error))),
       );
     }
+  }
+
+  Future<void> _registrarLiveManual() async {
+    await showDialog<bool>(
+      context: context,
+      builder: (_) => const RegistrarLiveManualDialog(),
+    );
   }
 
   Future<void> _iniciarLive(Cabine cabine) async {
@@ -398,6 +408,13 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen>
       titleSerif: true,
       subtitle:
           'Visão operacional da unidade: ao vivo, reservadas e rendimento.',
+      actions: [
+        FilledButton.icon(
+          onPressed: _registrarLiveManual,
+          icon: Icon(PhosphorIcons.videoCamera(), size: 16),
+          label: const Text('Registrar Live'),
+        ),
+      ],
       child: Column(
         children: [
           Material(
