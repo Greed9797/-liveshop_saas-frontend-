@@ -270,12 +270,12 @@ class _LeadFormState extends ConsumerState<_LeadForm> {
                         Expanded(child: _Field(label: 'Valor (R\$)', controller: _valor, keyboard: TextInputType.number)),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    _Field(label: 'Observações internas', controller: _observacoes, multiline: true),
                     if (_isEdit) ...[
                       const SizedBox(height: 18),
                       _BioDataBlock(lead: widget.lead!),
                     ],
+                    const SizedBox(height: 12),
+                    _Field(label: 'Observações internas', controller: _observacoes, multiline: true),
                   ],
                 ),
               ),
@@ -441,6 +441,47 @@ class _BioDataBlock extends StatelessWidget {
       _LABELS[key] ??
       key.split('_').map((p) => p.isEmpty ? p : '${p[0].toUpperCase()}${p.substring(1)}').join(' ');
 
+  /// Fallback: parsea o texto da ficha gerada pelo backend (formatLeadFicha)
+  /// quando payload_externo ainda não está disponível na resposta da API.
+  /// Formato esperado:
+  ///   SEÇÃO EM CAPS
+  ///   Label: valor
+  ///   Label: valor
+  ///
+  ///   OUTRA SEÇÃO
+  ///   ...
+  static List<({String section, List<({String label, String value})> rows})>
+      _parseFicha(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return const [];
+    final sections = <({String section, List<({String label, String value})> rows})>[];
+    String? current;
+    var rows = <({String label, String value})>[];
+    void flush() {
+      if (current != null && rows.isNotEmpty) {
+        sections.add((section: current!, rows: List.of(rows)));
+      }
+      rows = [];
+    }
+    for (final line in raw.split('\n')) {
+      final t = line.trim();
+      if (t.isEmpty) continue;
+      // Heurística: linha sem ":" e em maiúsculas = título de seção
+      if (!t.contains(':') && t.toUpperCase() == t && t.length > 2) {
+        flush();
+        current = t;
+        continue;
+      }
+      final idx = t.indexOf(':');
+      if (idx > 0) {
+        final label = t.substring(0, idx).trim();
+        final value = t.substring(idx + 1).trim();
+        if (value.isNotEmpty) rows.add((label: label, value: value));
+      }
+    }
+    flush();
+    return sections;
+  }
+
   @override
   Widget build(BuildContext context) {
     final email = lead.contatoEmail;
@@ -452,9 +493,11 @@ class _BioDataBlock extends StatelessWidget {
     final persona = payload?['persona']?.toString();
     final sourcePath = payload?['source_path']?.toString();
     final submittedAt = payload?['submitted_at']?.toString();
+    final fichaSections = _parseFicha(lead.observacoesInternas);
 
     final hasContato = (email?.isNotEmpty ?? false) || (whatsapp?.isNotEmpty ?? false);
-    if (!hasContato && data.isEmpty && payload == null) return const SizedBox.shrink();
+    final hasAnything = hasContato || data.isNotEmpty || fichaSections.isNotEmpty;
+    if (!hasAnything) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -493,19 +536,35 @@ class _BioDataBlock extends StatelessWidget {
             Container(height: 1, color: _D.border),
             const SizedBox(height: 8),
           ],
-          if (data.isEmpty)
-            Text(
-              'Sem dados adicionais do formulário.',
-              style: GoogleFonts.inter(fontSize: 11.5, color: _D.textMuted, fontStyle: FontStyle.italic),
-            )
-          else
+          if (data.isNotEmpty)
             ...data.entries
                 .map((e) {
                   final v = _formatValue(e.value);
                   if (v.isEmpty) return null;
                   return _BioRow(label: _humanLabel(e.key), value: v);
                 })
-                .whereType<Widget>(),
+                .whereType<Widget>()
+          else if (fichaSections.isNotEmpty)
+            ...fichaSections.expand((s) => [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 6),
+                    child: Text(
+                      s.section,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: _D.primary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  ...s.rows.map((r) => _BioRow(label: r.label, value: r.value)),
+                ])
+          else if (!hasContato)
+            Text(
+              'Sem dados adicionais do formulário.',
+              style: GoogleFonts.inter(fontSize: 11.5, color: _D.textMuted, fontStyle: FontStyle.italic),
+            ),
         ],
       ),
     );
