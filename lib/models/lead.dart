@@ -24,6 +24,9 @@ class Lead {
   final String? convertidoClienteId;
   final DateTime? ganhoEm;
   final DateTime? atualizadoEm;
+  final String? contatoEmail;
+  final String? contatoWhatsapp;
+  final Map<String, dynamic>? payloadExterno;
 
   const Lead({
     required this.id,
@@ -51,6 +54,9 @@ class Lead {
     this.convertidoClienteId,
     this.ganhoEm,
     this.atualizadoEm,
+    this.contatoEmail,
+    this.contatoWhatsapp,
+    this.payloadExterno,
   });
 
   static double _toDouble(dynamic value) {
@@ -103,6 +109,11 @@ class Lead {
         convertidoClienteId: j['convertido_cliente_id'] as String?,
         ganhoEm: _toDate(j['ganho_em']),
         atualizadoEm: _toDate(j['atualizado_em']),
+        contatoEmail: j['contato_email'] as String?,
+        contatoWhatsapp: j['contato_whatsapp'] as String?,
+        payloadExterno: j['payload_externo'] is Map
+            ? Map<String, dynamic>.from(j['payload_externo'] as Map)
+            : null,
       );
 
   Duration? get tempoRestante => expiraEm?.difference(DateTime.now());
