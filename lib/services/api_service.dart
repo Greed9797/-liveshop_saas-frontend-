@@ -55,6 +55,7 @@ class ApiService {
   }
 
   static late final Dio _dio;
+  static Dio? _refreshDio;
   static bool _initialized = false;
   static Future<String?>? _refreshFuture;
   static Future<void> Function()? _onUnauthorized;
@@ -158,15 +159,14 @@ class ApiService {
     }
 
     try {
-      final baseUrl = _resolveBaseUrl();
-      final refreshDio = Dio(BaseOptions(
-        baseUrl: baseUrl,
+      _refreshDio ??= Dio(BaseOptions(
+        baseUrl: _resolveBaseUrl(),
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         headers: {'Content-Type': 'application/json'},
       ));
 
-      final response = await refreshDio.post<Map<String, dynamic>>(
+      final response = await _refreshDio!.post<Map<String, dynamic>>(
         '/auth/refresh',
         data: {'refresh_token': refreshToken},
       );
@@ -287,100 +287,118 @@ class ApiService {
       _runRequest(() => _dio.delete(path));
 
   /// Opens an SSE connection to the backend and emits real-time snapshots.
-  /// Uses Dio with ResponseType.stream for Flutter Web compatibility.
-  /// The stream closes when the subscription is cancelled (provider disposed).
+  /// Reconnects with exponential backoff (1s → 30s max) on transport errors.
+  /// Subscription cancellation (provider disposal) propagates as cancellation
+  /// of the inner await-for and exits the loop cleanly.
   static Stream<LiveSnapshot> streamLiveSnapshot(String liveId) async* {
     final token = await _storageRead(_tokenKey);
     if (token == null) return;
 
-    late Response<ResponseBody> response;
-    try {
-      response = await _dio.get<ResponseBody>(
-        '/lives/$liveId/stream',
-        options: Options(
-          responseType: ResponseType.stream,
-          headers: {'Authorization': 'Bearer $token'},
-          receiveTimeout: const Duration(hours: 24),
-        ),
-      );
-    } catch (_) {
-      return; // Server unavailable or live not found — stream ends silently
-    }
+    Duration backoff = const Duration(seconds: 1);
+    const maxBackoff = Duration(seconds: 30);
 
-    final buffer = StringBuffer();
+    while (true) {
+      try {
+        final response = await _dio.get<ResponseBody>(
+          '/lives/$liveId/stream',
+          options: Options(
+            responseType: ResponseType.stream,
+            headers: {'Authorization': 'Bearer $token'},
+            receiveTimeout: const Duration(hours: 24),
+          ),
+        );
 
-    await for (final chunk
-        in response.data!.stream.map<List<int>>((u) => u).transform(utf8.decoder)) {
-      buffer.write(chunk);
-      String pending = buffer.toString();
+        backoff = const Duration(seconds: 1);
+        final buffer = StringBuffer();
 
-      while (pending.contains('\n\n')) {
-        final idx = pending.indexOf('\n\n');
-        final frame = pending.substring(0, idx).trim();
-        pending = pending.substring(idx + 2);
+        await for (final chunk in response.data!.stream
+            .map<List<int>>((u) => u)
+            .transform(utf8.decoder)) {
+          buffer.write(chunk);
+          String pending = buffer.toString();
 
-        for (final line in frame.split('\n')) {
-          if (!line.startsWith('data: ')) continue;
-          try {
-            final json =
-                jsonDecode(line.substring(6)) as Map<String, dynamic>;
-            yield LiveSnapshot.fromJson(json);
-          } catch (_) {
-            // Ignore malformed frames (heartbeats start with ':', not 'data:')
+          while (pending.contains('\n\n')) {
+            final idx = pending.indexOf('\n\n');
+            final frame = pending.substring(0, idx).trim();
+            pending = pending.substring(idx + 2);
+
+            for (final line in frame.split('\n')) {
+              if (!line.startsWith('data: ')) continue;
+              try {
+                final json =
+                    jsonDecode(line.substring(6)) as Map<String, dynamic>;
+                yield LiveSnapshot.fromJson(json);
+              } catch (_) {}
+            }
           }
-        }
-      }
 
-      buffer.clear();
-      buffer.write(pending);
+          buffer.clear();
+          buffer.write(pending);
+        }
+        return;
+      } catch (_) {
+        await Future.delayed(backoff);
+        backoff *= 2;
+        if (backoff > maxBackoff) backoff = maxBackoff;
+      }
     }
   }
 
   /// SSE das notificações enviadas ao closer de uma cabine.
   /// Cada frame é uma mensagem JSON com id/type/message/ts.
+  /// Reconecta com backoff exponencial em erros de transporte.
   static Stream<Map<String, dynamic>> streamCloserNotifications(
       String cabineId) async* {
     final token = await _storageRead(_tokenKey);
     if (token == null) return;
 
-    late Response<ResponseBody> response;
-    try {
-      response = await _dio.get<ResponseBody>(
-        '/cabines/$cabineId/closer-notifications/stream',
-        options: Options(
-          responseType: ResponseType.stream,
-          headers: {'Authorization': 'Bearer $token'},
-          receiveTimeout: const Duration(hours: 24),
-        ),
-      );
-    } catch (_) {
-      return;
-    }
+    Duration backoff = const Duration(seconds: 1);
+    const maxBackoff = Duration(seconds: 30);
 
-    final buffer = StringBuffer();
+    while (true) {
+      try {
+        final response = await _dio.get<ResponseBody>(
+          '/cabines/$cabineId/closer-notifications/stream',
+          options: Options(
+            responseType: ResponseType.stream,
+            headers: {'Authorization': 'Bearer $token'},
+            receiveTimeout: const Duration(hours: 24),
+          ),
+        );
 
-    await for (final chunk
-        in response.data!.stream.map<List<int>>((u) => u).transform(utf8.decoder)) {
-      buffer.write(chunk);
-      String pending = buffer.toString();
+        backoff = const Duration(seconds: 1);
+        final buffer = StringBuffer();
 
-      while (pending.contains('\n\n')) {
-        final idx = pending.indexOf('\n\n');
-        final frame = pending.substring(0, idx).trim();
-        pending = pending.substring(idx + 2);
+        await for (final chunk in response.data!.stream
+            .map<List<int>>((u) => u)
+            .transform(utf8.decoder)) {
+          buffer.write(chunk);
+          String pending = buffer.toString();
 
-        for (final line in frame.split('\n')) {
-          if (!line.startsWith('data: ')) continue;
-          try {
-            final json =
-                jsonDecode(line.substring(6)) as Map<String, dynamic>;
-            yield json;
-          } catch (_) {}
+          while (pending.contains('\n\n')) {
+            final idx = pending.indexOf('\n\n');
+            final frame = pending.substring(0, idx).trim();
+            pending = pending.substring(idx + 2);
+
+            for (final line in frame.split('\n')) {
+              if (!line.startsWith('data: ')) continue;
+              try {
+                final json =
+                    jsonDecode(line.substring(6)) as Map<String, dynamic>;
+                yield json;
+              } catch (_) {}
+            }
+          }
+
+          buffer.clear();
+          buffer.write(pending);
         }
+        return;
+      } catch (_) {
+        await Future.delayed(backoff);
+        backoff *= 2;
+        if (backoff > maxBackoff) backoff = maxBackoff;
       }
-
-      buffer.clear();
-      buffer.write(pending);
     }
   }
 }

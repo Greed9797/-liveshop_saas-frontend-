@@ -30,12 +30,33 @@ void main() async {
     await container.read(authProvider.notifier).expireSession();
   });
 
-  await container.read(authProvider.notifier).restoreSession();
-  await container.read(themeModeProvider.notifier).restore();
+  // Bootstrap resiliente: storage I/O com timeout + fallback silencioso.
+  // Garante que runApp() execute mesmo se SecureStorage estiver travado.
+  try {
+    await container
+        .read(authProvider.notifier)
+        .restoreSession()
+        .timeout(const Duration(seconds: 8));
+  } catch (e) {
+    debugPrint('[bootstrap] restoreSession falhou: $e');
+  }
+  try {
+    await container
+        .read(themeModeProvider.notifier)
+        .restore()
+        .timeout(const Duration(seconds: 5));
+  } catch (e) {
+    debugPrint('[bootstrap] themeMode restore falhou: $e');
+  }
 
   if (isE2ETesting) {
     WidgetsBinding.instance.ensureSemantics();
-    await bootstrapE2EAuth(container, role: e2eRole);
+    try {
+      await bootstrapE2EAuth(container, role: e2eRole)
+          .timeout(const Duration(seconds: 10));
+    } catch (e) {
+      debugPrint('[bootstrap] E2E auth falhou: $e');
+    }
   }
 
   runApp(UncontrolledProviderScope(

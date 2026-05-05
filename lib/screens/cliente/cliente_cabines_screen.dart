@@ -16,7 +16,7 @@ class ClienteCabinesScreen extends ConsumerWidget {
     final cabinesAsync = ref.watch(clienteCabinesProvider);
 
     return AppScaffold(
-      currentRoute: AppRoutes.clienteCabines,
+      currentRoute: AppRoutes.clienteCabinesTabs,
       child: cabinesAsync.when(
         loading: () =>
             const Center(child: CircularProgressIndicator()),

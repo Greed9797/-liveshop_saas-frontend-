@@ -17,21 +17,16 @@ import '../screens/cabines/cabine_detail_screen.dart';
 import '../screens/solicitacoes/solicitacoes_screen.dart';
 import '../screens/cliente/cliente_agenda_screen.dart';
 import '../screens/cliente/cliente_ao_vivo_screen.dart';
-import '../screens/cliente/cliente_cabines_tabs_screen.dart';
 import '../screens/cliente/cliente_reservas_screen.dart';
-import '../screens/cliente/cliente_configuracoes_screen.dart';
 import '../screens/cliente/cliente_historico_screen.dart';
 import '../screens/cliente/cliente_lives_screen.dart';
 import '../livelab_v2/admin_v2_routes.dart';
 import '../livelab_v2/cliente_v2_routes.dart';
-import '../screens/clientes/clientes_leads_screen.dart';
 import '../screens/configuracoes/configuracoes_screen.dart';
 import '../screens/excelencia/excelencia_screen.dart';
 import '../screens/financeiro/financeiro_screen.dart';
-import '../screens/leads/leads_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
 import '../screens/painel_cliente/carteira_clientes_screen.dart';
-import '../screens/painel_cliente/cliente_dashboard_screen.dart';
 import '../screens/recomendacoes/recomendacoes_screen.dart';
 import '../screens/vendas/analise_financeira_screen.dart';
 import '../screens/vendas/analise_vendas_screen.dart';
@@ -61,7 +56,6 @@ class AppRoutes {
   static const cliente = '/cliente';
   static const clienteAoVivo = '/cliente/ao-vivo';
   static const clienteHistorico = '/cliente/historico';
-  static const clienteCabines = '/cliente/cabines';
   static const clienteCabineDetail = '/cliente/cabines/detalhe';
   static const clienteDashboard = '/cliente/dashboard';
   static const leads = '/leads';
@@ -383,17 +377,6 @@ class AppRoutes {
           settings: settings,
         );
 
-      case clienteCabines:
-        return buildPremiumRoute(
-          child: RoleRouteGuard(
-            allowedRoles: _commercialRoles,
-            fallbackRoute: clienteDashboard,
-            unauthenticatedRoute: login,
-            child: CabinesScreen(repository: ApiCabinesRepository()),
-          ),
-          settings: settings,
-        );
-
       case clienteDashboard:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
@@ -411,7 +394,7 @@ class AppRoutes {
             allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: LeadsScreen(),
+            child: MasterCrmV2(),
           ),
           settings: settings,
         );
@@ -493,7 +476,7 @@ class AppRoutes {
             allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: ClientesLeadsScreen(),
+            child: MasterCrmV2(),
           ),
           settings: settings,
         );
@@ -645,7 +628,12 @@ class AppRoutes {
 
       case onboarding:
         return buildPremiumRoute(
-          child: const OnboardingScreen(),
+          child: const RoleRouteGuard(
+            allowedRoles: {'cliente_parceiro'},
+            fallbackRoute: cliente,
+            unauthenticatedRoute: login,
+            child: OnboardingScreen(),
+          ),
           settings: settings,
         );
 

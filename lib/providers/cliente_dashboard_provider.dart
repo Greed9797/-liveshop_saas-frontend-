@@ -254,17 +254,12 @@ class ClienteLive {
   final double gmv;
   final int itensVendidos;
   final int pedidos;
-  final int totalOrders;
   final int duracaoMin;
   final double duracaoHoras;
   final int viewers;
-  final int viewerCount;
   final int comentarios;
-  final int commentsCount;
   final int likes;
-  final int likesCount;
   final int shares;
-  final int sharesCount;
   final String? topProduto;
   final double roas;
   final double valorInvestido;
@@ -278,17 +273,12 @@ class ClienteLive {
     required this.gmv,
     required this.itensVendidos,
     required this.pedidos,
-    required this.totalOrders,
     required this.duracaoMin,
     required this.duracaoHoras,
     required this.viewers,
-    required this.viewerCount,
     required this.comentarios,
-    required this.commentsCount,
     required this.likes,
-    required this.likesCount,
     required this.shares,
-    required this.sharesCount,
     this.topProduto,
     required this.roas,
     required this.valorInvestido,
@@ -307,24 +297,14 @@ class ClienteLive {
         gmv: _toDouble(j['gmv'] ?? j['total_faturamento']),
         itensVendidos: _toInt(j['itens_vendidos'] ?? j['total_vendas']),
         pedidos: _toInt(j['pedidos'] ?? j['totalOrders'] ?? j['total_orders']),
-        totalOrders:
-            _toInt(j['totalOrders'] ?? j['total_orders'] ?? j['pedidos']),
         duracaoMin: _toInt(j['duracao_min']),
         duracaoHoras: _toDouble(j['duracao_horas']),
         viewers: _toInt(j['viewers'] ?? j['viewerCount'] ?? j['viewer_count']),
-        viewerCount:
-            _toInt(j['viewerCount'] ?? j['viewer_count'] ?? j['viewers']),
         comentarios: _toInt(
           j['comentarios'] ?? j['commentsCount'] ?? j['comments_count'],
         ),
-        commentsCount: _toInt(
-          j['commentsCount'] ?? j['comments_count'] ?? j['comentarios'],
-        ),
         likes: _toInt(j['likes'] ?? j['likesCount'] ?? j['likes_count']),
-        likesCount: _toInt(j['likesCount'] ?? j['likes_count'] ?? j['likes']),
         shares: _toInt(j['shares'] ?? j['sharesCount'] ?? j['shares_count']),
-        sharesCount:
-            _toInt(j['sharesCount'] ?? j['shares_count'] ?? j['shares']),
         topProduto: (j['topProduto'] ?? j['top_produto'])?.toString(),
         roas: _toDouble(j['roas']),
         valorInvestido: _toDouble(j['valor_investido']),
@@ -618,7 +598,7 @@ class ClienteDashboardNotifier extends AsyncNotifier<ClienteDashboard> {
     final interval =
         dashboard.liveAtiva != null ? _clienteLivePolling : _clienteIdlePolling;
 
-    _timer = Timer.periodic(interval, (_) async {
+    _timer = Timer(interval, () async {
       try {
         final newData = await _fetch(period, periodoStr);
         if (state.hasValue) {
@@ -627,6 +607,7 @@ class ClienteDashboardNotifier extends AsyncNotifier<ClienteDashboard> {
         _configurePolling(period, periodoStr, newData);
       } catch (e) {
         debugPrint('Erro no polling do cliente: $e');
+        _configurePolling(period, periodoStr, dashboard);
       }
     });
   }
