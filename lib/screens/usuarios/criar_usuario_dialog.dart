@@ -17,6 +17,7 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nomeCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _senhaCtrl = TextEditingController();
 
   String _papel = 'gerente';
   String? _clienteId;
@@ -36,6 +37,7 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
   void dispose() {
     _nomeCtrl.dispose();
     _emailCtrl.dispose();
+    _senhaCtrl.dispose();
     super.dispose();
   }
 
@@ -78,6 +80,20 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
                     validator: (v) {
                       if (v?.trim().isEmpty ?? true) return 'Obrigatório';
                       if (!v!.contains('@')) return 'E-mail inválido';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.x4),
+
+                  _Label('Senha temporária (opcional)'),
+                  TextFormField(
+                    controller: _senhaCtrl,
+                    obscureText: false,
+                    decoration: _dec('Deixe em branco para gerar automaticamente'),
+                    validator: (v) {
+                      final s = v?.trim() ?? '';
+                      if (s.isEmpty) return null;
+                      if (s.length < 6) return 'Mínimo 6 caracteres';
                       return null;
                     },
                   ),
@@ -176,11 +192,13 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
     setState(() => _saving = true);
 
     try {
+      final senhaCustom = _senhaCtrl.text.trim();
       final payload = <String, dynamic>{
         'nome': _nomeCtrl.text.trim(),
         'email': _emailCtrl.text.trim(),
         'papel': _papel,
         if (_clienteId != null) 'cliente_id': _clienteId,
+        if (senhaCustom.isNotEmpty) 'senha_temporaria': senhaCustom,
       };
 
       final result =
