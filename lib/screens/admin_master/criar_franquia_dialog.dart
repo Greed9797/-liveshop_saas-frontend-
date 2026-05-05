@@ -21,6 +21,7 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
   final _emailContatoCtrl = TextEditingController();
   final _ownerNomeCtrl = TextEditingController();
   final _ownerEmailCtrl = TextEditingController();
+  final _ownerSenhaCtrl = TextEditingController();
   bool _saving = false;
 
   @override
@@ -31,6 +32,7 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
     _emailContatoCtrl.dispose();
     _ownerNomeCtrl.dispose();
     _ownerEmailCtrl.dispose();
+    _ownerSenhaCtrl.dispose();
     super.dispose();
   }
 
@@ -136,6 +138,19 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
                       return null;
                     },
                   ),
+                  const SizedBox(height: AppSpacing.x3),
+
+                  _Label('Senha temporária (opcional)'),
+                  TextFormField(
+                    controller: _ownerSenhaCtrl,
+                    decoration: _dec('Deixe em branco para gerar automaticamente'),
+                    validator: (v) {
+                      final s = v?.trim() ?? '';
+                      if (s.isEmpty) return null;
+                      if (s.length < 6) return 'Mínimo 6 caracteres';
+                      return null;
+                    },
+                  ),
                   const SizedBox(height: AppSpacing.x6),
 
                   Row(
@@ -188,6 +203,8 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
         'franqueado': {
           'nome': _ownerNomeCtrl.text.trim(),
           'email': _ownerEmailCtrl.text.trim(),
+          if (_ownerSenhaCtrl.text.trim().isNotEmpty)
+            'senha_temporaria': _ownerSenhaCtrl.text.trim(),
         },
       };
 
