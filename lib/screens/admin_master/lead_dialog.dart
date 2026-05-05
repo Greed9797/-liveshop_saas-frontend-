@@ -69,8 +69,12 @@ class _LeadFormState extends ConsumerState<_LeadForm> {
   late final TextEditingController _origem;
   late final TextEditingController _valor;
   late final TextEditingController _observacoes;
+  late final TextEditingController _email;
+  late final TextEditingController _whatsapp;
   late String _tipo;
   late String _etapa;
+  // Controllers dinâmicos pra cada campo do dados_extras. Key = chave do JSONB.
+  final Map<String, TextEditingController> _extras = {};
   bool _saving = false;
   bool _deleting = false;
 
@@ -91,8 +95,23 @@ class _LeadFormState extends ConsumerState<_LeadForm> {
           : (l.valorOportunidade > 0 ? l.valorOportunidade : l.fatEstimado).toStringAsFixed(0),
     );
     _observacoes = TextEditingController(text: l?.observacoesInternas ?? '');
+    _email = TextEditingController(text: l?.contatoEmail ?? '');
+    _whatsapp = TextEditingController(text: l?.contatoWhatsapp ?? '');
     _tipo = _detectTipo(l?.nicho);
     _etapa = l?.crmEtapa ?? 'lead_novo';
+    // Constrói controllers para cada campo do dados_extras vindo do banco.
+    // Mantém ordem original do JSONB para preservar a sequência das seções.
+    final extras = l?.dadosExtras ?? const <String, dynamic>{};
+    for (final entry in extras.entries) {
+      _extras[entry.key] = TextEditingController(text: _stringifyExtra(entry.value));
+    }
+  }
+
+  static String _stringifyExtra(dynamic v) {
+    if (v == null) return '';
+    if (v is List) return v.map((e) => e.toString()).where((s) => s.isNotEmpty).join(', ');
+    if (v is Map) return v.entries.map((e) => '${e.key}: ${e.value}').join(' · ');
+    return v.toString();
   }
 
   @override
@@ -104,6 +123,11 @@ class _LeadFormState extends ConsumerState<_LeadForm> {
     _origem.dispose();
     _valor.dispose();
     _observacoes.dispose();
+    _email.dispose();
+    _whatsapp.dispose();
+    for (final c in _extras.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -116,6 +140,8 @@ class _LeadFormState extends ConsumerState<_LeadForm> {
     return 'Outro';
   }
 
+  static const _ARRAY_KEYS = {'atrativos'};
+
   Future<void> _save() async {
     if (_nome.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -126,12 +152,26 @@ class _LeadFormState extends ConsumerState<_LeadForm> {
     setState(() => _saving = true);
     try {
       final valorNum = double.tryParse(_valor.text.replaceAll(',', '.')) ?? 0;
+      // Reconstrói dados_extras do dialog (preserva tipo array para chaves específicas)
+      final extras = <String, dynamic>{};
+      for (final entry in _extras.entries) {
+        final v = entry.value.text.trim();
+        if (v.isEmpty) continue;
+        if (_ARRAY_KEYS.contains(entry.key)) {
+          extras[entry.key] = v.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+        } else {
+          extras[entry.key] = v;
+        }
+      }
+
       final data = <String, dynamic>{
         'nome': _nome.text.trim(),
         if (_cidade.text.trim().isNotEmpty) 'cidade': _cidade.text.trim(),
         if (_estado.text.trim().isNotEmpty) 'estado': _estado.text.trim(),
         if (_responsavel.text.trim().isNotEmpty) 'responsavel_nome': _responsavel.text.trim(),
         if (_origem.text.trim().isNotEmpty) 'origem': _origem.text.trim(),
+        if (_email.text.trim().isNotEmpty) 'contato_email': _email.text.trim(),
+        if (_whatsapp.text.trim().isNotEmpty) 'contato_whatsapp': _whatsapp.text.trim(),
         if (_tipo != 'Outro') 'nicho': _tipo,
         if (valorNum > 0) ...{
           'valor_oportunidade': valorNum,
@@ -139,6 +179,7 @@ class _LeadFormState extends ConsumerState<_LeadForm> {
         },
         if (_observacoes.text.trim().isNotEmpty) 'observacoes_internas': _observacoes.text.trim(),
         'crm_etapa': _etapa,
+        if (extras.isNotEmpty || _isEdit) 'dados_extras': extras,
       };
 
       final notifier = ref.read(leadsProvider.notifier);
@@ -270,12 +311,20 @@ class _LeadFormState extends ConsumerState<_LeadForm> {
                         Expanded(child: _Field(label: 'Valor (R\$)', controller: _valor, keyboard: TextInputType.number)),
                       ],
                     ),
-                    if (_isEdit) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _Field(label: 'E-mail', controller: _email, keyboard: TextInputType.emailAddress)),
+                        const SizedBox(width: 10),
+                        Expanded(child: _Field(label: 'WhatsApp', controller: _whatsapp, keyboard: TextInputType.phone)),
+                      ],
+                    ),
+                    if (_extras.isNotEmpty) ...[
                       const SizedBox(height: 18),
-                      _BioDataBlock(lead: widget.lead!),
+                      _BioFormFields(extras: _extras),
                     ],
                     const SizedBox(height: 12),
-                    _Field(label: 'Observações internas', controller: _observacoes, multiline: true),
+                    _Field(label: 'Anotações do operador', controller: _observacoes, multiline: true),
                   ],
                 ),
               ),
@@ -401,9 +450,12 @@ class _Dropdown extends StatelessWidget {
   }
 }
 
-class _BioDataBlock extends StatelessWidget {
-  final Lead lead;
-  const _BioDataBlock({required this.lead});
+/// Renderiza as chaves do dados_extras como campos editáveis agrupados em
+/// seções. Cada chave conhecida ganha label humanizado; chaves novas
+/// recebem fallback automático. Salvar persiste tudo via dados_extras JSONB.
+class _BioFormFields extends StatelessWidget {
+  final Map<String, TextEditingController> extras;
+  const _BioFormFields({required this.extras});
 
   static const _LABELS = <String, String>{
     'nome': 'Nome',
@@ -430,74 +482,37 @@ class _BioDataBlock extends StatelessWidget {
     'interesse': 'Nível de interesse',
   };
 
-  String _formatValue(dynamic v) {
-    if (v == null) return '';
-    if (v is List) return v.map((e) => e.toString()).where((s) => s.isNotEmpty).join(', ');
-    if (v is Map) return v.entries.map((e) => '${e.key}: ${e.value}').join(' · ');
-    return v.toString().trim();
-  }
-
-  String _humanLabel(String key) =>
+  static String _humanLabel(String key) =>
       _LABELS[key] ??
       key.split('_').map((p) => p.isEmpty ? p : '${p[0].toUpperCase()}${p.substring(1)}').join(' ');
 
-  /// Fallback: parsea o texto da ficha gerada pelo backend (formatLeadFicha)
-  /// quando payload_externo ainda não está disponível na resposta da API.
-  /// Formato esperado:
-  ///   SEÇÃO EM CAPS
-  ///   Label: valor
-  ///   Label: valor
-  ///
-  ///   OUTRA SEÇÃO
-  ///   ...
-  static List<({String section, List<({String label, String value})> rows})>
-      _parseFicha(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return const [];
-    final sections = <({String section, List<({String label, String value})> rows})>[];
-    String? current;
-    var rows = <({String label, String value})>[];
-    void flush() {
-      if (current != null && rows.isNotEmpty) {
-        sections.add((section: current!, rows: List.of(rows)));
-      }
-      rows = [];
-    }
-    for (final line in raw.split('\n')) {
-      final t = line.trim();
-      if (t.isEmpty) continue;
-      // Heurística: linha sem ":" e em maiúsculas = título de seção
-      if (!t.contains(':') && t.toUpperCase() == t && t.length > 2) {
-        flush();
-        current = t;
-        continue;
-      }
-      final idx = t.indexOf(':');
-      if (idx > 0) {
-        final label = t.substring(0, idx).trim();
-        final value = t.substring(idx + 1).trim();
-        if (value.isNotEmpty) rows.add((label: label, value: value));
-      }
-    }
-    flush();
-    return sections;
-  }
+  // Agrupa chaves em seções pra hierarquia visual
+  static const _SECTIONS = <(String, List<String>)>[
+    ('IDENTIFICAÇÃO', ['nome', 'cidade', 'estado', 'telefone']),
+    ('PERFIL', ['situacao', 'experiencia_franquia', 'conhece_live_commerce', 'socios', 'segmento', 'nicho']),
+    ('CAPACIDADE', ['capital', 'fat_anual', 'faturamento', 'fat_estimado', 'prazo_inicio', 'espaco_fisico', 'horario']),
+    ('MOTIVAÇÃO', ['atrativos', 'receio', 'interesse']),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final email = lead.contatoEmail;
-    final whatsapp = lead.contatoWhatsapp;
-    final payload = lead.payloadExterno;
-    final data = (payload?['data'] is Map)
-        ? Map<String, dynamic>.from(payload!['data'] as Map)
-        : <String, dynamic>{};
-    final persona = payload?['persona']?.toString();
-    final sourcePath = payload?['source_path']?.toString();
-    final submittedAt = payload?['submitted_at']?.toString();
-    final fichaSections = _parseFicha(lead.observacoesInternas);
+    if (extras.isEmpty) return const SizedBox.shrink();
 
-    final hasContato = (email?.isNotEmpty ?? false) || (whatsapp?.isNotEmpty ?? false);
-    final hasAnything = hasContato || data.isNotEmpty || fichaSections.isNotEmpty;
-    if (!hasAnything) return const SizedBox.shrink();
+    // Distribui chaves em seções; chaves não mapeadas vão pra "OUTROS"
+    final allKeys = extras.keys.toList();
+    final assigned = <String>{};
+    final groupedSections = <({String title, List<String> keys})>[];
+    for (final (title, keys) in _SECTIONS) {
+      final present = keys.where(allKeys.contains).toList();
+      if (present.isNotEmpty) {
+        groupedSections.add((title: title, keys: present));
+        assigned.addAll(present);
+      }
+    }
+    final outros = allKeys.where((k) => !assigned.contains(k)).toList();
+    if (outros.isNotEmpty) {
+      groupedSections.add((title: 'OUTROS', keys: outros));
+    }
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -507,7 +522,7 @@ class _BioDataBlock extends StatelessWidget {
         border: Border.all(color: _D.border),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'Dados do formulário',
@@ -518,87 +533,26 @@ class _BioDataBlock extends StatelessWidget {
               letterSpacing: 0.4,
             ),
           ),
-          const SizedBox(height: 4),
-          if (persona != null || sourcePath != null || submittedAt != null)
+          for (final s in groupedSections) ...[
+            const SizedBox(height: 12),
             Text(
-              [
-                if (persona != null) 'Persona: $persona',
-                if (sourcePath != null) sourcePath,
-                if (submittedAt != null) submittedAt,
-              ].join(' · '),
-              style: GoogleFonts.inter(fontSize: 10.5, color: _D.textMuted),
+              s.title,
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: _D.primary,
+                letterSpacing: 0.8,
+              ),
             ),
-          const SizedBox(height: 12),
-          if (hasContato) ...[
-            if (email?.isNotEmpty ?? false) _BioRow(label: 'E-mail', value: email!),
-            if (whatsapp?.isNotEmpty ?? false) _BioRow(label: 'WhatsApp', value: whatsapp!),
-            const SizedBox(height: 8),
-            Container(height: 1, color: _D.border),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
+            for (final k in s.keys) ...[
+              const SizedBox(height: 8),
+              _Field(label: _humanLabel(k), controller: extras[k]!),
+            ],
           ],
-          if (data.isNotEmpty)
-            ...data.entries
-                .map((e) {
-                  final v = _formatValue(e.value);
-                  if (v.isEmpty) return null;
-                  return _BioRow(label: _humanLabel(e.key), value: v);
-                })
-                .whereType<Widget>()
-          else if (fichaSections.isNotEmpty)
-            ...fichaSections.expand((s) => [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, bottom: 6),
-                    child: Text(
-                      s.section,
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: _D.primary,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
-                  ...s.rows.map((r) => _BioRow(label: r.label, value: r.value)),
-                ])
-          else if (!hasContato)
-            Text(
-              'Sem dados adicionais do formulário.',
-              style: GoogleFonts.inter(fontSize: 11.5, color: _D.textMuted, fontStyle: FontStyle.italic),
-            ),
         ],
       ),
     );
   }
 }
 
-class _BioRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _BioRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: _D.textSec,
-              letterSpacing: 0.2,
-            ),
-          ),
-          const SizedBox(height: 2),
-          SelectableText(
-            value,
-            style: GoogleFonts.inter(fontSize: 12.5, color: _D.text, height: 1.4),
-          ),
-        ],
-      ),
-    );
-  }
-}

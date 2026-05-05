@@ -27,6 +27,7 @@ class Lead {
   final String? contatoEmail;
   final String? contatoWhatsapp;
   final Map<String, dynamic>? payloadExterno;
+  final Map<String, dynamic> dadosExtras;
 
   const Lead({
     required this.id,
@@ -57,6 +58,7 @@ class Lead {
     this.contatoEmail,
     this.contatoWhatsapp,
     this.payloadExterno,
+    this.dadosExtras = const {},
   });
 
   static double _toDouble(dynamic value) {
@@ -114,6 +116,9 @@ class Lead {
         payloadExterno: j['payload_externo'] is Map
             ? Map<String, dynamic>.from(j['payload_externo'] as Map)
             : null,
+        dadosExtras: j['dados_extras'] is Map
+            ? Map<String, dynamic>.from(j['dados_extras'] as Map)
+            : const {},
       );
 
   Duration? get tempoRestante => expiraEm?.difference(DateTime.now());
