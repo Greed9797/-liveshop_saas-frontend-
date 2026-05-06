@@ -470,8 +470,22 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
     );
   }
 
+  /// Gera lista de últimos 12 meses no formato "YYYY-MM" terminando no mês atual.
+  List<String> _last12Months() {
+    final now = DateTime.now();
+    final out = <String>[];
+    for (var i = 11; i >= 0; i--) {
+      final d = DateTime(now.year, now.month - i, 1);
+      out.add('${d.year}-${d.month.toString().padLeft(2, '0')}');
+    }
+    return out;
+  }
+
   Widget _faturamentoCard(LlTokens t, AnalyticsDashboardData d) {
-    final fat = d.faturamentoMensal;
+    final byMes = {for (final m in d.faturamentoMensal) m.mes: m.gmv};
+    final fat = _last12Months()
+        .map((m) => FaturamentoMensal(mes: m, gmv: byMes[m] ?? 0))
+        .toList();
     final maxV = fat.fold<double>(1, (a, b) => b.gmv > a ? b.gmv : a);
     final total = fat.fold<double>(0, (a, b) => a + b.gmv);
     final fmt = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 0);
@@ -538,7 +552,10 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
   }
 
   Widget _vendasCard(LlTokens t, AnalyticsDashboardData d) {
-    final vendas = d.vendasMensal;
+    final byMes = {for (final m in d.vendasMensal) m.mes: m.totalVendas};
+    final vendas = _last12Months()
+        .map((m) => VendasMensal(mes: m, totalVendas: byMes[m] ?? 0))
+        .toList();
     final maxV = vendas.fold<int>(1, (a, b) => b.totalVendas > a ? b.totalVendas : a);
     final total = vendas.fold<int>(0, (a, b) => a + b.totalVendas);
     return _cardShell(
@@ -800,7 +817,14 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
   }
 
   Widget _horasCard(LlTokens t, AnalyticsDashboardData d) {
-    final horas = d.horasLivePorDia;
+    // Preenche 30 dias mesmo com dados esparsos
+    final byDia = {for (final h in d.horasLivePorDia) h.dia: h.horas};
+    final now = DateTime.now();
+    final horas = List.generate(30, (i) {
+      final dt = DateTime(now.year, now.month, now.day - (29 - i));
+      final iso = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+      return HorasLiveDia(dia: iso, horas: byDia[iso] ?? 0);
+    });
     return _cardShell(
       t,
       title: 'Horas no ar · diário',
