@@ -24,22 +24,39 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
     ref.read(analyticsDashboardProvider.notifier).refresh();
   }
 
-  /// Gera lista de últimos 12 meses no formato {value: "YYYY-MM", label: "Abr 2026"}.
-  List<({String value, String label})> _availableMonths() {
-    final now = DateTime.now();
-    const nomes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    final out = <({String value, String label})>[];
-    for (var i = 0; i < 12; i++) {
-      final d = DateTime(now.year, now.month - i, 1);
-      final value = '${d.year}-${d.month.toString().padLeft(2, '0')}';
-      final label = '${nomes[d.month]} ${d.year}';
-      out.add((value: value, label: label));
-    }
-    return out;
+  void _setPreset(AnalyticsPreset p) {
+    ref.read(dashboardFiltrosProvider.notifier).setPreset(p);
   }
 
-  void _setMesAno(String mesAno) {
-    ref.read(dashboardFiltrosProvider.notifier).setMesAno(mesAno);
+  Future<void> _openCustomRangePicker() async {
+    final cur = ref.read(dashboardFiltrosProvider);
+    final result = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      initialDateRange: DateTimeRange(start: cur.from, end: cur.to),
+      helpText: 'Selecione o período',
+      cancelText: 'Cancelar',
+      confirmText: 'Aplicar',
+      saveText: 'Aplicar',
+      builder: (ctx, child) {
+        final t = ctx.llTokens;
+        return Theme(
+          data: Theme.of(ctx).copyWith(
+            colorScheme: Theme.of(ctx).colorScheme.copyWith(
+                  primary: t.primary,
+                  onPrimary: Colors.white,
+                  surface: t.bgElev1,
+                  onSurface: t.textPrimary,
+                ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (result != null) {
+      ref.read(dashboardFiltrosProvider.notifier).setCustomRange(result.start, result.end);
+    }
   }
 
   @override
@@ -213,93 +230,95 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
 
   Widget _filtersBar(LlTokens t) {
     final filtros = ref.watch(dashboardFiltrosProvider);
-    final months = _availableMonths();
-    final current = months.firstWhere(
-      (m) => m.value == filtros.mesAno,
-      orElse: () => months.first,
-    );
+    final fmt = DateFormat('dd/MM/yyyy', 'pt_BR');
+    final rangeLabel = filtros.from == filtros.to
+        ? fmt.format(filtros.from)
+        : '${fmt.format(filtros.from)} → ${fmt.format(filtros.to)}';
 
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: t.bgElev1,
-            border: Border.all(color: t.border),
-            borderRadius: BorderRadius.circular(10),
-          ),
+        _presetPill(t, AnalyticsPreset.hoje, filtros.preset),
+        _presetPill(t, AnalyticsPreset.ontem, filtros.preset),
+        _presetPill(t, AnalyticsPreset.dias7, filtros.preset),
+        _presetPill(t, AnalyticsPreset.dias14, filtros.preset),
+        _presetPill(t, AnalyticsPreset.mes1, filtros.preset),
+        _customRangeBtn(t, filtros.preset == AnalyticsPreset.custom),
+        const SizedBox(width: 8),
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.calendar_today, size: 14, color: t.textMuted),
-              const SizedBox(width: 8),
+              Icon(Icons.calendar_today_outlined, size: 13, color: t.textMuted),
+              const SizedBox(width: 6),
               Text(
-                'Mês de referência',
-                style: TextStyle(color: t.textMuted, fontSize: 11),
-              ),
-              const SizedBox(width: 10),
-              DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: current.value,
-                  isDense: true,
-                  icon: Icon(Icons.expand_more, size: 16, color: t.textSecondary),
-                  dropdownColor: t.bgElev1,
-                  style: TextStyle(
-                    color: t.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  items: months
-                      .map((m) => DropdownMenuItem(value: m.value, child: Text(m.label)))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) _setMesAno(v);
-                  },
-                ),
+                rangeLabel,
+                style: TextStyle(color: t.textMuted, fontSize: 11, fontWeight: FontWeight.w600),
               ),
             ],
           ),
-        ),
-        const SizedBox(width: 8),
-        // Pills de atalho
-        Wrap(
-          spacing: 6,
-          children: [
-            _shortcutPill(t, 'Mês atual', () {
-              final now = DateTime.now();
-              _setMesAno('${now.year}-${now.month.toString().padLeft(2, '0')}');
-            }),
-            _shortcutPill(t, 'Mês anterior', () {
-              final d = DateTime(DateTime.now().year, DateTime.now().month - 1, 1);
-              _setMesAno('${d.year}-${d.month.toString().padLeft(2, '0')}');
-            }),
-          ],
-        ),
-        const Spacer(),
-        Text(
-          'Mostrando: ${current.label}',
-          style: TextStyle(color: t.textMuted, fontSize: 11),
         ),
       ],
     );
   }
 
-  Widget _shortcutPill(LlTokens t, String label, VoidCallback onTap) {
+  Widget _presetPill(LlTokens t, AnalyticsPreset preset, AnalyticsPreset active) {
+    final isActive = preset == active;
     return Material(
-      color: t.bgElev1,
-      borderRadius: BorderRadius.circular(8),
+      color: isActive ? t.primarySoft : t.bgElev1,
+      borderRadius: BorderRadius.circular(10),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => _setPreset(preset),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
-            border: Border.all(color: t.border),
-            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: isActive ? t.primary : t.border),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
-            label,
-            style: TextStyle(color: t.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
+            preset.label,
+            style: TextStyle(
+              color: isActive ? t.primary : t.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _customRangeBtn(LlTokens t, bool active) {
+    return Material(
+      color: active ? t.primarySoft : t.bgElev1,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: _openCustomRangePicker,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            border: Border.all(color: active ? t.primary : t.border),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.edit_calendar_outlined, size: 14, color: active ? t.primary : t.textSecondary),
+              const SizedBox(width: 6),
+              Text(
+                'Personalizado',
+                style: TextStyle(
+                  color: active ? t.primary : t.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -535,15 +554,12 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
     );
   }
 
-  /// Gera lista de últimos 12 meses no formato "YYYY-MM" terminando no mês selecionado.
+  /// Gera lista de últimos 12 meses no formato "YYYY-MM" terminando no mês de `to`.
   List<String> _last12Months() {
     final filtros = ref.read(dashboardFiltrosProvider);
-    final parts = filtros.mesAno.split('-');
-    final anchorY = int.tryParse(parts[0]) ?? DateTime.now().year;
-    final anchorM = int.tryParse(parts.length > 1 ? parts[1] : '') ?? DateTime.now().month;
     final out = <String>[];
     for (var i = 11; i >= 0; i--) {
-      final d = DateTime(anchorY, anchorM - i, 1);
+      final d = DateTime(filtros.to.year, filtros.to.month - i, 1);
       out.add('${d.year}-${d.month.toString().padLeft(2, '0')}');
     }
     return out;
@@ -885,22 +901,19 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
   }
 
   Widget _horasCard(LlTokens t, AnalyticsDashboardData d) {
-    // Preenche 30 dias do mês selecionado mesmo com dados esparsos
+    // Preenche todos os dias do range selecionado com 0 quando não há dado
     final byDia = {for (final h in d.horasLivePorDia) h.dia: h.horas};
     final filtros = ref.read(dashboardFiltrosProvider);
-    final parts = filtros.mesAno.split('-');
-    final ancY = int.tryParse(parts[0]) ?? DateTime.now().year;
-    final ancM = int.tryParse(parts.length > 1 ? parts[1] : '') ?? DateTime.now().month;
-    final lastDayOfMonth = DateTime(ancY, ancM + 1, 0);
-    final horas = List.generate(30, (i) {
-      final dt = DateTime(lastDayOfMonth.year, lastDayOfMonth.month, lastDayOfMonth.day - (29 - i));
+    final totalDays = filtros.to.difference(filtros.from).inDays + 1;
+    final horas = List.generate(totalDays, (i) {
+      final dt = filtros.from.add(Duration(days: i));
       final iso = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
       return HorasLiveDia(dia: iso, horas: byDia[iso] ?? 0);
     });
     return _cardShell(
       t,
       title: 'Horas no ar · diário',
-      subtitle: 'Últimos 30 dias',
+      subtitle: '$totalDays ${totalDays == 1 ? "dia" : "dias"} no período',
       tag: _tag(t, '${d.kpis.totalHorasNoAr.toStringAsFixed(1)}h total'),
       minHeight: 260,
       body: SizedBox(

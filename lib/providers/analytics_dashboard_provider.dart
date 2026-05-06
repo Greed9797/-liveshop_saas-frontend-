@@ -3,32 +3,32 @@ import '../models/analytics_dashboard.dart';
 import '../services/api_service.dart';
 import 'auth_provider.dart';
 
+String _isoDate(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
 // ─────────────────────────────────────────
 // Filtros (estado síncrono)
 // ─────────────────────────────────────────
 
-String _currentMesAno() {
-  final now = DateTime.now();
-  return '${now.year}-${now.month.toString().padLeft(2, '0')}';
-}
-
 class DashboardFiltrosNotifier extends Notifier<AnalyticsFiltros> {
   @override
-  AnalyticsFiltros build() => AnalyticsFiltros(
-        clienteId: null,
-        mesAno: _currentMesAno(),
-      );
+  AnalyticsFiltros build() => AnalyticsFiltros.forPreset(AnalyticsPreset.mes1);
 
   void setClienteId(String? id) {
     state = state.copyWith(clienteId: id);
   }
 
-  void setMesAno(String mesAno) {
-    state = state.copyWith(mesAno: mesAno);
+  void setPreset(AnalyticsPreset preset) {
+    final f = AnalyticsFiltros.forPreset(preset, clienteId: state.clienteId);
+    state = f;
+  }
+
+  void setCustomRange(DateTime from, DateTime to) {
+    state = state.copyWith(from: from, to: to, preset: AnalyticsPreset.custom);
   }
 
   void reset() {
-    state = AnalyticsFiltros(clienteId: null, mesAno: _currentMesAno());
+    state = AnalyticsFiltros.forPreset(AnalyticsPreset.mes1);
   }
 }
 
@@ -49,13 +49,15 @@ class AnalyticsDashboardNotifier
     if (!authState.isAuthenticated) {
       throw Exception('Não autenticado');
     }
-    // ref.watch garante re-fetch automático quando os filtros mudam
     final filtros = ref.watch(dashboardFiltrosProvider);
     return _fetch(filtros);
   }
 
   Future<AnalyticsDashboardData> _fetch(AnalyticsFiltros filtros) async {
-    final params = <String, dynamic>{'mesAno': filtros.mesAno};
+    final params = <String, dynamic>{
+      'from': _isoDate(filtros.from),
+      'to': _isoDate(filtros.to),
+    };
     if (filtros.clienteId != null) params['cliente_id'] = filtros.clienteId;
 
     final resp = await ApiService.get('/analytics/dashboard', params: params);

@@ -1,13 +1,73 @@
+/// Presets disponíveis no filtro de período.
+enum AnalyticsPreset { hoje, ontem, dias7, dias14, mes1, custom }
+
+extension AnalyticsPresetX on AnalyticsPreset {
+  String get id => switch (this) {
+        AnalyticsPreset.hoje => 'hoje',
+        AnalyticsPreset.ontem => 'ontem',
+        AnalyticsPreset.dias7 => '7d',
+        AnalyticsPreset.dias14 => '14d',
+        AnalyticsPreset.mes1 => '1m',
+        AnalyticsPreset.custom => 'custom',
+      };
+  String get label => switch (this) {
+        AnalyticsPreset.hoje => 'Hoje',
+        AnalyticsPreset.ontem => 'Ontem',
+        AnalyticsPreset.dias7 => '7 dias',
+        AnalyticsPreset.dias14 => '14 dias',
+        AnalyticsPreset.mes1 => '1 mês',
+        AnalyticsPreset.custom => 'Personalizado',
+      };
+}
+
 class AnalyticsFiltros {
   final String? clienteId;
-  final String mesAno;
+  final DateTime from;
+  final DateTime to;
+  final AnalyticsPreset preset;
 
-  const AnalyticsFiltros({this.clienteId, required this.mesAno});
+  const AnalyticsFiltros({
+    this.clienteId,
+    required this.from,
+    required this.to,
+    required this.preset,
+  });
 
-  AnalyticsFiltros copyWith({Object? clienteId = _sentinel, String? mesAno}) {
+  /// Calcula from/to a partir de um preset relativo a hoje.
+  static AnalyticsFiltros forPreset(AnalyticsPreset p, {String? clienteId}) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    DateTime from;
+    DateTime to;
+    switch (p) {
+      case AnalyticsPreset.hoje:
+        from = today; to = today; break;
+      case AnalyticsPreset.ontem:
+        from = today.subtract(const Duration(days: 1));
+        to = from; break;
+      case AnalyticsPreset.dias7:
+        to = today; from = today.subtract(const Duration(days: 6)); break;
+      case AnalyticsPreset.dias14:
+        to = today; from = today.subtract(const Duration(days: 13)); break;
+      case AnalyticsPreset.mes1:
+        to = today; from = today.subtract(const Duration(days: 29)); break;
+      case AnalyticsPreset.custom:
+        to = today; from = today.subtract(const Duration(days: 29)); break;
+    }
+    return AnalyticsFiltros(clienteId: clienteId, from: from, to: to, preset: p);
+  }
+
+  AnalyticsFiltros copyWith({
+    Object? clienteId = _sentinel,
+    DateTime? from,
+    DateTime? to,
+    AnalyticsPreset? preset,
+  }) {
     return AnalyticsFiltros(
       clienteId: clienteId == _sentinel ? this.clienteId : clienteId as String?,
-      mesAno: mesAno ?? this.mesAno,
+      from: from ?? this.from,
+      to: to ?? this.to,
+      preset: preset ?? this.preset,
     );
   }
 }
