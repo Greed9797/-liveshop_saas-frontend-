@@ -20,23 +20,26 @@ class AnalyticsDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScreen> {
-  String _periodo = 'Ano';
-  final List<String> _periodos = const ['Hoje', '7 dias', '30 dias', 'Ano'];
-
   void _refresh() {
     ref.read(analyticsDashboardProvider.notifier).refresh();
   }
 
-  void _changePeriod(String p) {
-    setState(() => _periodo = p);
-    final notifier = ref.read(dashboardFiltrosProvider.notifier);
+  /// Gera lista de últimos 12 meses no formato {value: "YYYY-MM", label: "Abr 2026"}.
+  List<({String value, String label})> _availableMonths() {
     final now = DateTime.now();
-    final cur = '${now.year}-${now.month.toString().padLeft(2, '0')}';
-    if (p == 'Hoje' || p == '7 dias' || p == '30 dias') {
-      notifier.setMesAno(cur);
-    } else {
-      notifier.setMesAno(cur);
+    const nomes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    final out = <({String value, String label})>[];
+    for (var i = 0; i < 12; i++) {
+      final d = DateTime(now.year, now.month - i, 1);
+      final value = '${d.year}-${d.month.toString().padLeft(2, '0')}';
+      final label = '${nomes[d.month]} ${d.year}';
+      out.add((value: value, label: label));
     }
+    return out;
+  }
+
+  void _setMesAno(String mesAno) {
+    ref.read(dashboardFiltrosProvider.notifier).setMesAno(mesAno);
   }
 
   @override
@@ -209,35 +212,97 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
   }
 
   Widget _filtersBar(LlTokens t) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _periodos.map((p) {
-        final active = _periodo == p;
-        return Material(
-          color: active ? t.primarySoft : t.bgElev1,
-          borderRadius: BorderRadius.circular(10),
-          child: InkWell(
+    final filtros = ref.watch(dashboardFiltrosProvider);
+    final months = _availableMonths();
+    final current = months.firstWhere(
+      (m) => m.value == filtros.mesAno,
+      orElse: () => months.first,
+    );
+
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: t.bgElev1,
+            border: Border.all(color: t.border),
             borderRadius: BorderRadius.circular(10),
-            onTap: () => _changePeriod(p),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-              decoration: BoxDecoration(
-                border: Border.all(color: active ? t.primary : t.border),
-                borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.calendar_today, size: 14, color: t.textMuted),
+              const SizedBox(width: 8),
+              Text(
+                'Mês de referência',
+                style: TextStyle(color: t.textMuted, fontSize: 11),
               ),
-              child: Text(
-                p,
-                style: TextStyle(
-                  color: active ? t.primary : t.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+              const SizedBox(width: 10),
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: current.value,
+                  isDense: true,
+                  icon: Icon(Icons.expand_more, size: 16, color: t.textSecondary),
+                  dropdownColor: t.bgElev1,
+                  style: TextStyle(
+                    color: t.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  items: months
+                      .map((m) => DropdownMenuItem(value: m.value, child: Text(m.label)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) _setMesAno(v);
+                  },
                 ),
               ),
-            ),
+            ],
           ),
-        );
-      }).toList(),
+        ),
+        const SizedBox(width: 8),
+        // Pills de atalho
+        Wrap(
+          spacing: 6,
+          children: [
+            _shortcutPill(t, 'Mês atual', () {
+              final now = DateTime.now();
+              _setMesAno('${now.year}-${now.month.toString().padLeft(2, '0')}');
+            }),
+            _shortcutPill(t, 'Mês anterior', () {
+              final d = DateTime(DateTime.now().year, DateTime.now().month - 1, 1);
+              _setMesAno('${d.year}-${d.month.toString().padLeft(2, '0')}');
+            }),
+          ],
+        ),
+        const Spacer(),
+        Text(
+          'Mostrando: ${current.label}',
+          style: TextStyle(color: t.textMuted, fontSize: 11),
+        ),
+      ],
+    );
+  }
+
+  Widget _shortcutPill(LlTokens t, String label, VoidCallback onTap) {
+    return Material(
+      color: t.bgElev1,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: t.border),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(color: t.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
     );
   }
 
@@ -470,12 +535,15 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
     );
   }
 
-  /// Gera lista de últimos 12 meses no formato "YYYY-MM" terminando no mês atual.
+  /// Gera lista de últimos 12 meses no formato "YYYY-MM" terminando no mês selecionado.
   List<String> _last12Months() {
-    final now = DateTime.now();
+    final filtros = ref.read(dashboardFiltrosProvider);
+    final parts = filtros.mesAno.split('-');
+    final anchorY = int.tryParse(parts[0]) ?? DateTime.now().year;
+    final anchorM = int.tryParse(parts.length > 1 ? parts[1] : '') ?? DateTime.now().month;
     final out = <String>[];
     for (var i = 11; i >= 0; i--) {
-      final d = DateTime(now.year, now.month - i, 1);
+      final d = DateTime(anchorY, anchorM - i, 1);
       out.add('${d.year}-${d.month.toString().padLeft(2, '0')}');
     }
     return out;
@@ -817,11 +885,15 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
   }
 
   Widget _horasCard(LlTokens t, AnalyticsDashboardData d) {
-    // Preenche 30 dias mesmo com dados esparsos
+    // Preenche 30 dias do mês selecionado mesmo com dados esparsos
     final byDia = {for (final h in d.horasLivePorDia) h.dia: h.horas};
-    final now = DateTime.now();
+    final filtros = ref.read(dashboardFiltrosProvider);
+    final parts = filtros.mesAno.split('-');
+    final ancY = int.tryParse(parts[0]) ?? DateTime.now().year;
+    final ancM = int.tryParse(parts.length > 1 ? parts[1] : '') ?? DateTime.now().month;
+    final lastDayOfMonth = DateTime(ancY, ancM + 1, 0);
     final horas = List.generate(30, (i) {
-      final dt = DateTime(now.year, now.month, now.day - (29 - i));
+      final dt = DateTime(lastDayOfMonth.year, lastDayOfMonth.month, lastDayOfMonth.day - (29 - i));
       final iso = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
       return HorasLiveDia(dia: iso, horas: byDia[iso] ?? 0);
     });
