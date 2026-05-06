@@ -4,8 +4,9 @@ import '../../../theme/livelab_theme.dart';
 import '../home_models.dart';
 
 class KpiGrid extends StatelessWidget {
-  const KpiGrid({super.key, required this.kpis});
+  const KpiGrid({super.key, required this.kpis, this.onKpiTap});
   final List<HomeKpi> kpis;
+  final void Function(int index)? onKpiTap;
 
   @override
   Widget build(BuildContext context) {
@@ -22,15 +23,16 @@ class KpiGrid extends StatelessWidget {
           mainAxisExtent: 116,
         ),
         itemCount: kpis.length,
-        itemBuilder: (_, i) => _KpiCard(kpi: kpis[i]),
+        itemBuilder: (_, i) => _KpiCard(kpi: kpis[i], onTap: onKpiTap == null ? null : () => onKpiTap!(i)),
       );
     });
   }
 }
 
 class _KpiCard extends StatelessWidget {
-  const _KpiCard({required this.kpi});
+  const _KpiCard({required this.kpi, this.onTap});
   final HomeKpi kpi;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -38,70 +40,78 @@ class _KpiCard extends StatelessWidget {
     final iconBg = kpi.primaryIcon ? t.primarySoft : t.bgElev2;
     final iconFg = kpi.primaryIcon ? t.primary : t.textSecondary;
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: t.bgElev1,
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: t.border),
-        boxShadow: t.shadowCard,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: t.bgElev1,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: t.border),
+            boxShadow: t.shadowCard,
+          ),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(
-                  kpi.label,
-                  style: TextStyle(color: t.textSecondary, fontSize: 12, fontWeight: FontWeight.w500),
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      kpi.label,
+                      style: TextStyle(color: t.textSecondary, fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                  if (kpi.icon != null)
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: iconBg,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Icon(kpi.icon, size: 16, color: iconFg),
+                    ),
+                ],
               ),
-              if (kpi.icon != null)
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: iconBg,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Icon(kpi.icon, size: 16, color: iconFg),
+              Text(
+                kpi.value,
+                style: TextStyle(
+                  color: t.textPrimary,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.7,
+                  height: 1,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Row(
+                children: [
+                  if (kpi.delta.isNotEmpty) ...[
+                    _delta(t, kpi.delta, kpi.deltaPositive),
+                    const SizedBox(width: 6),
+                  ],
+                  if (kpi.footnote != null)
+                    Expanded(
+                      child: Text(
+                        kpi.footnote!,
+                        style: TextStyle(color: t.textMuted, fontSize: 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
-          Text(
-            kpi.value,
-            style: TextStyle(
-              color: t.textPrimary,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.7,
-              height: 1,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Row(
-            children: [
-              if (kpi.delta.isNotEmpty) ...[
-                _delta(t, kpi.delta, kpi.deltaPositive),
-                const SizedBox(width: 6),
-              ],
-              if (kpi.footnote != null)
-                Expanded(
-                  child: Text(
-                    kpi.footnote!,
-                    style: TextStyle(color: t.textMuted, fontSize: 11),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

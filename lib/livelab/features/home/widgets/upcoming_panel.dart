@@ -4,10 +4,11 @@ import '../../../theme/livelab_theme.dart';
 import '../home_models.dart';
 
 class UpcomingPanel extends StatelessWidget {
-  const UpcomingPanel({super.key, required this.upcoming, this.liveCount = 0, this.totalScheduled = 0});
+  const UpcomingPanel({super.key, required this.upcoming, this.liveCount = 0, this.totalScheduled = 0, this.onSeeAll});
   final List<UpcomingLive> upcoming;
   final int liveCount;
   final int totalScheduled;
+  final VoidCallback? onSeeAll;
 
   @override
   Widget build(BuildContext context) {
@@ -42,16 +43,19 @@ class UpcomingPanel extends StatelessWidget {
                   ],
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Agenda completa',
-                    style: TextStyle(color: t.primary, fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.arrow_forward, size: 14, color: t.primary),
-                ],
+              GestureDetector(
+                onTap: onSeeAll,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Agenda completa',
+                      style: TextStyle(color: t.primary, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.arrow_forward, size: 14, color: t.primary),
+                  ],
+                ),
               ),
             ],
           ),

@@ -3,8 +3,9 @@ import '../../../theme/livelab_theme.dart';
 import '../home_models.dart';
 
 class AlertsRow extends StatelessWidget {
-  const AlertsRow({super.key, required this.alerts});
+  const AlertsRow({super.key, required this.alerts, this.onAlertTap});
   final List<HomeAlert> alerts;
+  final void Function(int index)? onAlertTap;
 
   @override
   Widget build(BuildContext context) {
@@ -39,15 +40,16 @@ class AlertsRow extends StatelessWidget {
           mainAxisExtent: 86,
         ),
         itemCount: alerts.length,
-        itemBuilder: (_, i) => _AlertCard(alert: alerts[i]),
+        itemBuilder: (_, i) => _AlertCard(alert: alerts[i], onTap: onAlertTap == null ? null : () => onAlertTap!(i)),
       );
     });
   }
 }
 
 class _AlertCard extends StatelessWidget {
-  const _AlertCard({required this.alert});
+  const _AlertCard({required this.alert, this.onTap});
   final HomeAlert alert;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +61,13 @@ class _AlertCard extends StatelessWidget {
       HomeAlertSeverity.success => (t.success, t.successSoft, Icons.check_circle_outline),
     };
 
-    return ClipRRect(
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
@@ -124,6 +132,8 @@ class _AlertCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );

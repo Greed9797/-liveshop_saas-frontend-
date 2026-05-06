@@ -36,6 +36,29 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _future = widget.repository.fetch());
   }
 
+  void _navigate(String route) {
+    Navigator.of(context).pushNamed(route);
+  }
+
+  void _onKpiTap(int i) {
+    const routes = [
+      AppRoutes.financeiro,
+      AppRoutes.comercial,
+      AppRoutes.analyticsDashboard,
+      AppRoutes.clientes,
+    ];
+    if (i < routes.length) _navigate(routes[i]);
+  }
+
+  void _onAlertTap(int i) {
+    const routes = [
+      AppRoutes.auditoriaContratos,
+      AppRoutes.boletos,
+      AppRoutes.agendamentos,
+    ];
+    if (i < routes.length) _navigate(routes[i]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return LivelabScaffold(
@@ -59,6 +82,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  List<CtaItem> _wiredCtas(List<CtaItem> source) {
+    const routeMap = {
+      'Iniciar live agora': AppRoutes.cabines,
+      'Aprovar solicitações': AppRoutes.solicitacoes,
+      'Boletos a vencer': AppRoutes.boletos,
+      'Leads quentes': AppRoutes.leads,
+    };
+    return source.map((c) {
+      final route = routeMap[c.title];
+      return CtaItem(
+        icon: c.icon,
+        title: c.title,
+        subtitle: c.subtitle,
+        count: c.count,
+        primary: c.primary,
+        onTap: route == null ? null : () => _navigate(route),
+      );
+    }).toList();
+  }
+
   Widget _content(HomeData d) {
     final t = context.llTokens;
     final r = LlResponsive.of(context);
@@ -78,18 +121,18 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 18),
           HeroStrip(hero: d.hero),
           const SizedBox(height: 18),
-          CtaStrip(items: d.ctas),
+          CtaStrip(items: _wiredCtas(d.ctas)),
           const SizedBox(height: 22),
           SectionLabel(
             label: 'Visão executiva',
-            trailing: SectionAllLink(label: 'Ver detalhado', onTap: _refresh),
+            trailing: SectionAllLink(label: 'Ver detalhado', onTap: () => _navigate(AppRoutes.analyticsDashboard)),
           ),
           const SizedBox(height: 8),
-          KpiGrid(kpis: d.kpis),
+          KpiGrid(kpis: d.kpis, onKpiTap: _onKpiTap),
           const SizedBox(height: 22),
           const SectionLabel(label: 'Atenção imediata'),
           const SizedBox(height: 8),
-          AlertsRow(alerts: d.alerts),
+          AlertsRow(alerts: d.alerts, onAlertTap: _onAlertTap),
           const SizedBox(height: 18),
           if (twoCol)
             Row(
@@ -101,12 +144,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     upcoming: d.upcoming,
                     liveCount: d.upcoming.where((u) => u.status == UpcomingStatus.now).length,
                     totalScheduled: d.upcoming.length,
+                    onSeeAll: () => _navigate(AppRoutes.agendamentos),
                   ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   flex: 10,
-                  child: RankingPanel(entries: d.ranking),
+                  child: RankingPanel(
+                    entries: d.ranking,
+                    onSeeAll: () => _navigate(AppRoutes.analyticsDashboard),
+                  ),
                 ),
               ],
             )
@@ -115,9 +162,13 @@ class _HomeScreenState extends State<HomeScreen> {
               upcoming: d.upcoming,
               liveCount: d.upcoming.where((u) => u.status == UpcomingStatus.now).length,
               totalScheduled: d.upcoming.length,
+              onSeeAll: () => _navigate(AppRoutes.agendamentos),
             ),
             const SizedBox(height: 14),
-            RankingPanel(entries: d.ranking),
+            RankingPanel(
+              entries: d.ranking,
+              onSeeAll: () => _navigate(AppRoutes.analyticsDashboard),
+            ),
           ],
         ],
       ),

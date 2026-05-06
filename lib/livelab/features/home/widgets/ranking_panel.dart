@@ -4,8 +4,9 @@ import '../../../theme/livelab_theme.dart';
 import '../home_models.dart';
 
 class RankingPanel extends StatelessWidget {
-  const RankingPanel({super.key, required this.entries});
+  const RankingPanel({super.key, required this.entries, this.onSeeAll});
   final List<RankingEntry> entries;
+  final VoidCallback? onSeeAll;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +33,19 @@ class RankingPanel extends StatelessWidget {
                 'Ranking do dia',
                 style: TextStyle(color: t.textPrimary, fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.2),
               ),
+              const Spacer(),
+              if (onSeeAll != null)
+                GestureDetector(
+                  onTap: onSeeAll,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Ver completo', style: TextStyle(color: t.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 4),
+                      Icon(Icons.arrow_forward, size: 14, color: t.primary),
+                    ],
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 2),
