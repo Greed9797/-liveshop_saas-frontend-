@@ -22,17 +22,59 @@ class KpiResumo {
   final double faturamentoTotal;
   final int totalVendas;
   final double ticketMedio;
+  final int audienciaMedia;
+  final int deltaFaturamento;
+  final int deltaVendas;
+  final int deltaTicket;
+  final int deltaAudiencia;
+  final double totalHorasNoAr;
 
   const KpiResumo({
     required this.faturamentoTotal,
     required this.totalVendas,
     required this.ticketMedio,
+    this.audienciaMedia = 0,
+    this.deltaFaturamento = 0,
+    this.deltaVendas = 0,
+    this.deltaTicket = 0,
+    this.deltaAudiencia = 0,
+    this.totalHorasNoAr = 0,
   });
 
   factory KpiResumo.fromJson(Map<String, dynamic> j) => KpiResumo(
         faturamentoTotal: (j['faturamento_total'] as num? ?? 0).toDouble(),
         totalVendas: (j['total_vendas'] as num? ?? 0).toInt(),
         ticketMedio: (j['ticket_medio'] as num? ?? 0).toDouble(),
+        audienciaMedia: (j['audiencia_media'] as num? ?? 0).toInt(),
+        deltaFaturamento: (j['delta_faturamento'] as num? ?? 0).toInt(),
+        deltaVendas: (j['delta_vendas'] as num? ?? 0).toInt(),
+        deltaTicket: (j['delta_ticket'] as num? ?? 0).toInt(),
+        deltaAudiencia: (j['delta_audiencia'] as num? ?? 0).toInt(),
+        totalHorasNoAr: (j['total_horas_no_ar'] as num? ?? 0).toDouble(),
+      );
+}
+
+class PeakHour {
+  final int hora;
+  final double gmv;
+  const PeakHour({required this.hora, required this.gmv});
+  factory PeakHour.fromJson(Map<String, dynamic> j) => PeakHour(
+        hora: (j['hora'] as num? ?? 0).toInt(),
+        gmv: (j['gmv'] as num? ?? 0).toDouble(),
+      );
+}
+
+class HeatmapCell {
+  final int dow; // 1=Mon..7=Sun
+  final int blocoHora; // 0,3,6,9,12,15,18,21
+  final double gmv;
+  final int lives;
+  const HeatmapCell({required this.dow, required this.blocoHora, required this.gmv, required this.lives});
+  factory HeatmapCell.fromJson(Map<String, dynamic> j) => HeatmapCell(
+        dow: (j['dow'] as num? ?? 0).toInt(),
+        blocoHora: (j['bloco_hora'] as num? ?? 0).toInt(),
+        gmv: (j['gmv'] as num? ?? 0).toDouble(),
+        lives: (j['lives'] as num? ?? 0).toInt(),
       );
 }
 
@@ -103,6 +145,8 @@ class AnalyticsDashboardData {
   final List<VendasMensal> vendasMensal;
   final List<HorasLiveDia> horasLivePorDia;
   final List<RankingApresentador> rankingApresentadores;
+  final List<PeakHour> peakHours;
+  final List<HeatmapCell> heatmapConversao;
 
   const AnalyticsDashboardData({
     required this.kpis,
@@ -110,6 +154,8 @@ class AnalyticsDashboardData {
     required this.vendasMensal,
     required this.horasLivePorDia,
     required this.rankingApresentadores,
+    this.peakHours = const [],
+    this.heatmapConversao = const [],
   });
 
   factory AnalyticsDashboardData.fromJson(Map<String, dynamic> j) =>
@@ -128,6 +174,12 @@ class AnalyticsDashboardData {
             .toList(),
         rankingApresentadores: (j['ranking_apresentadores'] as List? ?? const [])
             .map((e) => RankingApresentador.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+        peakHours: (j['peak_hours'] as List? ?? const [])
+            .map((e) => PeakHour.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+        heatmapConversao: (j['heatmap_conversao'] as List? ?? const [])
+            .map((e) => HeatmapCell.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
       );
 }

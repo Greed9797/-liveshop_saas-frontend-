@@ -1,594 +1,1060 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/analytics_dashboard.dart';
 import '../../providers/analytics_dashboard_provider.dart';
-import '../../providers/analytics_provider.dart';
-import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../design_system/design_system.dart';
-import '../../widgets/analytics_ranking_list.dart';
-import '../../widgets/app_scaffold.dart';
-import '../../widgets/charts/gmv_mensal_chart.dart';
-import '../../widgets/charts/horas_live_chart.dart';
-import '../../widgets/charts/vendas_mensal_chart.dart';
-import '../../widgets/heatmap_widget.dart';
-import '../../widgets/prime_time_chart.dart';
+import '../../livelab/core/responsive.dart';
+import '../../livelab/theme/livelab_theme.dart';
+import '../../livelab/theme/tokens.dart';
+import '../../livelab/widgets/livelab_scaffold.dart';
+import '../../services/api_service.dart';
 
 class AnalyticsDashboardScreen extends ConsumerStatefulWidget {
   const AnalyticsDashboardScreen({super.key});
 
   @override
-  ConsumerState<AnalyticsDashboardScreen> createState() =>
-      _AnalyticsDashboardScreenState();
+  ConsumerState<AnalyticsDashboardScreen> createState() => _AnalyticsDashboardScreenState();
 }
 
-class _AnalyticsDashboardScreenState
-    extends ConsumerState<AnalyticsDashboardScreen> {
-  final _mesAnoCtrl = TextEditingController();
-  bool _isAno = true;
+class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScreen> {
+  String _periodo = 'Ano';
+  final List<String> _periodos = const ['Hoje', '7 dias', '30 dias', 'Ano'];
 
-  @override
-  void initState() {
-    super.initState();
-    final filtros = ref.read(dashboardFiltrosProvider);
-    _mesAnoCtrl.text = filtros.mesAno;
+  void _refresh() {
+    ref.read(analyticsDashboardProvider.notifier).refresh();
   }
 
-  @override
-  void dispose() {
-    _mesAnoCtrl.dispose();
-    super.dispose();
-  }
-
-  void _onMesAnoSubmitted(String value) {
-    final regex = RegExp(r'^\d{4}-\d{2}$');
-    if (!regex.hasMatch(value)) return;
-    ref.read(dashboardFiltrosProvider.notifier).setMesAno(value);
+  void _changePeriod(String p) {
+    setState(() => _periodo = p);
+    final notifier = ref.read(dashboardFiltrosProvider.notifier);
+    final now = DateTime.now();
+    final cur = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    if (p == 'Hoje' || p == '7 dias' || p == '30 dias') {
+      notifier.setMesAno(cur);
+    } else {
+      notifier.setMesAno(cur);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
+    final asyncData = ref.watch(analyticsDashboardProvider);
+
+    return LivelabScaffold(
       currentRoute: AppRoutes.analyticsDashboard,
-      child: _AnalyticsDashboardBody(
-        mesAnoCtrl: _mesAnoCtrl,
-        onMesAnoSubmitted: _onMesAnoSubmitted,
-        isAno: _isAno,
-        onIsAnoChanged: (v) => setState(() => _isAno = v),
+      onRefresh: _refresh,
+      child: asyncData.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'Erro: ${ApiService.extractErrorMessage(e)}',
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ),
+        data: (data) => _content(data),
       ),
     );
   }
-}
 
-// ──────────────────────────────────────────────
-// Body
-// ──────────────────────────────────────────────
+  Widget _content(AnalyticsDashboardData data) {
+    final t = context.llTokens;
+    final r = LlResponsive.of(context);
+    final pad = r.isMobile ? 16.0 : 28.0;
 
-class _AnalyticsDashboardBody extends ConsumerWidget {
-  final TextEditingController mesAnoCtrl;
-  final void Function(String) onMesAnoSubmitted;
-  final bool isAno;
-  final ValueChanged<bool> onIsAnoChanged;
-
-  const _AnalyticsDashboardBody({
-    required this.mesAnoCtrl,
-    required this.onMesAnoSubmitted,
-    required this.isAno,
-    required this.onIsAnoChanged,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final filtros = ref.watch(dashboardFiltrosProvider);
-    final dashAsync = ref.watch(analyticsDashboardProvider);
-    final clientesAsync = ref.watch(clientesProvider);
-
-    return Column(
-      children: [
-        _buildHeader(context, ref, filtros, clientesAsync, isAno, onIsAnoChanged),
-        Expanded(
-          child: AppGradientBackground(
-            child: dashAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.x6),
-                  child: AppCard(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.error_outline, size: 48, color: AppColors.danger),
-                        const SizedBox(height: AppSpacing.x3),
-                        Text('Erro ao carregar dados', style: AppTypography.bodyMedium),
-                        const SizedBox(height: AppSpacing.x1),
-                        Text(
-                          '$e',
-                          style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: AppSpacing.x4),
-                        AppSecondaryButton(
-                          onPressed: () => ref.read(analyticsDashboardProvider.notifier).refresh(),
-                          label: 'Tentar novamente',
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              data: (data) => LayoutBuilder(
-                builder: (context, constraints) {
-                  final isDesktop = constraints.maxWidth >= AppBreakpoints.tablet;
-                  final hPad = constraints.maxWidth >= AppBreakpoints.desktop
-                      ? AppSpacing.x8
-                      : AppSpacing.x4;
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(hPad, AppSpacing.x6, hPad, AppSpacing.x8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ── KPI Cards ──
-                        _KpiCardsRow(data: data),
-                        const SizedBox(height: AppSpacing.x6),
-
-                        // ── Gráficos de faturamento e vendas ──
-                        _SectionHeader(
-                          title: 'Desempenho Mensal',
-                          subtitle: 'GMV e volume de lives nos últimos 12 meses.',
-                        ),
-                        const SizedBox(height: AppSpacing.x3),
-                        if (isDesktop)
-                          IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(
-                                  child: ChartCard(
-                                    title: 'Faturamento Mensal',
-                                    sub: 'Últimos 12 meses',
-                                    child: GmvMensalChart(dados: data.faturamentoMensal),
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.x3),
-                                Expanded(
-                                  child: ChartCard(
-                                    title: 'Vendas Mensais',
-                                    sub: 'Últimos 12 meses',
-                                    child: VendasMensalChart(dados: data.vendasMensal),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          Column(
-                            children: [
-                              ChartCard(
-                                title: 'Faturamento Mensal',
-                                sub: 'Últimos 12 meses',
-                                child: GmvMensalChart(dados: data.faturamentoMensal),
-                              ),
-                              const SizedBox(height: AppSpacing.x3),
-                              ChartCard(
-                                title: 'Vendas Mensais',
-                                sub: 'Últimos 12 meses',
-                                child: VendasMensalChart(dados: data.vendasMensal),
-                              ),
-                            ],
-                          ),
-                        const SizedBox(height: AppSpacing.x6),
-
-                        // ── Horas de live ──
-                        _SectionHeader(
-                          title: 'Horas de Live por Dia',
-                          subtitle: 'Distribuição de horas nos últimos 30 dias.',
-                        ),
-                        const SizedBox(height: AppSpacing.x3),
-                        ChartCard(
-                          title: 'Horas de Live',
-                          sub: 'Últimos 30 dias',
-                          child: HorasLiveChart(dados: data.horasLivePorDia),
-                        ),
-                        const SizedBox(height: AppSpacing.x6),
-
-                        // ── Ranking ──
-                        _SectionHeader(
-                          title: 'Top Apresentadores',
-                          subtitle: 'Ranking por GMV no período selecionado.',
-                        ),
-                        const SizedBox(height: AppSpacing.x3),
-                        AnalyticsRankingList(items: data.rankingApresentadores),
-                        const SizedBox(height: AppSpacing.x6),
-
-                        // ── Inteligência Comercial ──
-                        _SectionHeader(
-                          title: 'Inteligência Comercial',
-                          subtitle: 'Prime time e heatmap de conversão por horário.',
-                        ),
-                        const SizedBox(height: AppSpacing.x3),
-                        const _IntelComercialSection(),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(pad, 16, pad, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _pageHeader(t),
+          const SizedBox(height: 18),
+          _filtersBar(t),
+          const SizedBox(height: 16),
+          _kpiStrip(t, data),
+          const SizedBox(height: 24),
+          _sectionTitle(t, 'Desempenho mensal', 'GMV e volume de lives nos últimos 12 meses'),
+          const SizedBox(height: 8),
+          _row2(
+            r,
+            _faturamentoCard(t, data),
+            _vendasCard(t, data),
           ),
-        ),
-      ],
+          const SizedBox(height: 24),
+          _sectionTitle(t, 'Inteligência comercial', 'Prime time e heatmap de conversão por horário'),
+          const SizedBox(height: 8),
+          _row2(
+            r,
+            _peakHoursCard(t, data),
+            _heatmapCard(t, data),
+          ),
+          const SizedBox(height: 24),
+          _sectionTitle(t, 'Horas de live e ranking', 'Distribuição de horas e top apresentadores'),
+          const SizedBox(height: 8),
+          _row2(
+            r,
+            _horasCard(t, data),
+            _rankingCard(t, data),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildHeader(
-    BuildContext context,
-    WidgetRef ref,
-    dynamic filtros,
-    AsyncValue clientesAsync,
-    bool isAno,
-    ValueChanged<bool> onIsAnoChanged,
-  ) {
-    final clienteOptions = clientesAsync.valueOrNull ?? [];
-    void showClienteDropdown(BuildContext context) {
-      if (clienteOptions.isEmpty) return;
-      showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Selecionar Cliente'),
-          content: SizedBox(
-            width: 200,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: clienteOptions.length,
-              itemBuilder: (ctx, i) {
-                final c = clienteOptions[i];
-                return ListTile(
-                  title: Text(c.nome as String),
-                  onTap: () {
-                    ref.read(dashboardFiltrosProvider.notifier).setClienteId(c.id as String);
-                    Navigator.of(ctx).pop();
-                  },
-                );
-              },
-            ),
-          ),
-        ),
+  Widget _row2(LlResponsive r, Widget a, Widget b) {
+    if (r.isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [a, const SizedBox(height: 12), b],
       );
     }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(AppSpacing.x6, AppSpacing.x4, AppSpacing.x6, AppSpacing.x4),
-      decoration: BoxDecoration(
-        color: context.colors.bgCard,
-        border: Border(bottom: BorderSide(color: context.colors.borderSubtle)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 750;
-
-          // Eyebrow row
-          final eyebrowRow = Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(width: 18, height: 1, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Text(
-                'PERFORMANCE COMERCIAL',
-                style: AppTypography.caption.copyWith(
-                  fontSize: 11,
-                  letterSpacing: 0.16,
-                  fontWeight: FontWeight.w500,
-                  color: context.colors.textMuted,
-                ),
-              ),
-            ],
-          );
-
-          // Title row
-          final titleRow = Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Painel de ',
-                  style: AppTypography.h1.copyWith(
-                    fontSize: isWide ? 26 : 24,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                TextSpan(
-                  text: 'Analytics',
-                  style: AppTypography.h1.copyWith(
-                    fontSize: isWide ? 28 : 26,
-                    fontWeight: FontWeight.w400,
-                    fontStyle: FontStyle.italic,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-          );
-
-          // Filter controls row
-          final filterRow = Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppGhostButton(
-                label: isAno ? 'Ano' : 'Mês',
-                onPressed: () => onIsAnoChanged(!isAno),
-              ),
-              const SizedBox(width: AppSpacing.x2),
-              AppGhostButton(
-                label: 'Cliente',
-                icon: Icons.keyboard_arrow_down,
-                onPressed: () => showClienteDropdown(context),
-              ),
-              const SizedBox(width: AppSpacing.x2),
-              IconButton(
-                icon: Icon(Icons.refresh, color: context.colors.textSecondary),
-                tooltip: 'Atualizar',
-                onPressed: () => ref.read(analyticsDashboardProvider.notifier).refresh(),
-              ),
-            ],
-          );
-
-          if (isWide) {
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      eyebrowRow,
-                      const SizedBox(height: 6),
-                      titleRow,
-                      const SizedBox(height: 2),
-                      Text('Análise de faturamento e performance',
-                          style: AppTypography.caption.copyWith(color: context.colors.textSecondary)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.x4),
-                filterRow,
-              ],
-            );
-          }
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              eyebrowRow,
-              const SizedBox(height: 6),
-              titleRow,
-              const SizedBox(height: AppSpacing.x3),
-              filterRow,
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────
-// Section header
-// ──────────────────────────────────────────────
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
-
-  const _SectionHeader({required this.title, required this.subtitle});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: AppTypography.h3.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 2),
-        Text(subtitle,
-            style: AppTypography.bodySmall.copyWith(color: context.colors.textSecondary)),
+        Expanded(child: a),
+        const SizedBox(width: 12),
+        Expanded(child: b),
       ],
     );
   }
-}
 
-// ──────────────────────────────────────────────
-// KPI Cards
-// ──────────────────────────────────────────────
-
-class _KpiCardsRow extends StatelessWidget {
-  final dynamic data;
-
-  const _KpiCardsRow({required this.data});
-
-  static final _currencyFmt = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 600;
-
-        final ticketMedioValue = data.kpis.totalVendas > 0
-            ? _currencyFmt.format(data.kpis.ticketMedio)
-            : '–';
-
-        final cards = [
-          BigKpi(
-            icon: Icons.account_balance_wallet_outlined,
-            label: 'Faturamento Total',
-            value: _currencyFmt.format(data.kpis.faturamentoTotal),
-          ),
-          BigKpi(
-            icon: Icons.shopping_cart_outlined,
-            label: 'Total de Vendas',
-            value: '${data.kpis.totalVendas} vendas',
-          ),
-          BigKpi(
-            icon: Icons.trending_up,
-            label: 'Ticket Médio',
-            value: ticketMedioValue,
-          ),
-        ];
-
-        if (isMobile) {
-          return Column(
+  Widget _pageHeader(LlTokens t) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+              Text(
+                '— PERFORMANCE COMERCIAL',
+                style: TextStyle(
+                  color: t.primary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text.rich(
+                TextSpan(
                   children: [
-                    Expanded(child: cards[0]),
-                    const SizedBox(width: AppSpacing.x3),
-                    Expanded(child: cards[1]),
+                    TextSpan(
+                      text: 'Painel de ',
+                      style: TextStyle(
+                        color: t.textPrimary,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.9,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Analytics',
+                      style: GoogleFonts.instrumentSerif(
+                        color: t.primary,
+                        fontStyle: FontStyle.italic,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -1,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.x3),
-              cards[2],
+              const SizedBox(height: 4),
+              Text(
+                'Análise de faturamento e performance · todas as unidades',
+                style: TextStyle(color: t.textMuted, fontSize: 13),
+              ),
             ],
-          );
-        }
-
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: cards[0]),
-              const SizedBox(width: AppSpacing.x3),
-              Expanded(child: cards[1]),
-              const SizedBox(width: AppSpacing.x3),
-              Expanded(child: cards[2]),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ──────────────────────────────────────────────
-// Inteligência Comercial — PrimeTime + Heatmap
-// ──────────────────────────────────────────────
-
-class _IntelComercialSection extends ConsumerWidget {
-  const _IntelComercialSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final analyticsAsync = ref.watch(franqueadoAnalyticsResumoProvider);
-
-    return analyticsAsync.when(
-      loading: () => const SizedBox(
-        height: 200,
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (e, _) => AppCard(
-        child: Center(
-          child: Text(
-            'Erro ao carregar dados',
-            style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
           ),
         ),
-      ),
-      data: (analytics) {
-        // Build PrimeTimeChart bars from heatmapHorarios (hora 6–21)
-        final horarios = analytics.heatmapHorarios;
-        final maxGmv = horarios.isEmpty
-            ? 0.0
-            : horarios.map((h) => h.gmvTotal).reduce((a, b) => a > b ? a : b);
-        final avgGmv = horarios.isEmpty
-            ? 0.0
-            : horarios.map((h) => h.gmvTotal).reduce((a, b) => a + b) /
-                horarios.length;
-
-        double gmvForHora(List horarios, int hora) {
-          for (final h in horarios) {
-            if (h.hora == hora) return h.gmvTotal;
-          }
-          return 0.0;
-        }
-
-        final primeTimeBars = List.generate(16, (i) {
-          final hora = i + 6; // 6h to 21h
-          final gmv = gmvForHora(horarios, hora);
-          return PrimeTimeBar(
-            label: '${hora}h',
-            value: gmv,
-            isActive: maxGmv > 0 && gmv >= avgGmv,
-          );
-        });
-
-        // Heatmap por dia-da-semana: a API retorna apenas agregados por hora,
-        // sem breakdown por dia da semana. Exibimos a intensidade horária
-        // repetida igualmente para cada dia como aproximação visual.
-        // Valores são normalizados 0.0–1.0; se não há dados, ficam 0.0.
-        final heatmapMatrix = List.generate(7, (_) {
-          return List.generate(6, (slot) {
-            final hora = [6, 9, 12, 15, 18, 21][slot];
-            final gmv = gmvForHora(horarios, hora);
-            return maxGmv > 0 ? (gmv / maxGmv) : 0.0;
-          });
-        });
-
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= AppBreakpoints.tablet;
-            if (isWide) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        Material(
+          color: t.bgElev1,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: _refresh,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                border: Border.all(color: t.border),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: ChartCard(
-                      title: 'Horários de Pico',
-                      sub: 'GMV por horário do dia',
-                      child: PrimeTimeChart(bars: primeTimeBars, height: 200),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.x3),
-                  Expanded(
-                    child: ChartCard(
-                      title: 'Conversão por Dia',
-                      sub: 'Heatmap de performance',
-                      child: HeatmapWidget(
-                        matrix: heatmapMatrix,
-                        rowLabels: const ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-                        colLabels: const ['6h', '9h', '12h', '15h', '18h', '21h'],
-                        height: 200,
-                        cellSize: 20,
-                      ),
+                  Icon(Icons.refresh, size: 14, color: t.textSecondary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Atualizar',
+                    style: TextStyle(
+                      color: t.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
-              );
-            }
-            return Column(
-              children: [
-                ChartCard(
-                  title: 'Horários de Pico',
-                  sub: 'GMV por horário do dia',
-                  child: PrimeTimeChart(bars: primeTimeBars, height: 200),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _filtersBar(LlTokens t) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _periodos.map((p) {
+        final active = _periodo == p;
+        return Material(
+          color: active ? t.primarySoft : t.bgElev1,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => _changePeriod(p),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+              decoration: BoxDecoration(
+                border: Border.all(color: active ? t.primary : t.border),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                p,
+                style: TextStyle(
+                  color: active ? t.primary : t.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(height: AppSpacing.x3),
-                ChartCard(
-                  title: 'Conversão por Dia',
-                  sub: 'Heatmap de performance',
-                  child: HeatmapWidget(
-                    matrix: heatmapMatrix,
-                    rowLabels: const ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-                    colLabels: const ['6h', '9h', '12h', '15h', '18h', '21h'],
-                    height: 200,
-                    cellSize: 20,
-                  ),
-                ),
-              ],
-            );
-          },
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _kpiStrip(LlTokens t, AnalyticsDashboardData d) {
+    final fmtBrl = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 0);
+    final kpis = d.kpis;
+    final cards = [
+      _KpiSpec(
+        icon: Icons.attach_money,
+        iconColor: t.primary,
+        iconBg: t.primarySoft,
+        label: 'Faturamento total',
+        value: fmtBrl.format(kpis.faturamentoTotal),
+        sub: 'GMV consolidado · período',
+        delta: kpis.deltaFaturamento,
+      ),
+      _KpiSpec(
+        icon: Icons.shopping_cart_outlined,
+        iconColor: const Color(0xFF5AC8FA),
+        iconBg: const Color(0xFF5AC8FA).withValues(alpha: 0.16),
+        label: 'Total de vendas',
+        value: '${kpis.totalVendas} ${kpis.totalVendas == 1 ? "venda" : "vendas"}',
+        sub: 'encerradas no período',
+        delta: kpis.deltaVendas,
+      ),
+      _KpiSpec(
+        icon: Icons.trending_up,
+        iconColor: const Color(0xFF34C759),
+        iconBg: const Color(0xFF34C759).withValues(alpha: 0.16),
+        label: 'Ticket médio',
+        value: fmtBrl.format(kpis.ticketMedio),
+        sub: 'por live encerrada',
+        delta: kpis.deltaTicket,
+      ),
+      _KpiSpec(
+        icon: Icons.people_outline,
+        iconColor: const Color(0xFFAF7BFF),
+        iconBg: const Color(0xFFAF7BFF).withValues(alpha: 0.18),
+        label: 'Audiência média',
+        value: _compactInt(kpis.audienciaMedia),
+        sub: 'viewers por live',
+        delta: kpis.deltaAudiencia,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (c, box) {
+        final cols = box.maxWidth < 720 ? 2 : 4;
+        return GridView.builder(
+          primary: false,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: cols,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            mainAxisExtent: 138,
+          ),
+          itemCount: cards.length,
+          itemBuilder: (_, i) => _kpiCard(t, cards[i]),
         );
       },
     );
   }
+
+  Widget _kpiCard(LlTokens t, _KpiSpec spec) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: t.bgElev1,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: t.border),
+        boxShadow: t.shadowCard,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: spec.iconBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(spec.icon, size: 18, color: spec.iconColor),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  spec.label,
+                  style: TextStyle(color: t.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          Text(
+            spec.value,
+            style: TextStyle(
+              color: t.textPrimary,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.6,
+              height: 1.05,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  spec.sub,
+                  style: TextStyle(color: t.textMuted, fontSize: 11),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (spec.delta != 0) _deltaPill(t, spec.delta),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _deltaPill(LlTokens t, int delta) {
+    final positive = delta >= 0;
+    final color = positive ? t.success : t.danger;
+    final bg = positive ? t.successSoft : t.dangerSoft;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(positive ? Icons.trending_up : Icons.trending_down, size: 11, color: color),
+          const SizedBox(width: 3),
+          Text(
+            '${positive ? '+' : ''}$delta%',
+            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(LlTokens t, String title, String sub) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 6, right: 8),
+            width: 4,
+            height: 16,
+            decoration: BoxDecoration(color: t.primary, borderRadius: BorderRadius.circular(2)),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(color: t.textPrimary, fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.2),
+                ),
+                Text(
+                  sub,
+                  style: TextStyle(color: t.textMuted, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cardShell(LlTokens t, {required String title, required String subtitle, Widget? tag, required Widget body, double? minHeight}) {
+    return Container(
+      constraints: BoxConstraints(minHeight: minHeight ?? 0),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: t.bgElev1,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: t.border),
+        boxShadow: t.shadowCard,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: TextStyle(color: t.textPrimary, fontSize: 13, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: TextStyle(color: t.textMuted, fontSize: 11)),
+                  ],
+                ),
+              ),
+              if (tag != null) tag,
+            ],
+          ),
+          const SizedBox(height: 16),
+          body,
+        ],
+      ),
+    );
+  }
+
+  Widget _tag(LlTokens t, String text, {Color? color, Color? bg}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: bg ?? t.bgElev2,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: color ?? t.textSecondary, fontSize: 11, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+
+  Widget _faturamentoCard(LlTokens t, AnalyticsDashboardData d) {
+    final fat = d.faturamentoMensal;
+    final maxV = fat.fold<double>(1, (a, b) => b.gmv > a ? b.gmv : a);
+    final total = fat.fold<double>(0, (a, b) => a + b.gmv);
+    final fmt = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 0);
+    return _cardShell(
+      t,
+      title: 'Faturamento mensal (GMV)',
+      subtitle: 'Últimos 12 meses',
+      tag: _tag(t, 'total ${_compactBrl(total)}'),
+      minHeight: 280,
+      body: SizedBox(
+        height: 200,
+        child: fat.isEmpty
+            ? _emptyState(t, 'Sem dados de faturamento')
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: fat.map((m) {
+                  final h = (m.gmv / maxV * 160).clamp(0.0, 160.0);
+                  final isLast = m == fat.last;
+                  return Expanded(
+                    child: Tooltip(
+                      message: '${_mesLabel(m.mes)} · ${fmt.format(m.gmv)}',
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (m.gmv > 0)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  _compactBrl(m.gmv),
+                                  style: TextStyle(color: t.textSecondary, fontSize: 9, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            Container(
+                              height: h.toDouble(),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [t.primary, t.primary.withValues(alpha: 0.5)],
+                                ),
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _mesLabel(m.mes).substring(0, 3),
+                              style: TextStyle(
+                                color: isLast ? t.primary : t.textMuted,
+                                fontSize: 10,
+                                fontWeight: isLast ? FontWeight.w700 : FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+      ),
+    );
+  }
+
+  Widget _vendasCard(LlTokens t, AnalyticsDashboardData d) {
+    final vendas = d.vendasMensal;
+    final maxV = vendas.fold<int>(1, (a, b) => b.totalVendas > a ? b.totalVendas : a);
+    final total = vendas.fold<int>(0, (a, b) => a + b.totalVendas);
+    return _cardShell(
+      t,
+      title: 'Vendas mensais',
+      subtitle: 'Lives encerradas por mês',
+      tag: _tag(t, 'total $total'),
+      minHeight: 280,
+      body: SizedBox(
+        height: 200,
+        child: vendas.isEmpty
+            ? _emptyState(t, 'Sem vendas no período')
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: vendas.map((m) {
+                  final h = (m.totalVendas / maxV * 160).clamp(0.0, 160.0);
+                  final isLast = m == vendas.last;
+                  return Expanded(
+                    child: Tooltip(
+                      message: '${_mesLabel(m.mes)} · ${m.totalVendas} ${m.totalVendas == 1 ? "venda" : "vendas"}',
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (m.totalVendas > 0)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  '${m.totalVendas}',
+                                  style: TextStyle(color: t.textSecondary, fontSize: 9, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            Container(
+                              height: h.toDouble(),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [t.info, t.info.withValues(alpha: 0.5)],
+                                ),
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _mesLabel(m.mes).substring(0, 3),
+                              style: TextStyle(
+                                color: isLast ? t.info : t.textMuted,
+                                fontSize: 10,
+                                fontWeight: isLast ? FontWeight.w700 : FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+      ),
+    );
+  }
+
+  Widget _peakHoursCard(LlTokens t, AnalyticsDashboardData d) {
+    final hoursList = List.generate(16, (i) => 6 + i); // 6h..21h
+    final byHour = {for (final p in d.peakHours) p.hora: p.gmv};
+    final maxV = hoursList.fold<double>(1, (a, h) {
+      final v = byHour[h] ?? 0;
+      return v > a ? v : a;
+    });
+    final total = byHour.values.fold<double>(0, (a, b) => a + b);
+    final peakHour = byHour.entries.fold<MapEntry<int, double>?>(null,
+        (best, cur) => best == null || cur.value > best.value ? cur : best);
+
+    return _cardShell(
+      t,
+      title: 'Horários de pico',
+      subtitle: 'GMV por horário do dia',
+      tag: peakHour != null && peakHour.value > 0
+          ? _tag(t, 'pico ${peakHour.key}h', color: t.primary, bg: t.primarySoft)
+          : _tag(t, 'sem dados'),
+      minHeight: 280,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: 140,
+            child: total == 0
+                ? _emptyState(t, 'Sem horários registrados')
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: hoursList.map((h) {
+                      final v = byHour[h] ?? 0;
+                      final hPct = (v / maxV * 120).clamp(2.0, 120.0);
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 1),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Container(
+                                height: hPct.toDouble(),
+                                decoration: BoxDecoration(
+                                  color: v > 0 ? t.primary : t.bgElev2,
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text('${h}h', style: TextStyle(color: t.textMuted, fontSize: 8)),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+          ),
+          if (total > 0) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: _compactBrl(total),
+                        style: TextStyle(color: t.textPrimary, fontSize: 13, fontWeight: FontWeight.w700),
+                      ),
+                      TextSpan(
+                        text: peakHour != null && peakHour.value > 0 ? '  concentrado às ${peakHour.key}h' : '',
+                        style: TextStyle(color: t.textSecondary, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _heatmapCard(LlTokens t, AnalyticsDashboardData d) {
+    const dows = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    const blocos = [6, 9, 12, 15, 18, 21];
+    final byKey = <String, double>{};
+    double maxVal = 0;
+    for (final c in d.heatmapConversao) {
+      final k = '${c.dow}-${c.blocoHora}';
+      byKey[k] = c.gmv;
+      if (c.gmv > maxVal) maxVal = c.gmv;
+    }
+
+    String? peakLabel;
+    if (maxVal > 0) {
+      for (final c in d.heatmapConversao) {
+        if (c.gmv == maxVal) {
+          peakLabel = '${dows[(c.dow - 1).clamp(0, 6)].toLowerCase()} · ${c.blocoHora}h pico';
+          break;
+        }
+      }
+    }
+
+    Color cellColor(double v) {
+      if (v <= 0 || maxVal == 0) return t.bgElev2;
+      final ratio = (v / maxVal).clamp(0.1, 1.0);
+      return Color.lerp(t.bgElev2, t.primary, ratio.toDouble())!;
+    }
+
+    return _cardShell(
+      t,
+      title: 'Conversão por dia',
+      subtitle: 'Heatmap GMV por hora · semana × bloco 3h',
+      tag: _tag(t, peakLabel ?? 'sem dados'),
+      minHeight: 280,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header columns
+          Padding(
+            padding: const EdgeInsets.only(left: 36),
+            child: Row(
+              children: blocos
+                  .map((b) => Expanded(
+                        child: Center(
+                          child: Text('${b}h', style: TextStyle(color: t.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Rows
+          ...List.generate(7, (rowIdx) {
+            final dow = rowIdx + 1;
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 32,
+                    child: Text(
+                      dows[rowIdx],
+                      style: TextStyle(color: t.textMuted, fontSize: 10, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  ...blocos.map((b) {
+                    final v = byKey['$dow-$b'] ?? 0;
+                    return Expanded(
+                      child: Tooltip(
+                        message: v > 0 ? '${dows[rowIdx]} ${b}h · ${_compactBrl(v)}' : '${dows[rowIdx]} ${b}h',
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: Container(
+                            height: 26,
+                            decoration: BoxDecoration(
+                              color: cellColor(v),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            alignment: Alignment.center,
+                            child: v > 0 && v / maxVal > 0.6
+                                ? Text(
+                                    _compactBrl(v).replaceAll('R\$ ', ''),
+                                    style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
+                                  )
+                                : null,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text('menor', style: TextStyle(color: t.textMuted, fontSize: 10)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [t.bgElev2, t.primary]),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text('maior', style: TextStyle(color: t.textMuted, fontSize: 10)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _horasCard(LlTokens t, AnalyticsDashboardData d) {
+    final horas = d.horasLivePorDia;
+    return _cardShell(
+      t,
+      title: 'Horas no ar · diário',
+      subtitle: 'Últimos 30 dias',
+      tag: _tag(t, '${d.kpis.totalHorasNoAr.toStringAsFixed(1)}h total'),
+      minHeight: 260,
+      body: SizedBox(
+        height: 160,
+        child: horas.isEmpty
+            ? _emptyState(t, 'Sem horas registradas')
+            : CustomPaint(
+                size: Size.infinite,
+                painter: _LineChartPainter(
+                  values: horas.map((h) => h.horas).toList(),
+                  primary: t.primary,
+                  hairline: t.hairline,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _rankingCard(LlTokens t, AnalyticsDashboardData d) {
+    final ranking = d.rankingApresentadores;
+    final maxGmv = ranking.fold<double>(1, (a, b) => b.gmvTotal > a ? b.gmvTotal : a);
+    final fmt = NumberFormat.simpleCurrency(locale: 'pt_BR', decimalDigits: 0);
+    return _cardShell(
+      t,
+      title: 'Top apresentadores',
+      subtitle: 'Ranking por GMV no período',
+      tag: _tag(t, '${ranking.length} ${ranking.length == 1 ? "ativo" : "ativos"}'),
+      minHeight: 260,
+      body: ranking.isEmpty
+          ? _emptyState(t, 'Sem apresentadores no período')
+          : Column(
+              children: ranking.take(5).toList().asMap().entries.map((e) {
+                final pos = e.key + 1;
+                final p = e.value;
+                final share = (p.gmvTotal / maxGmv * 100).round();
+                final initials = _initials(p.apresentadorNome);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      _medalPos(t, pos),
+                      const SizedBox(width: 10),
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: t.bgElev2,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          initials,
+                          style: TextStyle(color: t.textPrimary, fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              p.apresentadorNome,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: t.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                            Text(
+                              '${p.totalLives} ${p.totalLives == 1 ? "live" : "lives"} · share $share%',
+                              style: TextStyle(color: t.textMuted, fontSize: 10),
+                            ),
+                            const SizedBox(height: 4),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(2),
+                              child: LinearProgressIndicator(
+                                value: (share / 100).clamp(0.0, 1.0),
+                                minHeight: 4,
+                                backgroundColor: t.bgElev2,
+                                valueColor: AlwaysStoppedAnimation(t.primary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        fmt.format(p.gmvTotal),
+                        style: TextStyle(
+                          color: t.textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+    );
+  }
+
+  Widget _medalPos(LlTokens t, int pos) {
+    final gradient = switch (pos) {
+      1 => const LinearGradient(colors: [Color(0xFFFFC93C), Color(0xFFFF9F1C)]),
+      2 => const LinearGradient(colors: [Color(0xFFD8D8D8), Color(0xFFA8A8A8)]),
+      3 => const LinearGradient(colors: [Color(0xFFD49664), Color(0xFFB07042)]),
+      _ => null,
+    };
+    return Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        color: gradient == null ? t.bgElev2 : null,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '$pos',
+        style: TextStyle(
+          color: pos <= 3 ? Colors.black : t.textSecondary,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyState(LlTokens t, String msg) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Text(
+          msg,
+          style: TextStyle(color: t.textFaint, fontSize: 12, fontStyle: FontStyle.italic),
+        ),
+      ),
+    );
+  }
+
+  String _mesLabel(String iso) {
+    final parts = iso.split('-');
+    if (parts.length != 2) return iso;
+    final mes = int.tryParse(parts[1]) ?? 0;
+    const nomes = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    return mes >= 1 && mes <= 12 ? nomes[mes] : iso;
+  }
+
+  String _compactBrl(double v) {
+    if (v >= 1000000) return 'R\$ ${(v / 1000000).toStringAsFixed(1)}M';
+    if (v >= 1000) return 'R\$ ${(v / 1000).toStringAsFixed(v >= 10000 ? 0 : 1)}k';
+    return 'R\$ ${v.toStringAsFixed(0)}';
+  }
+
+  String _compactInt(int v) {
+    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(v >= 10000 ? 0 : 1)}k';
+    return '$v';
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(' ').where((s) => s.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+  }
+}
+
+class _KpiSpec {
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
+  final String label;
+  final String value;
+  final String sub;
+  final int delta;
+  const _KpiSpec({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    required this.label,
+    required this.value,
+    required this.sub,
+    required this.delta,
+  });
+}
+
+class _LineChartPainter extends CustomPainter {
+  final List<double> values;
+  final Color primary;
+  final Color hairline;
+  _LineChartPainter({required this.values, required this.primary, required this.hairline});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.isEmpty) return;
+    final maxV = values.reduce((a, b) => a > b ? a : b);
+    if (maxV == 0) return;
+
+    final w = size.width;
+    final h = size.height;
+
+    // Hairlines
+    final hairlinePaint = Paint()
+      ..color = hairline
+      ..strokeWidth = 1;
+    for (final r in [0.25, 0.5, 0.75]) {
+      canvas.drawLine(Offset(0, h * r), Offset(w, h * r), hairlinePaint);
+    }
+
+    // Build path
+    final path = Path();
+    final fillPath = Path();
+    final stepX = w / (values.length - 1).clamp(1, double.infinity);
+
+    for (var i = 0; i < values.length; i++) {
+      final x = stepX * i;
+      final y = h - (values[i] / maxV * h * 0.9);
+      if (i == 0) {
+        path.moveTo(x, y);
+        fillPath.moveTo(x, h);
+        fillPath.lineTo(x, y);
+      } else {
+        path.lineTo(x, y);
+        fillPath.lineTo(x, y);
+      }
+    }
+    fillPath.lineTo(w, h);
+    fillPath.close();
+
+    // Fill gradient
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [primary.withValues(alpha: 0.32), primary.withValues(alpha: 0)],
+      ).createShader(Rect.fromLTWH(0, 0, w, h));
+    canvas.drawPath(fillPath, fillPaint);
+
+    // Line
+    final linePaint = Paint()
+      ..color = primary
+      ..strokeWidth = 2.2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(_LineChartPainter old) =>
+      old.values != values || old.primary != primary;
 }
