@@ -452,16 +452,16 @@ class _OperacionalTab extends ConsumerWidget {
           data: (r) => _kpiGrid(t, [
             _finKpiCard(
               t,
-              label: 'FATURAMENTO BRUTO',
+              label: 'RECEITA FRANQUEADORA',
               value: r.fatBruto,
-              sub: 'no período',
+              sub: 'fixo + comissão',
               color: t.info,
             ),
             _finKpiCard(
               t,
-              label: 'FATURAMENTO LÍQUIDO',
+              label: 'RECEITA LÍQUIDA',
               value: r.fatLiquido,
-              sub: 'após custos',
+              sub: 'após custos operacionais',
               color: t.success,
             ),
             _finKpiCard(
@@ -606,7 +606,7 @@ class _FluxoCaixaPanel extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('ENTRADAS',
+                  Text('GMV DAS LIVES',
                       style: TextStyle(
                         color: t.textMuted,
                         fontSize: 10,
@@ -647,7 +647,7 @@ class _FluxoCaixaPanel extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('SAÍDAS',
+                  Text('CUSTOS',
                       style: TextStyle(
                         color: t.textMuted,
                         fontSize: 10,
