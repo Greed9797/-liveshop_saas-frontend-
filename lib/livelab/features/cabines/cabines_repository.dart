@@ -1,6 +1,8 @@
 // CRUD + ações operacionais de cabines/lives.
 // Backend: src/routes/cabines.js (rotas /v1/cabines, /v1/lives, /v1/solicitacoes).
 
+import 'package:flutter/foundation.dart' show debugPrint;
+
 import '../../../services/api_service.dart';
 import 'cabines_models.dart';
 
@@ -52,7 +54,8 @@ class ApiCabinesRepository extends CabinesRepository {
       }
       entries.sort((a, b) => a.timeLabel.compareTo(b.timeLabel));
       return entries;
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[cabines] fetchProximas4h falhou: $e\n$st');
       return const [];
     }
   }

@@ -471,22 +471,31 @@ class _AdminLineChartPainter extends CustomPainter {
 }
 
 class AdminGrowthChart extends StatelessWidget {
-  const AdminGrowthChart({super.key});
+  const AdminGrowthChart({super.key, this.items = const []});
+  final List<GrowthBarItem> items;
 
   @override
   Widget build(BuildContext context) {
-    final items = const [
-      _GrowthItem('Te4535ste 2.0', 1.0, '+100%'),
-      _GrowthItem('Demo Centro', 0.0, '0%'),
-      _GrowthItem('Beta', 0.0, '0%'),
-    ];
+    if (items.isEmpty) {
+      return SizedBox(
+        height: 210,
+        child: Center(
+          child: Text('Sem dados de crescimento no período',
+              style: LL.caption.copyWith(fontSize: 11.5)),
+        ),
+      );
+    }
+    final mapped = items
+        .map((it) =>
+            _GrowthItem(it.name, it.normalizedValue, it.deltaLabel))
+        .toList();
 
     return SizedBox(
       height: 210,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          for (final item in items)
+          for (final item in mapped)
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -522,6 +531,16 @@ class AdminGrowthChart extends StatelessWidget {
       ),
     );
   }
+}
+
+class GrowthBarItem {
+  const GrowthBarItem(
+      {required this.name,
+      required this.normalizedValue,
+      required this.deltaLabel});
+  final String name;
+  final double normalizedValue; // 0..1
+  final String deltaLabel;
 }
 
 class _GrowthItem {

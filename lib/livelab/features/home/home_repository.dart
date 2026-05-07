@@ -277,31 +277,3 @@ class ApiHomeRepository implements HomeRepository {
   }
 }
 
-class MockHomeRepository implements HomeRepository {
-  @override
-  Future<HomeData> fetch() => Future.value(
-        const HomeData(
-          hero: HeroSummary(
-            liveCount: 0,
-            totalCabins: 0,
-            gmvMes: 'R\$ 0',
-            gmvDelta: '',
-            gmvDeltaPositive: true,
-            gmvSpark: [],
-            nextLiveTime: null,
-            nextLiveCabin: null,
-            nextLiveClient: null,
-            nextLiveStartsIn: null,
-            viewersNow: 0,
-            salesNow: 0,
-            peakOfDay: false,
-          ),
-          ctas: [],
-          kpis: [],
-          alerts: [],
-          upcoming: [],
-          ranking: [],
-          lives: [],
-        ),
-      );
-}

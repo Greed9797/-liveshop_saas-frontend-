@@ -828,12 +828,42 @@ class _CustoTile extends StatelessWidget {
             tooltip: 'Remover',
             icon: Icon(Icons.delete_outline, size: 18, color: t.textMuted),
             onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: t.bgElev1,
+                  title: Text('Excluir custo?',
+                      style: TextStyle(color: t.textPrimary)),
+                  content: Text(
+                    'Excluir "${custo.descricao}" no valor de R\$ ${custo.valor.toStringAsFixed(2)}? Esta ação não pode ser desfeita.',
+                    style: TextStyle(color: t.textSecondary),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: const Text('Cancelar'),
+                    ),
+                    FilledButton(
+                      style: FilledButton.styleFrom(backgroundColor: t.danger),
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: const Text('Excluir'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm != true) return;
               try {
                 await ref.read(custosProvider.notifier).deletar(custo.id);
                 ref.invalidate(financeiroProvider);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      backgroundColor: t.success,
+                      content: const Text('Custo removido')));
+                }
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      backgroundColor: t.danger,
                       content: Text(ApiService.extractErrorMessage(e))));
                 }
               }

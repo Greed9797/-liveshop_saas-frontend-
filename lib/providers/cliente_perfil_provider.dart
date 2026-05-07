@@ -1,5 +1,6 @@
 // Perfil do cliente_parceiro autenticado: nome, logo_url, site, etc.
 // Usado pra exibir logo do cliente em avatar topbar + sidebar footer.
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
 import 'auth_provider.dart';
@@ -27,7 +28,8 @@ final clientePerfilProvider = FutureProvider<ClientePerfil?>((ref) async {
   try {
     final resp = await ApiService.get<Map<String, dynamic>>('/cliente/perfil');
     return ClientePerfil.fromJson(resp.data as Map<String, dynamic>);
-  } catch (_) {
+  } catch (e) {
+    debugPrint('[clientePerfilProvider] falhou: $e');
     return null;
   }
 });

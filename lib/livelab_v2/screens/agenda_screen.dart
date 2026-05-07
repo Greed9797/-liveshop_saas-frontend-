@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../routes/app_routes.dart';
 import '../core/ll_theme.dart';
 import '../widgets/ll_components.dart';
 
@@ -217,7 +218,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       child: LLButton(
                           label: 'Nova Live',
                           icon: Icons.add_rounded,
-                          onTap: () {}),
+                          onTap: () => Navigator.of(context)
+                              .pushNamed(AppRoutes.solicitacoes)),
                     ),
                   ],
                 ),

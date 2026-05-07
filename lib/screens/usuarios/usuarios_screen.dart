@@ -605,7 +605,12 @@ class _MoreMenuInterno extends StatelessWidget {
       color: t.bgElev1,
       onSelected: (v) async {
         try {
-          if (v == 'reset') {
+          if (v == 'editar') {
+            await showDialog<void>(
+              context: context,
+              builder: (_) => _InternoFormDialog(usuario: u),
+            );
+          } else if (v == 'reset') {
             final senha = await ref
                 .read(usuariosProvider.notifier)
                 .resetSenha(u.id);
@@ -639,6 +644,15 @@ class _MoreMenuInterno extends StatelessWidget {
       },
       itemBuilder: (_) => [
         PopupMenuItem(
+          value: 'editar',
+          child: Row(children: [
+            Icon(Icons.edit_outlined, size: 16, color: t.textPrimary),
+            const SizedBox(width: 8),
+            Text('Editar',
+                style: TextStyle(color: t.textPrimary, fontSize: 13)),
+          ]),
+        ),
+        PopupMenuItem(
           value: 'reset',
           child: Row(children: [
             Icon(Icons.lock_reset, size: 16, color: t.textPrimary),
@@ -662,6 +676,147 @@ class _MoreMenuInterno extends StatelessWidget {
           ]),
         ),
       ],
+    );
+  }
+}
+
+class _InternoFormDialog extends ConsumerStatefulWidget {
+  final Usuario usuario;
+  const _InternoFormDialog({required this.usuario});
+
+  @override
+  ConsumerState<_InternoFormDialog> createState() =>
+      _InternoFormDialogState();
+}
+
+class _InternoFormDialogState extends ConsumerState<_InternoFormDialog> {
+  late final TextEditingController _nome;
+  late final TextEditingController _email;
+  late String _papel;
+  bool _saving = false;
+
+  static const _papeis = [
+    ('gerente', 'Gerente'),
+    ('gerente_comercial', 'Gerente Comercial'),
+    ('financeiro', 'Financeiro'),
+    ('operacional', 'Operacional'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _nome = TextEditingController(text: widget.usuario.nome);
+    _email = TextEditingController(text: widget.usuario.email);
+    _papel = _papeis.any((p) => p.$1 == widget.usuario.papel)
+        ? widget.usuario.papel
+        : _papeis.first.$1;
+  }
+
+  @override
+  void dispose() {
+    _nome.dispose();
+    _email.dispose();
+    super.dispose();
+  }
+
+  Future<void> _salvar() async {
+    final nome = _nome.text.trim();
+    final email = _email.text.trim();
+    final t = context.llTokens;
+    if (nome.isEmpty || email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: t.danger,
+        content: const Text('Nome e email são obrigatórios.'),
+      ));
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await ref.read(usuariosProvider.notifier).atualizar(
+        widget.usuario.id,
+        {'nome': nome, 'email': email, 'papel': _papel},
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: t.success,
+        content: const Text('Usuário atualizado'),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: t.danger,
+        content: Text(ApiService.extractErrorMessage(e)),
+      ));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.llTokens;
+    return Dialog(
+      backgroundColor: t.bgElev1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children: [
+                  Icon(Icons.edit_outlined, size: 20, color: t.textPrimary),
+                  const SizedBox(width: 10),
+                  Text('Editar interno',
+                      style: TextStyle(
+                          color: t.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700)),
+                ]),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _nome,
+                  decoration: const InputDecoration(labelText: 'Nome'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _email,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _papel,
+                  decoration: const InputDecoration(labelText: 'Papel'),
+                  items: [
+                    for (final p in _papeis)
+                      DropdownMenuItem(value: p.$1, child: Text(p.$2)),
+                  ],
+                  onChanged: (v) =>
+                      setState(() => _papel = v ?? _papeis.first.$1),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: _saving
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        child: const Text('Cancelar'),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: _saving ? null : _salvar,
+                        child: Text(_saving ? 'Salvando...' : 'Salvar'),
+                      ),
+                    ]),
+              ]),
+        ),
+      ),
     );
   }
 }

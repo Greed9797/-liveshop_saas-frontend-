@@ -1,26 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 import '../core/ll_theme.dart';
 import '../widgets/ll_components.dart';
 
-class ConfigScreen extends StatefulWidget {
+class ConfigScreen extends ConsumerStatefulWidget {
   const ConfigScreen({super.key});
 
   @override
-  State<ConfigScreen> createState() => _ConfigScreenState();
+  ConsumerState<ConfigScreen> createState() => _ConfigScreenState();
 }
 
-class _ConfigScreenState extends State<ConfigScreen> {
+class _ConfigScreenState extends ConsumerState<ConfigScreen> {
   String section = 'conta';
   bool showCurrent = false;
   bool showNew = false;
   bool showConfirm = false;
+  bool savingPassword = false;
 
   final website = TextEditingController();
+  final currentPassword = TextEditingController();
+  final newPassword = TextEditingController();
+  final confirmPassword = TextEditingController();
 
   @override
   void dispose() {
     website.dispose();
+    currentPassword.dispose();
+    newPassword.dispose();
+    confirmPassword.dispose();
     super.dispose();
+  }
+
+  Future<void> _onSavePassword() async {
+    final atual = currentPassword.text.trim();
+    final nova = newPassword.text.trim();
+    final conf = confirmPassword.text.trim();
+
+    if (atual.isEmpty || nova.isEmpty || conf.isEmpty) {
+      _snack('Preencha todos os campos.', erro: true);
+      return;
+    }
+    if (nova != conf) {
+      _snack('A confirmação não bate com a nova senha.', erro: true);
+      return;
+    }
+    if (nova.length < 8 ||
+        !RegExp(r'[A-Za-z]').hasMatch(nova) ||
+        !RegExp(r'\d').hasMatch(nova)) {
+      _snack('Senha deve ter mínimo 8 caracteres com letras e números.',
+          erro: true);
+      return;
+    }
+
+    setState(() => savingPassword = true);
+    try {
+      await ApiService.patch('/auth/senha',
+          data: {'senha_atual': atual, 'nova_senha': nova});
+      currentPassword.clear();
+      newPassword.clear();
+      confirmPassword.clear();
+      if (mounted) _snack('Senha alterada com sucesso.', erro: false);
+    } catch (e) {
+      if (mounted) _snack(ApiService.extractErrorMessage(e), erro: true);
+    } finally {
+      if (mounted) setState(() => savingPassword = false);
+    }
+  }
+
+  void _snack(String msg, {required bool erro}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: erro ? LL.live : LL.success,
+    ));
   }
 
   @override
@@ -80,13 +133,17 @@ class _ConfigScreenState extends State<ConfigScreen> {
       'plano' => const _PlanoSection(),
       'suporte' => const _SuporteSection(),
       _ => _ContaSection(
-          website: website,
+          currentPassword: currentPassword,
+          newPassword: newPassword,
+          confirmPassword: confirmPassword,
           showCurrent: showCurrent,
           showNew: showNew,
           showConfirm: showConfirm,
+          savingPassword: savingPassword,
           onToggleCurrent: () => setState(() => showCurrent = !showCurrent),
           onToggleNew: () => setState(() => showNew = !showNew),
           onToggleConfirm: () => setState(() => showConfirm = !showConfirm),
+          onSavePassword: _onSavePassword,
         ),
     };
   }
@@ -150,27 +207,58 @@ class _ConfigNavButton extends StatelessWidget {
   }
 }
 
-class _ContaSection extends StatelessWidget {
+class _ContaSection extends ConsumerWidget {
   const _ContaSection({
-    required this.website,
+    required this.currentPassword,
+    required this.newPassword,
+    required this.confirmPassword,
     required this.showCurrent,
     required this.showNew,
     required this.showConfirm,
+    required this.savingPassword,
     required this.onToggleCurrent,
     required this.onToggleNew,
     required this.onToggleConfirm,
+    required this.onSavePassword,
   });
 
-  final TextEditingController website;
+  final TextEditingController currentPassword;
+  final TextEditingController newPassword;
+  final TextEditingController confirmPassword;
   final bool showCurrent;
   final bool showNew;
   final bool showConfirm;
+  final bool savingPassword;
   final VoidCallback onToggleCurrent;
   final VoidCallback onToggleNew;
   final VoidCallback onToggleConfirm;
+  final VoidCallback onSavePassword;
+
+  String _initials(String nome) {
+    final parts = nome.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
+  }
+
+  String _papelLabel(String papel) => switch (papel) {
+        'cliente_parceiro' => 'Cliente Parceiro',
+        'franqueador_master' => 'Franqueador Master',
+        'franqueado' => 'Franqueado',
+        'gerente' => 'Gerente',
+        'apresentador' => 'Apresentador',
+        _ => papel,
+      };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider).user;
+    final nome = user?.nome ?? '—';
+    final email = user?.email ?? '—';
+    final tenantNome = user?.tenantNome ?? '';
+    final papelLabel = _papelLabel(user?.papel ?? '');
+
     return SizedBox(
       width: 620,
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -178,59 +266,36 @@ class _ContaSection extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           borderColor: context.llBorderMid,
           child: Row(children: [
-            const LLAvatar(initials: 'LP', size: 56),
+            LLAvatar(initials: _initials(nome), size: 56),
             const SizedBox(width: 16),
             Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                  Text('Loja Parceira Teste',
+                  Text(nome,
                       style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
                           color: context.llTextPrimary,
-                          letterSpacing: -0.4)),
+                          letterSpacing: -0.4),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
-                  Text('cliente@lojaparceira.com.br · Cliente desde abr/2026',
+                  Text(
+                      tenantNome.isNotEmpty
+                          ? '$email · $tenantNome'
+                          : email,
                       style: TextStyle(
                           fontSize: 12,
                           color: context.llTextMuted,
-                          fontWeight: FontWeight.w500)),
+                          fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
                 ])),
-            const LLBadge(
-                label: 'Ativa', color: LL.success, background: LL.successSoft),
-          ]),
-        ),
-        const SizedBox(height: 14),
-        LLCard(
-          padding: const EdgeInsets.all(20),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Expanded(
-                  child: Text('Logo da Empresa',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: context.llTextPrimary))),
-              Text('Buscamos automaticamente do seu site', style: LL.caption),
-            ]),
-            const SizedBox(height: 4),
-            Text('O logo aparecerá nas suas lives e no painel',
-                style: LL.caption.copyWith(fontSize: 11.5)),
-            const SizedBox(height: 14),
-            Row(children: [
-              Expanded(
-                  child: TextField(
-                      controller: website,
-                      decoration: const InputDecoration(
-                          hintText: 'https://minhaempresa.com.br'))),
-              const SizedBox(width: 10),
-              LLButton(
-                  label: 'Buscar logo',
-                  icon: Icons.search_rounded,
-                  onTap: () {}),
-            ]),
+            LLBadge(
+                label: papelLabel,
+                color: LL.success,
+                background: LL.successSoft),
           ]),
         ),
         const SizedBox(height: 14),
@@ -248,21 +313,28 @@ class _ContaSection extends StatelessWidget {
                 style: LL.caption.copyWith(fontSize: 11.5)),
             const SizedBox(height: 14),
             _PasswordField(
+                controller: currentPassword,
                 hint: 'Senha atual',
                 visible: showCurrent,
                 onToggle: onToggleCurrent),
             const SizedBox(height: 10),
             _PasswordField(
-                hint: 'Nova senha', visible: showNew, onToggle: onToggleNew),
+                controller: newPassword,
+                hint: 'Nova senha',
+                visible: showNew,
+                onToggle: onToggleNew),
             const SizedBox(height: 10),
             _PasswordField(
+                controller: confirmPassword,
                 hint: 'Confirmar nova senha',
                 visible: showConfirm,
                 onToggle: onToggleConfirm),
             const SizedBox(height: 16),
             Align(
                 alignment: Alignment.centerRight,
-                child: LLButton(label: 'Salvar nova senha', onTap: () {})),
+                child: LLButton(
+                    label: savingPassword ? 'Salvando...' : 'Salvar nova senha',
+                    onTap: savingPassword ? null : onSavePassword)),
           ]),
         ),
       ]),
@@ -271,8 +343,13 @@ class _ContaSection extends StatelessWidget {
 }
 
 class _PasswordField extends StatelessWidget {
-  const _PasswordField(
-      {required this.hint, required this.visible, required this.onToggle});
+  const _PasswordField({
+    required this.controller,
+    required this.hint,
+    required this.visible,
+    required this.onToggle,
+  });
+  final TextEditingController controller;
   final String hint;
   final bool visible;
   final VoidCallback onToggle;
@@ -280,6 +357,7 @@ class _PasswordField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      controller: controller,
       obscureText: !visible,
       decoration: InputDecoration(
         hintText: hint,
@@ -333,8 +411,27 @@ class _PlanoSection extends StatelessWidget {
                     color: context.llTextSecond,
                     fontWeight: FontWeight.w600)),
             const SizedBox(height: 18),
-            LLButton(
-                label: 'Fazer upgrade', icon: Icons.bolt_rounded, onTap: () {}),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: LL.accentSoft,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: LL.accent.withValues(alpha: 0.4)),
+              ),
+              child: Row(children: [
+                const Icon(Icons.support_agent_rounded,
+                    size: 18, color: LL.accent),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                      'Para fazer upgrade, fale com seu gerente Livelab pelo canal Suporte.',
+                      style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: context.llTextPrimary)),
+                ),
+              ]),
+            ),
           ]),
         ),
         const SizedBox(height: 14),

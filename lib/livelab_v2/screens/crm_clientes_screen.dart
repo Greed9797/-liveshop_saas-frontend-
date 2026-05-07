@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../routes/app_routes.dart';
 import '../core/ll_theme.dart';
 import '../widgets/ll_components.dart';
 
@@ -55,7 +56,8 @@ class _CRMClientesScreenState extends State<CRMClientesScreen> {
                     LLButton(
                         label: 'Novo cliente',
                         icon: Icons.add_rounded,
-                        onTap: () {}),
+                        onTap: () =>
+                            Navigator.of(context).pushNamed(AppRoutes.usuarios)),
                   ]),
                   const SizedBox(height: 18),
                   LayoutBuilder(builder: (context, constraints) {
@@ -755,7 +757,7 @@ class _ClientDrawerState extends State<ClientDrawer> {
       LLButton(
           label: 'Solicitar nova live',
           icon: Icons.bolt_rounded,
-          onTap: () {},
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.solicitacoes),
           expanded: true),
       const SizedBox(height: 8),
       const LLButton(

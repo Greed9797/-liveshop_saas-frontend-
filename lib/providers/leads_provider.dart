@@ -14,9 +14,9 @@ class LeadsNotifier extends AsyncNotifier<List<Lead>> {
   @override
   Future<List<Lead>> build() async {
     final authState = ref.watch(authProvider);
-    if (!authState.isAuthenticated) {
-      throw Exception('Não autenticado');
-    }
+    // Sem usuário logado, retorna lista vazia em vez de throw — guard de
+    // rota cuida da redirect; throw aqui derrubava a árvore inteira de widgets.
+    if (!authState.isAuthenticated) return const [];
     return _fetch();
   }
 

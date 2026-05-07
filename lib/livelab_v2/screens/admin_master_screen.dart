@@ -1,119 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+import '../../models/admin_master.dart';
+import '../../providers/admin_master_provider.dart';
 import '../core/ll_theme.dart';
 import '../widgets/ll_components.dart';
 import '../widgets/ll_admin_widgets.dart';
 
-class AdminMasterScreen extends StatelessWidget {
+String _currentPeriod() {
+  final now = DateTime.now();
+  return '${now.year}-${now.month.toString().padLeft(2, '0')}';
+}
+
+String _periodLabel(String period) {
+  try {
+    final date = DateTime.parse('$period-01');
+    return DateFormat('MMMM y', 'pt_BR').format(date);
+  } catch (_) {
+    return period;
+  }
+}
+
+String _currency(double value) =>
+    NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2)
+        .format(value);
+
+String _signedPercent(double value) {
+  final prefix = value > 0 ? '+' : '';
+  return '$prefix${value.toStringAsFixed(1)}%';
+}
+
+class AdminMasterScreen extends ConsumerStatefulWidget {
   const AdminMasterScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final kpis = const [
-      AdminKpiCard(label: 'Unidades ativas', value: '1', sub: '1 franquia operando', icon: Icons.apartment_rounded, color: LL.accent),
-      AdminKpiCard(label: 'Clientes ativos', value: '12', sub: 'contratos faturando', icon: Icons.groups_2_rounded, color: LL.info),
-      AdminKpiCard(label: 'Faturamento da rede', value: 'R\$ 66.500,30', sub: 'vs mês anterior', icon: Icons.live_tv_rounded, color: LL.success, delta: '+12,4%'),
-      AdminKpiCard(label: 'Receita franqueadora', value: 'R\$ 75,00', sub: 'líquida no período', icon: Icons.account_balance_wallet_rounded, color: LL.accent, delta: '+8,1%'),
-      AdminKpiCard(label: 'Contratos pendentes', value: '12', sub: 'aguardando assinatura', icon: Icons.pending_actions_rounded, color: LL.warning),
-      AdminKpiCard(label: 'Crescimento', value: '+100,0%', sub: 'vs mês anterior', icon: Icons.trending_up_rounded, color: LL.success, delta: 'MoM'),
-      AdminKpiCard(label: 'Inadimplência', value: 'R\$ 75,00', sub: '1 unidade em atraso', icon: Icons.warning_amber_rounded, color: LL.live, delta: '+100,0%', deltaUp: false),
-      AdminKpiCard(label: 'Ticket médio / unidade', value: 'R\$ 66.500,30', sub: 'receita por franquia ativa', icon: Icons.sell_rounded, color: LL.info),
-    ];
+  ConsumerState<AdminMasterScreen> createState() => _AdminMasterScreenState();
+}
 
-    const rankItems = [
-      RankItem(name: 'Franquia Te4535ste Paulista 2.0', value: 'R\$ 66.500,30', delta: '+100,0%'),
-      RankItem(name: 'Franquia Demo Centro', value: 'R\$ 0,00', delta: '—', up: false),
-      RankItem(name: 'Franquia Beta', value: 'R\$ 0,00', delta: '—', up: false),
-    ];
+class _AdminMasterScreenState extends ConsumerState<AdminMasterScreen> {
+  late String _period;
+
+  @override
+  void initState() {
+    super.initState();
+    _period = _currentPeriod();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dashboardAsync = ref.watch(masterDashboardProvider(_period));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AdminPageToolbar(
+          AdminPageToolbar(
             italic: 'Painel',
             bold: 'Master',
-            subtitle: 'Leitura executiva da rede em poucos segundos, sem ruído operacional.',
-            filters: [AdminFilterChip(label: 'Período', value: 'abril 2026')],
+            subtitle:
+                'Leitura executiva da rede em poucos segundos, sem ruído operacional.',
+            filters: [
+              AdminFilterChip(label: 'Período', value: _periodLabel(_period)),
+            ],
+            onRefresh: () =>
+                ref.invalidate(masterDashboardProvider(_period)),
           ),
           const SizedBox(height: 16),
-          _ExecutiveSummary(),
-          const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final columns = width < 680 ? 1 : width < 1040 ? 2 : 4;
-              return GridView.count(
-                shrinkWrap: true,
-                primary: false,
-                crossAxisCount: columns,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: columns == 1 ? 4.2 : 2.05,
-                children: kpis,
-              );
-            },
-          ),
-          const AdminSectionHeader(title: 'Ranking de unidades', subtitle: 'desempenho consolidado da rede no mês atual', actionLabel: 'Ver detalhado'),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxWidth < 760;
-              final cards = const [
-                RankCard(title: 'Por faturamento', items: rankItems),
-                RankCard(title: 'Por crescimento', items: rankItems),
-              ];
-              if (compact) {
-                return const Column(children: [RankCard(title: 'Por faturamento', items: rankItems), SizedBox(height: 10), RankCard(title: 'Por crescimento', items: rankItems)]);
-              }
-              return Row(children: [for (final card in cards) Expanded(child: Padding(padding: const EdgeInsets.only(right: 10), child: card))]);
-            },
-          ),
-          const AdminSectionHeader(title: 'Alertas críticos', subtitle: 'situações que pedem ação direta da franqueadora', actionLabel: 'Ver todos (7)'),
-          const LLCard(
-            padding: EdgeInsets.all(12),
-            child: Column(
-              children: [
-                AdminAlertRow(kind: AdminAlertKind.danger, title: 'Inadimplência na unidade', body: 'Franquia Te4535ste Paulista 2.0 tem R\$ 75,00 em aberto com a franqueadora.', action: 'Resolver'),
-                AdminAlertRow(kind: AdminAlertKind.warning, title: 'Contrato parado na pipeline', body: '321312 está em rascunho há mais de 7 dias.', action: 'Abrir'),
-                AdminAlertRow(kind: AdminAlertKind.warning, title: 'Contrato parado na pipeline', body: 'fafas está em análise há mais de 7 dias.', action: 'Abrir'),
-                AdminAlertRow(kind: AdminAlertKind.warning, title: 'Contrato parado na pipeline', body: 'rdferwc está em rascunho há mais de 7 dias.', action: 'Abrir'),
-                AdminAlertRow(kind: AdminAlertKind.warning, title: 'Contrato parado na pipeline', body: 'Teste Cliente Novo está em análise há mais de 7 dias.', action: 'Abrir'),
-                AdminAlertRow(kind: AdminAlertKind.warning, title: 'Contrato parado na pipeline', body: 'fas/as está em análise há mais de 7 dias.', action: 'Abrir'),
-              ],
+          dashboardAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 80),
+              child: Center(child: CircularProgressIndicator()),
             ),
-          ),
-          const AdminSectionHeader(title: 'Performance da rede', subtitle: 'tendências que importam — sem ruído'),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxWidth < 840;
-              final chartA = const AdminChartCard(
-                title: 'Receita consolidada da rede',
-                subtitle: 'últimos 6 meses · faturamento bruto e receita da franqueadora',
-                child: AdminLineChart(
-                  labels: ['Nov/25', 'Dez/25', 'Jan/26', 'Fev/26', 'Mar/26', 'Abr/26'],
-                  data: [0, 0, 0, 0, 0, 66.5],
-                  secondaryData: [0, 0, 0, 0, 0, 0.075],
-                  maxY: 70,
-                ),
-              );
-              final chartB = const AdminChartCard(
-                title: 'Crescimento por unidade',
-                subtitle: 'comparativo com o mês anterior, por franquia',
-                child: AdminGrowthChart(),
-              );
-              if (compact) return Column(children: [chartA, const SizedBox(height: 10), chartB]);
-              return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(flex: 3, child: chartA), const SizedBox(width: 10), Expanded(flex: 2, child: chartB)]);
-            },
-          ),
-          const AdminSectionHeader(title: 'Comercial & financeiro', subtitle: 'leitura direta do pipeline e do caixa da franqueadora'),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxWidth < 760;
-              if (compact) {
-                return const Column(children: [_PipelineCard(), SizedBox(height: 10), _CommissionCard()]);
-              }
-              return const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: _PipelineCard()), SizedBox(width: 10), Expanded(child: _CommissionCard())]);
-            },
+            error: (e, _) => _ErrorBox(
+              message: e.toString(),
+              onRetry: () =>
+                  ref.invalidate(masterDashboardProvider(_period)),
+            ),
+            data: (dashboard) => _Body(dashboard: dashboard),
           ),
         ],
       ),
@@ -121,9 +86,269 @@ class AdminMasterScreen extends StatelessWidget {
   }
 }
 
-class _ExecutiveSummary extends StatelessWidget {
+class _Body extends StatelessWidget {
+  const _Body({required this.dashboard});
+  final MasterDashboardData dashboard;
+
   @override
   Widget build(BuildContext context) {
+    final cards = dashboard.cards;
+    final revenueRank = dashboard.revenueRanking
+        .take(3)
+        .map((r) => RankItem(
+              name: r.unitName,
+              value: _currency(r.grossRevenue),
+              delta: _signedPercent(r.growthPercent),
+              up: r.growthPercent >= 0,
+            ))
+        .toList();
+    final growthRank = dashboard.growthRanking
+        .take(3)
+        .map((r) => RankItem(
+              name: r.unitName,
+              value: _currency(r.grossRevenue),
+              delta: _signedPercent(r.growthPercent),
+              up: r.growthPercent >= 0,
+            ))
+        .toList();
+
+    final maxGrowth = dashboard.unitGrowth
+        .map((u) => u.growthPercent.abs())
+        .fold<double>(0, (acc, v) => v > acc ? v : acc);
+    final growthBars = dashboard.unitGrowth
+        .take(3)
+        .map((u) => GrowthBarItem(
+              name: u.unitName,
+              normalizedValue:
+                  maxGrowth == 0 ? 0 : (u.growthPercent / maxGrowth).clamp(0.0, 1.0),
+              deltaLabel: _signedPercent(u.growthPercent),
+            ))
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ExecutiveSummary(text: dashboard.executiveSummary),
+        const SizedBox(height: 14),
+        LayoutBuilder(builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final columns = width < 680
+              ? 1
+              : width < 1040
+                  ? 2
+                  : 4;
+          return GridView.count(
+            shrinkWrap: true,
+            primary: false,
+            crossAxisCount: columns,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: columns == 1 ? 4.2 : 2.05,
+            children: [
+              AdminKpiCard(
+                  label: 'Unidades ativas',
+                  value: '${cards.unitsActive}',
+                  sub: '${cards.unitsActive} franquia(s) operando',
+                  icon: Icons.apartment_rounded,
+                  color: LL.accent),
+              AdminKpiCard(
+                  label: 'Clientes ativos',
+                  value: '${cards.clientsActive}',
+                  sub: 'contratos faturando',
+                  icon: Icons.groups_2_rounded,
+                  color: LL.info),
+              AdminKpiCard(
+                  label: 'Faturamento da rede',
+                  value: _currency(cards.grossRevenue),
+                  sub: 'vs mês anterior',
+                  icon: Icons.live_tv_rounded,
+                  color: LL.success,
+                  delta: _signedPercent(cards.growthPercent),
+                  deltaUp: cards.growthPercent >= 0),
+              AdminKpiCard(
+                  label: 'Receita franqueadora',
+                  value: _currency(cards.franchisorNetRevenue),
+                  sub: 'líquida no período',
+                  icon: Icons.account_balance_wallet_rounded,
+                  color: LL.accent),
+              AdminKpiCard(
+                  label: 'Contratos pendentes',
+                  value: '${cards.pendingContracts}',
+                  sub: 'aguardando assinatura',
+                  icon: Icons.pending_actions_rounded,
+                  color: LL.warning),
+              AdminKpiCard(
+                  label: 'Crescimento',
+                  value: _signedPercent(cards.growthPercent),
+                  sub: 'vs mês anterior',
+                  icon: Icons.trending_up_rounded,
+                  color: cards.growthPercent >= 0 ? LL.success : LL.live,
+                  delta: 'MoM',
+                  deltaUp: cards.growthPercent >= 0),
+              AdminKpiCard(
+                  label: 'Inadimplência',
+                  value: _currency(cards.delinquencyValue),
+                  sub:
+                      'representa ${cards.delinquencyPercent.toStringAsFixed(1)}%',
+                  icon: Icons.warning_amber_rounded,
+                  color: cards.delinquencyValue > 0 ? LL.live : LL.success,
+                  delta: _signedPercent(cards.delinquencyPercent),
+                  deltaUp: cards.delinquencyPercent <= 0),
+              AdminKpiCard(
+                  label: 'Ticket médio / unidade',
+                  value: _currency(cards.averageTicketPerUnit),
+                  sub: 'receita por franquia ativa',
+                  icon: Icons.sell_rounded,
+                  color: LL.info),
+            ],
+          );
+        }),
+        const AdminSectionHeader(
+            title: 'Ranking de unidades',
+            subtitle:
+                'desempenho consolidado da rede no período selecionado'),
+        LayoutBuilder(builder: (context, constraints) {
+          final compact = constraints.maxWidth < 760;
+          final cardA =
+              RankCard(title: 'Por faturamento', items: revenueRank);
+          final cardB =
+              RankCard(title: 'Por crescimento', items: growthRank);
+          if (compact) {
+            return Column(
+                children: [cardA, const SizedBox(height: 10), cardB]);
+          }
+          return Row(children: [
+            Expanded(
+                child: Padding(
+                    padding: const EdgeInsets.only(right: 10), child: cardA)),
+            Expanded(child: cardB),
+          ]);
+        }),
+        const AdminSectionHeader(
+            title: 'Alertas críticos',
+            subtitle: 'situações que pedem ação direta da franqueadora'),
+        if (dashboard.alerts.isEmpty)
+          LLCard(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: Text(
+                  'Sem alertas críticos no período. Tudo sob controle.',
+                  style: LL.caption.copyWith(fontSize: 12)),
+            ),
+          )
+        else
+          LLCard(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                for (final a in dashboard.alerts.take(6))
+                  AdminAlertRow(
+                    kind: _alertKind(a.severity),
+                    title: a.title,
+                    body:
+                        a.unitName.isNotEmpty ? '${a.unitName} — ${a.description}' : a.description,
+                    action: 'Abrir',
+                  ),
+              ],
+            ),
+          ),
+        const AdminSectionHeader(
+            title: 'Performance da rede',
+            subtitle: 'tendências que importam — sem ruído'),
+        LayoutBuilder(builder: (context, constraints) {
+          final compact = constraints.maxWidth < 840;
+          final history = dashboard.networkHistory;
+          final maxY = history.isEmpty
+              ? 1.0
+              : history
+                      .map((h) => h.grossRevenue)
+                      .reduce((a, b) => a > b ? a : b) *
+                  1.1;
+          final chartA = AdminChartCard(
+            title: 'Receita consolidada da rede',
+            subtitle:
+                'últimos ${history.length} meses · faturamento bruto e receita da franqueadora',
+            child: history.isEmpty
+                ? SizedBox(
+                    height: 180,
+                    child: Center(
+                      child: Text('Sem histórico de receita',
+                          style: LL.caption.copyWith(fontSize: 11.5)),
+                    ),
+                  )
+                : AdminLineChart(
+                    labels: history.map((h) => h.label).toList(),
+                    data: history
+                        .map((h) => h.grossRevenue / 1000.0)
+                        .toList(),
+                    secondaryData: history
+                        .map((h) => h.franchisorRevenue / 1000.0)
+                        .toList(),
+                    maxY: maxY / 1000.0,
+                  ),
+          );
+          final chartB = AdminChartCard(
+            title: 'Crescimento por unidade',
+            subtitle: 'comparativo com o mês anterior, por franquia',
+            child: AdminGrowthChart(items: growthBars),
+          );
+          if (compact) {
+            return Column(
+                children: [chartA, const SizedBox(height: 10), chartB]);
+          }
+          return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(flex: 3, child: chartA),
+            const SizedBox(width: 10),
+            Expanded(flex: 2, child: chartB),
+          ]);
+        }),
+        const AdminSectionHeader(
+            title: 'Comercial & financeiro',
+            subtitle:
+                'leitura direta do pipeline e do caixa da franqueadora'),
+        LayoutBuilder(builder: (context, constraints) {
+          final compact = constraints.maxWidth < 760;
+          final pipeline = _PipelineCard(stages: dashboard.crmPipeline);
+          final commission =
+              _CommissionCard(summary: dashboard.commissionSummary);
+          if (compact) {
+            return Column(children: [
+              pipeline,
+              const SizedBox(height: 10),
+              commission,
+            ]);
+          }
+          return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(child: pipeline),
+            const SizedBox(width: 10),
+            Expanded(child: commission),
+          ]);
+        }),
+      ],
+    );
+  }
+
+  AdminAlertKind _alertKind(String severity) {
+    switch (severity) {
+      case 'alta':
+        return AdminAlertKind.danger;
+      case 'baixa':
+        return AdminAlertKind.info;
+      default:
+        return AdminAlertKind.warning;
+    }
+  }
+}
+
+class _ExecutiveSummary extends StatelessWidget {
+  const _ExecutiveSummary({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final body = text.isNotEmpty
+        ? text
+        : 'Sem resumo disponível para o período. Os dados aparecem aqui após a primeira live faturada.';
     return LLCard(
       padding: const EdgeInsets.all(16),
       color: LL.accentSoft,
@@ -133,20 +358,24 @@ class _ExecutiveSummary extends StatelessWidget {
           Container(
             width: 42,
             height: 42,
-            decoration: BoxDecoration(color: LL.accent.llOpacity(0.16), borderRadius: BorderRadius.circular(13)),
-            child: const Icon(Icons.trending_up_rounded, color: LL.accent, size: 20),
+            decoration: BoxDecoration(
+                color: LL.accent.llOpacity(0.16),
+                borderRadius: BorderRadius.circular(13)),
+            child: const Icon(Icons.trending_up_rounded,
+                color: LL.accent, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('RESUMO EXECUTIVO', style: LL.label.copyWith(color: LL.accent, fontSize: 9.5)),
+                Text('RESUMO EXECUTIVO',
+                    style: LL.label
+                        .copyWith(color: LL.accent, fontSize: 9.5)),
                 const SizedBox(height: 4),
-                Text(
-                  '1 unidade, 12 clientes e R\$ 66.500,30 faturados na rede. Receita líquida da franqueadora de R\$ 75,00, com 12 contratos pendentes e 1 alerta crítico em andamento.',
-                  style: LL.body.copyWith(color: LL.textPrimary, fontSize: 13.2, height: 1.38),
-                ),
+                Text(body,
+                    style: LL.body.copyWith(
+                        color: LL.textPrimary, fontSize: 13.2, height: 1.38)),
               ],
             ),
           ),
@@ -157,51 +386,77 @@ class _ExecutiveSummary extends StatelessWidget {
 }
 
 class _PipelineCard extends StatelessWidget {
-  const _PipelineCard();
+  const _PipelineCard({required this.stages});
+  final List<MasterPipelineStage> stages;
 
   @override
   Widget build(BuildContext context) {
-    const items = [
-      _PipeItem('Lead captado', 0, LL.info),
-      _PipeItem('Qualificação', 0, LL.info),
-      _PipeItem('Reunião agendada', 0, LL.info),
-      _PipeItem('Negociação', 0, LL.accent),
-      _PipeItem('Contrato enviado', 0, LL.accent),
-      _PipeItem('Contrato pendente', 12, LL.warning),
-      _PipeItem('Fechado ganho', 1, LL.success),
-      _PipeItem('Fechado perdido', 0, LL.textMuted),
-    ];
-
     return AdminChartCard(
       title: 'Pipeline do CRM',
-      subtitle: 'estrutura pronta para expansão comercial global',
-      child: Column(children: [for (final item in items) _PipeRow(item)]),
+      subtitle: 'estrutura comercial em andamento',
+      child: stages.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              child: Center(
+                child: Text('Sem registros no pipeline',
+                    style: LL.caption.copyWith(fontSize: 11.5)),
+              ),
+            )
+          : Column(children: [for (final s in stages) _PipeRow(stage: s)]),
     );
   }
 }
 
-class _PipeItem {
-  const _PipeItem(this.name, this.value, this.color);
-  final String name;
-  final int value;
-  final Color color;
-}
-
 class _PipeRow extends StatelessWidget {
-  const _PipeRow(this.item);
-  final _PipeItem item;
+  const _PipeRow({required this.stage});
+  final MasterPipelineStage stage;
+
+  Color get _color => switch (stage.stage) {
+        'fechado_ganho' => LL.success,
+        'fechado_perdido' => LL.textMuted,
+        'contrato_pendente' => LL.warning,
+        'negociacao' || 'contrato_enviado' => LL.accent,
+        _ => LL.info,
+      };
+
+  String get _label => switch (stage.stage) {
+        'lead_captado' => 'Lead captado',
+        'qualificacao' => 'Qualificação',
+        'reuniao_agendada' => 'Reunião agendada',
+        'negociacao' => 'Negociação',
+        'contrato_enviado' => 'Contrato enviado',
+        'contrato_pendente' => 'Contrato pendente',
+        'fechado_ganho' => 'Fechado ganho',
+        'fechado_perdido' => 'Fechado perdido',
+        _ => stage.stage,
+      };
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: LL.border))),
+      decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: LL.border))),
       child: Row(
         children: [
-          Container(width: 8, height: 8, decoration: BoxDecoration(color: item.color, shape: BoxShape.circle)),
+          Container(
+              width: 8,
+              height: 8,
+              decoration:
+                  BoxDecoration(color: _color, shape: BoxShape.circle)),
           const SizedBox(width: 9),
-          Expanded(child: Text(item.name, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: LL.textSecond))),
-          Text('${item.value}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: item.value > 0 ? LL.textPrimary : LL.textMuted)),
+          Expanded(
+              child: Text(_label,
+                  style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: LL.textSecond))),
+          Text('${stage.count}',
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  color:
+                      stage.count > 0 ? LL.textPrimary : LL.textMuted)),
         ],
       ),
     );
@@ -209,26 +464,55 @@ class _PipeRow extends StatelessWidget {
 }
 
 class _CommissionCard extends StatelessWidget {
-  const _CommissionCard();
+  const _CommissionCard({required this.summary});
+  final MasterCommissionSummary summary;
 
   @override
   Widget build(BuildContext context) {
+    final total = summary.received + summary.pending + summary.overdue;
+    final receiveRate = total == 0 ? 0.0 : (summary.received / total) * 100;
+
     return AdminChartCard(
       title: 'Comissionamento da franqueadora',
       subtitle: 'leitura direta do caixa da franqueadora no período',
       child: Column(
-        children: const [
-          _MoneyStatus(label: 'Previsto', value: 'R\$ 75,00', color: LL.accent),
-          _MoneyStatus(label: 'Recebido', value: 'R\$ 0,00', color: LL.success),
-          _MoneyStatus(label: 'Pendente', value: 'R\$ 0,00', color: LL.warning),
-          _MoneyStatus(label: 'Inadimplente', value: 'R\$ 75,00', color: LL.live),
-          SizedBox(height: 12),
-          Divider(color: LL.border, height: 1),
-          SizedBox(height: 12),
+        children: [
+          _MoneyStatus(
+              label: 'Previsto',
+              value: _currency(summary.forecast),
+              color: LL.accent),
+          _MoneyStatus(
+              label: 'Recebido',
+              value: _currency(summary.received),
+              color: LL.success),
+          _MoneyStatus(
+              label: 'Pendente',
+              value: _currency(summary.pending),
+              color: LL.warning),
+          _MoneyStatus(
+              label: 'Inadimplente',
+              value: _currency(summary.overdue),
+              color: LL.live),
+          const SizedBox(height: 12),
+          const Divider(color: LL.border, height: 1),
+          const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: Text('Taxa de recebimento', style: TextStyle(fontSize: 11, color: LL.textMuted, fontWeight: FontWeight.w600))),
-              Text('0% / 100%', style: TextStyle(fontSize: 14, color: LL.live, fontWeight: FontWeight.w900)),
+              const Expanded(
+                  child: Text('Taxa de recebimento',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: LL.textMuted,
+                          fontWeight: FontWeight.w600))),
+              Text('${receiveRate.toStringAsFixed(0)}%',
+                  style: TextStyle(
+                      fontSize: 14,
+                      color: receiveRate >= 80
+                          ? LL.success
+                          : receiveRate >= 50
+                              ? LL.warning
+                              : LL.live,
+                      fontWeight: FontWeight.w900)),
             ],
           ),
         ],
@@ -238,7 +522,8 @@ class _CommissionCard extends StatelessWidget {
 }
 
 class _MoneyStatus extends StatelessWidget {
-  const _MoneyStatus({required this.label, required this.value, required this.color});
+  const _MoneyStatus(
+      {required this.label, required this.value, required this.color});
   final String label;
   final String value;
   final Color color;
@@ -247,15 +532,59 @@ class _MoneyStatus extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: LL.border))),
+      decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: LL.border))),
       child: Row(
         children: [
-          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          Container(
+              width: 8,
+              height: 8,
+              decoration:
+                  BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 9),
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: LL.textSecond))),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: LL.textPrimary)),
+          Expanded(
+              child: Text(label,
+                  style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: LL.textSecond))),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  color: LL.textPrimary)),
         ],
       ),
+    );
+  }
+}
+
+class _ErrorBox extends StatelessWidget {
+  const _ErrorBox({required this.message, required this.onRetry});
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return LLCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Icon(Icons.error_outline, color: LL.live, size: 24),
+        const SizedBox(height: 10),
+        Text('Não foi possível carregar o painel master',
+            style: TextStyle(
+                color: LL.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w800)),
+        const SizedBox(height: 6),
+        Text(message,
+            style: LL.caption.copyWith(fontSize: 12, color: LL.textSecond)),
+        const SizedBox(height: 14),
+        LLButton(
+            label: 'Tentar novamente',
+            icon: Icons.refresh_rounded,
+            onTap: onRetry),
+      ]),
     );
   }
 }
