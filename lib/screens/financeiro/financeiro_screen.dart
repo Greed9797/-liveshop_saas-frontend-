@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+
 import '../../providers/financeiro_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../design_system/design_system.dart';
 import '../../services/api_service.dart';
-import '../../widgets/money_text.dart';
-import '../../widgets/responsive_grid.dart';
-import '../../widgets/client_avatar.dart';
+import '../../livelab/core/responsive.dart';
+import '../../livelab/theme/livelab_theme.dart';
+import '../../livelab/theme/tokens.dart';
+import '../../livelab/widgets/livelab_scaffold.dart';
 import '../boletos/boletos_screen.dart';
 
 class FinanceiroScreen extends ConsumerStatefulWidget {
@@ -17,95 +20,401 @@ class FinanceiroScreen extends ConsumerStatefulWidget {
 }
 
 class _FinanceiroScreenState extends ConsumerState<FinanceiroScreen> {
+  int _tab = 0;
+
+  void _refresh() {
+    ref.invalidate(financeiroProvider);
+    ref.invalidate(custosProvider);
+    ref.invalidate(fluxoCaixaProvider);
+    ref.invalidate(faturamentoPorClienteProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final selectedPeriod = ref.watch(financeiroPeriodoProvider);
-
-    return AppScreenScaffold(
+    return LivelabScaffold(
       currentRoute: AppRoutes.financeiro,
-      title: 'Financeiro',
-      eyebrow: 'Consolidado da franquia',
-      titleSerif: true,
-      subtitle: 'Faturamento, custos e fluxo de caixa do período selecionado.',
-      child: DefaultTabController(
-        length: 4,
-        child: Column(
-          children: [
-            Material(
-              color: context.colors.bgCard,
-              elevation: 0,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: AppSpacing.x5,
-                      right: AppSpacing.x5,
-                      top: AppSpacing.x3,
+      onRefresh: _refresh,
+      child: _content(),
+    );
+  }
+
+  Widget _content() {
+    final t = context.llTokens;
+    final r = LlResponsive.of(context);
+    final pad = r.isMobile ? 16.0 : 28.0;
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(pad, 16, pad, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _pageHeader(t),
+          const SizedBox(height: 18),
+          _periodSwitcher(t),
+          const SizedBox(height: 14),
+          _tabStrip(t),
+          const SizedBox(height: 18),
+          if (_tab == 0) _OperacionalTab(t: t),
+          if (_tab == 1) _PorClienteTab(t: t),
+          if (_tab == 2) _RecebiveisTab(t: t),
+          if (_tab == 3) const BoletosTab(),
+        ],
+      ),
+    );
+  }
+
+  Widget _pageHeader(LlTokens t) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '— SAÚDE FINANCEIRA',
+                style: TextStyle(
+                  color: t.primary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Painel ',
+                      style: TextStyle(
+                        color: t.textPrimary,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.9,
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        AppSegmentedControl<String>(
-                          segments: const ['mes', 'trimestre', 'ano'],
-                          selected: selectedPeriod,
-                          labelOf: (s) =>
-                              {
-                                'mes': 'Mês',
-                                'trimestre': 'Trimestre',
-                                'ano': '12 meses',
-                              }[s] ??
-                              s,
-                          onChanged: (s) => ref
-                              .read(financeiroPeriodoProvider.notifier)
-                              .state = s,
-                        ),
-                      ],
+                    TextSpan(
+                      text: 'Financeiro',
+                      style: GoogleFonts.instrumentSerif(
+                        color: t.primary,
+                        fontStyle: FontStyle.italic,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Faturamento, custos, fluxo de caixa e boletos da unidade.',
+                style: TextStyle(color: t.textMuted, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        Material(
+          color: t.bgElev1,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: _refresh,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                border: Border.all(color: t.border),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.refresh, size: 14, color: t.textSecondary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Atualizar',
+                    style: TextStyle(
+                      color: t.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  TabBar(
-                    labelColor: AppColors.primary,
-                    unselectedLabelColor: context.colors.textSecondary,
-                    indicatorColor: AppColors.primary,
-                    tabs: [
-                      Tab(
-                          icon: Icon(Icons.account_balance_wallet_outlined,
-                              size: 18),
-                          text: 'Operacional'),
-                      Tab(
-                          icon: Icon(Icons.table_chart_outlined, size: 18),
-                          text: 'Por Cliente'),
-                      Tab(
-                          icon: Icon(Icons.donut_large_outlined, size: 18),
-                          text: 'Recebíveis'),
-                      Tab(
-                          icon: Icon(Icons.receipt_long_outlined, size: 18),
-                          text: 'Boletos'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _periodSwitcher(LlTokens t) {
+    final selected = ref.watch(financeiroPeriodoProvider);
+    const opts = [
+      ('mes', 'Mês'),
+      ('trimestre', 'Trimestre'),
+      ('ano', '12 meses'),
+    ];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: opts.map((o) {
+        final active = selected == o.$1;
+        return Material(
+          color: active ? t.primarySoft : t.bgElev1,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () =>
+                ref.read(financeiroPeriodoProvider.notifier).state = o.$1,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                border: Border.all(color: active ? t.primary : t.border),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                o.$2,
+                style: TextStyle(
+                  color: active ? t.primary : t.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _tabStrip(LlTokens t) {
+    const tabs = [
+      (Icons.payments_outlined, 'Operacional'),
+      (Icons.groups_outlined, 'Por Cliente'),
+      (Icons.account_balance_wallet_outlined, 'Recebíveis'),
+      (Icons.receipt_long_outlined, 'Boletos'),
+    ];
+    return LayoutBuilder(
+      builder: (c, box) {
+        final isCompact = box.maxWidth < 640;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: List.generate(tabs.length, (i) {
+            final active = _tab == i;
+            return Material(
+              color: active ? t.primarySoft : t.bgElev1,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => setState(() => _tab = i),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isCompact ? 12 : 16,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: active ? t.primary : t.border),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        tabs[i].$1,
+                        size: 16,
+                        color: active ? t.primary : t.textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        tabs[i].$2,
+                        style: TextStyle(
+                          color: active ? t.primary : t.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  _OperacionalTab(selectedPeriod: selectedPeriod),
-                  _PorClienteTab(),
-                  const _ReceiveisTab(),
-                  const BoletosTab(),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+            );
+          }),
+        );
+      },
     );
   }
 }
 
-// ─── ABA A: OPERACIONAL (Custos + Fluxo de Caixa) ────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers compartilhados
+// ─────────────────────────────────────────────────────────────────────────────
+
+final _fmtBrlCompact =
+    NumberFormat.compactSimpleCurrency(locale: 'pt_BR', decimalDigits: 1);
+final _fmtBrl =
+    NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2);
+
+Widget _cardShell(
+  LlTokens t, {
+  required Widget child,
+  EdgeInsets padding = const EdgeInsets.all(18),
+}) {
+  return Container(
+    padding: padding,
+    decoration: BoxDecoration(
+      color: t.bgElev1,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: t.border),
+      boxShadow: t.shadowCard,
+    ),
+    child: child,
+  );
+}
+
+Widget _finKpiCard(
+  LlTokens t, {
+  required String label,
+  required double value,
+  required String sub,
+  required Color color,
+}) {
+  return _cardShell(
+    t,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: t.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'R\$ ',
+                style: TextStyle(
+                  color: color.withValues(alpha: 0.7),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: GoogleFonts.inter().fontFamily,
+                ),
+              ),
+              TextSpan(
+                text: value >= 1000
+                    ? _fmtBrlCompact.format(value).replaceAll('R\$', '').trim()
+                    : NumberFormat('#,##0.00', 'pt_BR').format(value),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.8,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  fontFamily: GoogleFonts.inter().fontFamily,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          sub,
+          style: TextStyle(color: t.textMuted, fontSize: 11),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _eyebrow(LlTokens t, String text) {
+  return Row(
+    children: [
+      Container(width: 18, height: 1, color: t.primary),
+      const SizedBox(width: 8),
+      Text(
+        text,
+        style: TextStyle(
+          color: t.textMuted,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.4,
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _blockHeader(LlTokens t, String title, {Widget? trailing}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              color: t.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ),
+        if (trailing != null) trailing,
+      ],
+    ),
+  );
+}
+
+Widget _kpiGrid(LlTokens t, List<Widget> cards) {
+  return LayoutBuilder(
+    builder: (c, box) {
+      final cols = box.maxWidth < 640 ? 1 : 3;
+      return GridView.builder(
+        primary: false,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: cols,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          mainAxisExtent: 142,
+        ),
+        itemCount: cards.length,
+        itemBuilder: (_, i) => cards[i],
+      );
+    },
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Aba: Operacional
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _OperacionalTab extends ConsumerWidget {
-  final String selectedPeriod;
-  const _OperacionalTab({required this.selectedPeriod});
+  final LlTokens t;
+  const _OperacionalTab({required this.t});
 
   static const _categorias = [
     _Categoria('Aluguel', Icons.home_outlined, 'aluguel'),
@@ -118,157 +427,485 @@ class _OperacionalTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final resumoAsync = ref.watch(financeiroProvider);
-    final custosAsync = ref.watch(custosProvider);
     final fluxoAsync = ref.watch(fluxoCaixaProvider);
+    final custosAsync = ref.watch(custosProvider);
 
-    final chips = _categorias
-        .map((cat) => ActionChip(
-              avatar: Icon(cat.icon, size: 14),
-              label: Text(cat.label),
-              onPressed: () =>
-                  _showAdicionarCustoComCategoria(context, ref, cat),
-            ))
-        .toList();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.x5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Resumo rápido — KpiFinCard strip ────────────────────────────
-          resumoAsync.when(
-            loading: () => const LinearProgressIndicator(),
-            error: (_, __) => const SizedBox.shrink(),
-            data: (r) {
-              final bruto = _formatBRL(r.fatBruto);
-              final liquido = _formatBRL(r.fatLiquido);
-              final custos = _formatBRL(r.totalCustos);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.x5),
-                child: ResponsiveGrid(
-                  mobileColumns: 1,
-                  tabletColumns: 3,
-                  desktopColumns: 3,
-                  spacing: AppSpacing.x3,
-                  runSpacing: AppSpacing.x3,
-                  children: [
-                    KpiFinCard(
-                        label: 'Faturamento Bruto',
-                        prefix: 'R\$',
-                        value: bruto,
-                        tone: KpiFinTone.info,
-                        sub: 'no mês'),
-                    KpiFinCard(
-                        label: 'Faturamento Líquido',
-                        prefix: 'R\$',
-                        value: liquido,
-                        tone: KpiFinTone.success,
-                        sub: 'após custos'),
-                    KpiFinCard(
-                        label: 'Custos Operacionais',
-                        prefix: 'R\$',
-                        value: custos,
-                        tone: KpiFinTone.danger,
-                        sub: 'total do mês'),
-                  ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // KPI strip
+        resumoAsync.when(
+          loading: () => const SizedBox(
+            height: 140,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => _errorBox(t, e),
+          data: (r) => _kpiGrid(t, [
+            _finKpiCard(
+              t,
+              label: 'FATURAMENTO BRUTO',
+              value: r.fatBruto,
+              sub: 'no período',
+              color: t.info,
+            ),
+            _finKpiCard(
+              t,
+              label: 'FATURAMENTO LÍQUIDO',
+              value: r.fatLiquido,
+              sub: 'após custos',
+              color: t.success,
+            ),
+            _finKpiCard(
+              t,
+              label: 'CUSTOS OPERACIONAIS',
+              value: r.totalCustos,
+              sub: 'total no período',
+              color: t.danger,
+            ),
+          ]),
+        ),
+        const SizedBox(height: 22),
+        // Fluxo de caixa
+        _cardShell(
+          t,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _blockHeader(t, 'Fluxo de Caixa — período atual'),
+              fluxoAsync.when(
+                loading: () => const SizedBox(
+                  height: 90,
+                  child: Center(child: CircularProgressIndicator()),
                 ),
-              );
-            },
+                error: (e, _) => _errorBox(t, e),
+                data: (fluxo) => _FluxoCaixaPanel(
+                  t: t,
+                  entradas: fluxo.totalEntradas,
+                  saidas: fluxo.totalSaidas,
+                  saldo: fluxo.saldo,
+                ),
+              ),
+            ],
           ),
-
-          // ── Fluxo de Caixa ─────────────────────────────────────────────
-          AppSectionHeader(title: 'Fluxo de Caixa — Mês Atual'),
-
-          fluxoAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => Text('Erro ao carregar fluxo de caixa',
-                style: AppTypography.bodySmall
-                    .copyWith(color: context.colors.textSecondary)),
-            data: (fluxo) => _FluxBar(
-              entradas: fluxo.totalEntradas,
-              saidas: fluxo.totalSaidas,
-              saldo: fluxo.saldo,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.x6),
-
-          // ── Cadastrar custo ────────────────────────────────────────────
-          AppSectionHeader(
-            title: 'Custos do Mês',
-            trailing: AppPrimaryButton(
-              icon: Icons.add,
-              label: 'Adicionar',
-              onPressed: () => _showAdicionarCusto(context, ref),
-            ),
-          ),
-
-          // Botões de categoria rápida
-          Wrap(
-            spacing: AppSpacing.x2,
-            runSpacing: AppSpacing.x2,
-            children: chips,
-          ),
-          const SizedBox(height: AppSpacing.x4),
-
-          // Lista de custos cadastrados
-          custosAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => const SizedBox.shrink(),
-            data: (custos) => custos.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding:
-                          const EdgeInsets.symmetric(vertical: AppSpacing.x6),
-                      child: Text('Nenhum custo cadastrado este mês.',
-                          style: AppTypography.bodySmall
-                              .copyWith(color: context.colors.textSecondary)),
+        ),
+        const SizedBox(height: 18),
+        // Custos do mês
+        _cardShell(
+          t,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _blockHeader(
+                t,
+                'Custos do Mês',
+                trailing: _AddButton(
+                  t: t,
+                  label: 'Adicionar',
+                  onTap: () =>
+                      _showAdicionarCusto(context, ref, t, categoria: null),
+                ),
+              ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _categorias.map((cat) {
+                  return Material(
+                    color: t.bgElev2,
+                    borderRadius: BorderRadius.circular(999),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(999),
+                      onTap: () => _showAdicionarCusto(context, ref, t,
+                          categoria: cat),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: t.border),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(cat.icon,
+                                size: 14, color: t.textSecondary),
+                            const SizedBox(width: 6),
+                            Text(
+                              cat.label,
+                              style: TextStyle(
+                                color: t.textPrimary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  )
-                : Column(
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              custosAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 18),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => _errorBox(t, e),
+                data: (custos) {
+                  if (custos.isEmpty) {
+                    return _EmptyCustos(t: t);
+                  }
+                  return Column(
                     children: custos
-                        .map((c) => _CustoTile(custo: c, ref: ref))
+                        .map((c) => _CustoTile(t: t, custo: c, ref: ref))
                         .toList(),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FluxoCaixaPanel extends StatelessWidget {
+  final LlTokens t;
+  final double entradas;
+  final double saidas;
+  final double saldo;
+  const _FluxoCaixaPanel({
+    required this.t,
+    required this.entradas,
+    required this.saidas,
+    required this.saldo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final total = entradas + saidas;
+    final entradasPct = total > 0 ? entradas / total : 1.0;
+    final saidasPct = total > 0 ? saidas / total : 0.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('ENTRADAS',
+                      style: TextStyle(
+                        color: t.textMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                      )),
+                  const SizedBox(height: 4),
+                  Text(
+                    _fmtBrl.format(entradas),
+                    style: TextStyle(
+                      color: t.success,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
+                ],
+              ),
+            ),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: saldo >= 0 ? t.successSoft : t.dangerSoft,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '${saldo >= 0 ? '+' : ''}${_fmtBrl.format(saldo)}',
+                style: TextStyle(
+                  color: saldo >= 0 ? t.success : t.danger,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('SAÍDAS',
+                      style: TextStyle(
+                        color: t.textMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                      )),
+                  const SizedBox(height: 4),
+                  Text(
+                    _fmtBrl.format(saidas),
+                    style: TextStyle(
+                      color: t.danger,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: SizedBox(
+            height: 8,
+            child: Row(
+              children: [
+                Expanded(
+                  flex: (entradasPct * 1000).round().clamp(0, 1000),
+                  child: Container(color: t.success),
+                ),
+                Expanded(
+                  flex: (saidasPct * 1000).round().clamp(0, 1000),
+                  child: Container(color: t.danger),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AddButton extends StatelessWidget {
+  final LlTokens t;
+  final String label;
+  final VoidCallback onTap;
+  const _AddButton({required this.t, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: t.primary,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.add, size: 14, color: Colors.white),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyCustos extends StatelessWidget {
+  final LlTokens t;
+  const _EmptyCustos({required this.t});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          Icon(Icons.account_balance_wallet_outlined,
+              size: 32, color: t.textMuted),
+          const SizedBox(height: 10),
+          Text(
+            'Nenhum custo cadastrado este mês.',
+            style: TextStyle(
+              color: t.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Adicione um custo para acompanhar a saúde operacional.',
+            style: TextStyle(color: t.textMuted, fontSize: 12),
           ),
         ],
       ),
     );
   }
+}
 
-  void _showAdicionarCusto(BuildContext context, WidgetRef ref) =>
-      _showAdicionarCustoComCategoria(context, ref, null);
+class _CustoTile extends StatelessWidget {
+  final LlTokens t;
+  final dynamic custo; // CustoCadastrado
+  final WidgetRef ref;
+  const _CustoTile({required this.t, required this.custo, required this.ref});
 
-  void _showAdicionarCustoComCategoria(
-      BuildContext context, WidgetRef ref, _Categoria? categoria) {
-    final descCtrl = TextEditingController(text: categoria?.label);
-    final valorCtrl = TextEditingController();
-    String tipo = categoria?.valor ?? 'outros';
+  IconData _iconFor(String tipo) {
+    switch (tipo) {
+      case 'aluguel':
+        return Icons.home_outlined;
+      case 'salario':
+        return Icons.people_outline;
+      case 'energia':
+        return Icons.bolt_outlined;
+      case 'internet':
+        return Icons.wifi;
+      default:
+        return Icons.more_horiz;
+    }
+  }
 
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.xl)),
-          title: const Text('Adicionar Custo'),
-          content: Column(
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: t.bgElev2,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: t.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: t.dangerSoft,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(_iconFor(custo.tipo), size: 16, color: t.danger),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  custo.descricao,
+                  style: TextStyle(
+                    color: t.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  custo.competencia,
+                  style: TextStyle(color: t.textMuted, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            _fmtBrl.format(custo.valor),
+            style: TextStyle(
+              color: t.danger,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Remover',
+            icon: Icon(Icons.delete_outline, size: 18, color: t.textMuted),
+            onPressed: () async {
+              try {
+                await ref.read(custosProvider.notifier).deletar(custo.id);
+                ref.invalidate(financeiroProvider);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(ApiService.extractErrorMessage(e))));
+                }
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Categoria {
+  final String label;
+  final IconData icon;
+  final String valor;
+  const _Categoria(this.label, this.icon, this.valor);
+}
+
+void _showAdicionarCusto(
+  BuildContext context,
+  WidgetRef ref,
+  LlTokens t, {
+  _Categoria? categoria,
+}) {
+  final descCtrl = TextEditingController(text: categoria?.label);
+  final valorCtrl = TextEditingController();
+  String tipo = categoria?.valor ?? 'outros';
+
+  showDialog(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => AlertDialog(
+        backgroundColor: t.bgElev1,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Adicionar custo',
+            style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w700)),
+        content: SizedBox(
+          width: 360,
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppTextField(
+              TextField(
                 controller: descCtrl,
-                hint: 'Descrição',
+                style: TextStyle(color: t.textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Descrição',
+                  labelStyle: TextStyle(color: t.textMuted),
+                  border: const OutlineInputBorder(),
+                ),
               ),
-              const SizedBox(height: AppSpacing.x3),
-              AppTextField(
+              const SizedBox(height: 12),
+              TextField(
                 controller: valorCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                hint: 'R\$ Valor',
+                style: TextStyle(color: t.textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'R\$ Valor',
+                  labelStyle: TextStyle(color: t.textMuted),
+                  border: const OutlineInputBorder(),
+                ),
               ),
-              const SizedBox(height: AppSpacing.x3),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: tipo,
-                decoration: const InputDecoration(labelText: 'Categoria'),
+                dropdownColor: t.bgElev1,
+                style: TextStyle(color: t.textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Categoria',
+                  labelStyle: TextStyle(color: t.textMuted),
+                  border: const OutlineInputBorder(),
+                ),
                 items: const [
                   DropdownMenuItem(value: 'aluguel', child: Text('Aluguel')),
                   DropdownMenuItem(value: 'salario', child: Text('Salários')),
@@ -280,536 +917,511 @@ class _OperacionalTab extends ConsumerWidget {
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar'),
-            ),
-            AppPrimaryButton(
-              onPressed: () async {
-                final valorStr = valorCtrl.text.replaceAll(',', '.');
-                if (descCtrl.text.isEmpty || valorStr.isEmpty) return;
-                final valor = double.tryParse(valorStr);
-                if (valor == null || valor <= 0) return;
-                Navigator.pop(ctx);
-                try {
-                  await ref.read(custosProvider.notifier).adicionar({
-                    'descricao': descCtrl.text,
-                    'valor': valor,
-                    'tipo': tipo,
-                    'competencia':
-                        '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}',
-                  });
-                  ref.invalidate(financeiroProvider);
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(ApiService.extractErrorMessage(e))));
-                  }
-                }
-              },
-              label: 'SALVAR',
-            ),
-          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancelar', style: TextStyle(color: t.textSecondary)),
+          ),
+          FilledButton(
+            style:
+                FilledButton.styleFrom(backgroundColor: t.primary),
+            onPressed: () async {
+              final valorStr = valorCtrl.text.replaceAll(',', '.');
+              if (descCtrl.text.isEmpty || valorStr.isEmpty) return;
+              final valor = double.tryParse(valorStr);
+              if (valor == null || valor <= 0) return;
+              Navigator.pop(ctx);
+              try {
+                await ref.read(custosProvider.notifier).adicionar({
+                  'descricao': descCtrl.text,
+                  'valor': valor,
+                  'tipo': tipo,
+                  'competencia':
+                      '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}',
+                });
+                ref.invalidate(financeiroProvider);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(ApiService.extractErrorMessage(e))));
+                }
+              }
+            },
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Aba: Por Cliente
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PorClienteTab extends ConsumerWidget {
+  final LlTokens t;
+  const _PorClienteTab({required this.t});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncRows = ref.watch(faturamentoPorClienteProvider);
+
+    return _cardShell(
+      t,
+      padding: EdgeInsets.zero,
+      child: asyncRows.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 32),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (e, _) => Padding(
+          padding: const EdgeInsets.all(18),
+          child: _errorBox(t, e),
+        ),
+        data: (clientes) {
+          if (clientes.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Center(
+                child: Text(
+                  'Nenhum faturamento registrado neste período.',
+                  style: TextStyle(color: t.textMuted, fontSize: 13),
+                ),
+              ),
+            );
+          }
+          final total = clientes.fold(0.0, (s, c) => s + c.total);
+          final maxV = clientes.fold(0.0, (m, c) => c.total > m ? c.total : m);
+          final maxShare = total > 0 ? (maxV / total * 100) : 1.0;
+
+          return Column(
+            children: [
+              _PorClienteHeader(t: t),
+              ...List.generate(clientes.length, (i) {
+                final c = clientes[i];
+                final share = total > 0 ? (c.total / total * 100) : 0.0;
+                return _PorClienteRow(
+                  t: t,
+                  letter: c.nome.isNotEmpty ? c.nome[0].toUpperCase() : '?',
+                  name: c.nome,
+                  nicho: (c.nicho?.isNotEmpty ?? false) ? c.nicho! : '—',
+                  fat: c.total,
+                  share: share,
+                  maxShare: maxShare,
+                  isLast: i == clientes.length - 1,
+                );
+              }),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                decoration: BoxDecoration(
+                  color: t.bgElev2,
+                  borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(16)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('TOTAL DO PERÍODO',
+                        style: TextStyle(
+                          color: t.textMuted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                        )),
+                    Text(
+                      _fmtBrl.format(total),
+                      style: TextStyle(
+                        color: t.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-// ─── ABA B: FATURAMENTO POR CLIENTE ──────────────────────────────────────────
-
-class _PorClienteTab extends ConsumerWidget {
-  const _PorClienteTab();
+class _PorClienteHeader extends StatelessWidget {
+  final LlTokens t;
+  const _PorClienteHeader({required this.t});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final clientesAsync = ref.watch(faturamentoPorClienteProvider);
-
-    return clientesAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(ApiService.extractErrorMessage(e),
-              style: AppTypography.caption
-                  .copyWith(color: context.colors.textSecondary)),
-          const SizedBox(height: AppSpacing.x3),
-          AppPrimaryButton(
-            onPressed: () =>
-                ref.read(faturamentoPorClienteProvider.notifier).refresh(),
-            label: 'Tentar novamente',
-          ),
-        ]),
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: t.border)),
       ),
-      data: (clientes) {
-        final total = clientes.fold(0.0, (s, c) => s + c.total);
+      child: Row(
+        children: [
+          Expanded(flex: 4, child: _hdr(t, 'CLIENTE')),
+          Expanded(flex: 2, child: _hdr(t, 'NICHO')),
+          Expanded(flex: 2, child: _hdr(t, 'FATURAMENTO', right: true)),
+          Expanded(flex: 3, child: _hdr(t, 'PARTICIPAÇÃO', right: true)),
+        ],
+      ),
+    );
+  }
 
-        if (clientes.isEmpty) {
-          return Center(
-            child: Text('Nenhum faturamento registrado este mês.',
-                style: AppTypography.bodySmall
-                    .copyWith(color: context.colors.textSecondary)),
-          );
-        }
+  Widget _hdr(LlTokens t, String text, {bool right = false}) {
+    return Text(
+      text,
+      textAlign: right ? TextAlign.right : TextAlign.left,
+      style: TextStyle(
+        color: t.textMuted,
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+}
 
-        final tableRows = clientes.map((c) {
-          final pct = total > 0 ? (c.total / total * 100) : 0.0;
-          return AppTableRow(
-            cells: [
-              Row(
-                children: [
-                  ClientAvatar(
-                      initials: c.nome.isNotEmpty ? c.nome[0] : '?',
-                      size: 36,
-                      tone: ClientAvatarTone.success),
-                  const SizedBox(width: 8),
-                  Text(c.nome,
-                      style: AppTypography.label
-                          .copyWith(fontWeight: FontWeight.w500)),
-                ],
+class _PorClienteRow extends StatelessWidget {
+  final LlTokens t;
+  final String letter;
+  final String name;
+  final String nicho;
+  final double fat;
+  final double share;
+  final double maxShare;
+  final bool isLast;
+  const _PorClienteRow({
+    required this.t,
+    required this.letter,
+    required this.name,
+    required this.nicho,
+    required this.fat,
+    required this.share,
+    required this.maxShare,
+    required this.isLast,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pctOfMax = maxShare > 0 ? (share / maxShare).clamp(0.0, 1.0) : 0.0;
+    final isZero = share == 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : Border(bottom: BorderSide(color: t.hairline)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 4,
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: t.primarySoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    letter,
+                    style: TextStyle(
+                      color: t.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    name,
+                    style: TextStyle(
+                      color: t.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              nicho,
+              style: TextStyle(color: t.textMuted, fontSize: 12),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              _fmtBrl.format(fat),
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: t.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
-              Text(c.nicho ?? '—',
-                  style: AppTypography.caption
-                      .copyWith(color: context.colors.textSecondary)),
-              MoneyText(
-                  value: c.total, fontSize: 14, fontWeight: FontWeight.w600),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text('${pct.toStringAsFixed(1)}%',
-                      style: AppTypography.caption.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600)),
-                  const SizedBox(width: 6),
-                  SizedBox(
-                    width: 48,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: LinearProgressIndicator(
-                        value: pct / 100,
-                        minHeight: 4,
-                        backgroundColor: context.colors.bgPage,
-                        valueColor:
-                            const AlwaysStoppedAnimation(AppColors.primary),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  '${share.toStringAsFixed(1)}%',
+                  style: TextStyle(
+                    color: isZero ? t.textMuted : t.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 80,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      height: 6,
+                      color: t.bgElev2,
+                      child: FractionallySizedBox(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: pctOfMax,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                t.primary,
+                                t.primary.withValues(alpha: 0.6),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
-            onTap: () {
-              // navigate to client detail — hook for future
-            },
-          );
-        }).toList();
-
-        final formattedTotal =
-            'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}';
-
-        return Padding(
-          padding: const EdgeInsets.all(AppSpacing.x5),
-          child: AppTable(
-            columns: const [
-              AppTableColumn(label: 'CLIENTE', align: 'left'),
-              AppTableColumn(label: 'NICHO', align: 'left'),
-              AppTableColumn(label: 'FATURAMENTO', align: 'right'),
-              AppTableColumn(label: 'PARTICIPAÇÃO', align: 'right'),
-            ],
-            rows: tableRows,
-            footer: Text('Total: $formattedTotal',
-                style: AppTypography.bodyMedium
-                    .copyWith(fontWeight: FontWeight.w600)),
-            hoverHighlight: true,
+                ),
+              ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
 
-// ─── ABA C: RECEBÍVEIS (Roleta + BRUTO vs LÍQUIDO) ───────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Aba: Recebíveis
+// ─────────────────────────────────────────────────────────────────────────────
 
-class _ReceiveisTab extends ConsumerWidget {
-  const _ReceiveisTab();
+class _RecebiveisTab extends ConsumerWidget {
+  final LlTokens t;
+  const _RecebiveisTab({required this.t});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final financeiroAsync = ref.watch(financeiroProvider);
+    final resumoAsync = ref.watch(financeiroProvider);
 
-    return financeiroAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('Erro ao carregar')),
-      data: (resumo) => SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.x6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return resumoAsync.when(
+      loading: () => const SizedBox(
+        height: 240,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => _errorBox(t, e),
+      data: (r) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Eyebrow + micro-título (peach gradient através do scaffold)
-            Row(
-              children: [
-                Container(
-                  width: 18,
-                  height: 1,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'RECEBÍVEIS DO FRANQUEADO',
-                  style: AppTypography.caption.copyWith(
-                    color: context.colors.textMuted,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 1.4,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.x4),
-            // 3 KPI cards com tipografia unificada (usando KpiFinCard)
-            ResponsiveGrid(
-              mobileColumns: 1,
-              tabletColumns: 3,
-              desktopColumns: 3,
-              spacing: AppSpacing.x3,
-              runSpacing: AppSpacing.x3,
-              children: [
-                KpiFinCard(
-                  label: 'Bruto',
-                  value: _formatBRL(resumo.fatBruto),
-                  tone: KpiFinTone.info,
-                  sub: 'faturamento total',
-                ),
-                KpiFinCard(
-                  label: 'Líquido',
-                  value: _formatBRL(resumo.fatLiquido),
-                  tone: KpiFinTone.success,
-                  sub: 'após custos',
-                ),
-                KpiFinCard(
-                  label: 'Custos',
-                  value: _formatBRL(resumo.totalCustos),
-                  tone: KpiFinTone.danger,
-                  sub: 'operacionais',
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.x6),
-
-            // ── Card Bruto × Líquido × Custos com gradiente suave ─────────
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [context.colors.primarySoftBg, context.colors.bgCard],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                border: Border.all(color: context.colors.primarySoftFg.withValues(alpha: 0.3)),
-                borderRadius: BorderRadius.circular(AppRadius.xl),
+            _eyebrow(t, 'RECEBÍVEIS DO FRANQUEADO'),
+            const SizedBox(height: 14),
+            _kpiGrid(t, [
+              _finKpiCard(
+                t,
+                label: 'BRUTO',
+                value: r.fatBruto,
+                sub: 'faturamento total',
+                color: t.info,
               ),
-              padding: const EdgeInsets.all(AppSpacing.x5),
+              _finKpiCard(
+                t,
+                label: 'LÍQUIDO',
+                value: r.fatLiquido,
+                sub: 'após custos',
+                color: t.success,
+              ),
+              _finKpiCard(
+                t,
+                label: 'CUSTOS',
+                value: r.totalCustos,
+                sub: 'operacionais',
+                color: t.danger,
+              ),
+            ]),
+            const SizedBox(height: 22),
+            _cardShell(
+              t,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Bruto × Líquido × Custos', style: AppTypography.h3),
-                  const SizedBox(height: AppSpacing.x1),
+                  _blockHeader(t, 'Bruto × Líquido × Custos'),
                   Text(
                     'Comparativo do período selecionado.',
-                    style: AppTypography.caption
-                        .copyWith(color: context.colors.textSecondary),
+                    style: TextStyle(color: t.textMuted, fontSize: 11),
                   ),
-                  const SizedBox(height: AppSpacing.x5),
-                  _BrutoLiquidoBar(resumo: resumo),
-                  const SizedBox(height: AppSpacing.x4),
-                  const Wrap(
-                    spacing: AppSpacing.x4,
-                    runSpacing: AppSpacing.x2,
+                  const SizedBox(height: 18),
+                  _CompareBars(t: t, resumo: r),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 18,
+                    runSpacing: 8,
                     children: [
-                      _LegendDot(color: AppColors.info, label: 'Fat. Bruto'),
-                      _LegendDot(
-                          color: AppColors.success, label: 'Fat. Líquido'),
-                      _LegendDot(color: AppColors.danger, label: 'Custos'),
+                      _legend(t, t.info, 'Fat. Bruto'),
+                      _legend(t, t.success, 'Fat. Líquido'),
+                      _legend(t, t.danger, 'Custos'),
                     ],
                   ),
                 ],
               ),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _legend(LlTokens t, Color c, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: c, shape: BoxShape.circle),
         ),
-      ),
+        const SizedBox(width: 6),
+        Text(label,
+            style: TextStyle(
+              color: t.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            )),
+      ],
     );
   }
 }
 
-// ─── WIDGETS AUXILIARES ───────────────────────────────────────────────────────
-
-String _formatBRL(double v) {
-  if (v >= 1000) {
-    return '${(v / 1000).toStringAsFixed(1)}k';
-  }
-  return v.toStringAsFixed(2).replaceAll('.', ',');
-}
-
-class _FluxBar extends StatelessWidget {
-  final double entradas;
-  final double saidas;
-  final double saldo;
-
-  const _FluxBar(
-      {required this.entradas, required this.saidas, required this.saldo});
-
-  String _fmt(double v) => 'R\$ ${v.toStringAsFixed(2).replaceAll('.', ',')}';
+class _CompareBars extends StatelessWidget {
+  final LlTokens t;
+  final dynamic resumo; // FinanceiroResumo
+  const _CompareBars({required this.t, required this.resumo});
 
   @override
   Widget build(BuildContext context) {
-    final total = entradas + saidas;
-    final pctEntradas = total > 0 ? entradas / total : 0.5;
+    final maxV = [resumo.fatBruto, resumo.fatLiquido, resumo.totalCustos]
+        .fold<double>(1, (a, b) => b > a ? b : a);
+    final bars = [
+      ('Bruto', resumo.fatBruto as double, t.info),
+      ('Líquido', resumo.fatLiquido as double, t.success),
+      ('Custos', resumo.totalCustos as double, t.danger),
+    ];
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.x3),
-      decoration: BoxDecoration(
-        color: context.colors.bgPage,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
+      children: bars.map((b) {
+        final w = b.$2 == 0 ? 0.0 : (b.$2 / maxV).clamp(0.0, 1.0);
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('ENTRADAS',
-                        style: AppTypography.caption.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.success,
-                            letterSpacing: 0.8)),
-                    const SizedBox(height: AppSpacing.x1),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(_fmt(entradas),
-                          style: AppTypography.bodyLarge.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.success)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.x2),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.x3, vertical: AppSpacing.x1),
-                decoration: BoxDecoration(
-                  color: saldo >= 0
-                      ? AppColors.success.withValues(alpha: 0.1)
-                      : AppColors.danger.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                ),
+              SizedBox(
+                width: 70,
                 child: Text(
-                  '${saldo >= 0 ? '+' : ''}${_fmt(saldo)}',
-                  style: AppTypography.caption.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: saldo >= 0 ? AppColors.success : AppColors.danger),
+                  b.$1,
+                  style: TextStyle(
+                    color: t.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.x2),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
+                child: Stack(
                   children: [
-                    Text('SAÍDAS',
-                        style: AppTypography.caption.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.danger,
-                            letterSpacing: 0.8)),
-                    const SizedBox(height: AppSpacing.x1),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerRight,
-                      child: Text(_fmt(saidas),
-                          style: AppTypography.bodyLarge.copyWith(
+                    Container(
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: t.bgElev2,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: w,
+                      child: Container(
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: b.$3,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            _fmtBrl.format(b.$2),
+                            style: TextStyle(
+                              color: b.$2 == 0 ? t.textMuted : Colors.white,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.danger)),
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.x3),
-          Container(
-            height: 8,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              color: context.colors.bgMuted,
-            ),
-            child: Row(
-              children: [
-                Flexible(
-                  flex: (pctEntradas * 100).round().clamp(1, 99),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.horizontal(
-                          left: Radius.circular(4)),
-                      gradient: LinearGradient(
-                          colors: [AppColors.success, AppColors.success]),
-                    ),
-                  ),
-                ),
-                Flexible(
-                  flex: ((1 - pctEntradas) * 100).round().clamp(1, 99),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.horizontal(
-                          right: Radius.circular(4)),
-                      color: AppColors.danger,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
 }
 
-// ─── ABA C: RECEBÍVEIS
+// ─────────────────────────────────────────────────────────────────────────────
+// Erros compartilhados
+// ─────────────────────────────────────────────────────────────────────────────
 
-class _BrutoLiquidoBar extends StatelessWidget {
-  final FinanceiroResumo resumo;
-  const _BrutoLiquidoBar({required this.resumo});
-
-  @override
-  Widget build(BuildContext context) {
-    final max = (resumo.fatBruto > 0 ? resumo.fatBruto : 1).toDouble();
-    return Column(
-      children: [
-        _buildBar(
-            context, 'Bruto', resumo.fatBruto.toDouble(), max, AppColors.info),
-        const SizedBox(height: AppSpacing.x2),
-        _buildBar(context, 'Líquido', resumo.fatLiquido.toDouble(), max,
-            AppColors.success),
-        const SizedBox(height: AppSpacing.x2),
-        _buildBar(context, 'Custos', resumo.totalCustos.toDouble(), max,
-            AppColors.danger),
-      ],
-    );
-  }
-
-  Widget _buildBar(BuildContext context, String label, double value, double max,
-      Color color) {
-    final pct = (value / max).clamp(0.0, 1.0);
-    return Row(
-      children: [
-        SizedBox(
-            width: 60,
-            child: Text(label,
-                style: AppTypography.caption
-                    .copyWith(color: context.colors.textSecondary))),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            child: LinearProgressIndicator(
-              value: pct,
-              minHeight: 14,
-              backgroundColor: context.colors.bgPage,
-              valueColor: AlwaysStoppedAnimation(color),
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.x2),
-        Text(
-          'R\$ ${value.toStringAsFixed(0)}',
-          style: AppTypography.caption
-              .copyWith(fontWeight: FontWeight.w600, color: color),
-        ),
-      ],
-    );
-  }
-}
-
-class _CustoTile extends StatelessWidget {
-  final CustoCadastrado custo;
-  final WidgetRef ref;
-  const _CustoTile({required this.custo, required this.ref});
-
-  static const _tipoLabel = {
-    'aluguel': 'Aluguel',
-    'salario': 'Salários',
-    'energia': 'Energia',
-    'internet': 'Internet',
-    'outros': 'Outros',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: ClientAvatar(
-        initials: custo.descricao.isNotEmpty ? custo.descricao[0] : '?',
-        size: 36,
-        tone: ClientAvatarTone.neutral,
-      ),
-      title: Text(custo.descricao,
-          style: AppTypography.label.copyWith(fontWeight: FontWeight.w500)),
-      subtitle: Text(_tipoLabel[custo.tipo] ?? custo.tipo,
-          style:
-              AppTypography.caption.copyWith(color: context.colors.textSecondary)),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          MoneyText(
-            value: custo.valor,
-            fontSize: 14,
-            color: AppColors.danger,
-          ),
-          const SizedBox(width: AppSpacing.x1),
-          IconButton(
-            icon: Icon(Icons.delete_outline,
-                size: 18, color: context.colors.textMuted),
-            onPressed: () async {
-              await ref.read(custosProvider.notifier).deletar(custo.id);
-              ref.invalidate(financeiroProvider);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LegendDot extends StatelessWidget {
-  final Color color;
-  final String label;
-  const _LegendDot({required this.color, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: AppSpacing.x1),
-        Text(label,
-            style:
-                AppTypography.caption.copyWith(color: context.colors.textSecondary)),
-      ],
-    );
-  }
-}
-
-// ─── HELPER ───────────────────────────────────────────────────────────────────
-
-class _Categoria {
-  final String label;
-  final IconData icon;
-  final String valor;
-  const _Categoria(this.label, this.icon, this.valor);
+Widget _errorBox(LlTokens t, Object e) {
+  return Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: t.dangerSoft,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: t.danger.withValues(alpha: 0.3)),
+    ),
+    child: Text(
+      ApiService.extractErrorMessage(e),
+      style: TextStyle(color: t.danger, fontSize: 12),
+    ),
+  );
 }

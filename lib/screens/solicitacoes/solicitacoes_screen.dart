@@ -1,334 +1,118 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import '../../design_system/design_system.dart';
+import '../../models/cabine.dart';
+import '../../models/cliente.dart';
+import '../../models/apresentadora.dart';
 import '../../providers/solicitacoes_provider.dart';
+import '../../providers/cabines_provider.dart';
+import '../../providers/clientes_provider.dart';
+import '../../providers/apresentadoras_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
-import '../../widgets/solicitacao_card.dart';
+import '../../livelab/core/responsive.dart';
+import '../../livelab/theme/livelab_theme.dart';
+import '../../livelab/theme/tokens.dart';
+import '../../livelab/widgets/livelab_scaffold.dart';
 
 class SolicitacoesScreen extends ConsumerStatefulWidget {
   final bool embedded;
-
   const SolicitacoesScreen({super.key, this.embedded = false});
 
   @override
   ConsumerState<SolicitacoesScreen> createState() => _SolicitacoesScreenState();
 }
 
-class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen> {
+  int _tab = 0; // 0 pendentes, 1 todas
+  String _statusFilter = 'todos'; // todos | pendente | aprovada | recusada
+  String _dateFilter = '';
+  String _cabineFilter = '';
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  void _refresh() {
+    ref.read(solicitacoesProvider.notifier).refresh();
   }
 
   Future<void> _aprovar(String id) async {
     try {
       await ref.read(solicitacoesProvider.notifier).aprovar(id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Live aprovada com sucesso!'),
-          backgroundColor: AppColors.success,
-        ),
-      );
+      _snack('Live aprovada com sucesso', success: true);
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          backgroundColor: AppColors.danger,
-          duration: const Duration(seconds: 5),
-        ),
-      );
+      _snack(e.message, success: false);
     }
   }
 
-  void _recusar(String id) {
+  Future<void> _recusar(String id) async {
     final motivoCtrl = TextEditingController();
-    showDialog<void>(
+    final t = context.llTokens;
+    final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => _RecusarDialog(
-        ctrl: motivoCtrl,
-        onConfirmar: (motivo) async {
-          Navigator.pop(ctx);
-          try {
-            await ref.read(solicitacoesProvider.notifier).recusar(id, motivo);
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Agendamento recusado.')),
-            );
-          } on ApiException catch (e) {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(e.message),
-                backgroundColor: AppColors.danger,
-              ),
-            );
-          }
-        },
+      builder: (ctx) => AlertDialog(
+        backgroundColor: t.bgElev1,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Motivo da recusa',
+            style: TextStyle(color: t.textPrimary)),
+        content: SizedBox(
+          width: 360,
+          child: TextField(
+            controller: motivoCtrl,
+            autofocus: true,
+            maxLines: 3,
+            style: TextStyle(color: t.textPrimary),
+            decoration: InputDecoration(
+              hintText: 'Por que a solicitação está sendo recusada?',
+              hintStyle: TextStyle(color: t.textMuted),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancelar',
+                style: TextStyle(color: t.textSecondary)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: t.danger),
+            onPressed: () {
+              if (motivoCtrl.text.trim().isEmpty) return;
+              Navigator.pop(ctx, true);
+            },
+            child: const Text('Recusar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref
+          .read(solicitacoesProvider.notifier)
+          .recusar(id, motivoCtrl.text.trim());
+      if (!mounted) return;
+      _snack('Agendamento recusado', success: true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _snack(e.message, success: false);
+    }
+  }
+
+  void _snack(String msg, {required bool success}) {
+    final t = context.llTokens;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: success ? t.success : t.danger,
+        duration: const Duration(seconds: 4),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final solicitacoesAsync = ref.watch(solicitacoesProvider);
-    final now = DateTime.now();
-    final mesAtual = DateFormat('yyyy-MM').format(now);
-
-    final pendentesCount = solicitacoesAsync.valueOrNull
-            ?.where((s) => s.status == 'pendente')
-            .length ??
-        0;
-
-    final aprovadasMes = solicitacoesAsync.valueOrNull
-            ?.where((s) =>
-                s.status == 'aprovada' &&
-                s.dataSolicitada.startsWith(mesAtual))
-            .length ??
-        0;
-
-    final recusadasMes = solicitacoesAsync.valueOrNull
-            ?.where((s) =>
-                s.status == 'recusada' &&
-                s.dataSolicitada.startsWith(mesAtual))
-            .length ??
-        0;
-
-    final taxaAprovacao = () {
-      final total = aprovadasMes + recusadasMes;
-      if (total == 0) return '–';
-      return '${(aprovadasMes / total * 100).toStringAsFixed(0)}%';
-    }();
-
-    final content = Column(
-      children: [
-        // ── KPI Strip ──
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4, AppSpacing.x4, AppSpacing.x4, 0),
-          child: LayoutBuilder(
-            builder: (ctx, constraints) {
-              final isNarrow = constraints.maxWidth < 600;
-              if (isNarrow) {
-                return Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: KpiAccentCard(
-                            label: 'Pendentes',
-                            value: '$pendentesCount',
-                            sub: 'aguardando aprovação',
-                            accentTop: true,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.x3),
-                        Expanded(
-                          child: KpiAccentCard(
-                            label: 'Aprovadas (mês)',
-                            value: '$aprovadasMes',
-                            sub: 'neste mês',
-                            valueColor: AppColors.success,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.x3),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: KpiAccentCard(
-                            label: 'Recusadas (mês)',
-                            value: '$recusadasMes',
-                            sub: 'neste mês',
-                            valueColor: AppColors.danger,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.x3),
-                        Expanded(
-                          child: KpiAccentCard(
-                            label: 'Taxa aprovação',
-                            value: taxaAprovacao,
-                            sub: 'aprovadas / total',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              }
-              return Row(
-                children: [
-                  Expanded(
-                    child: KpiAccentCard(
-                      label: 'Pendentes',
-                      value: '$pendentesCount',
-                      sub: 'aguardando aprovação',
-                      accentTop: true,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.x3),
-                  Expanded(
-                    child: KpiAccentCard(
-                      label: 'Aprovadas (mês)',
-                      value: '$aprovadasMes',
-                      sub: 'neste mês',
-                      valueColor: AppColors.success,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.x3),
-                  Expanded(
-                    child: KpiAccentCard(
-                      label: 'Recusadas (mês)',
-                      value: '$recusadasMes',
-                      sub: 'neste mês',
-                      valueColor: AppColors.danger,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.x3),
-                  Expanded(
-                    child: KpiAccentCard(
-                      label: 'Taxa aprovação',
-                      value: taxaAprovacao,
-                      sub: 'aprovadas / total',
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-
-        // ── Barra de abas ──
-        Material(
-          color: context.colors.bgCard,
-          elevation: 1,
-          child: TabBar(
-            controller: _tabController,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: context.colors.textSecondary,
-            indicatorColor: AppColors.primary,
-            tabs: [
-              Tab(
-                icon: const Icon(Icons.pending_actions_outlined, size: 18),
-                text: pendentesCount > 0
-                    ? 'Pendentes ($pendentesCount)'
-                    : 'Pendentes',
-              ),
-              const Tab(
-                icon: Icon(Icons.list_alt_outlined, size: 18),
-                text: 'Todas',
-              ),
-            ],
-          ),
-        ),
-
-        // ── Conteúdo ──
-        Expanded(
-          child: solicitacoesAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.x6),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: AppColors.danger),
-                    const SizedBox(height: AppSpacing.x3),
-                    Text(ApiService.extractErrorMessage(error),
-                        textAlign: TextAlign.center),
-                    const SizedBox(height: AppSpacing.x2),
-                    AppSecondaryButton(
-                      onPressed: () =>
-                          ref.read(solicitacoesProvider.notifier).refresh(),
-                      label: 'Tentar novamente',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            data: (solicitacoes) {
-              final pendentes =
-                  solicitacoes.where((s) => s.status == 'pendente').toList();
-
-              return TabBarView(
-                controller: _tabController,
-                children: [
-                  // Tab 0: Pendentes
-                  _SolicitacoesLista(
-                    items: pendentes,
-                    emptyIcon: Icons.check_circle_outline_rounded,
-                    emptyMessage: 'Nenhum agendamento pendente',
-                    showActions: true,
-                    onAprovar: _aprovar,
-                    onRecusar: _recusar,
-                    onRefresh: () =>
-                        ref.read(solicitacoesProvider.notifier).refresh(),
-                  ),
-                  // Tab 1: Todas
-                  _SolicitacoesLista(
-                    items: solicitacoes,
-                    emptyIcon: Icons.inbox_outlined,
-                    emptyMessage: 'Nenhum agendamento registrado',
-                    showActions: false,
-                    onAprovar: _aprovar,
-                    onRecusar: _recusar,
-                    onRefresh: () =>
-                        ref.read(solicitacoesProvider.notifier).refresh(),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ],
-    );
-
-    final contentWithFab = Stack(
-      children: [
-        content,
-        Positioned(
-          bottom: AppSpacing.x4,
-          right: AppSpacing.x4,
-          child: FloatingActionButton.extended(
-            onPressed: () => _mostrarNovoAgendamento(context),
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            icon: const Icon(Icons.add),
-            label: const Text('Novo Agendamento'),
-          ),
-        ),
-      ],
-    );
-
-    if (widget.embedded) return contentWithFab;
-
-    return AppScreenScaffold(
-      currentRoute: AppRoutes.agendamentos,
-      title: 'Agendamentos de Lives',
-      eyebrow: 'Agenda operacional',
-      titleSerif: true,
-      subtitle: 'Aprove, recuse e acompanhe pedidos de horário dos clientes.',
-      child: contentWithFab,
-    );
-  }
-
-  Future<void> _mostrarNovoAgendamento(BuildContext context) async {
+  Future<void> _novoAgendamento() async {
     await showDialog<void>(
       context: context,
       builder: (ctx) => _NovoAgendamentoDialog(
@@ -340,594 +124,960 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen>
       ),
     );
   }
-}
-
-// ──────────────────────────────────────────────────────────────
-// Dialog: Motivo da recusa
-// ──────────────────────────────────────────────────────────────
-
-class _RecusarDialog extends StatelessWidget {
-  final TextEditingController ctrl;
-  final void Function(String motivo) onConfirmar;
-
-  const _RecusarDialog({required this.ctrl, required this.onConfirmar});
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg)),
-      title: const Row(
-        children: [
-          Icon(Icons.block_rounded, color: AppColors.danger, size: 20),
-          SizedBox(width: AppSpacing.x2),
-          Text('Motivo da recusa'),
-        ],
-      ),
-      content: AppTextField(
-        controller: ctrl,
-        hint: 'Explique o motivo da recusa...',
-        keyboardType: TextInputType.multiline,
-      ),
-      actions: [
-        AppSecondaryButton(
-          onPressed: () => Navigator.pop(context),
-          label: 'Cancelar',
-        ),
-        const SizedBox(width: AppSpacing.x2),
-        AppPrimaryButton(
-          label: 'Confirmar',
-          onPressed: () {
-            final motivo = ctrl.text.trim();
-            if (motivo.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('O motivo é obrigatório')),
-              );
-              return;
-            }
-            onConfirmar(motivo);
-          },
-        ),
-      ],
+    if (widget.embedded) return _content();
+
+    return LivelabScaffold(
+      currentRoute: AppRoutes.agendamentos,
+      onRefresh: _refresh,
+      child: _content(),
     );
   }
-}
 
-// ──────────────────────────────────────────────────────────────
-// Lista de agendamentos (reutilizada em ambas as tabs)
-// ──────────────────────────────────────────────────────────────
+  Widget _content() {
+    final t = context.llTokens;
+    final r = LlResponsive.of(context);
+    final pad = r.isMobile ? 16.0 : 28.0;
 
-class _SolicitacoesLista extends StatefulWidget {
-  final List<SolicitacaoFranqueador> items;
-  final IconData emptyIcon;
-  final String emptyMessage;
-  final bool showActions;
-  final Future<void> Function(String) onAprovar;
-  final void Function(String) onRecusar;
-  final Future<void> Function() onRefresh;
+    final asyncData = ref.watch(solicitacoesProvider);
 
-  const _SolicitacoesLista({
-    required this.items,
-    required this.emptyIcon,
-    required this.emptyMessage,
-    required this.showActions,
-    required this.onAprovar,
-    required this.onRecusar,
-    required this.onRefresh,
-  });
-
-  @override
-  State<_SolicitacoesLista> createState() => _SolicitacoesListaState();
-}
-
-class _SolicitacoesListaState extends State<_SolicitacoesLista> {
-  String _statusFilter = 'todos';
-  String _filtroData = '';
-  String _filtroCabine = '';
-  final _dataCtrl = TextEditingController();
-  final _cabineCtrl = TextEditingController();
-
-  // ── Bulk selection ──
-  final Set<String> _selected = {};
-  bool _selectionMode = false;
-
-  static final _dateDisplay = DateFormat('dd/MM/yyyy');
-  static final _dateParser = DateFormat('yyyy-MM-dd');
-
-  @override
-  void dispose() {
-    _dataCtrl.dispose();
-    _cabineCtrl.dispose();
-    super.dispose();
-  }
-
-  String _formatDate(String raw) {
-    try {
-      return _dateDisplay.format(_dateParser.parse(raw));
-    } catch (_) {
-      return raw;
-    }
-  }
-
-  bool get _hasActiveFilters =>
-      (!widget.showActions && _statusFilter != 'todos') ||
-      _filtroData.isNotEmpty ||
-      _filtroCabine.isNotEmpty;
-
-  List<SolicitacaoFranqueador> get _filtered {
-    return widget.items.where((item) {
-      // Status filter (only in Todas tab)
-      if (!widget.showActions && _statusFilter != 'todos') {
-        if (item.status != _statusFilter) return false;
-      }
-      // Data filter
-      if (_filtroData.isNotEmpty) {
-        final formatted = _formatDate(item.dataSolicitada);
-        if (!formatted.contains(_filtroData)) return false;
-      }
-      // Cabine filter
-      if (_filtroCabine.isNotEmpty) {
-        if (!item.cabineNumero.toString().contains(_filtroCabine)) return false;
-      }
-      return true;
-    }).toList();
-  }
-
-  void _limparFiltros() {
-    setState(() {
-      _statusFilter = 'todos';
-      _filtroData = '';
-      _filtroCabine = '';
-      _dataCtrl.clear();
-      _cabineCtrl.clear();
-    });
-  }
-
-  void _exitSelectionMode() {
-    setState(() {
-      _selectionMode = false;
-      _selected.clear();
-    });
-  }
-
-  Future<void> _bulkAprovar() async {
-    final ids = List<String>.from(_selected);
-    for (final id in ids) {
-      await widget.onAprovar(id);
-    }
-    _exitSelectionMode();
-  }
-
-  Future<void> _bulkRecusar() async {
-    final ids = List<String>.from(_selected);
-    for (final id in ids) {
-      widget.onRecusar(id);
-    }
-    _exitSelectionMode();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final filtered = _filtered;
-
-    // Empty original list (no data at all)
-    if (widget.items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(widget.emptyIcon, size: 64, color: context.colors.textMuted),
-            const SizedBox(height: AppSpacing.x4),
-            Text(
-              widget.emptyMessage,
-              style: AppTypography.bodyMedium
-                  .copyWith(color: context.colors.textSecondary),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
+    return Stack(
       children: [
-        // ── Filter Bar ──
-        _FilterBar(
-          showStatusChips: !widget.showActions,
-          statusFilter: _statusFilter,
-          dataCtrl: _dataCtrl,
-          cabineCtrl: _cabineCtrl,
-          hasActiveFilters: _hasActiveFilters,
-          onStatusChanged: (v) => setState(() => _statusFilter = v),
-          onDataChanged: (v) => setState(() => _filtroData = v),
-          onCabineChanged: (v) => setState(() => _filtroCabine = v),
-          onLimpar: _limparFiltros,
-        ),
-
-        // ── Bulk selection banner ──
-        if (widget.showActions && _selectionMode) ...[
-          Container(
-            color: context.colors.bgMuted,
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.x4, vertical: AppSpacing.x2),
-            child: Row(
-              children: [
-                Text(
-                  '${_selected.length} selecionado${_selected.length == 1 ? '' : 's'}',
-                  style: AppTypography.bodySmall.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: context.colors.textPrimary),
-                ),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: _selected.isEmpty ? null : _bulkAprovar,
-                  icon: const Icon(Icons.check_circle_outline,
-                      size: 16, color: AppColors.success),
-                  label: const Text('Aprovar todos',
-                      style: TextStyle(color: AppColors.success)),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.x2),
-                    visualDensity: VisualDensity.compact,
-                    textStyle: AppTypography.bodySmall,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.x2),
-                TextButton.icon(
-                  onPressed: _selected.isEmpty ? null : _bulkRecusar,
-                  icon: const Icon(Icons.cancel_outlined,
-                      size: 16, color: AppColors.danger),
-                  label: const Text('Recusar todos',
-                      style: TextStyle(color: AppColors.danger)),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.x2),
-                    visualDensity: VisualDensity.compact,
-                    textStyle: AppTypography.bodySmall,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.x2),
-                IconButton(
-                  tooltip: 'Cancelar seleção',
-                  onPressed: _exitSelectionMode,
-                  icon: const Icon(Icons.close, size: 18),
-                  visualDensity: VisualDensity.compact,
-                ),
+        SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(pad, 16, pad, 100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (!widget.embedded) ...[
+                _pageHeader(t),
+                const SizedBox(height: 18),
               ],
+              _kpis(t, asyncData),
+              const SizedBox(height: 18),
+              _tabStrip(t, asyncData),
+              const SizedBox(height: 18),
+              asyncData.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 60),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => _errorBox(t, e),
+                data: (items) {
+                  final pendentes =
+                      items.where((s) => s.status == 'pendente').toList();
+                  if (_tab == 0) {
+                    if (pendentes.isEmpty) {
+                      return _emptyBox(
+                        t,
+                        icon: Icons.check_circle_outline_rounded,
+                        title: 'Nenhum agendamento pendente',
+                        sub:
+                            'Tudo em dia. Quando um cliente solicitar uma live, ela aparecerá aqui.',
+                      );
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: pendentes
+                          .map((s) => _SolRow(
+                                t: t,
+                                s: s,
+                                onAprovar: () => _aprovar(s.id),
+                                onRecusar: () => _recusar(s.id),
+                                pending: true,
+                              ))
+                          .toList(),
+                    );
+                  }
+                  // tab Todas
+                  final filtered = items.where(_passesFilter).toList();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _filtersBar(t),
+                      const SizedBox(height: 14),
+                      if (filtered.isEmpty)
+                        _emptyBox(
+                          t,
+                          icon: Icons.search_off_rounded,
+                          title: 'Nenhum agendamento encontrado',
+                          sub: 'Tente ajustar os filtros.',
+                        )
+                      else
+                        ...filtered.map((s) => _SolRow(
+                              t: t,
+                              s: s,
+                              pending: false,
+                              onAprovar: () => _aprovar(s.id),
+                              onRecusar: () => _recusar(s.id),
+                            )),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          right: pad,
+          bottom: 24,
+          child: Material(
+            color: t.primary,
+            borderRadius: BorderRadius.circular(999),
+            elevation: 6,
+            shadowColor: t.primary.withValues(alpha: 0.4),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: _novoAgendamento,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 18, vertical: 14),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.add, size: 18, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Novo Agendamento',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ],
-
-        // ── List or empty-filtered state ──
-        Expanded(
-          child: filtered.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.search_off_rounded,
-                          size: 56, color: context.colors.textMuted),
-                      const SizedBox(height: AppSpacing.x4),
-                      Text(
-                        'Nenhum resultado para os filtros aplicados',
-                        style: AppTypography.bodyMedium
-                            .copyWith(color: context.colors.textSecondary),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: AppSpacing.x4),
-                      AppSecondaryButton(
-                        label: 'Limpar filtros',
-                        icon: Icons.filter_list_off_rounded,
-                        onPressed: _limparFiltros,
-                      ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: widget.onRefresh,
-                  color: AppColors.primary,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(AppSpacing.x4),
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: AppSpacing.x3),
-                    itemBuilder: (ctx, i) {
-                      final req = filtered[i];
-                      final isSelected = _selected.contains(req.id);
-
-                      final card = SolicitacaoCard(
-                        cabineNumero:
-                            req.cabineNumero.toString().padLeft(2, '0'),
-                        clienteNome: req.clienteNome,
-                        data: _formatDate(req.dataSolicitada),
-                        hora:
-                            '${req.horaInicioDisplay} – ${req.horaFimDisplay}',
-                        duracao: req.observacao ?? '',
-                        solicitadoPor: req.solicitanteNome,
-                        apresentadoraNome: req.apresentadoraNome,
-                        status: req.status,
-                        onApprove: widget.showActions && !_selectionMode
-                            ? () => widget.onAprovar(req.id)
-                            : () {},
-                        onReject: widget.showActions && !_selectionMode
-                            ? () => widget.onRecusar(req.id)
-                            : () {},
-                        showStatusBadge: !widget.showActions,
-                      );
-
-                      if (!widget.showActions) return card;
-
-                      return GestureDetector(
-                        onLongPress: () {
-                          if (!_selectionMode) {
-                            setState(() {
-                              _selectionMode = true;
-                              _selected.add(req.id);
-                            });
-                          }
-                        },
-                        onTap: _selectionMode
-                            ? () {
-                                setState(() {
-                                  if (isSelected) {
-                                    _selected.remove(req.id);
-                                  } else {
-                                    _selected.add(req.id);
-                                  }
-                                });
-                              }
-                            : null,
-                        child: Stack(
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              decoration: isSelected
-                                  ? BoxDecoration(
-                                      borderRadius: BorderRadius.circular(
-                                          AppRadius.lg),
-                                      border: Border.all(
-                                          color: AppColors.primary
-                                              .withValues(alpha: 0.5),
-                                          width: 2),
-                                    )
-                                  : null,
-                              child: card,
-                            ),
-                            if (_selectionMode)
-                              Positioned(
-                                top: AppSpacing.x2,
-                                left: AppSpacing.x2,
-                                child: IgnorePointer(
-                                  child: Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? AppColors.primary
-                                          : context.colors.bgCard,
-                                      border: Border.all(
-                                          color: AppColors.primary,
-                                          width: 2),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: isSelected
-                                        ? const Icon(Icons.check,
-                                            size: 14,
-                                            color: Colors.white)
-                                        : null,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
         ),
       ],
     );
   }
-}
 
-// ──────────────────────────────────────────────────────────────
-// Filter Bar widget
-// ──────────────────────────────────────────────────────────────
+  bool _passesFilter(SolicitacaoFranqueador s) {
+    if (_statusFilter != 'todos' && s.status != _statusFilter) return false;
+    if (_dateFilter.isNotEmpty) {
+      final formatted = _ddmmyyyy(s.dataSolicitada);
+      if (!formatted.contains(_dateFilter)) return false;
+    }
+    if (_cabineFilter.isNotEmpty) {
+      final n = 'cabine ${s.cabineNumero.toString().padLeft(2, '0')}';
+      if (!n.toLowerCase().contains(_cabineFilter.toLowerCase())) {
+        return false;
+      }
+    }
+    return true;
+  }
 
-class _FilterBar extends StatelessWidget {
-  final bool showStatusChips;
-  final String statusFilter;
-  final TextEditingController dataCtrl;
-  final TextEditingController cabineCtrl;
-  final bool hasActiveFilters;
-  final ValueChanged<String> onStatusChanged;
-  final ValueChanged<String> onDataChanged;
-  final ValueChanged<String> onCabineChanged;
-  final VoidCallback onLimpar;
+  Widget _pageHeader(LlTokens t) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '— AGENDA OPERACIONAL',
+                style: TextStyle(
+                  color: t.primary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Solicitações de ',
+                      style: TextStyle(
+                        color: t.textPrimary,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.9,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Live',
+                      style: GoogleFonts.instrumentSerif(
+                        color: t.primary,
+                        fontStyle: FontStyle.italic,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Aprove, recuse e acompanhe pedidos de horário dos clientes.',
+                style: TextStyle(color: t.textMuted, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        Material(
+          color: t.bgElev1,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: _refresh,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                border: Border.all(color: t.border),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.refresh, size: 14, color: t.textSecondary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Atualizar',
+                    style: TextStyle(
+                      color: t.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-  const _FilterBar({
-    required this.showStatusChips,
-    required this.statusFilter,
-    required this.dataCtrl,
-    required this.cabineCtrl,
-    required this.hasActiveFilters,
-    required this.onStatusChanged,
-    required this.onDataChanged,
-    required this.onCabineChanged,
-    required this.onLimpar,
-  });
+  Widget _kpis(LlTokens t, AsyncValue<List<SolicitacaoFranqueador>> async) {
+    final items = async.valueOrNull ?? const <SolicitacaoFranqueador>[];
+    final mes = DateFormat('yyyy-MM').format(DateTime.now());
+    final pendentes = items.where((s) => s.status == 'pendente').length;
+    final aprovadasMes = items
+        .where(
+            (s) => s.status == 'aprovada' && s.dataSolicitada.startsWith(mes))
+        .length;
+    final recusadasMes = items
+        .where(
+            (s) => s.status == 'recusada' && s.dataSolicitada.startsWith(mes))
+        .length;
+    final totalDecidido = aprovadasMes + recusadasMes;
+    final taxa = totalDecidido == 0
+        ? '—'
+        : '${(aprovadasMes / totalDecidido * 100).round()}%';
 
-  static const _statusOpts = [
-    ('todos', 'Todos'),
-    ('pendente', 'Pendente'),
-    ('aprovada', 'Aprovada'),
-    ('recusada', 'Recusada'),
-  ];
+    final cards = <Widget>[
+      _kpi(t,
+          label: 'PENDENTES',
+          value: '$pendentes',
+          sub: 'aguardando aprovação',
+          color: pendentes > 0 ? t.primary : t.textPrimary,
+          accent: pendentes > 0),
+      _kpi(t,
+          label: 'APROVADAS (MÊS)',
+          value: '$aprovadasMes',
+          sub: 'neste mês',
+          color: t.success),
+      _kpi(t,
+          label: 'RECUSADAS (MÊS)',
+          value: '$recusadasMes',
+          sub: 'neste mês',
+          color: t.danger),
+      _kpi(t,
+          label: 'TAXA APROVAÇÃO',
+          value: taxa,
+          sub: 'aprovadas / decididas',
+          color: totalDecidido == 0 ? t.textMuted : t.textPrimary),
+    ];
 
-  @override
-  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (c, box) {
+        final cols = box.maxWidth < 720 ? 2 : 4;
+        return GridView.builder(
+          primary: false,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: cols,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            mainAxisExtent: 132,
+          ),
+          itemCount: cards.length,
+          itemBuilder: (_, i) => cards[i],
+        );
+      },
+    );
+  }
+
+  Widget _kpi(
+    LlTokens t, {
+    required String label,
+    required String value,
+    required String sub,
+    required Color color,
+    bool accent = false,
+  }) {
     return Container(
-      color: context.colors.bgCard,
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.x4, AppSpacing.x3, AppSpacing.x4, AppSpacing.x3),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: t.bgElev1,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent ? t.primary : t.border),
+        boxShadow: t.shadowCard,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Status chips row (Todas tab only)
-          if (showStatusChips) ...[
-            Wrap(
-              spacing: AppSpacing.x2,
-              runSpacing: AppSpacing.x2,
-              children: _statusOpts.map((opt) {
-                final (value, label) = opt;
-                final isActive = statusFilter == value;
-                return AppChip(
-                  label: label,
-                  active: isActive,
-                  onTap: () => onStatusChanged(value),
-                );
-              }).toList(),
+          Text(
+            label,
+            style: TextStyle(
+              color: t.textMuted,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
             ),
-            const SizedBox(height: AppSpacing.x3),
-          ],
-          // Text fields row
-          Row(
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 38,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.8,
+              height: 1,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          Text(
+            sub,
+            style: TextStyle(color: t.textMuted, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tabStrip(LlTokens t,
+      AsyncValue<List<SolicitacaoFranqueador>> async) {
+    final items = async.valueOrNull ?? const <SolicitacaoFranqueador>[];
+    final pendentes = items.where((s) => s.status == 'pendente').length;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _tabPill(t,
+            i: 0,
+            icon: Icons.schedule,
+            label: 'Pendentes',
+            badge: pendentes > 0 ? '$pendentes' : null,
+            badgeAccent: true),
+        _tabPill(t,
+            i: 1,
+            icon: Icons.list_alt_outlined,
+            label: 'Todas',
+            badge: '${items.length}',
+            badgeAccent: false),
+      ],
+    );
+  }
+
+  Widget _tabPill(LlTokens t,
+      {required int i,
+      required IconData icon,
+      required String label,
+      String? badge,
+      required bool badgeAccent}) {
+    final active = _tab == i;
+    return Material(
+      color: active ? t.primarySoft : t.bgElev1,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => setState(() => _tab = i),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            border: Border.all(color: active ? t.primary : t.border),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: TextFormField(
-                    controller: dataCtrl,
-                    onChanged: onDataChanged,
-                    keyboardType: TextInputType.datetime,
-                    style: AppTypography.bodySmall,
-                    decoration: InputDecoration(
-                      hintText: 'Data (dd/mm/aaaa)',
-                      hintStyle: AppTypography.bodySmall
-                          .copyWith(color: context.colors.textMuted),
-                      prefixIcon: Icon(Icons.calendar_today_outlined,
-                          size: 16, color: context.colors.textMuted),
-                      prefixIconConstraints:
-                          const BoxConstraints(minWidth: 36, minHeight: 36),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.x2, vertical: AppSpacing.x2),
-                    ),
-                  ),
+              Icon(icon, size: 16, color: active ? t.primary : t.textSecondary),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: active ? t.primary : t.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(width: AppSpacing.x2),
-              Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: TextFormField(
-                    controller: cabineCtrl,
-                    onChanged: onCabineChanged,
-                    keyboardType: TextInputType.number,
-                    style: AppTypography.bodySmall,
-                    decoration: InputDecoration(
-                      hintText: 'Cabine nº',
-                      hintStyle: AppTypography.bodySmall
-                          .copyWith(color: context.colors.textMuted),
-                      prefixIcon: Icon(Icons.meeting_room_outlined,
-                          size: 16, color: context.colors.textMuted),
-                      prefixIconConstraints:
-                          const BoxConstraints(minWidth: 36, minHeight: 36),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.x2, vertical: AppSpacing.x2),
-                    ),
+              if (badge != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: badgeAccent ? t.primary : t.bgElev2,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                        color: badgeAccent ? t.primary : t.border),
                   ),
-                ),
-              ),
-              if (hasActiveFilters) ...[
-                const SizedBox(width: AppSpacing.x2),
-                TextButton.icon(
-                  onPressed: onLimpar,
-                  icon: const Icon(Icons.filter_list_off_rounded, size: 16),
-                  label: const Text('Limpar'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: context.colors.textSecondary,
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
-                    visualDensity: VisualDensity.compact,
-                    textStyle: AppTypography.bodySmall,
+                  child: Text(
+                    badge,
+                    style: TextStyle(
+                      color: badgeAccent ? Colors.white : t.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _filtersBar(LlTokens t) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: t.bgElev1,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: t.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _statusChip(t, 'todos', 'Todos'),
+              _statusChip(t, 'pendente', 'Pendente'),
+              _statusChip(t, 'aprovada', 'Aprovada'),
+              _statusChip(t, 'recusada', 'Recusada'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _searchInput(t,
+                  icon: Icons.calendar_today_outlined,
+                  hint: 'Data (dd/mm/aaaa)',
+                  onChanged: (v) => setState(() => _dateFilter = v))),
+              const SizedBox(width: 10),
+              Expanded(child: _searchInput(t,
+                  icon: Icons.video_camera_back_outlined,
+                  hint: 'Cabine nº',
+                  onChanged: (v) => setState(() => _cabineFilter = v))),
             ],
           ),
         ],
       ),
     );
   }
+
+  Widget _statusChip(LlTokens t, String value, String label) {
+    final active = _statusFilter == value;
+    return Material(
+      color: active ? t.primarySoft : t.bgElev2,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: () => setState(() => _statusFilter = value),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: active ? t.primary : t.border),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: active ? t.primary : t.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _searchInput(
+    LlTokens t, {
+    required IconData icon,
+    required String hint,
+    required void Function(String) onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: t.bgElev2,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: t.border),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: t.textMuted),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              onChanged: onChanged,
+              style: TextStyle(color: t.textPrimary, fontSize: 13),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: hint,
+                hintStyle: TextStyle(color: t.textMuted, fontSize: 13),
+                border: InputBorder.none,
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyBox(LlTokens t,
+      {required IconData icon, required String title, required String sub}) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      decoration: BoxDecoration(
+        color: t.bgElev1,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: t.border),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: t.primarySoft,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: t.primary, size: 26),
+          ),
+          const SizedBox(height: 14),
+          Text(title,
+              style: TextStyle(
+                color: t.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              )),
+          const SizedBox(height: 4),
+          Text(sub,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: t.textMuted, fontSize: 12)),
+        ],
+      ),
+    );
+  }
 }
 
-// ──────────────────────────────────────────────────────────────
-// Dialog: Novo Agendamento (criado pelo franqueado)
-// ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SolRow
+// ─────────────────────────────────────────────────────────────────────────────
 
-class _NovoAgendamentoDialog extends StatefulWidget {
+class _SolRow extends StatelessWidget {
+  final LlTokens t;
+  final SolicitacaoFranqueador s;
+  final VoidCallback onAprovar;
+  final VoidCallback onRecusar;
+  final bool pending;
+  const _SolRow({
+    required this.t,
+    required this.s,
+    required this.onAprovar,
+    required this.onRecusar,
+    required this.pending,
+  });
+
+  Color _statusColor(LlTokens t, String st) {
+    switch (st) {
+      case 'aprovada':
+        return t.success;
+      case 'recusada':
+        return t.danger;
+      default:
+        return t.warning;
+    }
+  }
+
+  String _statusLabel(String st) {
+    switch (st) {
+      case 'aprovada':
+        return 'Aprovada';
+      case 'recusada':
+        return 'Recusada';
+      default:
+        return 'Pendente';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = LlResponsive.of(context);
+    final stack = r.isMobile;
+    final accentLeftBorder = pending ? t.primary : _statusColor(t, s.status);
+
+    final left = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: t.bgElev2,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: t.border),
+          ),
+          child: Text(
+            'CABINE ${s.cabineNumero.toString().padLeft(2, '0')}',
+            style: TextStyle(
+              color: t.textPrimary,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                s.clienteNome,
+                style: TextStyle(
+                  color: t.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                children: [
+                  _meta(t, Icons.calendar_today_outlined,
+                      '${_ddmmyyyy(s.dataSolicitada)} às ${s.horaInicioDisplay}'),
+                  _meta(t, Icons.schedule,
+                      '${s.horaInicioDisplay} – ${s.horaFimDisplay}'),
+                  _meta(t, Icons.mic_none_rounded,
+                      s.apresentadoraNome ?? s.solicitanteNome),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    final right = pending
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _actionBtn(t,
+                  icon: Icons.close,
+                  label: 'Recusar',
+                  fg: t.danger,
+                  bg: t.dangerSoft,
+                  onTap: onRecusar),
+              const SizedBox(width: 8),
+              _actionBtn(t,
+                  icon: Icons.check,
+                  label: 'Aprovar',
+                  fg: Colors.white,
+                  bg: t.success,
+                  onTap: onAprovar),
+            ],
+          )
+        : Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: _statusColor(t, s.status).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              _statusLabel(s.status),
+              style: TextStyle(
+                color: _statusColor(t, s.status),
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.4,
+              ),
+            ),
+          );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: t.bgElev1,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: t.border),
+        boxShadow: t.shadowCard,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Row(
+          children: [
+            Container(width: 4, color: accentLeftBorder),
+            Expanded(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: stack
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          left,
+                          const SizedBox(height: 12),
+                          Align(alignment: Alignment.centerRight, child: right),
+                        ],
+                      )
+                    : Row(children: [
+                        Expanded(child: left),
+                        const SizedBox(width: 12),
+                        right,
+                      ]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _meta(LlTokens t, IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: t.textMuted),
+        const SizedBox(width: 4),
+        Text(text,
+            style: TextStyle(color: t.textMuted, fontSize: 11.5)),
+      ],
+    );
+  }
+
+  Widget _actionBtn(LlTokens t,
+      {required IconData icon,
+      required String label,
+      required Color fg,
+      required Color bg,
+      required VoidCallback onTap}) {
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: fg,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+String _ddmmyyyy(String iso) {
+  // 'YYYY-MM-DD' → 'DD/MM/YYYY'
+  if (iso.length < 10) return iso;
+  return '${iso.substring(8, 10)}/${iso.substring(5, 7)}/${iso.substring(0, 4)}';
+}
+
+Widget _errorBox(LlTokens t, Object e) {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: t.dangerSoft,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: t.danger.withValues(alpha: 0.3)),
+    ),
+    child: Row(
+      children: [
+        Icon(Icons.error_outline, color: t.danger),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            ApiService.extractErrorMessage(e),
+            style: TextStyle(color: t.danger, fontSize: 13),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Novo Agendamento Dialog (com pickers reais)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _NovoAgendamentoDialog extends ConsumerStatefulWidget {
   final Future<void> Function(Map<String, dynamic> data) onSalvar;
-
   const _NovoAgendamentoDialog({required this.onSalvar});
 
   @override
-  State<_NovoAgendamentoDialog> createState() => _NovoAgendamentoDialogState();
+  ConsumerState<_NovoAgendamentoDialog> createState() =>
+      _NovoAgendamentoDialogState();
 }
 
-class _NovoAgendamentoDialogState extends State<_NovoAgendamentoDialog> {
-  final _cabineIdCtrl      = TextEditingController();
-  final _clienteIdCtrl     = TextEditingController();
-  final _apresentadoraCtrl = TextEditingController();
-  final _dataCtrl          = TextEditingController();
-  final _horaInicioCtrl    = TextEditingController();
-  final _horaFimCtrl       = TextEditingController();
-  final _obsCtrl           = TextEditingController();
+class _NovoAgendamentoDialogState
+    extends ConsumerState<_NovoAgendamentoDialog> {
+  Cabine? _cabine;
+  Cliente? _cliente;
+  Apresentadora? _apresentadora;
+  DateTime? _data;
+  TimeOfDay? _horaInicio;
+  TimeOfDay? _horaFim;
+  final _obsCtrl = TextEditingController();
   bool _saving = false;
 
   @override
   void dispose() {
-    _cabineIdCtrl.dispose();
-    _clienteIdCtrl.dispose();
-    _apresentadoraCtrl.dispose();
-    _dataCtrl.dispose();
-    _horaInicioCtrl.dispose();
-    _horaFimCtrl.dispose();
     _obsCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _salvar() async {
-    final cabineId  = _cabineIdCtrl.text.trim();
-    final clienteId = _clienteIdCtrl.text.trim();
-    final data      = _dataCtrl.text.trim();
-    final hI        = _horaInicioCtrl.text.trim();
-    final hF        = _horaFimCtrl.text.trim();
+  Future<void> _pickData() async {
+    final t = context.llTokens;
+    final picked = await showDatePicker(
+      context: context,
+      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: _data ?? DateTime.now(),
+      helpText: 'Data do agendamento',
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: Theme.of(ctx).colorScheme.copyWith(
+                primary: t.primary,
+                onPrimary: Colors.white,
+                surface: t.bgElev1,
+                onSurface: t.textPrimary,
+              ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) setState(() => _data = picked);
+  }
 
-    if (cabineId.isEmpty || clienteId.isEmpty || data.isEmpty || hI.isEmpty || hF.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Preencha todos os campos obrigatórios')));
+  Future<void> _pickHora({required bool inicio}) async {
+    final t = context.llTokens;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: (inicio ? _horaInicio : _horaFim) ??
+          const TimeOfDay(hour: 9, minute: 0),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: Theme.of(ctx).colorScheme.copyWith(
+                primary: t.primary,
+                onPrimary: Colors.white,
+                surface: t.bgElev1,
+                onSurface: t.textPrimary,
+              ),
+        ),
+        child: MediaQuery(
+          data: MediaQuery.of(ctx)
+              .copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        ),
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        if (inicio) {
+          _horaInicio = picked;
+        } else {
+          _horaFim = picked;
+        }
+      });
+    }
+  }
+
+  String _fmtTime(TimeOfDay? t) {
+    if (t == null) return '--:--';
+    return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _salvar() async {
+    final t = context.llTokens;
+    if (_cabine == null ||
+        _cliente == null ||
+        _data == null ||
+        _horaInicio == null ||
+        _horaFim == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: t.danger,
+        content: const Text('Preencha cabine, cliente, data e horários'),
+      ));
       return;
     }
-
     setState(() => _saving = true);
     try {
       await widget.onSalvar({
-        'cabine_id':        cabineId,
-        'cliente_id':       clienteId,
-        if (_apresentadoraCtrl.text.trim().isNotEmpty)
-          'apresentadora_id': _apresentadoraCtrl.text.trim(),
-        'data_solicitada':  data,
-        'hora_inicio':      hI,
-        'hora_fim':         hF,
+        'cabine_id': _cabine!.id,
+        'cliente_id': _cliente!.id,
+        if (_apresentadora != null) 'apresentadora_id': _apresentadora!.id,
+        'data_solicitada':
+            '${_data!.year}-${_data!.month.toString().padLeft(2, '0')}-${_data!.day.toString().padLeft(2, '0')}',
+        'hora_inicio': '${_fmtTime(_horaInicio)}:00',
+        'hora_fim': '${_fmtTime(_horaFim)}:00',
         if (_obsCtrl.text.trim().isNotEmpty)
           'observacao': _obsCtrl.text.trim(),
       });
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: t.success,
+          content: const Text('Agendamento criado com sucesso'),
+        ));
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(ApiService.extractErrorMessage(e))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: t.danger,
+          content: Text(ApiService.extractErrorMessage(e)),
+        ));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -936,63 +1086,243 @@ class _NovoAgendamentoDialogState extends State<_NovoAgendamentoDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.llTokens;
+    final cabinesAsync = ref.watch(cabinesProvider);
+    final clientesAsync = ref.watch(clientesProvider);
+    final apresentadorasAsync = ref.watch(apresentadorasProvider);
+
+    final dataLabel = _data == null
+        ? 'Selecionar data'
+        : DateFormat('dd/MM/yyyy', 'pt_BR').format(_data!);
+
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg)),
-      title: const Row(children: [
-        Icon(Icons.calendar_month, color: AppColors.primary, size: 20),
-        SizedBox(width: AppSpacing.x2),
-        Text('Novo Agendamento'),
-      ]),
+      backgroundColor: t.bgElev1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(
+        children: [
+          Icon(Icons.event_available, color: t.primary, size: 20),
+          const SizedBox(width: 10),
+          Text('Novo agendamento',
+              style: TextStyle(
+                  color: t.textPrimary, fontWeight: FontWeight.w700)),
+        ],
+      ),
       content: SizedBox(
-        width: 420,
+        width: 460,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AppTextField(controller: _cabineIdCtrl,
-                  hint: 'ID da Cabine *'),
-              const SizedBox(height: AppSpacing.x3),
-              AppTextField(controller: _clienteIdCtrl,
-                  hint: 'ID do Cliente *'),
-              const SizedBox(height: AppSpacing.x3),
-              AppTextField(controller: _apresentadoraCtrl,
-                  hint: 'ID da Apresentadora (opcional)'),
-              const SizedBox(height: AppSpacing.x3),
-              AppTextField(controller: _dataCtrl,
-                  hint: 'Data (YYYY-MM-DD) *',
-                  keyboardType: TextInputType.datetime),
-              const SizedBox(height: AppSpacing.x3),
-              Row(children: [
-                Expanded(
-                  child: AppTextField(controller: _horaInicioCtrl,
-                      hint: 'Início (HH:MM) *',
-                      keyboardType: TextInputType.datetime),
+              _label(t, 'Cabine *'),
+              cabinesAsync.when(
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => _errorBox(t, e),
+                data: (list) => DropdownButtonFormField<Cabine>(
+                  initialValue: _cabine,
+                  isExpanded: true,
+                  dropdownColor: t.bgElev1,
+                  style: TextStyle(color: t.textPrimary, fontSize: 13),
+                  decoration: _ddDecoration(t),
+                  items: list
+                      .map((c) => DropdownMenuItem<Cabine>(
+                            value: c,
+                            child: Text(
+                              'Cabine ${c.numero.toString().padLeft(2, '0')}'
+                              '${c.nome != null ? ' · ${c.nome}' : ''}',
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (v) => setState(() => _cabine = v),
                 ),
-                const SizedBox(width: AppSpacing.x2),
-                Expanded(
-                  child: AppTextField(controller: _horaFimCtrl,
-                      hint: 'Fim (HH:MM) *',
-                      keyboardType: TextInputType.datetime),
+              ),
+              const SizedBox(height: 12),
+              _label(t, 'Cliente *'),
+              clientesAsync.when(
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => _errorBox(t, e),
+                data: (list) => DropdownButtonFormField<Cliente>(
+                  initialValue: _cliente,
+                  isExpanded: true,
+                  dropdownColor: t.bgElev1,
+                  style: TextStyle(color: t.textPrimary, fontSize: 13),
+                  decoration: _ddDecoration(t),
+                  items: list
+                      .map((c) => DropdownMenuItem<Cliente>(
+                            value: c,
+                            child: Text(c.nome,
+                                overflow: TextOverflow.ellipsis),
+                          ))
+                      .toList(),
+                  onChanged: (v) => setState(() => _cliente = v),
                 ),
-              ]),
-              const SizedBox(height: AppSpacing.x3),
-              AppTextField(controller: _obsCtrl,
-                  hint: 'Observação (opcional)',
-                  keyboardType: TextInputType.multiline),
+              ),
+              const SizedBox(height: 12),
+              _label(t, 'Apresentadora (opcional)'),
+              apresentadorasAsync.when(
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => _errorBox(t, e),
+                data: (list) => DropdownButtonFormField<Apresentadora?>(
+                  initialValue: _apresentadora,
+                  isExpanded: true,
+                  dropdownColor: t.bgElev1,
+                  style: TextStyle(color: t.textPrimary, fontSize: 13),
+                  decoration: _ddDecoration(t),
+                  items: <DropdownMenuItem<Apresentadora?>>[
+                    DropdownMenuItem<Apresentadora?>(
+                      value: null,
+                      child: Text('— Sem apresentadora —',
+                          style: TextStyle(color: t.textMuted)),
+                    ),
+                    ...list.map((a) => DropdownMenuItem<Apresentadora?>(
+                          value: a,
+                          child:
+                              Text(a.nome, overflow: TextOverflow.ellipsis),
+                        )),
+                  ],
+                  onChanged: (v) => setState(() => _apresentadora = v),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _label(t, 'Data *'),
+              _pickerTile(t,
+                  icon: Icons.calendar_today_outlined,
+                  text: dataLabel,
+                  onTap: _pickData),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _label(t, 'Início *'),
+                        _pickerTile(t,
+                            icon: Icons.schedule,
+                            text: _fmtTime(_horaInicio),
+                            onTap: () => _pickHora(inicio: true)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _label(t, 'Fim *'),
+                        _pickerTile(t,
+                            icon: Icons.schedule,
+                            text: _fmtTime(_horaFim),
+                            onTap: () => _pickHora(inicio: false)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _label(t, 'Observação (opcional)'),
+              TextField(
+                controller: _obsCtrl,
+                maxLines: 2,
+                style: TextStyle(color: t.textPrimary, fontSize: 13),
+                decoration: _ddDecoration(t).copyWith(
+                  hintText: 'Detalhes ou contexto adicional…',
+                  hintStyle: TextStyle(color: t.textMuted),
+                ),
+              ),
             ],
           ),
         ),
       ),
       actions: [
-        AppSecondaryButton(
-            label: 'Cancelar',
-            onPressed: () => Navigator.of(context).pop()),
-        AppPrimaryButton(
-            label: 'Agendar',
-            isLoading: _saving,
-            onPressed: _salvar),
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context),
+          child:
+              Text('Cancelar', style: TextStyle(color: t.textSecondary)),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: t.primary),
+          onPressed: _saving ? null : _salvar,
+          child: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white))
+              : const Text('Agendar'),
+        ),
       ],
+    );
+  }
+
+  Widget _label(LlTokens t, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(text,
+          style: TextStyle(
+            color: t.textMuted,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.0,
+          )),
+    );
+  }
+
+  InputDecoration _ddDecoration(LlTokens t) {
+    return InputDecoration(
+      isDense: true,
+      filled: true,
+      fillColor: t.bgElev2,
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: t.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: t.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: t.primary),
+      ),
+    );
+  }
+
+  Widget _pickerTile(LlTokens t,
+      {required IconData icon,
+      required String text,
+      required VoidCallback onTap}) {
+    return Material(
+      color: t.bgElev2,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: t.border),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 14, color: t.textMuted),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(text,
+                    style: TextStyle(
+                        color: t.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600)),
+              ),
+              Icon(Icons.expand_more,
+                  size: 16, color: t.textMuted),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

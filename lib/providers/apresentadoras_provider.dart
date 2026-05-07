@@ -24,13 +24,41 @@ class ApresentadorasNotifier extends AsyncNotifier<List<Apresentadora>> {
     state = await AsyncValue.guard(_fetch);
   }
 
-  Future<void> salvar(Map<String, dynamic> data, {String? id}) async {
+  Future<String> salvar(Map<String, dynamic> data, {String? id}) async {
+    String savedId;
     if (id == null) {
-      await ApiService.post('/apresentadoras', data: data);
+      final resp = await ApiService.post<Map<String, dynamic>>(
+        '/apresentadoras',
+        data: data,
+      );
+      savedId = resp.data!['id'] as String;
     } else {
       await ApiService.patch('/apresentadoras/$id', data: data);
+      savedId = id;
     }
     state = await AsyncValue.guard(_fetch);
+    return savedId;
+  }
+
+  Future<void> deletar(String id) async {
+    await ApiService.delete('/apresentadoras/$id');
+    state = await AsyncValue.guard(_fetch);
+  }
+
+  /// Cria conta de usuário (papel: apresentador) vinculada à apresentadora.
+  Future<void> criarUsuario({
+    required String apresentadoraId,
+    required String nome,
+    required String email,
+    required String senha,
+  }) async {
+    await ApiService.post('/usuarios', data: {
+      'nome': nome,
+      'email': email,
+      'papel': 'apresentador',
+      'apresentadora_id': apresentadoraId,
+      'senha_temporaria': senha,
+    });
   }
 }
 

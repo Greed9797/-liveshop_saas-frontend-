@@ -32,6 +32,16 @@ class ClientesNotifier extends AsyncNotifier<List<Cliente>> {
     return cliente;
   }
 
+  Future<Cliente> atualizar(String id, Map<String, dynamic> data) async {
+    final resp = await ApiService.patch('/clientes/$id', data: data);
+    final updated = Cliente.fromJson(resp.data as Map<String, dynamic>);
+    state = AsyncData(
+      state.valueOrNull?.map((c) => c.id == id ? updated : c).toList() ??
+          [updated],
+    );
+    return updated;
+  }
+
   Future<Map<String, dynamic>> buscarCep(String cep) async {
     final resp = await ApiService.get('/cep/$cep');
     return resp.data as Map<String, dynamic>;
