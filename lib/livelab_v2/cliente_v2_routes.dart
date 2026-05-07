@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/theme_mode_provider.dart';
 import '../routes/app_routes.dart';
-import '../screens/cliente/cliente_configuracoes_screen.dart';
 import '../screens/cliente/cliente_home_v3_screen.dart';
 import '../widgets/app_scaffold.dart';
 import 'core/ll_theme.dart';
 import 'screens/agenda_screen.dart';
+import 'screens/config_screen.dart';
 import 'screens/minhas_lives_screen.dart';
 
 class _LlScope extends ConsumerWidget {
@@ -66,8 +66,12 @@ class ClienteAgendaV2 extends StatelessWidget {
 class ClienteConfigV2 extends StatelessWidget {
   const ClienteConfigV2({super.key});
 
-  // ClienteConfiguracoesScreen já usa AppScreenScaffold (que provê AppScaffold interno).
-  // Wrappar em _LlScope causa 2 scaffolds aninhados → tela cinza.
+  // Reusa ConfigScreen do livelab_v2 (refatorada com troca senha real,
+  // dados via authProvider, sem botões inertes). Antes apontava para
+  // ClienteConfiguracoesScreen legacy que tinha placeholders.
   @override
-  Widget build(BuildContext context) => const ClienteConfiguracoesScreen();
+  Widget build(BuildContext context) => const _LlScope(
+        currentRoute: AppRoutes.clienteConfiguracoes,
+        child: ConfigScreen(),
+      );
 }

@@ -12,6 +12,14 @@ import '../../livelab/theme/tokens.dart';
 import '../../livelab/widgets/livelab_scaffold.dart';
 import '../../services/api_service.dart';
 
+String _formatDeltaPct(num delta, bool positive) {
+  final abs = delta.abs();
+  // Cap em ±999% — valores acima viram setinha tripla.
+  // Ex: período anterior ~zero gera deltas como +42854% — sem sentido visualmente.
+  if (abs > 999) return positive ? '↑↑↑' : '↓↓↓';
+  return '${positive ? '+' : ''}${delta.toStringAsFixed(1)}%';
+}
+
 class AnalyticsDashboardScreen extends ConsumerStatefulWidget {
   const AnalyticsDashboardScreen({super.key});
 
@@ -464,7 +472,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
           Icon(positive ? Icons.trending_up : Icons.trending_down, size: 11, color: color),
           const SizedBox(width: 3),
           Text(
-            '${positive ? '+' : ''}$delta%',
+            _formatDeltaPct(delta, positive),
             style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
           ),
         ],

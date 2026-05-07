@@ -146,7 +146,7 @@ class RecomendacoesScreen extends ConsumerWidget {
                             ),
                             r.status == 'convertido'
                                 ? Text(
-                                    '+R\$ ${NumberFormat.currency(locale: 'pt_BR', symbol: '').format(500.0)}',
+                                    '+${NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2).format(500.0)}',
                                     style: AppTypography.bodyMedium.copyWith(
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.primary,

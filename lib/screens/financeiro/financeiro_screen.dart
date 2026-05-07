@@ -256,6 +256,15 @@ final _fmtBrlCompact =
 final _fmtBrl =
     NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2);
 
+String _fmtCompetencia(String iso) {
+  try {
+    final d = DateTime.parse(iso);
+    return DateFormat('dd/MM/yyyy', 'pt_BR').format(d);
+  } catch (_) {
+    return iso.split('T').first;
+  }
+}
+
 Widget _cardShell(
   LlTokens t, {
   required Widget child,
@@ -809,7 +818,7 @@ class _CustoTile extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  custo.competencia,
+                  _fmtCompetencia(custo.competencia),
                   style: TextStyle(color: t.textMuted, fontSize: 11),
                 ),
               ],
