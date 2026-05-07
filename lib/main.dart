@@ -22,6 +22,9 @@ const String e2eRole = String.fromEnvironment(
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // A11y on por default — ativar Flutter semantics tree para screen readers
+  // funcionarem sem o usuário precisar clicar "Enable accessibility".
+  WidgetsBinding.instance.ensureSemantics();
   await initializeDateFormatting('pt_BR', null);
   await ApiService.init();
 
