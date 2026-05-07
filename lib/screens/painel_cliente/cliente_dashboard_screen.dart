@@ -860,9 +860,7 @@ class _ProximasLivesCard extends ConsumerWidget {
   }
 
   void _onSolicitarLive(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Em breve')),
-    );
+    Navigator.of(context).pushNamed(AppRoutes.clienteAgenda);
   }
 }
 
@@ -1020,11 +1018,7 @@ class _NovaLiveCta extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Em breve')),
-          );
-        },
+        onPressed: () => Navigator.of(context).pushNamed(AppRoutes.clienteAgenda),
         icon: Icon(PhosphorIcons.plus(), size: 18),
         label: const Text('Solicitar nova live'),
         style: OutlinedButton.styleFrom(

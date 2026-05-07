@@ -5,6 +5,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../design_system/design_system.dart';
+import '../../providers/cliente_perfil_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../widgets/user_logo_widget.dart';
@@ -46,6 +47,23 @@ class _ClienteConfiguracoesScreenState
   void initState() {
     super.initState();
     _novaSenhaCtrl.addListener(() => setState(() {}));
+    _loadPerfil();
+  }
+
+  Future<void> _loadPerfil() async {
+    try {
+      final resp = await ApiService.get<Map<String, dynamic>>('/cliente/perfil');
+      final data = resp.data as Map<String, dynamic>;
+      if (!mounted) return;
+      setState(() {
+        final site = data['site'] as String?;
+        if (site != null && site.isNotEmpty) _siteCtrl.text = site;
+        final logo = data['logo_url'] as String?;
+        if (logo != null && logo.isNotEmpty) _clienteLogoUrl = logo;
+      });
+    } catch (_) {
+      // silencioso — campos ficam vazios
+    }
   }
 
   @override
@@ -76,6 +94,8 @@ class _ClienteConfiguracoesScreenState
       }
       if (!mounted) return;
       setState(() => _clienteLogoUrl = url);
+      // Invalida perfil pra atualizar avatar topbar/sidebar imediatamente.
+      ref.invalidate(clientePerfilProvider);
       _snack('Logo atualizado!');
     } catch (e) {
       if (!mounted) return;

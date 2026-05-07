@@ -49,18 +49,6 @@ class _MinhasLivesScreenState extends State<MinhasLivesScreen> {
                           label: const Text('Registrar Live'),
                           style: FilledButton.styleFrom(backgroundColor: LL.accent),
                         ),
-                        _TopMetric(
-                            label: 'Total no mês',
-                            value: '24',
-                            color: LL.accent),
-                        _TopMetric(
-                            label: 'GMV total',
-                            value: 'R\$ 142k',
-                            color: LL.success),
-                        _TopMetric(
-                            label: 'Ticket médio',
-                            value: 'R\$ 184',
-                            color: LL.info),
                       ]),
                     ],
                   ),
@@ -111,36 +99,6 @@ class _MinhasLivesScreenState extends State<MinhasLivesScreen> {
               onSolicitar: () => setState(() => tab = 'solicitar'))
         else
           _HistoryList(items: historico),
-      ],
-    );
-  }
-}
-
-class _TopMetric extends StatelessWidget {
-  const _TopMetric(
-      {required this.label, required this.value, required this.color});
-  final String label;
-  final String value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(label.toUpperCase(),
-            style: TextStyle(
-                fontSize: 10,
-                color: context.llTextMuted,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.4)),
-        const SizedBox(height: 2),
-        Text(value,
-            style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                color: color,
-                letterSpacing: -0.5)),
       ],
     );
   }
@@ -380,9 +338,17 @@ class _AgendaList extends StatelessWidget {
               fontWeight: FontWeight.w800,
               color: context.llTextPrimary)),
       const SizedBox(height: 2),
-      Text('Quinta, 29 de abril · 3 lives agendadas',
+      Text('${items.length} ${items.length == 1 ? 'live agendada' : 'lives agendadas'}',
           style: LL.caption.copyWith(fontSize: 11.5)),
       const SizedBox(height: 12),
+      if (items.isEmpty)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Center(
+            child: Text('Sem agendamentos no momento.',
+                style: LL.caption.copyWith(fontSize: 12)),
+          ),
+        ),
       for (final item in items)
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
@@ -441,9 +407,12 @@ class SolicitarCalendar extends StatefulWidget {
 }
 
 class _SolicitarCalendarState extends State<SolicitarCalendar> {
-  int selectedDay = 2;
+  late DateTime _weekStart;
+  int selectedDay = 0;
   String? selectedSlot;
   final Map<String, String> booked = {};
+
+  static const _diasNomes = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
   late final List<String> times = [
     for (var h = 8; h <= 20; h++) ...[
@@ -453,23 +422,41 @@ class _SolicitarCalendarState extends State<SolicitarCalendar> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _weekStart = DateTime(now.year, now.month, now.day - (now.weekday - 1));
+    selectedDay = now.weekday - 1; // hoje
+  }
+
+  void _shiftWeek(int delta) {
+    setState(() {
+      _weekStart = _weekStart.add(Duration(days: 7 * delta));
+      selectedDay = 0;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     const colW = 100.0;
     const timeW = 56.0;
     const rowH = 38.0;
-    final days = const [
-      ('Seg', 27),
-      ('Ter', 28),
-      ('Qui', 29),
-      ('Sex', 30),
-      ('Sáb', 1),
-      ('Dom', 2),
-      ('Dom', 3)
-    ];
+    final today = DateTime.now();
+    final todayKey = DateTime(today.year, today.month, today.day);
+    final days = List.generate(7, (i) {
+      final d = _weekStart.add(Duration(days: i));
+      return (_diasNomes[i], d.day, d, DateTime(d.year, d.month, d.day) == todayKey);
+    });
+    final weekEnd = _weekStart.add(const Duration(days: 6));
+    final headerLabel =
+        'Semana de ${llPad2(_weekStart.day)}/${llPad2(_weekStart.month)} a ${llPad2(weekEnd.day)}/${llPad2(weekEnd.month)}';
 
     return Column(children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        const _WeekButton2(label: 'Anterior', icon: Icons.chevron_left_rounded),
+        InkWell(
+          onTap: () => _shiftWeek(-1),
+          child: const _WeekButton2(label: 'Anterior', icon: Icons.chevron_left_rounded),
+        ),
         Column(children: [
           Text('Solicitar nova live',
               style: TextStyle(
@@ -477,16 +464,19 @@ class _SolicitarCalendarState extends State<SolicitarCalendar> {
                   fontWeight: FontWeight.w800,
                   color: context.llTextPrimary)),
           const SizedBox(height: 2),
-          Text('Clique em um horário disponível · Semana de 27/04 a 03/05',
+          Text('Clique em um horário disponível · $headerLabel',
               style: TextStyle(
                   fontSize: 11.5,
                   color: context.llTextMuted,
                   fontWeight: FontWeight.w500)),
         ]),
-        const _WeekButton2(
-            label: 'Próxima',
-            icon: Icons.chevron_right_rounded,
-            trailing: true),
+        InkWell(
+          onTap: () => _shiftWeek(1),
+          child: const _WeekButton2(
+              label: 'Próxima',
+              icon: Icons.chevron_right_rounded,
+              trailing: true),
+        ),
       ]),
       const SizedBox(height: 14),
       Wrap(
@@ -502,7 +492,7 @@ class _SolicitarCalendarState extends State<SolicitarCalendar> {
                   width: 58,
                   padding: const EdgeInsets.symmetric(vertical: 7),
                   decoration: BoxDecoration(
-                      color: i == 2
+                      color: days[i].$4
                           ? LL.accent
                           : selectedDay == i
                               ? context.llSurface3
@@ -513,13 +503,13 @@ class _SolicitarCalendarState extends State<SolicitarCalendar> {
                         style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
-                            color: i == 2 ? Colors.white : context.llTextMuted,
+                            color: days[i].$4 ? Colors.white : context.llTextMuted,
                             letterSpacing: 0.6)),
                     Text('${days[i].$2}',
                         style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w900,
-                            color: i == 2
+                            color: days[i].$4
                                 ? Colors.white
                                 : selectedDay == i
                                     ? context.llTextPrimary

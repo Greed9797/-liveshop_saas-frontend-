@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/theme_mode_provider.dart';
 import '../routes/app_routes.dart';
-import '../screens/painel_cliente/cliente_dashboard_screen.dart';
+import '../screens/cliente/cliente_configuracoes_screen.dart';
+import '../screens/cliente/cliente_home_v3_screen.dart';
 import '../widgets/app_scaffold.dart';
 import 'core/ll_theme.dart';
 import 'screens/agenda_screen.dart';
-import 'screens/config_screen.dart';
 import 'screens/minhas_lives_screen.dart';
 
 class _LlScope extends ConsumerWidget {
@@ -37,7 +37,10 @@ class ClienteHomeV2 extends StatelessWidget {
   const ClienteHomeV2({super.key});
 
   @override
-  Widget build(BuildContext context) => const ClienteDashboardScreen();
+  Widget build(BuildContext context) => const _LlScope(
+        currentRoute: AppRoutes.cliente,
+        child: ClienteHomeV3Screen(),
+      );
 }
 
 class ClienteCabinesV2 extends StatelessWidget {
@@ -63,9 +66,8 @@ class ClienteAgendaV2 extends StatelessWidget {
 class ClienteConfigV2 extends StatelessWidget {
   const ClienteConfigV2({super.key});
 
+  // ClienteConfiguracoesScreen já usa AppScreenScaffold (que provê AppScaffold interno).
+  // Wrappar em _LlScope causa 2 scaffolds aninhados → tela cinza.
   @override
-  Widget build(BuildContext context) => const _LlScope(
-        currentRoute: AppRoutes.clienteConfiguracoes,
-        child: ConfigScreen(),
-      );
+  Widget build(BuildContext context) => const ClienteConfiguracoesScreen();
 }

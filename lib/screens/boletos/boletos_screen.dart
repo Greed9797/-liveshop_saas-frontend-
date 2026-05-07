@@ -93,7 +93,7 @@ class _BoletosTabState extends ConsumerState<BoletosTab> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text(
-          'Gateway Asaas não configurado — pagamento estará disponível em breve.',
+          'Pagamento online indisponível no momento. Use o código de barras ou PIX manualmente.',
         ),
         backgroundColor: AppColors.warningFg,
         duration: const Duration(seconds: 3),

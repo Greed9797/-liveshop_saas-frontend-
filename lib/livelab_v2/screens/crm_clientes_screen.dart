@@ -70,7 +70,7 @@ class _CRMClientesScreenState extends State<CRMClientesScreen> {
                       children: const [
                         _TopKpi(
                             label: 'Ativos',
-                            value: '13',
+                            value: '0',
                             sub: 'com contrato em operação',
                             color: LL.success,
                             icon: Icons.check_rounded),
@@ -94,19 +94,15 @@ class _CRMClientesScreenState extends State<CRMClientesScreen> {
                     final compact = constraints.maxWidth < 900;
                     final items = const [
                       _MetricCard(
-                          label: 'LTV Total',
-                          value: 'R\$ 1,84M',
-                          delta: '+12%'),
+                          label: 'LTV Total', value: 'R\$ 0', delta: ''),
                       _MetricCard(
                           label: 'Faturamento Acumulado',
-                          value: 'R\$ 842k',
-                          delta: '+8%'),
+                          value: 'R\$ 0',
+                          delta: ''),
                       _MetricCard(
-                          label: 'Total de Lives', value: '284', delta: '+18'),
+                          label: 'Total de Lives', value: '0', delta: ''),
                       _MetricCard(
-                          label: 'Comissão Paga',
-                          value: 'R\$ 28.400',
-                          delta: '+6%'),
+                          label: 'Comissão Paga', value: 'R\$ 0', delta: ''),
                     ];
                     return GridView.count(
                       shrinkWrap: true,
@@ -626,53 +622,52 @@ class _ClientDrawerState extends State<ClientDrawer> {
 
   Widget _drawerBody(Client c) {
     if (tab == 'lives') {
-      final lives = [
-        ('Hoje · 13:08', '${c.name} Demo', '1h 24min', 18290, 3842),
-        ('Ontem · 19:30', 'Coleção Verão', '2h 10min', 14820, 2104),
-        ('27/04 · 16:00', 'Flash Sale', '1h 48min', 11280, 1842),
-      ];
+      final lives = const <(String, String, String, int, int)>[];
       return Column(children: [
-        for (final l in lives)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: LLCard(
-              padding: const EdgeInsets.all(14),
-              radius: 10,
-              child: Row(children: [
-                Expanded(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                      Text(l.$2,
-                          style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: LL.textPrimary)),
-                      const SizedBox(height: 2),
-                      Text('${l.$1} · ${l.$3}',
-                          style: LL.caption.copyWith(fontSize: 11)),
-                    ])),
-                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  Text(llMoney(l.$4),
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          color: LL.success)),
-                  Text('${l.$5} viewers',
-                      style: LL.caption.copyWith(fontSize: 10)),
+        if (lives.isEmpty)
+          Text('Sem lives registradas para este cliente.', style: LL.caption)
+        else
+          for (final l in lives)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: LLCard(
+                padding: const EdgeInsets.all(14),
+                radius: 10,
+                child: Row(children: [
+                  Expanded(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                        Text(l.$2,
+                            style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: LL.textPrimary)),
+                        const SizedBox(height: 2),
+                        Text('${l.$1} · ${l.$3}',
+                            style: LL.caption.copyWith(fontSize: 11)),
+                      ])),
+                  Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    Text(llMoney(l.$4),
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            color: LL.success)),
+                    Text('${l.$5} viewers',
+                        style: LL.caption.copyWith(fontSize: 10)),
+                  ]),
                 ]),
-              ]),
+              ),
             ),
-          ),
       ]);
     }
 
     if (tab == 'financeiro') {
       final rows = [
         ('LTV acumulado', c.faturamento, LL.success),
-        ('Comissão gerada', 'R\$ 6.000', LL.accent),
-        ('Plano ativo', 'Pro · R\$ 490/mês', LL.textPrimary),
-        ('Próximo vencimento', '30/05/2026', LL.warning),
+        ('Comissão gerada', 'R\$ 0', LL.accent),
+        ('Plano ativo', 'Sem plano ativo', LL.textPrimary),
+        ('Próximo vencimento', 'Sem vencimento', LL.warning),
       ];
       return Column(children: [
         for (final r in rows)

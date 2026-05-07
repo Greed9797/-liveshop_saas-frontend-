@@ -137,18 +137,7 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
           ),
         ),
 
-        // Futuramente outros relatórios da franquia entrarão aqui abaixo...
-        SliverPadding(
-            padding: const EdgeInsets.all(AppSpacing.x6),
-            sliver: SliverToBoxAdapter(
-              child: Text(
-                'Mais relatórios de Inteligência de Negócio em breve...',
-                style: AppTypography.caption.copyWith(
-                    color: context.colors.textSecondary,
-                    fontStyle: FontStyle.italic),
-                textAlign: TextAlign.center,
-              ),
-            ))
+        const SliverToBoxAdapter(child: SizedBox.shrink())
       ],
     );
   }

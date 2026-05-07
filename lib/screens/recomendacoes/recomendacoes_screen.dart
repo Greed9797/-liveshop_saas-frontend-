@@ -40,8 +40,7 @@ class RecomendacoesScreen extends ConsumerWidget {
                 final recs = recsAsync.valueOrNull ?? [];
                 final total = recs.length;
                 final convertidas = recs.where((r) => r.status == 'convertido').length;
-                final ganhos = recs.where((r) => r.status == 'convertido').length * 500.0; // placeholder per indication
-                final fmt = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 0);
+                final pendentes = recs.where((r) => r.status != 'convertido').length;
                 return ResponsiveGrid(
                   mobileColumns: 1,
                   tabletColumns: 3,
@@ -62,10 +61,10 @@ class RecomendacoesScreen extends ConsumerWidget {
                       valueColor: AppColors.success,
                     ),
                     KpiAccentCard(
-                      label: 'Ganhos',
-                      value: fmt.format(ganhos),
-                      sub: 'acumulados',
-                      valueColor: AppColors.primary,
+                      label: 'Pendentes',
+                      value: '$pendentes',
+                      sub: 'em acompanhamento',
+                      valueColor: AppColors.warningFg,
                     ),
                   ],
                 );

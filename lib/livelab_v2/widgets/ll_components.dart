@@ -8,26 +8,13 @@ class LLLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(size * 0.28),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [LL.accent, Color(0xFFFF2200)],
-        ),
-      ),
-      child: Text(
-        'L',
-        style: TextStyle(
-          fontSize: size * 0.5,
-          fontWeight: FontWeight.w900,
-          color: Colors.white,
-          letterSpacing: -0.8,
-        ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.28),
+      child: Image.asset(
+        'assets/images/favicon.png',
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
       ),
     );
   }

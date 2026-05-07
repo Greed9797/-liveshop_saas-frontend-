@@ -347,7 +347,7 @@ class _ScoreHeroCard extends StatelessWidget {
                                     ? 'Excelência'
                                     : score >= 50
                                         ? 'Operando'
-                                        : 'Em construção',
+                                        : 'Iniciando',
                                 type: score >= 80
                                     ? AppBadgeType.success
                                     : score >= 50

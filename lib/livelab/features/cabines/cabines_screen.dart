@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../routes/app_routes.dart';
+import '../../../services/api_service.dart';
 import '../../core/responsive.dart';
 import '../../theme/tokens.dart';
 import '../../theme/livelab_theme.dart';
@@ -24,24 +25,236 @@ class CabinesScreen extends StatefulWidget {
 
 class _CabinesScreenState extends State<CabinesScreen> {
   late Future<List<Cabin>> _future;
+  late Future<List<UpcomingScheduleEntry>> _proximasFuture;
   CabinFilters _filters = const CabinFilters();
   int? _selected;
+  final Set<String> _busy = {};
 
   @override
   void initState() {
     super.initState();
-    _future = widget.repository.fetchAll();
+    _reload();
   }
 
-  void _refresh() {
-    setState(() => _future = widget.repository.fetchAll());
+  void _reload() {
+    setState(() {
+      _future = widget.repository.fetchAll();
+      _proximasFuture = widget.repository.fetchProximas4h();
+    });
+  }
+
+  void _setBusy(String id, bool busy) {
+    if (!mounted) return;
+    setState(() {
+      if (busy) {
+        _busy.add(id);
+      } else {
+        _busy.remove(id);
+      }
+    });
+  }
+
+  void _toast(String msg, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: error ? Colors.red.shade700 : null,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> _runAction(Cabin c, Future<void> Function() action, String successMsg) async {
+    _setBusy(c.id, true);
+    try {
+      await action();
+      _toast(successMsg);
+      _reload();
+    } catch (e) {
+      _toast(ApiService.extractErrorMessage(e), error: true);
+    } finally {
+      _setBusy(c.id, false);
+    }
+  }
+
+  Future<void> _iniciarLive(Cabin c) async {
+    final clienteId = c.clienteId;
+    if (clienteId == null || clienteId.isEmpty) {
+      _toast('Cabine sem cliente vinculado. Reserve antes de iniciar.', error: true);
+      return;
+    }
+    final tituloCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Iniciar live · Cabine ${c.number.toString().padLeft(2, '0')}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(c.client ?? 'Cliente vinculado'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: tituloCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Título da live (opcional)',
+                hintText: 'Ex: Beauty Trend Quinta',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Iniciar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await _runAction(
+      c,
+      () => widget.repository.iniciarLiveManual(
+        c.id,
+        clienteId: clienteId,
+        titulo: tituloCtrl.text.trim().isEmpty ? null : tituloCtrl.text.trim(),
+      ),
+      'Live iniciada na cabine ${c.number.toString().padLeft(2, '0')}',
+    );
+  }
+
+  Future<void> _encerrarLive(Cabin c) async {
+    final liveId = c.liveAtualId;
+    if (liveId == null) {
+      _toast('Sem live ativa nesta cabine', error: true);
+      return;
+    }
+    final fatCtrl = TextEditingController(text: c.gmv > 0 ? c.gmv.toStringAsFixed(2) : '0');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Encerrar live · Cabine ${c.number.toString().padLeft(2, '0')}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Informe o faturamento gerado na live (R\$):'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: fatCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                prefixText: 'R\$ ',
+                hintText: '0.00',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Encerrar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final fat = double.tryParse(fatCtrl.text.replaceAll(',', '.')) ?? 0;
+    await _runAction(
+      c,
+      () => widget.repository.encerrarLive(liveId, fatGerado: fat),
+      'Live encerrada · R\$ ${fat.toStringAsFixed(2)}',
+    );
+  }
+
+  Future<void> _liberar(Cabin c) async {
+    await _runAction(
+      c,
+      () => widget.repository.liberarCabine(c.id),
+      'Cabine ${c.number.toString().padLeft(2, '0')} liberada',
+    );
+  }
+
+  Future<void> _setManutencao(Cabin c) async {
+    final motivoCtrl = TextEditingController();
+    final etaCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Agendar manutenção · Cabine ${c.number.toString().padLeft(2, '0')}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: motivoCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Motivo *',
+                hintText: 'Ex: troca de iluminação',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: etaCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Previsão de retorno (opcional)',
+                hintText: 'Ex: 16:00',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () {
+              if (motivoCtrl.text.trim().isEmpty) return;
+              Navigator.pop(ctx, true);
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await _runAction(
+      c,
+      () => widget.repository.setManutencao(
+        c.id,
+        motivo: motivoCtrl.text.trim(),
+        eta: etaCtrl.text.trim().isEmpty ? null : etaCtrl.text.trim(),
+      ),
+      'Cabine em manutenção',
+    );
+  }
+
+  Future<void> _abrirNovaLiveDialog(List<Cabin> all) async {
+    final disponiveis = all.where((c) =>
+      (c.status == CabinStatus.busy || c.status == CabinStatus.free) &&
+      c.clienteId != null && c.clienteId!.isNotEmpty
+    ).toList();
+    if (disponiveis.isEmpty) {
+      _toast('Nenhuma cabine com cliente vinculado. Reserve uma cabine primeiro.', error: true);
+      return;
+    }
+    final selected = await showDialog<Cabin>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Selecione a cabine'),
+        children: disponiveis.map((c) => SimpleDialogOption(
+          onPressed: () => Navigator.pop(ctx, c),
+          child: Text('Cabine ${c.number.toString().padLeft(2, '0')} · ${c.client ?? "—"}'),
+        )).toList(),
+      ),
+    );
+    if (selected != null) await _iniciarLive(selected);
   }
 
   @override
   Widget build(BuildContext context) {
     return LivelabScaffold(
       currentRoute: AppRoutes.cabines,
-      onRefresh: _refresh,
+      onRefresh: _reload,
       child: FutureBuilder<List<Cabin>>(
         future: _future,
         builder: (c, snap) {
@@ -86,7 +299,7 @@ class _CabinesScreenState extends State<CabinesScreen> {
           crossAxisCount: cols,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          mainAxisExtent: 360,
+          mainAxisExtent: 420,
         ),
         itemCount: filtered.length,
         itemBuilder: (_, i) {
@@ -94,7 +307,12 @@ class _CabinesScreenState extends State<CabinesScreen> {
           return CabinCard(
             cabin: c,
             selected: _selected == c.number,
+            busy: _busy.contains(c.id),
             onTap: () => setState(() => _selected = c.number),
+            onIniciarLive: () => _iniciarLive(c),
+            onEncerrarLive: () => _encerrarLive(c),
+            onLiberar: () => _liberar(c),
+            onSetManutencao: () => _setManutencao(c),
           );
         },
       );
@@ -104,7 +322,39 @@ class _CabinesScreenState extends State<CabinesScreen> {
         children: [
           OccupancyPanel(cabins: all),
           const SizedBox(height: LlSpacing.md),
-          ScheduleTimeline(entries: _scheduleEntries(all)),
+          FutureBuilder<List<UpcomingScheduleEntry>>(
+            future: _proximasFuture,
+            builder: (ctx, snap) {
+              final entries = snap.data ?? const <UpcomingScheduleEntry>[];
+              final liveCount = counts[CabinStatus.live] ?? 0;
+              final liveNumbers = all
+                  .where((c) => c.status == CabinStatus.live)
+                  .map((c) => c.number)
+                  .toList();
+              final list = <ScheduleEntry>[
+                if (liveCount > 0)
+                  ScheduleEntry(
+                    time: TimeOfDay.now().format(context),
+                    title: '$liveCount lives em curso',
+                    subtitle: 'Cabines ${liveNumbers.join(", ")}',
+                    now: true,
+                  ),
+                ...entries.map((e) => ScheduleEntry(
+                      time: e.timeLabel,
+                      title: e.title,
+                      subtitle: e.subtitle,
+                    )),
+              ];
+              if (list.isEmpty) {
+                list.add(const ScheduleEntry(
+                  time: '—',
+                  title: 'Nenhum agendamento próximo',
+                  subtitle: 'Próximas 4 horas livres',
+                ));
+              }
+              return ScheduleTimeline(entries: list);
+            },
+          ),
           const SizedBox(height: LlSpacing.md),
           QuickActionsPanel(
             actions: [
@@ -112,18 +362,28 @@ class _CabinesScreenState extends State<CabinesScreen> {
                 icon: Icons.bolt,
                 title: 'Iniciar nova live',
                 subtitle: '${counts[CabinStatus.free]} cabines disponíveis',
+                onTap: () => _abrirNovaLiveDialog(all),
               ),
-              const QuickAction(
+              QuickAction(
                 icon: Icons.notifications_active,
                 title: 'Aprovar reservas',
-                subtitle: '4 pendentes',
+                subtitle: 'Ver solicitações pendentes',
+                onTap: () => Navigator.of(context).pushNamed(AppRoutes.solicitacoes),
               ),
               QuickAction(
                 icon: Icons.settings,
                 iconColor: t.warning,
                 iconBg: t.warningSoft,
                 title: 'Agendar manutenção',
-                subtitle: 'Cabine 10 retorna às 16:00',
+                subtitle: '${counts[CabinStatus.maint]} em manutenção',
+                onTap: () async {
+                  if (all.isEmpty) return;
+                  final livre = all.firstWhere(
+                    (c) => c.status == CabinStatus.free,
+                    orElse: () => all.first,
+                  );
+                  await _setManutencao(livre);
+                },
               ),
             ],
           ),
@@ -205,25 +465,12 @@ class _CabinesScreenState extends State<CabinesScreen> {
             ],
           ),
         ),
-        const LlButton(label: 'Iniciar nova live', icon: Icons.bolt),
+        LlButton(
+          label: 'Iniciar nova live',
+          icon: Icons.bolt,
+          onPressed: () => _abrirNovaLiveDialog(all),
+        ),
       ],
     );
-  }
-
-  List<ScheduleEntry> _scheduleEntries(List<Cabin> all) {
-    final live = all.where((c) => c.status == CabinStatus.live).map((c) => c.number).toList();
-    return [
-      ScheduleEntry(
-        time: '14:30',
-        title: '${live.length} lives em curso',
-        subtitle: 'Cabines ${live.join(", ")}',
-        now: true,
-      ),
-      const ScheduleEntry(time: '15:00', title: 'Beauty Trend · Pré-live', subtitle: 'Cabine 03 · Rafael T. · 2h'),
-      const ScheduleEntry(time: '15:30', title: 'Tech Mode', subtitle: 'Cabine 09 · 90min'),
-      const ScheduleEntry(time: '16:00', title: 'Cabine 10 retoma', subtitle: 'Manutenção concluída'),
-      const ScheduleEntry(time: '16:30', title: 'Loja Fashion Demo', subtitle: 'Cabine 05 · Camila M.'),
-      const ScheduleEntry(time: '17:00', title: 'Moda Express', subtitle: 'Cabine 02 · Ana Lima'),
-    ];
   }
 }

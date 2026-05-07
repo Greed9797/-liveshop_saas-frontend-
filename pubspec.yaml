@@ -36,3 +36,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/logo.png
+    - assets/images/favicon.png
+    - assets/images/livelab_wordmark.png

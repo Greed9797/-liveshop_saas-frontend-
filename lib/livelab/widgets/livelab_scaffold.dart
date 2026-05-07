@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/cliente_perfil_provider.dart';
 import '../../providers/theme_mode_provider.dart';
 import '../../routes/app_routes.dart';
 import '../theme/tokens.dart';
@@ -169,6 +170,7 @@ class LivelabScaffold extends ConsumerWidget {
           LivelabNavItem(label: 'Consolidado', icon: PhosphorIcons.chartBar(), route: AppRoutes.masterConsolidated),
           LivelabNavItem(label: 'CRM', icon: PhosphorIcons.shoppingCart(), route: AppRoutes.masterCrm),
           LivelabNavItem(label: 'Franqueados', icon: PhosphorIcons.users(), route: AppRoutes.masterFranqueados),
+          LivelabNavItem(label: 'Configurações', icon: PhosphorIcons.gear(), route: AppRoutes.configuracoes),
         ]),
       ];
     }
@@ -184,6 +186,7 @@ class LivelabScaffold extends ConsumerWidget {
       ]),
       LivelabNavSection(label: 'Cabines', items: [
         LivelabNavItem(label: 'Cabines', icon: PhosphorIcons.videoCamera(), route: AppRoutes.cabines, dot: true),
+        LivelabNavItem(label: 'Solicitações', icon: PhosphorIcons.calendarCheck(), route: AppRoutes.solicitacoes, dot: true),
       ]),
       LivelabNavSection(label: 'Pessoas', items: [
         LivelabNavItem(label: 'Apresentadoras', icon: PhosphorIcons.microphone(), route: AppRoutes.apresentadoras),
@@ -235,20 +238,11 @@ class _Rail extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  // Logo mark
+                  // Logo mark + wordmark
                   _buildLogo(t),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      'Livelab',
-                      style: GoogleFonts.instrumentSerif(
-                        color: t.primary,
-                        fontStyle: FontStyle.italic,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20,
-                      ),
-                      overflow: TextOverflow.clip,
-                    ),
+                    child: _LivelabWordmark(textColor: t.textPrimary),
                   ),
                   // Collapse button
                   InkWell(
@@ -293,24 +287,11 @@ class _Rail extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Row(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [t.primary, const Color(0xFFFF8A3C)],
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      (user?.nome as String? ?? '?').substring(0, 1).toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
-                    ),
+                  _ClienteOrInitialsAvatar(
+                    size: 36,
+                    nome: (user?.nome as String?) ?? '',
+                    isCliente: (user?.papel as String?) == 'cliente_parceiro',
+                    primaryColor: t.primary,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -390,26 +371,18 @@ class _Rail extends ConsumerWidget {
       height: 48,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [t.primary, const Color(0xFFFF8A3C)],
-        ),
         boxShadow: [
           BoxShadow(
-              color: t.primary.withValues(alpha: 0.5),
+              color: t.primary.withValues(alpha: 0.45),
               blurRadius: 16,
               offset: const Offset(0, 6)),
         ],
       ),
-      alignment: Alignment.center,
-      child: Text(
-        'L',
-        style: GoogleFonts.instrumentSerif(
-          color: Colors.white,
-          fontStyle: FontStyle.italic,
-          fontWeight: FontWeight.w800,
-          fontSize: 22,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          'assets/images/favicon.png',
+          fit: BoxFit.cover,
         ),
       ),
     );
@@ -566,7 +539,7 @@ class _RailItem extends StatelessWidget {
   }
 }
 
-class _Topbar extends StatelessWidget {
+class _Topbar extends ConsumerWidget {
   const _Topbar({
     required this.user,
     required this.isDark,
@@ -582,7 +555,7 @@ class _Topbar extends StatelessWidget {
   final VoidCallback onBell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = context.llTokens;
     final hour = DateTime.now().hour;
     final greeting = hour < 12 ? 'Bom dia' : (hour < 18 ? 'Boa tarde' : 'Boa noite');
@@ -605,26 +578,13 @@ class _Topbar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(28, 16, 28, 0),
       child: Row(
         children: [
-          // greeting block
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [t.primary, const Color(0xFFFF8A3C)],
-              ),
-              boxShadow: [
-                BoxShadow(color: t.primary.withValues(alpha: 0.5), blurRadius: 12, offset: const Offset(0, 4)),
-              ],
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              _initials(nome),
-              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-            ),
+          // greeting block — logo do cliente quando papel = cliente_parceiro
+          _ClienteOrInitialsAvatar(
+            size: 52,
+            nome: nome,
+            isCliente: papel == 'cliente_parceiro',
+            primaryColor: t.primary,
+            shadow: true,
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -640,7 +600,7 @@ class _Topbar extends StatelessWidget {
                         style: TextStyle(color: t.textPrimary, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.4, height: 1.1),
                       ),
                       TextSpan(
-                        text: firstName,
+                        text: nome.isEmpty ? firstName : nome,
                         style: TextStyle(color: t.textSecondary, fontSize: 22, fontWeight: FontWeight.w500, letterSpacing: -0.4, height: 1.1),
                       ),
                       const TextSpan(text: ' '),
@@ -860,5 +820,102 @@ class _BottomNav extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Wordmark "Livelab." adaptativo: dark mode pinta de branco via ColorFilter;
+/// light mode renderiza original (preto com ponto laranja).
+class _LivelabWordmark extends StatelessWidget {
+  final Color textColor;
+  const _LivelabWordmark({required this.textColor});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = textColor.computeLuminance() > 0.5;
+    final image = Image.asset(
+      'assets/images/livelab_wordmark.png',
+      height: 22,
+      fit: BoxFit.contain,
+      alignment: Alignment.centerLeft,
+    );
+    if (!isDark) return image;
+    return ColorFiltered(
+      colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+      child: image,
+    );
+  }
+}
+
+/// Avatar circular: se cliente_parceiro tem logo_url no perfil, renderiza Image.
+/// Caso contrário, gradient laranja com iniciais (fallback).
+class _ClienteOrInitialsAvatar extends ConsumerWidget {
+  final double size;
+  final String nome;
+  final bool isCliente;
+  final Color primaryColor;
+  final bool shadow;
+  const _ClienteOrInitialsAvatar({
+    required this.size,
+    required this.nome,
+    required this.isCliente,
+    required this.primaryColor,
+    this.shadow = false,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    String? logoUrl;
+    if (isCliente) {
+      final perfil = ref.watch(clientePerfilProvider).valueOrNull;
+      logoUrl = perfil?.logoUrl;
+    }
+
+    final fallback = Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [primaryColor, const Color(0xFFFF8A3C)],
+        ),
+        boxShadow: shadow
+            ? [BoxShadow(color: primaryColor.withValues(alpha: 0.5), blurRadius: 12, offset: const Offset(0, 4))]
+            : null,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        _initials(nome),
+        style: TextStyle(color: Colors.white, fontSize: size * 0.36, fontWeight: FontWeight.w700),
+      ),
+    );
+
+    if (logoUrl == null || logoUrl.isEmpty) return fallback;
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+        boxShadow: shadow
+            ? [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 12, offset: const Offset(0, 4))]
+            : null,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Image.network(
+        logoUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => fallback,
+      ),
+    );
+  }
+
+  static String _initials(String n) {
+    final parts = n.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
+    return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
   }
 }

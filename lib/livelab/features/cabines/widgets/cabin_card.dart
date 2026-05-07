@@ -7,11 +7,26 @@ import '../../../widgets/ll_status_pill.dart';
 import '../cabines_models.dart';
 
 class CabinCard extends StatefulWidget {
-  const CabinCard({super.key, required this.cabin, this.selected = false, this.onTap});
+  const CabinCard({
+    super.key,
+    required this.cabin,
+    this.selected = false,
+    this.onTap,
+    this.onIniciarLive,
+    this.onEncerrarLive,
+    this.onLiberar,
+    this.onSetManutencao,
+    this.busy = false,
+  });
 
   final Cabin cabin;
   final bool selected;
   final VoidCallback? onTap;
+  final VoidCallback? onIniciarLive;
+  final VoidCallback? onEncerrarLive;
+  final VoidCallback? onLiberar;
+  final VoidCallback? onSetManutencao;
+  final bool busy;
 
   @override
   State<CabinCard> createState() => _CabinCardState();
@@ -69,6 +84,8 @@ class _CabinCardState extends State<CabinCard> {
                   const SizedBox(height: LlSpacing.sm),
                   _list(t),
                 ],
+                const SizedBox(height: LlSpacing.md),
+                _actions(t),
               ],
             ),
           ),
@@ -390,5 +407,97 @@ class _CabinCardState extends State<CabinCard> {
         ],
       ),
     );
+  }
+
+  Widget _actions(LlTokens t) {
+    final c = widget.cabin;
+    final disabled = widget.busy;
+
+    Widget pill({required String label, required IconData icon, required Color bg, required Color fg, required VoidCallback? onTap}) {
+      return Expanded(
+        child: Material(
+          color: bg,
+          borderRadius: BorderRadius.circular(LlRadius.sm),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(LlRadius.sm),
+            onTap: disabled ? null : onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 14, color: fg),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      label,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final children = <Widget>[];
+    switch (c.status) {
+      case CabinStatus.live:
+        children.add(pill(
+          label: 'Encerrar live',
+          icon: Icons.stop_circle_outlined,
+          bg: t.dangerSoft,
+          fg: t.danger,
+          onTap: widget.onEncerrarLive,
+        ));
+        break;
+      case CabinStatus.busy:
+        children.add(pill(
+          label: 'Iniciar live',
+          icon: Icons.play_circle_outlined,
+          bg: t.primarySoft,
+          fg: t.primary,
+          onTap: widget.onIniciarLive,
+        ));
+        children.add(const SizedBox(width: 8));
+        children.add(pill(
+          label: 'Liberar',
+          icon: Icons.lock_open,
+          bg: t.bgElev2,
+          fg: t.textSecondary,
+          onTap: widget.onLiberar,
+        ));
+        break;
+      case CabinStatus.free:
+        children.add(pill(
+          label: 'Iniciar live',
+          icon: Icons.bolt,
+          bg: t.primarySoft,
+          fg: t.primary,
+          onTap: widget.onIniciarLive,
+        ));
+        children.add(const SizedBox(width: 8));
+        children.add(pill(
+          label: 'Manutenção',
+          icon: Icons.build_outlined,
+          bg: t.warningSoft,
+          fg: t.warning,
+          onTap: widget.onSetManutencao,
+        ));
+        break;
+      case CabinStatus.maint:
+        children.add(pill(
+          label: 'Reativar cabine',
+          icon: Icons.lock_open,
+          bg: t.successSoft,
+          fg: t.success,
+          onTap: widget.onLiberar,
+        ));
+        break;
+    }
+    return Row(children: children);
   }
 }

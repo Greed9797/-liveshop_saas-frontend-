@@ -64,8 +64,10 @@ class _RoleRouteGuardState extends ConsumerState<RoleRouteGuard> {
     final user = authState.user;
 
     if (user == null) {
-      // Não redireciona aqui — o listener em main.dart cuida do
-      // pushNamedAndRemoveUntil para evitar tela dupla de login.
+      // Sem usuário → redireciona pra login. Cobre caso onde user navega
+      // manualmente pra rota protegida sem ter sessão (sem transição
+      // logout→login que o listener em main.dart capturaria).
+      _scheduleRedirect(widget.unauthenticatedRoute);
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );

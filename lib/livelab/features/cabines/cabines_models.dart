@@ -31,8 +31,12 @@ class CabinHistoryEntry {
 
 class Cabin {
   const Cabin({
+    required this.id,
     required this.number,
     required this.status,
+    this.liveAtualId,
+    this.contratoId,
+    this.clienteId,
     this.client,
     this.presenter,
     this.contract,
@@ -47,8 +51,12 @@ class Cabin {
     this.history = const [],
   });
 
+  final String id;
   final int number;
   final CabinStatus status;
+  final String? liveAtualId;
+  final String? contratoId;
+  final String? clienteId;
   final String? client;
   final String? presenter;
   final String? contract;
@@ -61,6 +69,19 @@ class Cabin {
   final String? maintenanceEta;
   final List<CabinScheduleEntry> agenda;
   final List<CabinHistoryEntry> history;
+}
+
+class UpcomingScheduleEntry {
+  const UpcomingScheduleEntry({
+    required this.timeLabel,
+    required this.title,
+    required this.subtitle,
+    this.now = false,
+  });
+  final String timeLabel;
+  final String title;
+  final String subtitle;
+  final bool now;
 }
 
 class QueueEntry {

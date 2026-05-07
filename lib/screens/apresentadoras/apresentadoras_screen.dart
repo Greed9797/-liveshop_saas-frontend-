@@ -78,6 +78,11 @@ class ApresentadorasScreen extends ConsumerWidget {
         TextEditingController(text: item?.dataInicio ?? '');
     final dataFimCtrl = TextEditingController(text: item?.dataFim ?? '');
     var ativo = item?.ativo ?? true;
+    var step = 0;
+    var criarUsuario = false;
+    final usuarioEmailCtrl = TextEditingController(text: item?.email ?? '');
+    final usuarioSenhaCtrl = TextEditingController();
+    var senhaVisivel = false;
 
     showModalBottomSheet<void>(
       context: context,
@@ -102,7 +107,79 @@ class ApresentadorasScreen extends ConsumerWidget {
                           ? 'Nova apresentadora'
                           : 'Editar apresentadora',
                       style: AppTypography.h3),
+                  const SizedBox(height: AppSpacing.x3),
+                  // Step indicator
+                  Row(children: [
+                    _StepBadge(label: '1 · Dados', active: step == 0),
+                    const SizedBox(width: AppSpacing.x2),
+                    _StepBadge(label: '2 · Usuário', active: step == 1, dim: !criarUsuario),
+                  ]),
                   const SizedBox(height: AppSpacing.x4),
+                  if (step == 1) ...[
+                    Text('Acesso ao app',
+                        style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: AppSpacing.x2),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Criar conta de acesso ao app'),
+                      subtitle: const Text(
+                          'A apresentadora poderá fazer login com o email e senha definidos abaixo.'),
+                      value: criarUsuario,
+                      onChanged: (v) => setState(() {
+                        criarUsuario = v;
+                        if (v && usuarioEmailCtrl.text.isEmpty) {
+                          usuarioEmailCtrl.text = emailCtrl.text;
+                        }
+                      }),
+                    ),
+                    if (criarUsuario) ...[
+                      const SizedBox(height: AppSpacing.x3),
+                      AppTextField(
+                        controller: usuarioEmailCtrl,
+                        hint: 'E-mail de acesso *',
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: AppSpacing.x3),
+                      Row(children: [
+                        Expanded(
+                          child: AppTextField(
+                            controller: usuarioSenhaCtrl,
+                            hint: 'Senha *',
+                            obscureText: !senhaVisivel,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(senhaVisivel
+                              ? Icons.visibility_off
+                              : Icons.visibility),
+                          onPressed: () =>
+                              setState(() => senhaVisivel = !senhaVisivel),
+                        ),
+                        IconButton(
+                          tooltip: 'Gerar senha',
+                          icon: const Icon(Icons.casino_outlined),
+                          onPressed: () => setState(() {
+                            usuarioSenhaCtrl.text = _generatePassword();
+                            senhaVisivel = true;
+                          }),
+                        ),
+                      ]),
+                      const SizedBox(height: AppSpacing.x2),
+                      Text(
+                        'Mínimo 8 caracteres com letra e número.',
+                        style: AppTypography.caption
+                            .copyWith(color: context.colors.textMuted),
+                      ),
+                    ] else
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
+                        child: Text(
+                          'Sem acesso ao app — a apresentadora ficará apenas no cadastro interno.',
+                          style: AppTypography.bodySmall
+                              .copyWith(color: context.colors.textSecondary),
+                        ),
+                      ),
+                  ] else ...[
                   AppTextField(controller: nomeCtrl, hint: 'Nome *'),
                   const SizedBox(height: AppSpacing.x3),
                   Row(
@@ -186,50 +263,103 @@ class ApresentadorasScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+                  ], // fim do step 0
                   const SizedBox(height: AppSpacing.x5),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       AppSecondaryButton(
-                        label: 'Cancelar',
-                        onPressed: () => Navigator.pop(sheetContext),
+                        label: step == 0 ? 'Cancelar' : 'Voltar',
+                        onPressed: () {
+                          if (step == 0) {
+                            Navigator.pop(sheetContext);
+                          } else {
+                            setState(() => step = 0);
+                          }
+                        },
                       ),
                       const SizedBox(width: AppSpacing.x2),
                       AppPrimaryButton(
-                        label: 'Salvar',
+                        label: step == 0 ? 'Próximo' : 'Salvar',
                         onPressed: () async {
-                          final nome = nomeCtrl.text.trim();
-                          if (nome.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Informe o nome.')),
-                            );
+                          if (step == 0) {
+                            final nome = nomeCtrl.text.trim();
+                            if (nome.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Informe o nome.')),
+                              );
+                              return;
+                            }
+                            setState(() => step = 1);
                             return;
                           }
-                          final data = {
-                            'nome': nome,
-                            'telefone': _emptyToNull(telefoneCtrl.text),
-                            'cargo': _emptyToNull(cargoCtrl.text),
-                            'email': _emptyToNull(emailCtrl.text),
-                            'cpf_cnpj': _emptyToNull(cpfCtrl.text),
-                            'cidade': _emptyToNull(cidadeCtrl.text),
+                          // step == 1: validar usuário se habilitado e salvar
+                          if (criarUsuario) {
+                            final email = usuarioEmailCtrl.text.trim();
+                            final senha = usuarioSenhaCtrl.text;
+                            if (email.isEmpty ||
+                                !email.contains('@') ||
+                                !email.contains('.')) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('E-mail inválido.')),
+                              );
+                              return;
+                            }
+                            if (senha.length < 8 ||
+                                !RegExp(r'[A-Za-z]').hasMatch(senha) ||
+                                !RegExp(r'\d').hasMatch(senha)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Senha precisa de mín 8 caracteres com letra e número.'),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+                          final data = <String, dynamic>{
+                            'nome': nomeCtrl.text.trim(),
                             'ativo': ativo,
                             'fixo': _toDouble(fixoCtrl.text),
                             'comissao_pct': _toDouble(comissaoCtrl.text),
                             'meta_diaria_gmv': _toDouble(metaCtrl.text),
-                            'observacoes': _emptyToNull(obsCtrl.text),
-                            'link_contrato':
-                                _emptyToNull(linkContratoCtrl.text),
-                            'data_aniversario':
-                                _emptyToNull(aniversarioCtrl.text),
-                            'data_inicio': _emptyToNull(dataInicioCtrl.text),
-                            'data_fim': _emptyToNull(dataFimCtrl.text),
                           };
+                          void put(String k, String? v) {
+                            if (v != null && v.isNotEmpty) data[k] = v;
+                          }
+                          put('telefone', _emptyToNull(telefoneCtrl.text));
+                          put('cargo', _emptyToNull(cargoCtrl.text));
+                          put('email', _emptyToNull(emailCtrl.text));
+                          put('cpf_cnpj', _emptyToNull(cpfCtrl.text));
+                          put('cidade', _emptyToNull(cidadeCtrl.text));
+                          put('observacoes', _emptyToNull(obsCtrl.text));
+                          put('link_contrato', _emptyToNull(linkContratoCtrl.text));
+                          put('data_aniversario', _emptyToNull(aniversarioCtrl.text));
+                          put('data_inicio', _emptyToNull(dataInicioCtrl.text));
+                          put('data_fim', _emptyToNull(dataFimCtrl.text));
                           try {
-                            await ref
-                                .read(apresentadorasProvider.notifier)
-                                .salvar(data, id: item?.id);
+                            final notifier =
+                                ref.read(apresentadorasProvider.notifier);
+                            final id =
+                                await notifier.salvar(data, id: item?.id);
+                            if (criarUsuario) {
+                              await notifier.criarUsuario(
+                                apresentadoraId: id,
+                                nome: nomeCtrl.text.trim(),
+                                email: usuarioEmailCtrl.text.trim(),
+                                senha: usuarioSenhaCtrl.text,
+                              );
+                            }
                             if (sheetContext.mounted) {
                               Navigator.pop(sheetContext);
+                            }
+                            if (context.mounted && criarUsuario) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'Apresentadora salva e acesso criado para ${usuarioEmailCtrl.text.trim()}'),
+                                ),
+                              );
                             }
                           } catch (error) {
                             if (!context.mounted) return;
@@ -256,6 +386,19 @@ class ApresentadorasScreen extends ConsumerWidget {
   static String? _emptyToNull(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
+  }
+
+  static String _generatePassword() {
+    const letters = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
+    const digits = '23456789';
+    const all = letters + digits;
+    final rnd = DateTime.now().microsecondsSinceEpoch;
+    final buf = StringBuffer();
+    for (var i = 0; i < 10; i++) {
+      final src = i < 6 ? all : (i % 2 == 0 ? letters : digits);
+      buf.write(src[(rnd >> (i * 3)) % src.length]);
+    }
+    return buf.toString();
   }
 
   static double _toDouble(String value) =>
@@ -338,6 +481,35 @@ class _ApresentadoraCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _StepBadge extends StatelessWidget {
+  final String label;
+  final bool active;
+  final bool dim;
+  const _StepBadge({required this.label, required this.active, this.dim = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = active
+        ? AppColors.primary
+        : (dim ? context.colors.bgMuted : context.colors.bgCard);
+    final fg = active
+        ? Colors.white
+        : (dim ? context.colors.textMuted : context.colors.textSecondary);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x3, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        border: Border.all(color: active ? AppColors.primary : context.colors.borderSubtle),
+      ),
+      child: Text(label,
+          style: AppTypography.caption.copyWith(
+              color: fg, fontWeight: FontWeight.w700)),
     );
   }
 }

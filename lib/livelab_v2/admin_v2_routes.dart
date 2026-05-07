@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../routes/app_routes.dart';
-import '../screens/admin_master/master_crm_screen.dart';
+import '../screens/admin_master/master_crm_v3_screen.dart';
 import '../widgets/app_scaffold.dart';
 import 'core/ll_theme.dart';
 import 'screens/admin_master_screen.dart';
@@ -60,5 +60,8 @@ class MasterCrmV2 extends StatelessWidget {
   const MasterCrmV2({super.key});
 
   @override
-  Widget build(BuildContext context) => const MasterCrmScreen();
+  Widget build(BuildContext context) => const _LlAdminScope(
+        currentRoute: AppRoutes.masterCrm,
+        child: MasterCrmV3Screen(),
+      );
 }

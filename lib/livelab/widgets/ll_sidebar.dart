@@ -40,21 +40,13 @@ class LlSidebar extends StatelessWidget {
             padding: const EdgeInsets.all(LlSpacing.xl),
             child: Row(
               children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: t.primary,
-                    borderRadius: BorderRadius.circular(LlRadius.sm),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    'L',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(LlRadius.sm),
+                  child: Image.asset(
+                    'assets/images/favicon.png',
+                    width: 28,
+                    height: 28,
+                    fit: BoxFit.cover,
                   ),
                 ),
                 const SizedBox(width: LlSpacing.md),

@@ -98,7 +98,14 @@ class AppScaffold extends ConsumerWidget {
 
     // Touch derived providers to keep notifiers warm (boletos, configuracoes).
     ref.watch(boletosProvider);
-    ref.watch(configuracoesProvider);
+    // /v1/configuracoes restrito a papéis comerciais — pular pra
+    // cliente_parceiro/apresentador evita 403 silencioso no console.
+    final papel = ref.watch(authProvider).user?.papel;
+    if (papel != 'cliente_parceiro' &&
+        papel != 'apresentador' &&
+        papel != 'apresentadora') {
+      ref.watch(configuracoesProvider);
+    }
 
     return LivelabScaffold(
       currentRoute: currentRoute,

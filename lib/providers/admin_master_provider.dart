@@ -48,6 +48,7 @@ final masterConsolidatedProvider =
     });
 
 final masterCrmProvider = FutureProvider<MasterCrmData>((ref) async {
-  final data = await _getMap('/master/crm');
+  // Endpoint comercial — aceita master/franqueado/gerente (mesma estrutura).
+  final data = await _getMap('/crm/summary');
   return MasterCrmData.fromJson(data);
 });

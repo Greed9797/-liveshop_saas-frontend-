@@ -3,6 +3,13 @@ import '../models/lead.dart';
 import '../services/api_service.dart';
 import 'auth_provider.dart';
 
+double? _asDouble(dynamic v) {
+  if (v == null) return null;
+  if (v is num) return v.toDouble();
+  if (v is String) return double.tryParse(v.replaceAll(',', '.'));
+  return null;
+}
+
 class LeadsNotifier extends AsyncNotifier<List<Lead>> {
   @override
   Future<List<Lead>> build() async {
@@ -58,21 +65,61 @@ class LeadsNotifier extends AsyncNotifier<List<Lead>> {
     String etapa, {
     String? motivoPerda,
   }) async {
-    final resp = await ApiService.patch('/leads/$id/etapa', data: {
+    // Backend aceita crm_etapa direto no PATCH /leads/:id
+    final resp = await ApiService.patch('/leads/$id', data: {
       'crm_etapa': etapa,
       if (motivoPerda != null) 'motivo_perda': motivoPerda,
     });
-    final updated = Lead.fromJson(resp.data as Map<String, dynamic>);
+    final body = resp.data as Map<String, dynamic>;
+    // PATCH retorna parcial — merge com lead atual
+    final current = (state.valueOrNull ?? []).firstWhere(
+      (l) => l.id == id,
+      orElse: () => Lead.fromJson(body),
+    );
+    final merged = Lead(
+      id: current.id,
+      nome: current.nome,
+      nicho: current.nicho,
+      cidade: current.cidade,
+      estado: current.estado,
+      lat: current.lat,
+      lng: current.lng,
+      fatEstimado: current.fatEstimado,
+      status: current.status,
+      pegoPor: current.pegoPor,
+      pegoEm: current.pegoEm,
+      expiraEm: current.expiraEm,
+      criadoEm: current.criadoEm,
+      isNovo: current.isNovo,
+      crmEtapa: (body['crm_etapa'] as String?) ?? etapa,
+      valorOportunidade: _asDouble(body['valor_oportunidade']) ?? current.valorOportunidade,
+      responsavelNome: body['responsavel_nome'] as String? ?? current.responsavelNome,
+      origem: body['origem'] as String? ?? current.origem,
+      historicoContatos: current.historicoContatos,
+      observacoesInternas: current.observacoesInternas,
+      tarefas: current.tarefas,
+      motivoPerda: body['motivo_perda'] as String? ?? current.motivoPerda,
+      convertidoClienteId: current.convertidoClienteId,
+      ganhoEm: current.ganhoEm,
+      atualizadoEm: current.atualizadoEm,
+    );
     state = AsyncData(
       (state.valueOrNull ?? [])
-          .map((lead) => lead.id == id ? updated : lead)
+          .map((lead) => lead.id == id ? merged : lead)
           .toList(),
     );
-    return updated;
+    return merged;
   }
 
   Future<void> ganhar(String id, Map<String, dynamic> data) async {
     await ApiService.post('/leads/$id/ganhar', data: data);
+    state = AsyncData(
+      (state.valueOrNull ?? []).where((lead) => lead.id != id).toList(),
+    );
+  }
+
+  Future<void> deletar(String id) async {
+    await ApiService.delete('/leads/$id');
     state = AsyncData(
       (state.valueOrNull ?? []).where((lead) => lead.id != id).toList(),
     );
