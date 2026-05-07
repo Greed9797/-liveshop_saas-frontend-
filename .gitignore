@@ -1,9 +1,14 @@
 # Miscellaneous
 *.class
 *.log
+firebase-debug.log
+firebase-debug.*.log
 *.pyc
 *.swp
 .DS_Store
+
+# Screenshots/PII
+flutter_*.png
 .atom/
 .build/
 .buildlog/

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -49,7 +50,9 @@ void main() async {
     debugPrint('[bootstrap] themeMode restore falhou: $e');
   }
 
-  if (isE2ETesting) {
+  // E2E auth bootstrap só em builds NÃO-release. Em produção (release build)
+  // qualquer tentativa de --dart-define=E2E_TESTING=true é ignorada.
+  if (!kReleaseMode && isE2ETesting) {
     WidgetsBinding.instance.ensureSemantics();
     try {
       await bootstrapE2EAuth(container, role: e2eRole)

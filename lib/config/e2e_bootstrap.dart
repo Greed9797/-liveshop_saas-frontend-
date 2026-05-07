@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kReleaseMode, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
@@ -39,19 +40,21 @@ Future<void> bootstrapE2EAuth(
   ProviderContainer container, {
   required String role,
 }) async {
+  // Defesa em profundidade: nunca executar em build release, mesmo se
+  // o caller esquecer o guard kReleaseMode.
+  assert(!kReleaseMode, 'E2E bootstrap não pode rodar em release build');
+  if (kReleaseMode) return;
+
   final normalizedRole = _normalizeRole(role);
   final credential = _credentialsByRole[normalizedRole];
 
   if (credential == null) {
-    print('[E2E] Role not configured: $role');
+    debugPrint('[E2E] Role not configured');
     return;
   }
 
   if (credential.email.isEmpty || credential.password.isEmpty) {
-    print(
-      '[E2E] Credentials not provided for role $normalizedRole. '
-      'Pass --dart-define=E2E_EMAIL_<ROLE>=... and --dart-define=E2E_PASSWORD_<ROLE>=...',
-    );
+    debugPrint('[E2E] Credentials not provided');
     return;
   }
 
@@ -60,9 +63,8 @@ Future<void> bootstrapE2EAuth(
       .login(credential.email, credential.password);
 
   if (!ok) {
-    final error = container.read(authProvider).error;
-    print('[E2E] Auto login failed for role $normalizedRole: $error');
+    debugPrint('[E2E] Auto login failed');
   } else {
-    print('[E2E] Auto login active for role: $normalizedRole');
+    debugPrint('[E2E] Auto login active');
   }
 }

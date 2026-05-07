@@ -27,23 +27,32 @@ class ApiService {
   static const _userKey = 'auth_user';
 
   static const _storage = FlutterSecureStorage();
-  // Fallback em memória para plataformas sem Keychain configurado (macOS debug sem entitlement)
+  // Fallback em memória APENAS em desktop debug (macOS sem Keychain entitlement).
+  // Em web, NÃO ativar fallback: armazenar tokens no heap JS = XSS pode roubar.
+  // Se SecureStorage falha em web, o usuário é deslogado.
   static final Map<String, String> _memFallback = {};
+
+  static bool get _allowMemFallback => !kIsWeb;
 
   static Future<void> _storageWrite(String key, String value) async {
     try {
       await _storage.write(key: key, value: value);
-    } catch (_) {
-      _memFallback[key] = value;
+    } catch (e) {
+      if (_allowMemFallback) {
+        _memFallback[key] = value;
+      } else {
+        // Em web, repropagar — caller decide deslogar
+        rethrow;
+      }
     }
   }
 
   static Future<String?> _storageRead(String key) async {
     try {
       final v = await _storage.read(key: key);
-      return v ?? _memFallback[key];
+      return v ?? (_allowMemFallback ? _memFallback[key] : null);
     } catch (_) {
-      return _memFallback[key];
+      return _allowMemFallback ? _memFallback[key] : null;
     }
   }
 
