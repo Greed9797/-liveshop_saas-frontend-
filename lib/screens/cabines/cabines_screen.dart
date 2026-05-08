@@ -19,6 +19,7 @@ import '../../design_system/design_system.dart';
 import '../../widgets/cabine_card.dart';
 import '../../widgets/responsive_grid.dart';
 import '../../widgets/reservar_cabine_modal.dart';
+import '../../widgets/skeleton_list.dart';
 import '../../widgets/status_badge.dart';
 import '../solicitacoes/solicitacoes_screen.dart';
 
@@ -316,7 +317,11 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen>
         final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
 
         return cabinesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Padding(
+            padding: EdgeInsets.fromLTRB(
+                AppSpacing.x6, AppSpacing.x3, AppSpacing.x6, AppSpacing.x4),
+            child: SkeletonList(itemCount: 6, itemHeight: 140),
+          ),
           error: (error, _) => Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,

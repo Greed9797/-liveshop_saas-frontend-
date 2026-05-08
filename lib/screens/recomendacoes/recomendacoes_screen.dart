@@ -7,6 +7,9 @@ import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../design_system/design_system.dart';
 import '../../widgets/responsive_grid.dart';
+import '../../widgets/empty_state_widget.dart';
+import '../../widgets/skeleton_list.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class RecomendacoesScreen extends ConsumerWidget {
   const RecomendacoesScreen({super.key});
@@ -77,8 +80,10 @@ class RecomendacoesScreen extends ConsumerWidget {
             ),
             Expanded(
               child: recsAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(AppSpacing.x4),
+                  child: SkeletonList(itemCount: 6, itemHeight: 64),
+                ),
                 error: (e, _) => Center(
                   child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -94,18 +99,14 @@ class RecomendacoesScreen extends ConsumerWidget {
                       ]),
                 ),
                 data: (recs) => recs.isEmpty
-                    ? Center(
-                        child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.diamond_outlined,
-                              size: 48, color: context.colors.borderSubtle),
-                          const SizedBox(height: AppSpacing.x3),
-                          Text('Nenhuma recomendação ainda.',
-                              style: AppTypography.bodySmall
-                                  .copyWith(color: context.colors.textSecondary)),
-                        ],
-                      ))
+                    ? EmptyStateWidget(
+                        icon: PhosphorIcons.handshake(),
+                        title: 'Nenhuma recomendação ainda',
+                        message:
+                            'Indique potenciais clientes e ganhe bônus quando elas converterem em contratos.',
+                        actionLabel: 'Adicionar primeira',
+                        onAction: () => _showAddDialog(context, ref),
+                      )
                     : AppTable(
                         columns: const [
                           AppTableColumn(label: 'INDICAÇÃO', align: 'left'),

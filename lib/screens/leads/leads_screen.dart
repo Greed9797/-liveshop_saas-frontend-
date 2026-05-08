@@ -7,6 +7,9 @@ import '../../models/lead.dart';
 import '../../providers/leads_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/app_scaffold.dart';
+import '../../widgets/empty_state_widget.dart';
+import '../../widgets/skeleton_list.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 const _crmStages = [
   _CrmStage('lead_novo', 'Lead novo'),
@@ -85,19 +88,20 @@ class LeadsScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.x4),
             Expanded(
               child: leadsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const SkeletonList(itemCount: 5, itemHeight: 88),
                 error: (e, _) => _CrmError(
                   message: e.toString(),
                   onRetry: () => ref.read(leadsProvider.notifier).refresh(),
                 ),
                 data: (leads) => leads.isEmpty
-                    ? Center(
-                        child: Text(
-                          'Nenhum lead disponível no momento.',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: context.colors.textSecondary,
-                          ),
-                        ),
+                    ? EmptyStateWidget(
+                        icon: PhosphorIcons.userCirclePlus(),
+                        title: 'Nenhum lead ainda',
+                        message:
+                            'Quando o time comercial cadastrar leads, eles aparecem aqui no Kanban.',
+                        actionLabel: 'Atualizar',
+                        onAction: () =>
+                            ref.read(leadsProvider.notifier).refresh(),
                       )
                     : _KanbanBoard(
                         leads: leads,
