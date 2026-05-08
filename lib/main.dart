@@ -25,6 +25,19 @@ void main() async {
   // A11y on por default — ativar Flutter semantics tree para screen readers
   // funcionarem sem o usuário precisar clicar "Enable accessibility".
   WidgetsBinding.instance.ensureSemantics();
+
+  // Error boundary global — substitui tela cinza padrão por widget user-friendly
+  // com CTA de retry. Ativo só em release (em debug, mostrar stack helps dev).
+  if (kReleaseMode) {
+    ErrorWidget.builder = (FlutterErrorDetails details) => _GlobalErrorWidget(
+      details: details,
+    );
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      // Sentry capture seria aqui (frontend)
+    };
+  }
+
   await initializeDateFormatting('pt_BR', null);
   await ApiService.init();
 
@@ -69,6 +82,57 @@ void main() async {
     container: container,
     child: const LiveShopApp(),
   ));
+}
+
+/// Widget de fallback global quando algum descendente lança exception
+/// fora de um async catch. Mostra UI amigável com retry em vez de tela cinza.
+class _GlobalErrorWidget extends StatelessWidget {
+  const _GlobalErrorWidget({required this.details});
+  final FlutterErrorDetails details;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFFFF5F0),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.warning_amber_rounded,
+                  size: 48, color: Color(0xFFE8673C)),
+              const SizedBox(height: 16),
+              const Text('Algo deu errado',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1A1A),
+                  )),
+              const SizedBox(height: 8),
+              const Text(
+                'Tente recarregar a página. Se o problema continuar, fale com o suporte.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: Color(0xFF666666)),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFE8673C),
+                ),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Recarregar'),
+                onPressed: () {
+                  appNavigatorKey.currentState
+                      ?.pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class LiveShopApp extends ConsumerWidget {
