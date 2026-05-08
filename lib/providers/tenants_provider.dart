@@ -55,10 +55,15 @@ class TenantsNotifier extends AsyncNotifier<List<Tenant>> {
         cnpj: t.cnpj,
         telefoneContato: t.telefoneContato,
         emailContato: t.emailContato,
+        cidade: t.cidade,
+        uf: t.uf,
+        plano: t.plano,
         createdAt: t.createdAt,
         ownerId: t.ownerId,
         ownerNome: t.ownerNome,
         ownerEmail: t.ownerEmail,
+        livesMes: t.livesMes,
+        gmvMes: t.gmvMes,
       );
 }
 

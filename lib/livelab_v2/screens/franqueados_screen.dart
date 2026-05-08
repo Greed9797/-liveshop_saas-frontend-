@@ -117,25 +117,42 @@ class _FranqueadoView {
         ? '?'
         : tenant.nome.trim().substring(0, 1).toUpperCase();
     final colorKey = _colorForId(tenant.id);
-    final isMaster = (tenant.ownerEmail ?? '').contains('admin@');
+    final isMaster = tenant.plano == 'Master';
     final daysOld = _daysSince(tenant.createdAt);
     final status = !tenant.ativo
         ? 'pausa'
         : (daysOld != null && daysOld < 14 ? 'setup' : 'ativa');
+    final cityLabel = _formatCity(tenant.cidade, tenant.uf);
+    // Prefere métricas vindas do tenant (mês corrente) e fallback para masterUnits.
+    final gmv = tenant.gmvMes > 0
+        ? tenant.gmvMes
+        : (unit?.grossRevenue ?? 0);
+    final lives = tenant.livesMes > 0
+        ? tenant.livesMes
+        : 0;
     return _FranqueadoView(
       id: tenant.id,
       letter: letter,
       avatarColorKey: colorKey,
       name: tenant.nome,
       email: tenant.ownerEmail ?? tenant.emailContato ?? '—',
-      city: tenant.telefoneContato ?? '—',
+      city: cityLabel,
       cnpj: tenant.cnpj ?? '—',
-      plano: isMaster ? 'Master' : 'Standard',
-      gmv: unit?.grossRevenue ?? 0,
-      lives: unit?.activeClients ?? 0,
+      plano: tenant.plano,
+      gmv: gmv,
+      lives: lives,
       status: status,
       tag: isMaster ? 'master' : (status == 'setup' ? 'setup' : ''),
     );
+  }
+
+  static String _formatCity(String? cidade, String? uf) {
+    final c = (cidade ?? '').trim();
+    final u = (uf ?? '').trim().toUpperCase();
+    if (c.isEmpty && u.isEmpty) return '—';
+    if (u.isEmpty) return c;
+    if (c.isEmpty) return u;
+    return '$c · $u';
   }
 
   static String _colorForId(String id) {
