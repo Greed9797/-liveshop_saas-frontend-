@@ -20,7 +20,6 @@ class _C {
   static const bgElev1    = Color(0xFF16161A);
   static const bgElev2    = Color(0xFF1E1E22);
   static const bgElev3    = Color(0xFF26262B);
-  static const bgInput    = Color(0xFF1A1A1E);
 
   static const textPrimary   = Color(0xFFF5F0EB);
   static const textSecondary = Color(0xFFB8B2AC);
@@ -28,7 +27,6 @@ class _C {
   static const textFaint     = Color(0xFF4A4744);
 
   static const primary       = Color(0xFFFF6A2F);
-  static const primaryHover  = Color(0xFFFF7E48);
   static const primarySoft   = Color(0x24FF6A2F); // 14%
   static const primarySofter = Color(0x12FF6A2F); // 7%
 
@@ -37,7 +35,6 @@ class _C {
   static const warning     = Color(0xFFFBBF24);
   static const warningSoft = Color(0x1FFBBF24);
   static const danger      = Color(0xFFF87171);
-  static const dangerSoft  = Color(0x1FF87171);
   static const info        = Color(0xFF5AC8FA);
   static const infoSoft    = Color(0x295AC8FA);
   static const accent      = Color(0xFFAF7BFF);

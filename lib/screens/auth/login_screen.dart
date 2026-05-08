@@ -15,14 +15,12 @@ import '../../routes/app_routes.dart';
 class _LL {
   static const primary       = Color(0xFFFF5A1F);
   static const primaryHover  = Color(0xFFE64A0F);
-  static const primaryLight  = Color(0xFFFF7A42);
   static const primarySoft   = Color(0xFFFFE8DC);
   static const primarySofter = Color(0xFFFFF3EC);
 
   static const bgBase      = Color(0xFFFDF6F1);
   static const bgCard      = Color(0xFFFFFFFF);
   static const bgInput     = Color(0xFFF7EFE8);
-  static const bgMuted     = Color(0xFFF5EBE3);
 
   static const textPrimary     = Color(0xFF1A1A1A);
   static const textSecondary   = Color(0xFF4A4A4A);
@@ -31,12 +29,10 @@ class _LL {
 
   static const border       = Color(0x141A1A1A); // rgba(26,26,26,.08)
   static const borderInput  = Color(0x1A1A1A1A); // rgba(26,26,26,.10)
-  static const borderStrong = Color(0x261A1A1A); // rgba(26,26,26,.15)
 
   static const danger = Color(0xFFD9402F);
 
   static const radiusMd = 12.0;
-  static const radiusLg = 16.0;
   static const radiusXl = 20.0;
   static const radiusPill = 999.0;
 

@@ -285,54 +285,8 @@ class RecomendacoesScreen extends ConsumerWidget {
   }
 }
 
-// ─── Item da lista de recomendações ──────────────────────────────────────────
-
-class _RecomendacaoTile extends StatelessWidget {
-  final Recomendacao recomendacao;
-  final VoidCallback onConverter;
-
-  const _RecomendacaoTile({
-    required this.recomendacao,
-    required this.onConverter,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: AppSpacing.x4, vertical: AppSpacing.x2),
-      leading: CircleAvatar(
-        backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-        child: const Icon(Icons.diamond_outlined,
-            color: AppColors.primary, size: 20),
-      ),
-      title: Text(
-        recomendacao.nomeIndicado,
-        style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        'Indicado por: ${recomendacao.recomendante}',
-        style: AppTypography.caption.copyWith(color: context.colors.textSecondary),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: recomendacao.status == 'pendente'
-          ? AppSecondaryButton(
-              label: 'NEGOCIAR',
-              icon: Icons.handshake_outlined,
-              onPressed: onConverter,
-            )
-          : AppBadge(
-              label: recomendacao.status.toUpperCase(),
-              type: recomendacao.status == 'convertido'
-                  ? AppBadgeType.success
-                  : AppBadgeType.neutral,
-            ),
-    );
-  }
-}
+// _RecomendacaoTile removido: substituído pelo AppCardListItem inline
+// na lista (recomendacoes_screen.dart linhas 110-160).
 
 // ─── Dialog de negociação com mini-formulário ───────────────────────────────
 

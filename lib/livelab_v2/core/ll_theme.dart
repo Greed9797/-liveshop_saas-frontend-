@@ -33,12 +33,9 @@ class LL {
   // Light mode surface colors
   static const Color _lBg = Color(0xFFF5F4F2);
   static const Color _lSurface = Color(0xFFFFFFFF);
-  static const Color _lSurface2 = Color(0xFFFFFFFF);
   static const Color _lSurface3 = Color(0xFFF0EEE8);
   static const Color _lBorder = Color(0x1A000000);
-  static const Color _lBorderMid = Color(0x26000000);
   static const Color _lTextPrimary = Color(0xFF1A1918);
-  static const Color _lTextSecond = Color(0xFF6B6870);
   static const Color _lTextMuted = Color(0xFF9E9BA8);
 
   static const double sidebarExpanded = 220;

@@ -25,8 +25,6 @@ import 'dart:math' as math;
 // Formatters
 // ---------------------------------------------------------------------------
 final _currency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-final _dateWeekday = DateFormat('dd/MM (EEE)', 'pt_BR');
-final _time = DateFormat('HH:mm', 'pt_BR');
 final _periodFormat = DateFormat.yMMMM('pt_BR');
 
 // ---------------------------------------------------------------------------
@@ -477,21 +475,6 @@ class _MetaCard extends ConsumerWidget {
     }
   }
 
-  Color _statusBgColor(String status) {
-    switch (status) {
-      case 'acima_da_meta':
-        return AppColors.successBg;
-      case 'dentro_do_ritmo':
-        return AppColors.primarySoft;
-      case 'abaixo_do_ritmo':
-        return AppColors.warningBg;
-      case 'critico':
-        return AppColors.dangerBg;
-      default:
-        return AppColors.primarySoft;
-    }
-  }
-
   Color _statusTextColor(String status) {
     switch (status) {
       case 'acima_da_meta':
@@ -868,33 +851,6 @@ class _ProximaLiveRow extends StatelessWidget {
   final ProximaLive live;
 
   const _ProximaLiveRow({required this.live});
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'aprovada':
-        return AppColors.success;
-      default:
-        return AppColors.warning;
-    }
-  }
-
-  Color _statusBgColor(String status) {
-    switch (status) {
-      case 'aprovada':
-        return AppColors.successBg;
-      default:
-        return AppColors.warningBg;
-    }
-  }
-
-  String _statusLabel(String status) {
-    switch (status) {
-      case 'aprovada':
-        return 'Aprovada';
-      default:
-        return 'Pendente';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

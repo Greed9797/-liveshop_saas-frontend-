@@ -130,11 +130,76 @@ class LivelabScaffold extends ConsumerWidget {
   }
 
   void _openNotifications(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Sem notificações no momento.'),
-        duration: Duration(seconds: 2),
-      ),
+    final t = context.llTokens;
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: t.bgElev1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(PhosphorIcons.bell(), color: t.textPrimary, size: 20),
+                      const SizedBox(width: 10),
+                      Text('Notificações',
+                          style: TextStyle(
+                              color: t.textPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      IconButton(
+                        icon: Icon(PhosphorIcons.x(), size: 18, color: t.textMuted),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints:
+                            const BoxConstraints(minWidth: 28, minHeight: 28),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 28, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: t.bgElev2,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(PhosphorIcons.bellSlash(),
+                              size: 32, color: t.textMuted),
+                          const SizedBox(height: 12),
+                          Text('Tudo em dia',
+                              style: TextStyle(
+                                  color: t.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          Text('Você não tem notificações no momento',
+                              style: TextStyle(color: t.textMuted, fontSize: 12),
+                              textAlign: TextAlign.center),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -633,17 +698,10 @@ class _Topbar extends ConsumerWidget {
           if (onRefresh != null)
             _IconButton(icon: PhosphorIcons.arrowsClockwise(), onTap: onRefresh!),
           const SizedBox(width: 10),
-          _IconButton(icon: PhosphorIcons.bell(), onTap: onBell, dot: true),
+          _IconButton(icon: PhosphorIcons.bell(), onTap: onBell),
         ],
       ),
     );
-  }
-
-  String _initials(String name) {
-    final parts = name.trim().split(' ').where((s) => s.isNotEmpty).toList();
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   String _subDate() {

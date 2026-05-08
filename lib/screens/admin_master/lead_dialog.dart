@@ -17,7 +17,6 @@ class _D {
   static const textMuted   = Color(0xFF75716D);
   static const primary     = Color(0xFFFF6A2F);
   static const danger      = Color(0xFFF87171);
-  static const success     = Color(0xFF34D399);
 }
 
 const _STAGE_OPTS = [

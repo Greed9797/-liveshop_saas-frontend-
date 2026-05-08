@@ -6,7 +6,6 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../design_system/app_colors.dart' as ds_colors;
 import '../../design_system/app_tokens.dart' as ds_tokens;
 import '../../livelab/theme/livelab_theme.dart';
-import '../../livelab/theme/tokens.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_scaffold.dart';

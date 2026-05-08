@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
-import '../../design_system/app_colors.dart' as ds_colors;
 import '../../design_system/app_tokens.dart' as ds_tokens;
 import '../../livelab/theme/livelab_theme.dart';
 import '../../routes/app_routes.dart';

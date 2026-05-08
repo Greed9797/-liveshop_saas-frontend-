@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/tenant.dart';
-import '../models/usuario.dart';
 import '../services/api_service.dart';
 
 class TenantsNotifier extends AsyncNotifier<List<Tenant>> {
