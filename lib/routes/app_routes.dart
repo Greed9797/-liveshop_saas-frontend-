@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/cabine.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import '../screens/usuarios/usuarios_screen.dart';
-import '../screens/admin_master/master_franqueados_screen.dart';
 import '../screens/analytics/analytics_dashboard_screen.dart';
 import '../screens/apresentadoras/apresentadoras_screen.dart';
 import '../screens/auditoria/analise_credito_screen.dart';
@@ -654,7 +653,7 @@ class AppRoutes {
             allowedRoles: {'franqueador_master'},
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: MasterFranqueadosScreen(),
+            child: MasterFranqueadosV2(),
           ),
           settings: settings,
         );
