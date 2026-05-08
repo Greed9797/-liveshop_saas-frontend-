@@ -1,78 +1,266 @@
 import 'package:flutter/material.dart';
-import '../core/ll_theme.dart';
-import '../widgets/ll_components.dart';
-import '../widgets/ll_admin_widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
-class ConsolidadoScreen extends StatelessWidget {
+import '../../models/admin_master.dart';
+import '../../providers/admin_master_provider.dart';
+import '../../widgets/empty_state_widget.dart';
+import '../../widgets/skeleton_list.dart';
+import '../core/ll_theme.dart';
+import '../widgets/ll_admin_widgets.dart';
+import '../widgets/ll_components.dart';
+
+String _currentPeriod() {
+  final now = DateTime.now();
+  return '${now.year}-${now.month.toString().padLeft(2, '0')}';
+}
+
+String _periodLabel(String period) {
+  try {
+    final date = DateTime.parse('$period-01');
+    return DateFormat('MMMM y', 'pt_BR').format(date);
+  } catch (_) {
+    return period;
+  }
+}
+
+String _currency(double v) =>
+    NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2).format(v);
+
+String _signedPercent(double v) =>
+    '${v > 0 ? '+' : ''}${v.toStringAsFixed(1)}%';
+
+class ConsolidadoScreen extends ConsumerStatefulWidget {
   const ConsolidadoScreen({super.key});
 
   @override
+  ConsumerState<ConsolidadoScreen> createState() => _ConsolidadoScreenState();
+}
+
+class _ConsolidadoScreenState extends ConsumerState<ConsolidadoScreen> {
+  late String _periodo;
+  String _status = 'todos';
+
+  @override
+  void initState() {
+    super.initState();
+    _periodo = _currentPeriod();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final kpis = const [
-      AdminKpiCard(label: 'Faturamento bruto', value: 'R\$ 66.500,30', sub: 'rede consolidada', icon: Icons.live_tv_rounded, color: LL.success),
-      AdminKpiCard(label: 'Receita franqueadora', value: 'R\$ 75,00', sub: 'líquida no período', icon: Icons.apartment_rounded, color: LL.accent),
-      AdminKpiCard(label: 'MRR da rede', value: 'R\$ 47.840,00', sub: 'recorrente mensal', icon: Icons.attach_money_rounded, color: LL.info),
-      AdminKpiCard(label: 'Take rate médio', value: '+0,1%', sub: 'bruto vs comissão', icon: Icons.local_offer_rounded, color: Color(0xFFAF7BFF)),
-      AdminKpiCard(label: 'Previsão de recebimento', value: 'R\$ 75,00', sub: 'próximos 30 dias', icon: Icons.refresh_rounded, color: LL.success),
-      AdminKpiCard(label: 'Inadimplência', value: 'R\$ 75,00', sub: '1 unidade em atraso', icon: Icons.warning_amber_rounded, color: LL.live, delta: '+100,0%', deltaUp: false),
-      AdminKpiCard(label: 'Crescimento mensal', value: '+100,0%', sub: 'vs mês anterior', icon: Icons.trending_up_rounded, color: LL.success, delta: 'MoM'),
-      AdminKpiCard(label: 'Comparativo MoM', value: 'R\$ 66.500,30', sub: 'diferença absoluta', icon: Icons.bar_chart_rounded, color: LL.accent),
-    ];
+    final filters = (period: _periodo, status: _status);
+    final async = ref.watch(masterConsolidatedProvider(filters));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AdminPageToolbar(
+          AdminPageToolbar(
             italic: 'Consolidado',
-            subtitle: 'Leitura financeira da rede: bruto, receita da franqueadora, mix de receitas e risco.',
+            subtitle:
+                'Leitura financeira da rede: bruto, receita da franqueadora, mix de receitas e risco.',
             filters: [
-              AdminFilterChip(label: 'Período', value: 'abril 2026'),
-              AdminFilterChip(label: 'Status', value: 'Todos'),
-              AdminFilterChip(label: 'Ordenar por', value: 'Maior faturamento'),
+              AdminFilterChip(label: 'Período', value: _periodLabel(_periodo)),
+              AdminFilterChip(label: 'Status', value: _statusLabel(_status)),
             ],
+            onRefresh: () =>
+                ref.invalidate(masterConsolidatedProvider(filters)),
           ),
           const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final columns = width < 680 ? 1 : width < 1040 ? 2 : 4;
-              return GridView.count(
-                shrinkWrap: true,
-                primary: false,
-                crossAxisCount: columns,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: columns == 1 ? 4.2 : 2.05,
-                children: kpis,
-              );
-            },
+          async.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: SkeletonList(itemCount: 4, itemHeight: 90),
+            ),
+            error: (e, _) => _ErrorBox(
+              message: e.toString(),
+              onRetry: () =>
+                  ref.invalidate(masterConsolidatedProvider(filters)),
+            ),
+            data: (data) => _Body(data: data),
           ),
-          const SizedBox(height: 18),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxWidth < 840;
-              final chartA = const AdminChartCard(
-                title: 'Evolução da rede',
-                subtitle: 'histórico consolidado para comparar tendência e sazonalidade',
-                child: AdminLineChart(
-                  labels: ['Nov/24', 'Dez/24', 'Jan/25', 'Fev/25', 'Mar/25', 'Abr/25', 'Mai/25', 'Jun/25', 'Jul/25', 'Ago/25', 'Set/25', 'Out/25', 'Nov/25', 'Dez/25', 'Jan/26', 'Fev/26', 'Mar/26', 'Abr/26'],
-                  data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 66.5],
-                  maxY: 70,
-                ),
-              );
-              final chartB = const AdminChartCard(
-                title: 'Mix de receita',
-                subtitle: 'separação do que é mensalidade, comissão e outros componentes',
-                child: RevenueMixWidget(),
-              );
-              if (compact) return Column(children: [chartA, const SizedBox(height: 10), chartB]);
-              return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(flex: 3, child: chartA), const SizedBox(width: 10), Expanded(flex: 2, child: chartB)]);
-            },
+        ],
+      ),
+    );
+  }
+
+  String _statusLabel(String s) => switch (s) {
+        'ativo' => 'Ativos',
+        'inadimplente' => 'Inadimplentes',
+        _ => 'Todos',
+      };
+}
+
+class _Body extends StatelessWidget {
+  const _Body({required this.data});
+  final MasterConsolidatedData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final ov = data.overview;
+    final kpis = [
+      AdminKpiCard(
+          label: 'Faturamento bruto',
+          value: _currency(ov.grossRevenue),
+          sub: 'rede consolidada',
+          icon: Icons.live_tv_rounded,
+          color: LL.success),
+      AdminKpiCard(
+          label: 'Receita franqueadora',
+          value: _currency(ov.franchisorRevenue),
+          sub: 'líquida no período',
+          icon: Icons.apartment_rounded,
+          color: LL.accent),
+      AdminKpiCard(
+          label: 'MRR da rede',
+          value: _currency(ov.mrrNetwork),
+          sub: 'recorrente mensal',
+          icon: Icons.attach_money_rounded,
+          color: LL.info),
+      AdminKpiCard(
+          label: 'Take rate médio',
+          value: _signedPercent(ov.averageTakeRate),
+          sub: 'bruto vs comissão',
+          icon: Icons.local_offer_rounded,
+          color: const Color(0xFFAF7BFF)),
+      AdminKpiCard(
+          label: 'Previsão de recebimento',
+          value: _currency(ov.receivableForecast),
+          sub: 'próximos 30 dias',
+          icon: Icons.refresh_rounded,
+          color: LL.success),
+      AdminKpiCard(
+          label: 'Inadimplência',
+          value: _currency(ov.delinquencyValue),
+          sub: '${ov.delinquencyPercent.toStringAsFixed(1)}% do bruto',
+          icon: Icons.warning_amber_rounded,
+          color: ov.delinquencyValue > 0 ? LL.live : LL.success,
+          delta: _signedPercent(ov.delinquencyPercent),
+          deltaUp: ov.delinquencyPercent <= 0),
+      AdminKpiCard(
+          label: 'Crescimento mensal',
+          value: _signedPercent(ov.growthPercent),
+          sub: 'vs mês anterior',
+          icon: Icons.trending_up_rounded,
+          color: ov.growthPercent >= 0 ? LL.success : LL.live,
+          delta: 'MoM',
+          deltaUp: ov.growthPercent >= 0),
+      AdminKpiCard(
+          label: 'Comparativo MoM',
+          value: _currency(ov.comparisonValue),
+          sub: 'diferença absoluta',
+          icon: Icons.bar_chart_rounded,
+          color: LL.accent),
+    ];
+
+    final history = data.history;
+    final labels = history.map((h) => h.label).toList();
+    final values = history.map((h) => h.grossRevenue / 1000).toList(); // em milhares
+    final maxY = (values.isEmpty ? 70.0 : values.reduce((a, b) => a > b ? a : b))
+        .clamp(10.0, double.infinity);
+    final formatLast = values.isEmpty
+        ? 'R\$ 0'
+        : 'R\$ ${values.last.toStringAsFixed(1).replaceAll('.', ',')}k';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LayoutBuilder(builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final columns = width < 680
+              ? 1
+              : width < 1040
+                  ? 2
+                  : 4;
+          return GridView.count(
+            shrinkWrap: true,
+            primary: false,
+            crossAxisCount: columns,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: columns == 1 ? 4.2 : 2.05,
+            children: kpis,
+          );
+        }),
+        const SizedBox(height: 18),
+        LayoutBuilder(builder: (context, constraints) {
+          final compact = constraints.maxWidth < 840;
+          final chartA = AdminChartCard(
+            title: 'Evolução da rede',
+            subtitle:
+                'histórico consolidado para comparar tendência e sazonalidade',
+            child: history.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Center(
+                      child: Text('Sem histórico no período',
+                          style: LL.caption.copyWith(fontSize: 11.5)),
+                    ),
+                  )
+                : AdminLineChart(
+                    labels: labels,
+                    data: values,
+                    maxY: maxY,
+                    formatLast: formatLast,
+                  ),
+          );
+          final chartB = AdminChartCard(
+            title: 'Mix de receita',
+            subtitle:
+                'separação do que é mensalidade, comissão e outros componentes',
+            child: RevenueMixWidget(overview: ov),
+          );
+          if (compact) {
+            return Column(children: [chartA, const SizedBox(height: 10), chartB]);
+          }
+          return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(flex: 3, child: chartA),
+            const SizedBox(width: 10),
+            Expanded(flex: 2, child: chartB)
+          ]);
+        }),
+        const AdminSectionHeader(
+            title: 'Tabela consolidada por unidade',
+            subtitle:
+                'bruto, mensal/contratual, receita da franqueadora, crescimento e status',
+            actionLabel: 'Exportar CSV'),
+        ConsolidatedUnitTable(units: data.units, overview: ov),
+      ],
+    );
+  }
+}
+
+class _ErrorBox extends StatelessWidget {
+  const _ErrorBox({required this.message, required this.onRetry});
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline, size: 48, color: LL.live),
+          const SizedBox(height: 12),
+          Text('Não foi possível carregar o consolidado',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: context.llTextPrimary)),
+          const SizedBox(height: 4),
+          Text(message,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              style: LL.caption.copyWith(fontSize: 11.5)),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Tentar novamente'),
           ),
-          const AdminSectionHeader(title: 'Tabela consolidada por unidade', subtitle: 'bruto, mensal/contratual, receita da franqueadora, crescimento e status', actionLabel: 'Exportar CSV'),
-          const ConsolidatedUnitTable(),
         ],
       ),
     );
@@ -80,32 +268,58 @@ class ConsolidadoScreen extends StatelessWidget {
 }
 
 class RevenueMixWidget extends StatelessWidget {
-  const RevenueMixWidget({super.key});
+  const RevenueMixWidget({super.key, required this.overview});
+  final MasterConsolidatedOverview overview;
 
   @override
   Widget build(BuildContext context) {
-    const items = [
-      _MixItem(label: 'Mensalidades', value: 'R\$ 47.840,00', pct: 0.719, color: LL.info),
-      _MixItem(label: 'Comissão', value: 'R\$ 18.660,30', pct: 0.281, color: LL.accent),
-      _MixItem(label: 'Outros', value: 'R\$ 0,00', pct: 0.0, color: LL.textMuted),
+    final gross = overview.grossRevenue == 0 ? 1 : overview.grossRevenue;
+    final items = [
+      _MixItem(
+          label: 'Mensalidades',
+          value: _currency(overview.monthlyFeeRevenue),
+          pct: overview.monthlyFeeRevenue / gross,
+          color: LL.info),
+      _MixItem(
+          label: 'Comissão',
+          value: _currency(overview.commissionRevenue),
+          pct: overview.commissionRevenue / gross,
+          color: LL.accent),
+      _MixItem(
+          label: 'Outros',
+          value: _currency(overview.otherRevenue),
+          pct: overview.otherRevenue / gross,
+          color: context.llTextMuted),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final item in items) Padding(padding: const EdgeInsets.only(bottom: 16), child: _MixBar(item: item)),
-        const Divider(color: LL.border),
+        for (final item in items)
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _MixBar(item: item)),
+        Divider(color: context.llBorder),
         const SizedBox(height: 8),
-        const _MixFooter(label: 'Receita franqueadora', value: 'R\$ 75,00'),
+        _MixFooter(
+            label: 'Receita franqueadora',
+            value: _currency(overview.franchisorRevenue)),
         const SizedBox(height: 8),
-        const _MixFooter(label: 'Take rate médio', value: '+0,1%', color: LL.success),
+        _MixFooter(
+            label: 'Take rate médio',
+            value: _signedPercent(overview.averageTakeRate),
+            color: LL.success),
       ],
     );
   }
 }
 
 class _MixItem {
-  const _MixItem({required this.label, required this.value, required this.pct, required this.color});
+  const _MixItem(
+      {required this.label,
+      required this.value,
+      required this.pct,
+      required this.color});
   final String label;
   final String value;
   final double pct;
@@ -123,8 +337,17 @@ class _MixBar extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: Text(item.label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: LL.textPrimary))),
-            Text(item.value, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: LL.textPrimary)),
+            Expanded(
+                child: Text(item.label,
+                    style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                        color: context.llTextPrimary))),
+            Text(item.value,
+                style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                    color: context.llTextPrimary)),
           ],
         ),
         const SizedBox(height: 7),
@@ -132,40 +355,62 @@ class _MixBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
           child: Container(
             height: 10,
-            color: LL.surface3,
+            color: context.llSurface3,
             alignment: Alignment.centerLeft,
-            child: FractionallySizedBox(widthFactor: item.pct.clamp(0.0, 1.0), child: Container(color: item.color)),
+            child: FractionallySizedBox(
+                widthFactor: item.pct.clamp(0.0, 1.0),
+                child: Container(color: item.color)),
           ),
         ),
         const SizedBox(height: 4),
-        Text('${(item.pct * 100).toStringAsFixed(1).replaceAll('.', ',')}% do consolidado', style: LL.caption.copyWith(fontSize: 10.5)),
+        Text(
+            '${(item.pct * 100).toStringAsFixed(1).replaceAll('.', ',')}% do consolidado',
+            style: LL.caption.copyWith(fontSize: 10.5)),
       ],
     );
   }
 }
 
 class _MixFooter extends StatelessWidget {
-  const _MixFooter({required this.label, required this.value, this.color = LL.textPrimary});
+  const _MixFooter({required this.label, required this.value, this.color});
   final String label;
   final String value;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 12, color: LL.textSecond, fontWeight: FontWeight.w700))),
-        Text(value, style: TextStyle(fontSize: 12.5, color: color, fontWeight: FontWeight.w900)),
+        Expanded(
+            child: Text(label,
+                style: TextStyle(
+                    fontSize: 12,
+                    color: context.llTextSecond,
+                    fontWeight: FontWeight.w700))),
+        Text(value,
+            style: TextStyle(
+                fontSize: 12.5,
+                color: color ?? context.llTextPrimary,
+                fontWeight: FontWeight.w900)),
       ],
     );
   }
 }
 
 class ConsolidatedUnitTable extends StatelessWidget {
-  const ConsolidatedUnitTable({super.key});
+  const ConsolidatedUnitTable({super.key, required this.units, required this.overview});
+  final List<MasterConsolidatedUnit> units;
+  final MasterConsolidatedOverview overview;
 
   @override
   Widget build(BuildContext context) {
+    if (units.isEmpty) {
+      return const EmptyStateWidget(
+        icon: Icons.table_rows_rounded,
+        title: 'Sem unidades para listar',
+        message: 'Nenhuma franquia consolidada no período selecionado.',
+      );
+    }
     return LLCard(
       padding: EdgeInsets.zero,
       child: SingleChildScrollView(
@@ -173,27 +418,10 @@ class ConsolidatedUnitTable extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(minWidth: 920),
           child: Column(
-            children: const [
-              _TableHeader(),
-              _TableRowData(
-                unit: 'Franquia Te4535ste Paulista 2.0',
-                gross: 'R\$ 66.500,30',
-                contract: '+5,9%',
-                franchisor: 'R\$ 75,00',
-                takeRate: '+0,1%',
-                growth: '+100,0%',
-                status: 'INADIMPLENTE',
-              ),
-              _TableRowData(
-                unit: 'Total da rede',
-                gross: 'R\$ 66.500,30',
-                contract: '+5,9%',
-                franchisor: 'R\$ 75,00',
-                takeRate: '+0,1%',
-                growth: '+100,0%',
-                status: '1 unidade',
-                total: true,
-              ),
+            children: [
+              const _TableHeader(),
+              for (final u in units) _TableRowData.fromUnit(u),
+              _TableRowData.totalFromOverview(overview, count: units.length),
             ],
           ),
         ),
@@ -207,20 +435,74 @@ class _TableHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const headers = ['Unidade', 'Faturamento bruto', '% contratual', 'Receita franqueadora', 'Take rate', 'Crescimento', 'Status'];
+    const headers = [
+      'Unidade',
+      'Faturamento bruto',
+      '% contratual',
+      'Receita franqueadora',
+      'Take rate',
+      'Crescimento',
+      'Status'
+    ];
     const flexes = [3, 2, 1, 2, 1, 1, 2];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-      decoration: const BoxDecoration(color: LL.surface3, border: Border(bottom: BorderSide(color: LL.border))),
+      decoration: BoxDecoration(
+          color: context.llSurface3,
+          border: Border(bottom: BorderSide(color: context.llBorder))),
       child: Row(children: [
-        for (var i = 0; i < headers.length; i++) Expanded(flex: flexes[i], child: Text(headers[i].toUpperCase(), style: LL.label.copyWith(fontSize: 9))),
+        for (var i = 0; i < headers.length; i++)
+          Expanded(
+              flex: flexes[i],
+              child: Text(headers[i].toUpperCase(),
+                  style: LL.label.copyWith(fontSize: 9))),
       ]),
     );
   }
 }
 
 class _TableRowData extends StatelessWidget {
-  const _TableRowData({required this.unit, required this.gross, required this.contract, required this.franchisor, required this.takeRate, required this.growth, required this.status, this.total = false});
+  const _TableRowData({
+    required this.unit,
+    required this.gross,
+    required this.contract,
+    required this.franchisor,
+    required this.takeRate,
+    required this.growth,
+    required this.status,
+    required this.statusColor,
+    this.total = false,
+  });
+
+  factory _TableRowData.fromUnit(MasterConsolidatedUnit u) {
+    final isInadimplente = u.status == 'inadimplente';
+    return _TableRowData(
+      unit: u.name,
+      gross: _currency(u.grossRevenue),
+      contract: _signedPercent(u.contractPercent),
+      franchisor: _currency(u.franchisorRevenue),
+      takeRate: _signedPercent(u.takeRate),
+      growth: _signedPercent(u.growthPercent),
+      status: isInadimplente ? 'Inadimplente' : 'Ativa',
+      statusColor: isInadimplente ? LL.live : LL.success,
+    );
+  }
+
+  factory _TableRowData.totalFromOverview(MasterConsolidatedOverview ov,
+      {required int count}) {
+    return _TableRowData(
+      unit: 'Total da rede',
+      gross: _currency(ov.grossRevenue),
+      contract: _signedPercent(0),
+      franchisor: _currency(ov.franchisorRevenue),
+      takeRate: _signedPercent(ov.averageTakeRate),
+      growth: _signedPercent(ov.growthPercent),
+      status: '$count unidade${count == 1 ? '' : 's'}',
+      statusColor: LL.accent,
+      total: true,
+    );
+  }
+
   final String unit;
   final String gross;
   final String contract;
@@ -228,26 +510,36 @@ class _TableRowData extends StatelessWidget {
   final String takeRate;
   final String growth;
   final String status;
+  final Color statusColor;
   final bool total;
 
   @override
   Widget build(BuildContext context) {
     const flexes = [3, 2, 1, 2, 1, 1, 2];
-    final style = TextStyle(fontSize: 12.5, fontWeight: total ? FontWeight.w900 : FontWeight.w700, color: total ? LL.textPrimary : LL.textSecond);
+    final style = TextStyle(
+        fontSize: 12.5,
+        fontWeight: total ? FontWeight.w900 : FontWeight.w700,
+        color: total ? context.llTextPrimary : context.llTextSecond);
     final values = [unit, gross, contract, franchisor, takeRate, growth];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: LL.border))),
+      decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: context.llBorder))),
       child: Row(
         children: [
           for (var i = 0; i < values.length; i++)
             Expanded(
               flex: flexes[i],
-              child: Text(values[i], overflow: TextOverflow.ellipsis, style: i == 5 ? style.copyWith(color: LL.success) : style),
+              child: Text(values[i],
+                  overflow: TextOverflow.ellipsis,
+                  style: i == 5 ? style.copyWith(color: LL.success) : style),
             ),
           Expanded(
             flex: flexes[6],
-            child: total ? Text(status, style: LL.caption.copyWith(fontWeight: FontWeight.w800)) : const AdminStatusPill(label: 'Inadimplente', color: LL.live),
+            child: total
+                ? Text(status,
+                    style: LL.caption.copyWith(fontWeight: FontWeight.w800))
+                : AdminStatusPill(label: status, color: statusColor),
           ),
         ],
       ),

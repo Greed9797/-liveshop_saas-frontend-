@@ -375,7 +375,7 @@ class _ExecutiveSummary extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(body,
                     style: LL.body.copyWith(
-                        color: LL.textPrimary, fontSize: 13.2, height: 1.38)),
+                        color: context.llTextPrimary, fontSize: 13.2, height: 1.38)),
               ],
             ),
           ),
@@ -411,9 +411,9 @@ class _PipeRow extends StatelessWidget {
   const _PipeRow({required this.stage});
   final MasterPipelineStage stage;
 
-  Color get _color => switch (stage.stage) {
+  Color _color(BuildContext context) => switch (stage.stage) {
         'fechado_ganho' => LL.success,
-        'fechado_perdido' => LL.textMuted,
+        'fechado_perdido' => context.llTextMuted,
         'contrato_pendente' => LL.warning,
         'negociacao' || 'contrato_enviado' => LL.accent,
         _ => LL.info,
@@ -435,28 +435,28 @@ class _PipeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: LL.border))),
+      decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: context.llBorder))),
       child: Row(
         children: [
           Container(
               width: 8,
               height: 8,
               decoration:
-                  BoxDecoration(color: _color, shape: BoxShape.circle)),
+                  BoxDecoration(color: _color(context), shape: BoxShape.circle)),
           const SizedBox(width: 9),
           Expanded(
               child: Text(_label,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      color: LL.textSecond))),
+                      color: context.llTextSecond))),
           Text('${stage.count}',
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
                   color:
-                      stage.count > 0 ? LL.textPrimary : LL.textMuted)),
+                      stage.count > 0 ? context.llTextPrimary : context.llTextMuted)),
         ],
       ),
     );
@@ -494,15 +494,15 @@ class _CommissionCard extends StatelessWidget {
               value: _currency(summary.overdue),
               color: LL.live),
           const SizedBox(height: 12),
-          const Divider(color: LL.border, height: 1),
+          Divider(color: context.llBorder, height: 1),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                   child: Text('Taxa de recebimento',
                       style: TextStyle(
                           fontSize: 11,
-                          color: LL.textMuted,
+                          color: context.llTextMuted,
                           fontWeight: FontWeight.w600))),
               Text('${receiveRate.toStringAsFixed(0)}%',
                   style: TextStyle(
@@ -532,8 +532,8 @@ class _MoneyStatus extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: LL.border))),
+      decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: context.llBorder))),
       child: Row(
         children: [
           Container(
@@ -544,15 +544,15 @@ class _MoneyStatus extends StatelessWidget {
           const SizedBox(width: 9),
           Expanded(
               child: Text(label,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      color: LL.textSecond))),
+                      color: context.llTextSecond))),
           Text(value,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
-                  color: LL.textPrimary)),
+                  color: context.llTextPrimary)),
         ],
       ),
     );
@@ -573,12 +573,12 @@ class _ErrorBox extends StatelessWidget {
         const SizedBox(height: 10),
         Text('Não foi possível carregar o painel master',
             style: TextStyle(
-                color: LL.textPrimary,
+                color: context.llTextPrimary,
                 fontSize: 14,
                 fontWeight: FontWeight.w800)),
         const SizedBox(height: 6),
         Text(message,
-            style: LL.caption.copyWith(fontSize: 12, color: LL.textSecond)),
+            style: LL.caption.copyWith(fontSize: 12, color: context.llTextSecond)),
         const SizedBox(height: 14),
         LLButton(
             label: 'Tentar novamente',

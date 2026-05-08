@@ -1,95 +1,205 @@
 import 'package:flutter/material.dart';
-import '../core/ll_theme.dart';
-import '../widgets/ll_components.dart';
-import '../widgets/ll_admin_widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
-class UnidadesScreen extends StatelessWidget {
+import '../../models/admin_master.dart';
+import '../../providers/admin_master_provider.dart';
+import '../../widgets/empty_state_widget.dart';
+import '../../widgets/skeleton_list.dart';
+import '../core/ll_theme.dart';
+import '../widgets/ll_admin_widgets.dart';
+import '../widgets/ll_components.dart';
+
+String _currentPeriod() {
+  final now = DateTime.now();
+  return '${now.year}-${now.month.toString().padLeft(2, '0')}';
+}
+
+String _periodLabel(String period) {
+  try {
+    final date = DateTime.parse('$period-01');
+    return DateFormat('MMMM y', 'pt_BR').format(date);
+  } catch (_) {
+    return period;
+  }
+}
+
+String _currency(double value) =>
+    NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2)
+        .format(value);
+
+String _signedPercent(double value) {
+  final prefix = value > 0 ? '+' : '';
+  return '$prefix${value.toStringAsFixed(1)}%';
+}
+
+class UnidadesScreen extends ConsumerStatefulWidget {
   const UnidadesScreen({super.key});
 
   @override
+  ConsumerState<UnidadesScreen> createState() => _UnidadesScreenState();
+}
+
+class _UnidadesScreenState extends ConsumerState<UnidadesScreen> {
+  late String _periodo;
+  String _status = 'todos';
+
+  @override
+  void initState() {
+    super.initState();
+    _periodo = _currentPeriod();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final kpis = const [
-      AdminKpiCard(
-          label: 'Unidades',
-          value: '1',
-          sub: 'rede ativa',
-          icon: Icons.apartment_rounded,
-          color: LL.accent),
-      AdminKpiCard(
-          label: 'Clientes ativos',
-          value: '12',
-          sub: 'contratos faturando',
-          icon: Icons.groups_2_rounded,
-          color: LL.info),
-      AdminKpiCard(
-          label: 'Faturamento bruto',
-          value: 'R\$ 66.500,30',
-          sub: 'rede consolidada',
-          icon: Icons.live_tv_rounded,
-          color: LL.success),
-      AdminKpiCard(
-          label: 'Receita franqueadora',
-          value: 'R\$ 75,00',
-          sub: 'líquida no período',
-          icon: Icons.account_balance_wallet_rounded,
-          color: LL.accent),
-    ];
+    final filters = (period: _periodo, status: _status);
+    final unitsAsync = ref.watch(masterUnitsProvider(filters));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AdminPageToolbar(
+          AdminPageToolbar(
             italic: 'Unidades',
             subtitle:
                 'Cada unidade como uma mini-DRE operacional da rede, com drill-down por cliente final.',
             filters: [
-              AdminFilterChip(label: 'Período', value: 'abril 2026'),
-              AdminFilterChip(label: 'Status', value: 'Todos'),
+              AdminFilterChip(label: 'Período', value: _periodLabel(_periodo)),
+              AdminFilterChip(label: 'Status', value: _statusLabel(_status)),
             ],
+            onRefresh: () => ref.invalidate(masterUnitsProvider(filters)),
           ),
           const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final columns = width < 680
-                  ? 1
-                  : width < 1040
-                      ? 2
-                      : 4;
-              return GridView.count(
-                shrinkWrap: true,
-                primary: false,
-                crossAxisCount: columns,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: columns == 1 ? 4.2 : 2.05,
-                children: kpis,
-              );
-            },
-          ),
-          const SizedBox(height: 18),
-          const UnitDrillDownCard(initiallyOpen: true),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
-            decoration: BoxDecoration(
-                border:
-                    Border.all(color: LL.borderMid, style: BorderStyle.solid),
-                borderRadius: BorderRadius.circular(14)),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.add_rounded, size: 17, color: LL.textMuted),
-                SizedBox(width: 6),
-                Text('Adicionar nova unidade à rede',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: LL.textMuted)),
-              ],
+          unitsAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: SkeletonList(itemCount: 4, itemHeight: 90),
             ),
+            error: (e, _) => _ErrorBox(
+              message: e.toString(),
+              onRetry: () => ref.invalidate(masterUnitsProvider(filters)),
+            ),
+            data: (data) => _Body(data: data),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _statusLabel(String s) => switch (s) {
+        'ativo' => 'Ativos',
+        'inadimplente' => 'Inadimplentes',
+        _ => 'Todos',
+      };
+}
+
+class _Body extends StatelessWidget {
+  const _Body({required this.data});
+  final MasterUnitsData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = data.summary;
+    final units = data.units;
+
+    final kpis = [
+      AdminKpiCard(
+          label: 'Unidades',
+          value: '${summary.totalUnits}',
+          sub: 'rede ativa',
+          icon: Icons.apartment_rounded,
+          color: LL.accent),
+      AdminKpiCard(
+          label: 'Clientes ativos',
+          value: '${summary.activeClients}',
+          sub: 'contratos faturando',
+          icon: Icons.groups_2_rounded,
+          color: LL.info),
+      AdminKpiCard(
+          label: 'Faturamento bruto',
+          value: _currency(summary.grossRevenue),
+          sub: 'rede consolidada',
+          icon: Icons.live_tv_rounded,
+          color: LL.success),
+      AdminKpiCard(
+          label: 'Receita franqueadora',
+          value: _currency(summary.franchisorRevenue),
+          sub: 'líquida no período',
+          icon: Icons.account_balance_wallet_rounded,
+          color: LL.accent),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final columns = width < 680
+                ? 1
+                : width < 1040
+                    ? 2
+                    : 4;
+            return GridView.count(
+              shrinkWrap: true,
+              primary: false,
+              crossAxisCount: columns,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: columns == 1 ? 4.2 : 2.05,
+              children: kpis,
+            );
+          },
+        ),
+        const SizedBox(height: 18),
+        if (units.isEmpty)
+          EmptyStateWidget(
+            icon: Icons.apartment_rounded,
+            title: 'Sem unidades no período',
+            message:
+                'Nenhuma unidade encontrada com os filtros atuais. Ajuste o período ou status.',
+          )
+        else
+          ...[
+            for (var i = 0; i < units.length; i++) ...[
+              UnitDrillDownCard(unit: units[i], initiallyOpen: i == 0),
+              const SizedBox(height: 12),
+            ],
+          ],
+      ],
+    );
+  }
+}
+
+class _ErrorBox extends StatelessWidget {
+  const _ErrorBox({required this.message, required this.onRetry});
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline, size: 48, color: LL.live),
+          const SizedBox(height: 12),
+          Text('Não foi possível carregar as unidades',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: context.llTextPrimary)),
+          const SizedBox(height: 4),
+          Text(message,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              style: LL.caption.copyWith(fontSize: 11.5)),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Tentar novamente'),
           ),
         ],
       ),
@@ -98,7 +208,8 @@ class UnidadesScreen extends StatelessWidget {
 }
 
 class UnitDrillDownCard extends StatefulWidget {
-  const UnitDrillDownCard({super.key, this.initiallyOpen = false});
+  const UnitDrillDownCard({super.key, required this.unit, this.initiallyOpen = false});
+  final MasterUnit unit;
   final bool initiallyOpen;
 
   @override
@@ -110,6 +221,12 @@ class _UnitDrillDownCardState extends State<UnitDrillDownCard> {
 
   @override
   Widget build(BuildContext context) {
+    final unit = widget.unit;
+    final isInadimplente = unit.status == 'inadimplente';
+    final regionLabel = unit.region == null || unit.region!.isEmpty
+        ? 'Região não informada'
+        : unit.region!;
+
     return LLCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -129,50 +246,64 @@ class _UnitDrillDownCardState extends State<UnitDrillDownCard> {
                           spacing: 8,
                           runSpacing: 6,
                           crossAxisAlignment: WrapCrossAlignment.center,
-                          children: const [
-                            Text('Franquia Te4535ste Paulista 2.0',
+                          children: [
+                            Text(unit.name,
                                 style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w900,
-                                    color: LL.textPrimary)),
+                                    color: context.llTextPrimary)),
                             AdminStatusPill(
-                                label: 'Inadimplente', color: LL.live),
+                                label: isInadimplente
+                                    ? 'Inadimplente'
+                                    : (unit.status == 'ativo'
+                                        ? 'Ativa'
+                                        : unit.status),
+                                color:
+                                    isInadimplente ? LL.live : LL.success),
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text('Região não informada', style: LL.caption),
+                        Text(regionLabel, style: LL.caption),
                       ],
                     ),
                   ),
                   AnimatedRotation(
                     turns: open ? .5 : 0,
                     duration: const Duration(milliseconds: 180),
-                    child: const Icon(Icons.keyboard_arrow_down_rounded,
-                        size: 22, color: LL.textMuted),
+                    child: Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 22, color: context.llTextMuted),
                   ),
                 ],
               ),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                _UnitChip(label: 'Clientes', value: '12'),
-                _UnitChip(label: 'Faturamento bruto', value: 'R\$ 66.500,30'),
+                _UnitChip(label: 'Clientes', value: '${unit.activeClients}'),
                 _UnitChip(
-                    label: 'Receita líquida unidade', value: 'R\$ 66.425,30'),
-                _UnitChip(label: 'Receita franqueadora', value: 'R\$ 75,00'),
+                    label: 'Faturamento bruto',
+                    value: _currency(unit.grossRevenue)),
                 _UnitChip(
-                    label: 'Crescimento', value: '+100,0%', color: LL.success),
+                    label: 'Receita líquida unidade',
+                    value: _currency(unit.unitNetRevenue)),
+                _UnitChip(
+                    label: 'Receita franqueadora',
+                    value: _currency(unit.franchisorRevenue)),
+                _UnitChip(
+                    label: 'Crescimento',
+                    value: _signedPercent(unit.growthPercent),
+                    color:
+                        unit.growthPercent >= 0 ? LL.success : LL.live),
               ],
             ),
           ),
           AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
-            secondChild: const _UnitExpandedContent(),
+            secondChild: _UnitExpandedContent(unit: unit),
             crossFadeState:
                 open ? CrossFadeState.showSecond : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 180),
@@ -195,9 +326,9 @@ class _UnitChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
           color:
-              (color ?? LL.textSecond).llOpacity(color == null ? 0.06 : 0.12),
+              (color ?? context.llTextSecond).llOpacity(color == null ? 0.06 : 0.12),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color?.llOpacity(0.22) ?? LL.border)),
+          border: Border.all(color: color?.llOpacity(0.22) ?? context.llBorder)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -207,7 +338,7 @@ class _UnitChip extends StatelessWidget {
               style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
-                  color: color ?? LL.textPrimary)),
+                  color: color ?? context.llTextPrimary)),
         ],
       ),
     );
@@ -215,22 +346,24 @@ class _UnitChip extends StatelessWidget {
 }
 
 class _UnitExpandedContent extends StatelessWidget {
-  const _UnitExpandedContent();
+  const _UnitExpandedContent({required this.unit});
+  final MasterUnit unit;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-          color: LL.surface3,
-          border: Border(top: BorderSide(color: LL.border))),
+      decoration: BoxDecoration(
+          color: context.llSurface3,
+          border: Border(top: BorderSide(color: context.llBorder))),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 760;
-          final dre = const _MiniDreCard();
-          final clients = const _TopClientsCard();
-          if (compact)
+          final dre = _MiniDreCard(unit: unit);
+          final clients = _TopClientsCard(unit: unit);
+          if (compact) {
             return Column(children: [dre, const SizedBox(height: 12), clients]);
+          }
           return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Expanded(flex: 3, child: dre),
             const SizedBox(width: 12),
@@ -243,37 +376,43 @@ class _UnitExpandedContent extends StatelessWidget {
 }
 
 class _MiniDreCard extends StatelessWidget {
-  const _MiniDreCard();
+  const _MiniDreCard({required this.unit});
+  final MasterUnit unit;
 
   @override
   Widget build(BuildContext context) {
+    final operationalCosts = unit.grossRevenue -
+        unit.unitNetRevenue -
+        unit.franchisorRevenue;
     return LLCard(
-      color: LL.surface2,
+      color: context.llSurface2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Text('MINI-DRE DA UNIDADE',
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
-                  color: LL.textSecond,
+                  color: context.llTextSecond,
                   letterSpacing: 0.7)),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           _DreRow(
-              label: 'Receita bruta', value: 'R\$ 66.500,30', positive: true),
-          _DreRow(label: '(–) Impostos', value: '– R\$ 0,00', negative: true),
+              label: 'Receita bruta',
+              value: _currency(unit.grossRevenue),
+              positive: true),
           _DreRow(
               label: '(–) Comissão franqueadora',
-              value: '– R\$ 75,00',
+              value: '– ${_currency(unit.franchisorRevenue)}',
               negative: true),
-          _DreRow(
-              label: '(–) Custos operacionais',
-              value: '– R\$ 0,00',
-              negative: true),
-          Divider(color: LL.border),
+          if (operationalCosts > 0)
+            _DreRow(
+                label: '(–) Custos operacionais',
+                value: '– ${_currency(operationalCosts.abs())}',
+                negative: true),
+          Divider(color: context.llBorder),
           _DreRow(
               label: 'Receita líquida',
-              value: 'R\$ 66.425,30',
+              value: _currency(unit.unitNetRevenue),
               positive: true,
               total: true),
         ],
@@ -283,26 +422,61 @@ class _MiniDreCard extends StatelessWidget {
 }
 
 class _TopClientsCard extends StatelessWidget {
-  const _TopClientsCard();
+  const _TopClientsCard({required this.unit});
+  final MasterUnit unit;
 
   @override
   Widget build(BuildContext context) {
+    final top = unit.clients.take(3).toList();
     return LLCard(
-      color: LL.surface2,
+      color: context.llSurface2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Text('TOP 3 CLIENTES FINAIS',
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
-                  color: LL.textSecond,
+                  color: context.llTextSecond,
                   letterSpacing: 0.7)),
-          SizedBox(height: 10),
-          Text('Sem clientes com faturamento no período.',
-              style: TextStyle(color: LL.textMuted, fontSize: 12)),
+          const SizedBox(height: 10),
+          if (top.isEmpty)
+            Text('Sem clientes com faturamento no período.',
+                style: TextStyle(color: context.llTextMuted, fontSize: 12))
+          else
+            for (final c in top) ...[
+              _ClientRow(client: c),
+              if (c != top.last) const SizedBox(height: 8),
+            ],
         ],
       ),
+    );
+  }
+}
+
+class _ClientRow extends StatelessWidget {
+  const _ClientRow({required this.client});
+  final MasterClient client;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(client.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: context.llTextPrimary)),
+        ),
+        Text(_currency(client.grossRevenue),
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                color: context.llTextSecond)),
+      ],
     );
   }
 }
@@ -326,7 +500,7 @@ class _DreRow extends StatelessWidget {
         ? LL.success
         : negative
             ? LL.live
-            : LL.textPrimary;
+            : context.llTextPrimary;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -336,7 +510,7 @@ class _DreRow extends StatelessWidget {
                   style: TextStyle(
                       fontSize: total ? 13 : 12,
                       fontWeight: total ? FontWeight.w900 : FontWeight.w600,
-                      color: total ? LL.textPrimary : LL.textSecond))),
+                      color: total ? context.llTextPrimary : context.llTextSecond))),
           Text(value,
               style: TextStyle(
                   fontSize: total ? 13 : 12,

@@ -18,9 +18,16 @@ class _LlAdminScope extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       currentRoute: currentRoute,
-      child: Theme(
-        data: LL.theme,
-        child: ColoredBox(color: LL.bg, child: child),
+      child: Builder(
+        builder: (ctx) {
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          return Theme(
+            data: isDark ? LL.theme : LL.lightTheme,
+            child: Builder(
+              builder: (c) => ColoredBox(color: c.llBg, child: child),
+            ),
+          );
+        },
       ),
     );
   }

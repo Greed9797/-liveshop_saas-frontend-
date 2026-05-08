@@ -62,9 +62,9 @@ class AdminFilterChip extends StatelessWidget {
       height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: LL.surface2,
+        color: context.llSurface2,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: LL.border),
+        border: Border.all(color: context.llBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -73,13 +73,13 @@ class AdminFilterChip extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label.toUpperCase(), style: LL.label.copyWith(fontSize: 8.5, letterSpacing: 0.7)),
+              Text(label.toUpperCase(), style: LL.label.copyWith(fontSize: 8.5, letterSpacing: 0.7, color: context.llTextMuted)),
               const SizedBox(height: 1),
-              Text(value, style: const TextStyle(fontSize: 12.5, color: LL.textPrimary, fontWeight: FontWeight.w800)),
+              Text(value, style: TextStyle(fontSize: 12.5, color: context.llTextPrimary, fontWeight: FontWeight.w800)),
             ],
           ),
           const SizedBox(width: 10),
-          const Icon(Icons.keyboard_arrow_down_rounded, size: 17, color: LL.textMuted),
+          Icon(Icons.keyboard_arrow_down_rounded, size: 17, color: context.llTextMuted),
         ],
       ),
     );
@@ -128,7 +128,7 @@ class AdminKpiCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: LL.textPrimary, height: 1, letterSpacing: -0.9)),
+          Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: context.llTextPrimary, height: 1, letterSpacing: -0.9)),
           const SizedBox(height: 7),
           Row(
             children: [
@@ -160,7 +160,7 @@ class AdminSectionHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: LL.textPrimary, letterSpacing: -0.4)),
+                Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: context.llTextPrimary, letterSpacing: -0.4)),
                 const SizedBox(height: 3),
                 Text(subtitle, style: LL.caption.copyWith(fontSize: 11.5)),
               ],
@@ -200,8 +200,8 @@ class RankCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: LL.textPrimary))),
-              Text('TOP 3', style: LL.label.copyWith(fontSize: 9)),
+              Expanded(child: Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: context.llTextPrimary))),
+              Text('TOP 3', style: LL.label.copyWith(fontSize: 9, color: context.llTextMuted)),
             ],
           ),
           const SizedBox(height: 12),
@@ -230,10 +230,10 @@ class _RankRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (position) { 1 => LL.accent, 2 => LL.textSecond, _ => const Color(0xFFB87333) };
+    final color = switch (position) { 1 => LL.accent, 2 => context.llTextSecond, _ => const Color(0xFFB87333) };
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: LL.surface3.llOpacity(0.55), borderRadius: BorderRadius.circular(10), border: Border.all(color: LL.border)),
+      decoration: BoxDecoration(color: context.llSurface3.llOpacity(0.55), borderRadius: BorderRadius.circular(10), border: Border.all(color: context.llBorder)),
       child: Row(
         children: [
           Container(
@@ -248,7 +248,7 @@ class _RankRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: LL.textPrimary)),
+                Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: context.llTextPrimary)),
                 const SizedBox(height: 2),
                 Text(item.value, style: LL.caption.copyWith(fontSize: 10.5)),
               ],
@@ -288,7 +288,7 @@ class AdminAlertRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: LL.textPrimary)),
+                Text(title, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: context.llTextPrimary)),
                 const SizedBox(height: 2),
                 Text(body, maxLines: 2, overflow: TextOverflow.ellipsis, style: LL.caption.copyWith(fontSize: 11)),
               ],
@@ -317,7 +317,7 @@ class AdminChartCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: LL.textPrimary)),
+          Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: context.llTextPrimary)),
           const SizedBox(height: 2),
           Text(subtitle, style: LL.caption.copyWith(fontSize: 11)),
           const SizedBox(height: 14),
@@ -343,19 +343,46 @@ class AdminLineChart extends StatelessWidget {
       height: height,
       width: double.infinity,
       child: CustomPaint(
-        painter: _AdminLineChartPainter(data: data, secondaryData: secondaryData, labels: labels, maxY: maxY, formatLast: formatLast),
+        painter: _AdminLineChartPainter(
+          data: data,
+          secondaryData: secondaryData,
+          labels: labels,
+          maxY: maxY,
+          formatLast: formatLast,
+          gridColor: context.llBorderMid,
+          captionColor: context.llTextMuted,
+          tooltipBgColor: context.llTextPrimary,
+          tooltipFgColor: context.llBg,
+          dotInnerColor: context.llSurface2,
+        ),
       ),
     );
   }
 }
 
 class _AdminLineChartPainter extends CustomPainter {
-  _AdminLineChartPainter({required this.data, required this.secondaryData, required this.labels, required this.maxY, required this.formatLast});
+  _AdminLineChartPainter({
+    required this.data,
+    required this.secondaryData,
+    required this.labels,
+    required this.maxY,
+    required this.formatLast,
+    required this.gridColor,
+    required this.captionColor,
+    required this.tooltipBgColor,
+    required this.tooltipFgColor,
+    required this.dotInnerColor,
+  });
   final List<double> data;
   final List<double>? secondaryData;
   final List<String> labels;
   final double maxY;
   final String formatLast;
+  final Color gridColor;
+  final Color captionColor;
+  final Color tooltipBgColor;
+  final Color tooltipFgColor;
+  final Color dotInnerColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -370,21 +397,21 @@ class _AdminLineChartPainter extends CustomPainter {
     double y(double v) => top + height - (v / maxY).clamp(0.0, 1.0) * height;
 
     final gridPaint = Paint()
-      ..color = LL.borderMid
+      ..color = gridColor
       ..strokeWidth = 1;
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
     final ticks = [0.0, maxY * .25, maxY * .5, maxY * .75, maxY];
     for (final tick in ticks) {
       final yy = y(tick);
       _drawDashedLine(canvas, Offset(left, yy), Offset(size.width - right, yy), gridPaint);
-      textPainter.text = TextSpan(text: tick == 0 ? 'R\$ 0' : 'R\$ ${tick.toStringAsFixed(1).replaceAll('.', ',')} mil', style: LL.caption.copyWith(fontSize: 9));
+      textPainter.text = TextSpan(text: tick == 0 ? 'R\$ 0' : 'R\$ ${tick.toStringAsFixed(1).replaceAll('.', ',')} mil', style: LL.caption.copyWith(fontSize: 9, color: captionColor));
       textPainter.layout(maxWidth: 42);
       textPainter.paint(canvas, Offset(left - 8 - textPainter.width, yy - 6));
     }
 
     for (var i = 0; i < labels.length; i++) {
       if (i >= data.length) break;
-      textPainter.text = TextSpan(text: labels[i], style: LL.caption.copyWith(fontSize: 9));
+      textPainter.text = TextSpan(text: labels[i], style: LL.caption.copyWith(fontSize: 9, color: captionColor));
       textPainter.layout(maxWidth: 48);
       textPainter.paint(canvas, Offset(x(i) - textPainter.width / 2, size.height - 16));
     }
@@ -440,14 +467,14 @@ class _AdminLineChartPainter extends CustomPainter {
 
     for (var i = 0; i < data.length; i++) {
       final p = Offset(x(i), y(data[i]));
-      canvas.drawCircle(p, i == data.length - 1 ? 4.8 : 2.6, Paint()..color = i == data.length - 1 ? LL.accent : LL.surface2);
+      canvas.drawCircle(p, i == data.length - 1 ? 4.8 : 2.6, Paint()..color = i == data.length - 1 ? LL.accent : dotInnerColor);
       canvas.drawCircle(p, i == data.length - 1 ? 4.8 : 2.6, Paint()..style = PaintingStyle.stroke..strokeWidth = 1.6..color = LL.accent);
     }
 
     final last = Offset(x(data.length - 1), y(data.last));
     final labelRect = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(last.dx - 32, last.dy - 24), width: 72, height: 23), const Radius.circular(6));
-    canvas.drawRRect(labelRect, Paint()..color = LL.textPrimary);
-    textPainter.text = TextSpan(text: formatLast, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: LL.bg));
+    canvas.drawRRect(labelRect, Paint()..color = tooltipBgColor);
+    textPainter.text = TextSpan(text: formatLast, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: tooltipFgColor));
     textPainter.layout(maxWidth: 72);
     textPainter.paint(canvas, Offset(labelRect.outerRect.center.dx - textPainter.width / 2, labelRect.outerRect.center.dy - textPainter.height / 2));
   }
@@ -502,7 +529,7 @@ class AdminGrowthChart extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text(item.label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: item.value > 0 ? LL.success : LL.textMuted)),
+                    Text(item.label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: item.value > 0 ? LL.success : context.llTextMuted)),
                     const SizedBox(height: 8),
                     Expanded(
                       child: Align(
@@ -514,14 +541,14 @@ class AdminGrowthChart extends StatelessWidget {
                             decoration: BoxDecoration(
                               borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
                               gradient: item.value > 0 ? const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [LL.success, Color(0xFF28A745)]) : null,
-                              color: item.value > 0 ? null : LL.textMuted.llOpacity(0.25),
+                              color: item.value > 0 ? null : context.llTextMuted.llOpacity(0.25),
                             ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 9),
-                    Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: LL.textSecond)),
+                    Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: context.llTextSecond)),
                     Text('vs mês ant.', style: LL.caption.copyWith(fontSize: 8.5)),
                   ],
                 ),

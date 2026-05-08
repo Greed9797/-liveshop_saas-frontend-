@@ -16,16 +16,32 @@ import '../../widgets/crm/lead_filter.dart';
 import 'lead_dialog.dart';
 
 class _C {
-  static const bgBase     = Color(0xFF0E0E10);
-  static const bgElev1    = Color(0xFF16161A);
-  static const bgElev2    = Color(0xFF1E1E22);
-  static const bgElev3    = Color(0xFF26262B);
+  // Surface + text tokens são theme-aware — recebem BuildContext.
+  static bool _isDark(BuildContext c) =>
+      Theme.of(c).brightness == Brightness.dark;
 
-  static const textPrimary   = Color(0xFFF5F0EB);
-  static const textSecondary = Color(0xFFB8B2AC);
-  static const textMuted     = Color(0xFF75716D);
-  static const textFaint     = Color(0xFF4A4744);
+  static Color bgBase(BuildContext c) =>
+      _isDark(c) ? const Color(0xFF0E0E10) : const Color(0xFFF5F4F2);
+  static Color bgElev1(BuildContext c) =>
+      _isDark(c) ? const Color(0xFF16161A) : const Color(0xFFFFFFFF);
+  static Color bgElev2(BuildContext c) =>
+      _isDark(c) ? const Color(0xFF1E1E22) : const Color(0xFFF0EEE8);
+  static Color bgElev3(BuildContext c) =>
+      _isDark(c) ? const Color(0xFF26262B) : const Color(0xFFE6E3DC);
 
+  static Color textPrimary(BuildContext c) =>
+      _isDark(c) ? const Color(0xFFF5F0EB) : const Color(0xFF1A1918);
+  static Color textSecondary(BuildContext c) =>
+      _isDark(c) ? const Color(0xFFB8B2AC) : const Color(0xFF6B6870);
+  static Color textMuted(BuildContext c) =>
+      _isDark(c) ? const Color(0xFF75716D) : const Color(0xFF9E9BA8);
+  static Color textFaint(BuildContext c) =>
+      _isDark(c) ? const Color(0xFF4A4744) : const Color(0xFFC8C4BC);
+
+  static Color hairline(BuildContext c) =>
+      _isDark(c) ? const Color(0x1AFFFFFF) : const Color(0x1A000000);
+
+  // Cores semânticas — invariantes nos dois modos.
   static const primary       = Color(0xFFFF6A2F);
   static const primarySoft   = Color(0x24FF6A2F); // 14%
   static const primarySofter = Color(0x12FF6A2F); // 7%
@@ -39,8 +55,6 @@ class _C {
   static const infoSoft    = Color(0x295AC8FA);
   static const accent      = Color(0xFFAF7BFF);
   static const accentSoft  = Color(0x2DAF7BFF);
-
-  static const hairline = Color(0x1AFFFFFF);
 
   static TextStyle get serif => GoogleFonts.instrumentSerif(
         fontStyle: FontStyle.italic,
@@ -92,7 +106,7 @@ class _MasterCrmV3ScreenState extends ConsumerState<MasterCrmV3Screen> {
     final leadsAsync = ref.watch(leadsProvider);
 
     return Material(
-      color: _C.bgBase,
+      color: _C.bgBase(context),
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 18, 24, 32),
         child: Column(
@@ -116,10 +130,10 @@ class _MasterCrmV3ScreenState extends ConsumerState<MasterCrmV3Screen> {
             LeadFilterBuilder(
               filters: _advFilters,
               onChanged: (f) => setState(() => _advFilters = f),
-              bg: _C.bgElev1,
-              border: _C.hairline,
-              text: _C.textPrimary,
-              textMuted: _C.textMuted,
+              bg: _C.bgElev1(context),
+              border: _C.hairline(context),
+              text: _C.textPrimary(context),
+              textMuted: _C.textMuted(context),
               primary: _C.primary,
             ),
             const SizedBox(height: 16),
@@ -204,7 +218,7 @@ class _Header extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
-                    color: _C.textPrimary,
+                    color: _C.textPrimary(context),
                     letterSpacing: -0.7,
                   ),
                   children: [
@@ -226,7 +240,7 @@ class _Header extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           'Pipeline comercial de toda a rede — leads, qualificação e fechamento.',
-          style: GoogleFonts.inter(fontSize: 13.5, color: _C.textSecondary),
+          style: GoogleFonts.inter(fontSize: 13.5, color: _C.textSecondary(context)),
         ),
       ],
     );
@@ -275,7 +289,7 @@ class _ConstructionAlert extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Backend já responde. Conforme leads chegam (form bio, indicações, expansão), eles entram aqui automaticamente. Arraste cards entre colunas para mover etapas.',
-                  style: GoogleFonts.inter(fontSize: 12.5, color: _C.textSecondary, height: 1.5),
+                  style: GoogleFonts.inter(fontSize: 12.5, color: _C.textSecondary(context), height: 1.5),
                 ),
               ],
             ),
@@ -373,8 +387,8 @@ class _KpiCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: _C.bgElev1,
-        border: Border.all(color: _C.hairline),
+        color: _C.bgElev1(context),
+        border: Border.all(color: _C.hairline(context)),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -401,7 +415,7 @@ class _KpiCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
-                    color: _C.textMuted,
+                    color: _C.textMuted(context),
                     letterSpacing: 0.2,
                   ),
                 ),
@@ -417,7 +431,7 @@ class _KpiCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: _C.textPrimary,
+              color: _C.textPrimary(context),
               letterSpacing: -0.6,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
@@ -426,7 +440,7 @@ class _KpiCard extends StatelessWidget {
             sub,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(fontSize: 11, color: _C.textFaint),
+            style: GoogleFonts.inter(fontSize: 11, color: _C.textFaint(context)),
           ),
         ],
       ),
@@ -463,8 +477,8 @@ class _Kanban extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: _C.bgElev1,
-        border: Border.all(color: _C.hairline),
+        color: _C.bgElev1(context),
+        border: Border.all(color: _C.hairline(context)),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -486,14 +500,14 @@ class _Kanban extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: _C.textPrimary,
+                        color: _C.textPrimary(context),
                         letterSpacing: -0.3,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${leads.length} leads · ${_money.format(totalVal)} em pipeline · arraste para mover de etapa',
-                      style: GoogleFonts.inter(fontSize: 12, color: _C.textMuted),
+                      style: GoogleFonts.inter(fontSize: 12, color: _C.textMuted(context)),
                     ),
                   ],
                 ),
@@ -515,7 +529,7 @@ class _Kanban extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(color: _C.hairline, height: 1),
+          Divider(color: _C.hairline(context), height: 1),
           SizedBox(
             height: 520,
             child: SingleChildScrollView(
@@ -593,8 +607,8 @@ class _FilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? _C.primary : _C.bgElev2,
-          border: Border.all(color: active ? _C.primary : _C.hairline),
+          color: active ? _C.primary : _C.bgElev2(context),
+          border: Border.all(color: active ? _C.primary : _C.hairline(context)),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -602,7 +616,7 @@ class _FilterChip extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 11.5,
             fontWeight: FontWeight.w600,
-            color: active ? Colors.white : _C.textSecondary,
+            color: active ? Colors.white : _C.textSecondary(context),
           ),
         ),
       ),
@@ -654,9 +668,9 @@ class _KanbanColumnState extends State<_KanbanColumn> {
           duration: const Duration(milliseconds: 150),
           width: 280,
           decoration: BoxDecoration(
-            color: _hovering ? _C.bgElev3 : _C.bgElev2,
+            color: _hovering ? _C.bgElev3(context) : _C.bgElev2(context),
             border: Border.all(
-              color: _hovering ? widget.stage.color : _C.hairline,
+              color: _hovering ? widget.stage.color : _C.hairline(context),
               width: _hovering ? 1.5 : 1,
             ),
             borderRadius: BorderRadius.circular(12),
@@ -682,7 +696,7 @@ class _KanbanColumnState extends State<_KanbanColumn> {
                       style: GoogleFonts.inter(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: _C.textPrimary,
+                        color: _C.textPrimary(context),
                         letterSpacing: -0.1,
                       ),
                     ),
@@ -692,7 +706,7 @@ class _KanbanColumnState extends State<_KanbanColumn> {
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: _C.textMuted,
+                      color: _C.textMuted(context),
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
@@ -706,7 +720,7 @@ class _KanbanColumnState extends State<_KanbanColumn> {
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: _C.textMuted,
+                    color: _C.textMuted(context),
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
@@ -717,7 +731,7 @@ class _KanbanColumnState extends State<_KanbanColumn> {
                     ? Center(
                         child: Text(
                           'Vazio',
-                          style: GoogleFonts.inter(fontSize: 11, color: _C.textFaint),
+                          style: GoogleFonts.inter(fontSize: 11, color: _C.textFaint(context)),
                         ),
                       )
                     : ListView.separated(
@@ -753,8 +767,8 @@ class _KanbanCard extends StatelessWidget {
     final card = Container(
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: _C.bgElev1,
-        border: Border.all(color: _C.hairline),
+        color: _C.bgElev1(context),
+        border: Border.all(color: _C.hairline(context)),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -771,7 +785,7 @@ class _KanbanCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: _C.textPrimary,
+                    color: _C.textPrimary(context),
                     height: 1.25,
                   ),
                 ),
@@ -791,7 +805,7 @@ class _KanbanCard extends StatelessWidget {
               ].join(' · '),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(fontSize: 10.5, color: _C.textMuted),
+              style: GoogleFonts.inter(fontSize: 10.5, color: _C.textMuted(context)),
             ),
           ],
           const SizedBox(height: 10),
@@ -803,7 +817,7 @@ class _KanbanCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: _C.textPrimary,
+                    color: _C.textPrimary(context),
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
@@ -988,7 +1002,7 @@ class _PipelineCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       it.$2,
-                      style: GoogleFonts.inter(fontSize: 13, color: _C.textPrimary),
+                      style: GoogleFonts.inter(fontSize: 13, color: _C.textPrimary(context)),
                     ),
                   ),
                 ],
@@ -1030,7 +1044,7 @@ class _FieldsCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       f,
-                      style: GoogleFonts.inter(fontSize: 13, color: _C.textPrimary),
+                      style: GoogleFonts.inter(fontSize: 13, color: _C.textPrimary(context)),
                     ),
                   ),
                 ],
@@ -1053,8 +1067,8 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
-        color: _C.bgElev1,
-        border: Border.all(color: _C.hairline),
+        color: _C.bgElev1(context),
+        border: Border.all(color: _C.hairline(context)),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -1065,14 +1079,14 @@ class _SectionCard extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: _C.textPrimary,
+              color: _C.textPrimary(context),
               letterSpacing: -0.2,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: GoogleFonts.inter(fontSize: 11.5, color: _C.textMuted),
+            style: GoogleFonts.inter(fontSize: 11.5, color: _C.textMuted(context)),
           ),
           const SizedBox(height: 14),
           child,
@@ -1093,8 +1107,8 @@ class _LoadingBlock extends StatelessWidget {
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: _C.bgElev1,
-        border: Border.all(color: _C.hairline),
+        color: _C.bgElev1(context),
+        border: Border.all(color: _C.hairline(context)),
         borderRadius: BorderRadius.circular(14),
       ),
       alignment: Alignment.center,
@@ -1113,7 +1127,7 @@ class _ErrorBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _C.bgElev1,
+        color: _C.bgElev1(context),
         border: Border.all(color: _C.danger.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -1123,13 +1137,13 @@ class _ErrorBlock extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Erro ao carregar dados',
-            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: _C.textPrimary),
+            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: _C.textPrimary(context)),
           ),
           const SizedBox(height: 4),
           Text(
             '$error',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(fontSize: 11, color: _C.textMuted),
+            style: GoogleFonts.inter(fontSize: 11, color: _C.textMuted(context)),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
