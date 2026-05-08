@@ -16,7 +16,7 @@ class AdminPageToolbar extends StatelessWidget {
   final String italic;
   final String? bold;
   final String subtitle;
-  final List<AdminFilterChip> filters;
+  final List<Widget> filters;
   final VoidCallback? onRefresh;
 
   @override
@@ -52,13 +52,19 @@ class AdminPageToolbar extends StatelessWidget {
 }
 
 class AdminFilterChip extends StatelessWidget {
-  const AdminFilterChip({super.key, required this.label, required this.value});
+  const AdminFilterChip({
+    super.key,
+    required this.label,
+    required this.value,
+    this.onTap,
+  });
   final String label;
   final String value;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final body = Container(
       height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -73,14 +79,32 @@ class AdminFilterChip extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label.toUpperCase(), style: LL.label.copyWith(fontSize: 8.5, letterSpacing: 0.7, color: context.llTextMuted)),
+              Text(label.toUpperCase(),
+                  style: LL.label.copyWith(
+                      fontSize: 8.5,
+                      letterSpacing: 0.7,
+                      color: context.llTextMuted)),
               const SizedBox(height: 1),
-              Text(value, style: TextStyle(fontSize: 12.5, color: context.llTextPrimary, fontWeight: FontWeight.w800)),
+              Text(value,
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      color: context.llTextPrimary,
+                      fontWeight: FontWeight.w800)),
             ],
           ),
           const SizedBox(width: 10),
-          Icon(Icons.keyboard_arrow_down_rounded, size: 17, color: context.llTextMuted),
+          Icon(Icons.keyboard_arrow_down_rounded,
+              size: 17, color: context.llTextMuted),
         ],
+      ),
+    );
+    if (onTap == null) return body;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: body,
       ),
     );
   }
@@ -262,11 +286,12 @@ class _RankRow extends StatelessWidget {
 }
 
 class AdminAlertRow extends StatelessWidget {
-  const AdminAlertRow({super.key, required this.kind, required this.title, required this.body, required this.action});
+  const AdminAlertRow({super.key, required this.kind, required this.title, required this.body, required this.action, this.onAction});
   final AdminAlertKind kind;
   final String title;
   final String body;
   final String action;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -295,7 +320,7 @@ class AdminAlertRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          LLButton(label: action, icon: Icons.arrow_forward_rounded, variant: LLButtonVariant.ghost, small: true),
+          LLButton(label: action, icon: Icons.arrow_forward_rounded, variant: LLButtonVariant.ghost, small: true, onTap: onAction),
         ],
       ),
     );

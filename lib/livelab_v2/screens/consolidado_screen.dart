@@ -6,9 +6,11 @@ import '../../models/admin_master.dart';
 import '../../providers/admin_master_provider.dart';
 import '../../widgets/empty_state_widget.dart';
 import '../../widgets/skeleton_list.dart';
+import '../../utils/web_download.dart';
 import '../core/ll_theme.dart';
 import '../widgets/ll_admin_widgets.dart';
 import '../widgets/ll_components.dart';
+import '../widgets/period_picker.dart' as pp;
 
 String _currentPeriod() {
   final now = DateTime.now();
@@ -29,6 +31,51 @@ String _currency(double v) =>
 
 String _signedPercent(double v) =>
     '${v > 0 ? '+' : ''}${v.toStringAsFixed(1)}%';
+
+void _exportCsv(BuildContext context, MasterConsolidatedData data) {
+  final headers = [
+    'Unidade',
+    'Status',
+    'Faturamento bruto',
+    'Receita franqueadora',
+    'Take rate (%)',
+    '% contratual',
+    'Crescimento (%)',
+  ];
+  final rows = <List<String>>[
+    for (final u in data.units)
+      [
+        u.name,
+        u.status,
+        u.grossRevenue.toStringAsFixed(2).replaceAll('.', ','),
+        u.franchisorRevenue.toStringAsFixed(2).replaceAll('.', ','),
+        u.takeRate.toStringAsFixed(2).replaceAll('.', ','),
+        u.contractPercent.toStringAsFixed(2).replaceAll('.', ','),
+        u.growthPercent.toStringAsFixed(2).replaceAll('.', ','),
+      ],
+    [
+      'Total da rede',
+      '${data.units.length} unidade${data.units.length == 1 ? '' : 's'}',
+      data.overview.grossRevenue.toStringAsFixed(2).replaceAll('.', ','),
+      data.overview.franchisorRevenue.toStringAsFixed(2).replaceAll('.', ','),
+      data.overview.averageTakeRate.toStringAsFixed(2).replaceAll('.', ','),
+      '—',
+      data.overview.growthPercent.toStringAsFixed(2).replaceAll('.', ','),
+    ],
+  ];
+  final csv = buildCsv(headers: headers, rows: rows);
+  final period = data.period.replaceAll('-', '');
+  downloadTextFile(
+    filename: 'consolidado_$period.csv',
+    content: csv,
+  );
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('CSV exportado: consolidado_$period.csv'),
+      duration: const Duration(seconds: 2),
+    ),
+  );
+}
 
 class ConsolidadoScreen extends ConsumerStatefulWidget {
   const ConsolidadoScreen({super.key});
@@ -62,8 +109,29 @@ class _ConsolidadoScreenState extends ConsumerState<ConsolidadoScreen> {
             subtitle:
                 'Leitura financeira da rede: bruto, receita da franqueadora, mix de receitas e risco.',
             filters: [
-              AdminFilterChip(label: 'Período', value: _periodLabel(_periodo)),
-              AdminFilterChip(label: 'Status', value: _statusLabel(_status)),
+              AdminFilterChip(
+                label: 'Período',
+                value: _periodLabel(_periodo),
+                onTap: () async {
+                  final picked = await pp.showPeriodPicker(context, _periodo);
+                  if (picked != null && mounted) {
+                    setState(() => _periodo = picked);
+                  }
+                },
+              ),
+              Builder(builder: (ctx) {
+                return AdminFilterChip(
+                  label: 'Status',
+                  value: _statusLabel(_status),
+                  onTap: () async {
+                    final picked =
+                        await pp.showStatusPicker(ctx, _status);
+                    if (picked != null && mounted) {
+                      setState(() => _status = picked);
+                    }
+                  },
+                );
+              }),
             ],
             onRefresh: () =>
                 ref.invalidate(masterConsolidatedProvider(filters)),
@@ -221,11 +289,12 @@ class _Body extends StatelessWidget {
             Expanded(flex: 2, child: chartB)
           ]);
         }),
-        const AdminSectionHeader(
+        AdminSectionHeader(
             title: 'Tabela consolidada por unidade',
             subtitle:
                 'bruto, mensal/contratual, receita da franqueadora, crescimento e status',
-            actionLabel: 'Exportar CSV'),
+            actionLabel: 'Exportar CSV',
+            onTap: () => _exportCsv(context, data)),
         ConsolidatedUnitTable(units: data.units, overview: ov),
       ],
     );
@@ -397,6 +466,12 @@ class _MixFooter extends StatelessWidget {
   }
 }
 
+// Tabela consolidada: layout responsivo.
+// >= 920px: Row flex Expanded (table-like).
+// < 920px: cards verticais por unidade.
+
+const _tableFlexes = [3, 2, 1, 2, 1, 1, 2];
+
 class ConsolidatedUnitTable extends StatelessWidget {
   const ConsolidatedUnitTable({super.key, required this.units, required this.overview});
   final List<MasterConsolidatedUnit> units;
@@ -405,28 +480,54 @@ class ConsolidatedUnitTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (units.isEmpty) {
-      return const EmptyStateWidget(
-        icon: Icons.table_rows_rounded,
-        title: 'Sem unidades para listar',
-        message: 'Nenhuma franquia consolidada no período selecionado.',
+      return Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+            color: context.llSurface2,
+            border: Border.all(color: context.llBorder),
+            borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: const EmptyStateWidget(
+          icon: Icons.table_rows_rounded,
+          title: 'Sem unidades para listar',
+          message: 'Nenhuma franquia consolidada no período selecionado.',
+        ),
       );
     }
-    return LLCard(
-      padding: EdgeInsets.zero,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 920),
-          child: Column(
-            children: [
-              const _TableHeader(),
-              for (final u in units) _TableRowData.fromUnit(u),
-              _TableRowData.totalFromOverview(overview, count: units.length),
+    return LayoutBuilder(builder: (context, c) {
+      final isWide = c.maxWidth >= 760;
+      final width = isWide ? c.maxWidth : 760.0;
+      final tableContent = SizedBox(
+        width: width,
+        child: Column(
+          children: [
+            const _TableHeader(),
+            for (var i = 0; i < units.length; i++) ...[
+              _TableRowData.fromUnit(units[i]),
+              if (i < units.length - 1)
+                Divider(
+                    height: 1, thickness: 1, color: context.llBorder),
             ],
-          ),
+            Divider(
+                height: 1, thickness: 1, color: context.llBorder),
+            _TableRowData.totalFromOverview(overview, count: units.length),
+          ],
         ),
-      ),
-    );
+      );
+      return Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+            color: context.llSurface2,
+            border: Border.all(color: context.llBorder),
+            borderRadius: BorderRadius.circular(12)),
+        child: isWide
+            ? tableContent
+            : SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: tableContent,
+              ),
+      );
+    });
   }
 }
 
@@ -444,19 +545,32 @@ class _TableHeader extends StatelessWidget {
       'Crescimento',
       'Status'
     ];
-    const flexes = [3, 2, 1, 2, 1, 1, 2];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
           color: context.llSurface3,
           border: Border(bottom: BorderSide(color: context.llBorder))),
-      child: Row(children: [
-        for (var i = 0; i < headers.length; i++)
-          Expanded(
-              flex: flexes[i],
-              child: Text(headers[i].toUpperCase(),
-                  style: LL.label.copyWith(fontSize: 9))),
-      ]),
+      child: Row(
+        children: [
+          for (var i = 0; i < headers.length; i++)
+            Expanded(
+              flex: _tableFlexes[i],
+              child: Padding(
+                padding: EdgeInsets.only(right: i == headers.length - 1 ? 0 : 12),
+                child: Text(
+                  headers[i].toUpperCase(),
+                  textAlign: i == headers.length - 1
+                      ? TextAlign.right
+                      : (i == 0 ? TextAlign.left : TextAlign.right),
+                  style: LL.label.copyWith(
+                      fontSize: 9.5,
+                      letterSpacing: 0.8,
+                      color: context.llTextMuted),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -481,7 +595,7 @@ class _TableRowData extends StatelessWidget {
       gross: _currency(u.grossRevenue),
       contract: _signedPercent(u.contractPercent),
       franchisor: _currency(u.franchisorRevenue),
-      takeRate: _signedPercent(u.takeRate),
+      takeRate: '${u.takeRate.toStringAsFixed(1).replaceAll('.', ',')}%',
       growth: _signedPercent(u.growthPercent),
       status: isInadimplente ? 'Inadimplente' : 'Ativa',
       statusColor: isInadimplente ? LL.live : LL.success,
@@ -493,9 +607,9 @@ class _TableRowData extends StatelessWidget {
     return _TableRowData(
       unit: 'Total da rede',
       gross: _currency(ov.grossRevenue),
-      contract: _signedPercent(0),
+      contract: '—',
       franchisor: _currency(ov.franchisorRevenue),
-      takeRate: _signedPercent(ov.averageTakeRate),
+      takeRate: '${ov.averageTakeRate.toStringAsFixed(1).replaceAll('.', ',')}%',
       growth: _signedPercent(ov.growthPercent),
       status: '$count unidade${count == 1 ? '' : 's'}',
       statusColor: LL.accent,
@@ -515,31 +629,53 @@ class _TableRowData extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const flexes = [3, 2, 1, 2, 1, 1, 2];
-    final style = TextStyle(
-        fontSize: 12.5,
-        fontWeight: total ? FontWeight.w900 : FontWeight.w700,
-        color: total ? context.llTextPrimary : context.llTextSecond);
+    final baseStyle = TextStyle(
+      fontSize: 12.5,
+      fontWeight: total ? FontWeight.w900 : FontWeight.w700,
+      color: total ? context.llTextPrimary : context.llTextSecond,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
     final values = [unit, gross, contract, franchisor, takeRate, growth];
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-      decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: context.llBorder))),
+      color: total ? context.llSurface3 : null,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       child: Row(
         children: [
           for (var i = 0; i < values.length; i++)
             Expanded(
-              flex: flexes[i],
-              child: Text(values[i],
+              flex: _tableFlexes[i],
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Text(
+                  values[i],
                   overflow: TextOverflow.ellipsis,
-                  style: i == 5 ? style.copyWith(color: LL.success) : style),
+                  textAlign: i == 0 ? TextAlign.left : TextAlign.right,
+                  style: i == 5
+                      ? baseStyle.copyWith(
+                          color: growth.startsWith('-') ? LL.live : LL.success)
+                      : (i == 0
+                          ? baseStyle.copyWith(
+                              color: total
+                                  ? context.llTextPrimary
+                                  : context.llTextPrimary,
+                              fontWeight: total
+                                  ? FontWeight.w900
+                                  : FontWeight.w700)
+                          : baseStyle),
+                ),
+              ),
             ),
           Expanded(
-            flex: flexes[6],
-            child: total
-                ? Text(status,
-                    style: LL.caption.copyWith(fontWeight: FontWeight.w800))
-                : AdminStatusPill(label: status, color: statusColor),
+            flex: _tableFlexes[6],
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: total
+                  ? Text(status,
+                      style: LL.caption.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: context.llTextSecond))
+                  : AdminStatusPill(label: status, color: statusColor),
+            ),
           ),
         ],
       ),

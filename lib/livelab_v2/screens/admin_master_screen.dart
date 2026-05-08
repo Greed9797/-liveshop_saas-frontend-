@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 
 import '../../models/admin_master.dart';
 import '../../providers/admin_master_provider.dart';
+import '../../routes/app_routes.dart';
 import '../core/ll_theme.dart';
-import '../widgets/ll_components.dart';
 import '../widgets/ll_admin_widgets.dart';
+import '../widgets/ll_components.dart';
+import '../widgets/period_picker.dart';
 
 String _currentPeriod() {
   final now = DateTime.now();
@@ -62,7 +64,16 @@ class _AdminMasterScreenState extends ConsumerState<AdminMasterScreen> {
             subtitle:
                 'Leitura executiva da rede em poucos segundos, sem ruído operacional.',
             filters: [
-              AdminFilterChip(label: 'Período', value: _periodLabel(_period)),
+              AdminFilterChip(
+                label: 'Período',
+                value: _periodLabel(_period),
+                onTap: () async {
+                  final picked = await showPeriodPicker(context, _period);
+                  if (picked != null && mounted) {
+                    setState(() => _period = picked);
+                  }
+                },
+              ),
             ],
             onRefresh: () =>
                 ref.invalidate(masterDashboardProvider(_period)),
@@ -245,9 +256,11 @@ class _Body extends StatelessWidget {
                   AdminAlertRow(
                     kind: _alertKind(a.severity),
                     title: a.title,
-                    body:
-                        a.unitName.isNotEmpty ? '${a.unitName} — ${a.description}' : a.description,
+                    body: a.unitName.isNotEmpty
+                        ? '${a.unitName} — ${a.description}'
+                        : a.description,
                     action: 'Abrir',
+                    onAction: () => _openAlertDetail(context, a),
                   ),
               ],
             ),
@@ -556,6 +569,132 @@ class _MoneyStatus extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+void _openAlertDetail(BuildContext context, MasterAlertItem alert) {
+  final messenger = ScaffoldMessenger.of(context);
+  // Navega pra rota mais relevante do alerta. Tipos conhecidos:
+  //   - sem_venda / queda_receita / unit_*  → tela Unidades
+  //   - contrato_pipeline / contrato_*      → tela CRM
+  //   - inadimplencia / boleto_*            → tela Consolidado
+  String? targetRoute;
+  switch (alert.type) {
+    case 'contrato_pipeline':
+    case 'contrato_pendente':
+    case 'lead_parado':
+      targetRoute = AppRoutes.masterCrm;
+      break;
+    case 'inadimplencia':
+    case 'boleto_atrasado':
+      targetRoute = AppRoutes.masterConsolidated;
+      break;
+    case 'sem_venda':
+    case 'queda_receita':
+    default:
+      targetRoute = AppRoutes.masterUnits;
+  }
+
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: context.llSurface2,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (sheetCtx) => Padding(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: _alertColor(alert.severity).llOpacity(0.16),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.warning_amber_rounded,
+                    size: 17, color: _alertColor(alert.severity)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(alert.title,
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: sheetCtx.llTextPrimary)),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(sheetCtx),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (alert.unitName.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text('Unidade: ${alert.unitName}',
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      color: sheetCtx.llTextSecond,
+                      fontWeight: FontWeight.w700)),
+            ),
+          Text(alert.description,
+              style: TextStyle(
+                  fontSize: 13,
+                  color: sheetCtx.llTextPrimary,
+                  height: 1.5)),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: LLButton(
+                  label: 'Fechar',
+                  variant: LLButtonVariant.ghost,
+                  onTap: () => Navigator.pop(sheetCtx),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: LLButton(
+                  label: 'Ir para tela',
+                  icon: Icons.arrow_forward_rounded,
+                  onTap: () {
+                    Navigator.pop(sheetCtx);
+                    Navigator.of(context).pushNamed(targetRoute!);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+
+  if (alert.unitId.isEmpty) {
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Alerta sem unidade vinculada'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+}
+
+Color _alertColor(String severity) {
+  switch (severity) {
+    case 'critica':
+    case 'alta':
+      return LL.live;
+    case 'baixa':
+      return LL.info;
+    default:
+      return LL.warning;
   }
 }
 

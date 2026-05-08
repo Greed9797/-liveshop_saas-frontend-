@@ -9,6 +9,7 @@ import '../../widgets/skeleton_list.dart';
 import '../core/ll_theme.dart';
 import '../widgets/ll_admin_widgets.dart';
 import '../widgets/ll_components.dart';
+import '../widgets/period_picker.dart' as pp;
 
 String _currentPeriod() {
   final now = DateTime.now();
@@ -65,8 +66,29 @@ class _UnidadesScreenState extends ConsumerState<UnidadesScreen> {
             subtitle:
                 'Cada unidade como uma mini-DRE operacional da rede, com drill-down por cliente final.',
             filters: [
-              AdminFilterChip(label: 'Período', value: _periodLabel(_periodo)),
-              AdminFilterChip(label: 'Status', value: _statusLabel(_status)),
+              AdminFilterChip(
+                label: 'Período',
+                value: _periodLabel(_periodo),
+                onTap: () async {
+                  final picked = await pp.showPeriodPicker(context, _periodo);
+                  if (picked != null && mounted) {
+                    setState(() => _periodo = picked);
+                  }
+                },
+              ),
+              Builder(builder: (ctx) {
+                return AdminFilterChip(
+                  label: 'Status',
+                  value: _statusLabel(_status),
+                  onTap: () async {
+                    final picked =
+                        await pp.showStatusPicker(ctx, _status);
+                    if (picked != null && mounted) {
+                      setState(() => _status = picked);
+                    }
+                  },
+                );
+              }),
             ],
             onRefresh: () => ref.invalidate(masterUnitsProvider(filters)),
           ),
