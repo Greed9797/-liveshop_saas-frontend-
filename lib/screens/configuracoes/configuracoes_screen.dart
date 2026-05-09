@@ -292,6 +292,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
     final descCtrl = TextEditingController();
     final dimensoesCtrl = TextEditingController();
     final corCtrl = TextEditingController();
+    String tamanho = 'M';
     int quantidade = 1;
     bool saving = false;
 
@@ -311,6 +312,33 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   AppTextField(controller: nomeCtrl, hint: 'Nome da cabine *'),
+                  const SizedBox(height: AppSpacing.x3),
+                  Row(
+                    children: [
+                      Text('Tamanho *',
+                          style: AppTypography.bodySmall.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary)),
+                      const Spacer(),
+                      for (final opt in const ['P', 'M', 'G', 'GG']) ...[
+                        ChoiceChip(
+                          label: Text(opt),
+                          selected: tamanho == opt,
+                          onSelected: (_) =>
+                              setDialogState(() => tamanho = opt),
+                          selectedColor: AppColors.primary,
+                          labelStyle: TextStyle(
+                            color: tamanho == opt
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                    ],
+                  ),
                   const SizedBox(height: AppSpacing.x3),
                   AppTextField(
                     controller: dimensoesCtrl,
@@ -372,6 +400,7 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                     try {
                       await notifier.criar({
                         'nome': nomeFinal,
+                        'tamanho': tamanho,
                         if (dimensoesCtrl.text.trim().isNotEmpty)
                           'dimensoes': dimensoesCtrl.text.trim(),
                         if (corCtrl.text.trim().isNotEmpty)

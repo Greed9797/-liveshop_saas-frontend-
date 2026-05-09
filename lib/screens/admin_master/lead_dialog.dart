@@ -30,13 +30,6 @@ const _STAGE_OPTS = [
   ('perdido', 'Fechado perdido'),
 ];
 
-const _TIPO_OPTS = [
-  ('Cliente', 'Cliente'),
-  ('Creator', 'Creator'),
-  ('Unidade', 'Unidade'),
-  ('Outro', 'Outro'),
-];
-
 Future<bool?> showLeadDialog(BuildContext context, {Lead? lead}) {
   return showDialog<bool>(
     context: context,
@@ -293,13 +286,7 @@ class _LeadFormState extends ConsumerState<_LeadForm> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(child: _Dropdown(label: 'Tipo', value: _tipo, items: _TIPO_OPTS, onChanged: (v) => setState(() => _tipo = v ?? 'Cliente'))),
-                        const SizedBox(width: 10),
-                        Expanded(child: _Dropdown(label: 'Etapa', value: _etapa, items: _STAGE_OPTS, onChanged: (v) => setState(() => _etapa = v ?? 'lead_novo'))),
-                      ],
-                    ),
+                    _Dropdown(label: 'Etapa', value: _etapa, items: _STAGE_OPTS, onChanged: (v) => setState(() => _etapa = v ?? 'lead_novo')),
                     const SizedBox(height: 12),
                     _Field(label: 'Responsável', controller: _responsavel),
                     const SizedBox(height: 12),

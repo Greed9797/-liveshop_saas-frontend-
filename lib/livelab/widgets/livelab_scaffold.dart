@@ -30,6 +30,28 @@ class LivelabNavSection {
   final List<LivelabNavItem> items;
 }
 
+/// Determina se [route] é a home da role [papel]. Quando true, topbar
+/// renderiza o bloco de saudação ("Bom dia, X"); senão só mostra ações.
+bool _isHomeRoute(String route, String? papel) {
+  switch (papel) {
+    case 'franqueador_master':
+    case 'admin_master':
+      return route == AppRoutes.masterDashboard;
+    case 'cliente_parceiro':
+      return route == AppRoutes.cliente;
+    case 'apresentador':
+    case 'apresentadora':
+      return route == AppRoutes.cabines;
+    case 'franqueado':
+    case 'gerente':
+    case 'gerente_comercial':
+    case 'financeiro':
+    case 'operacional':
+    default:
+      return route == AppRoutes.home;
+  }
+}
+
 class LivelabScaffold extends ConsumerWidget {
   const LivelabScaffold({
     super.key,
@@ -83,6 +105,7 @@ class LivelabScaffold extends ConsumerWidget {
                   onToggleTheme: () => ref.read(themeModeProvider.notifier).toggle(),
                   onRefresh: onRefresh ?? () => _hardRefresh(context),
                   onBell: () => _openNotifications(context),
+                  showGreeting: _isHomeRoute(currentRoute, auth.user?.papel),
                 ),
                 Expanded(child: child),
                 _BottomNav(sections: sections, currentRoute: currentRoute),
@@ -611,6 +634,7 @@ class _Topbar extends ConsumerWidget {
     required this.onToggleTheme,
     required this.onRefresh,
     required this.onBell,
+    this.showGreeting = true,
   });
 
   final dynamic user; // User?
@@ -618,6 +642,7 @@ class _Topbar extends ConsumerWidget {
   final VoidCallback onToggleTheme;
   final VoidCallback? onRefresh;
   final VoidCallback onBell;
+  final bool showGreeting;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -643,56 +668,58 @@ class _Topbar extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(28, 16, 28, 0),
       child: Row(
         children: [
-          // greeting block — logo do cliente quando papel = cliente_parceiro
-          _ClienteOrInitialsAvatar(
-            size: 52,
-            nome: nome,
-            isCliente: papel == 'cliente_parceiro',
-            primaryColor: t.primary,
-            shadow: true,
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '$greeting, ',
-                        style: TextStyle(color: t.textPrimary, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.4, height: 1.1),
-                      ),
-                      TextSpan(
-                        text: nome.isEmpty ? firstName : nome,
-                        style: TextStyle(color: t.textSecondary, fontSize: 22, fontWeight: FontWeight.w500, letterSpacing: -0.4, height: 1.1),
-                      ),
-                      const TextSpan(text: ' '),
-                      TextSpan(
-                        text: papelLabel,
-                        style: GoogleFonts.instrumentSerif(
-                          color: t.primary,
-                          fontStyle: FontStyle.italic,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: -0.4,
-                          height: 1.1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  _subDate(),
-                  style: TextStyle(color: t.textMuted, fontSize: 13),
-                ),
-              ],
+          if (showGreeting) ...[
+            _ClienteOrInitialsAvatar(
+              size: 52,
+              nome: nome,
+              isCliente: papel == 'cliente_parceiro',
+              primaryColor: t.primary,
+              shadow: true,
             ),
-          ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '$greeting, ',
+                          style: TextStyle(color: t.textPrimary, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.4, height: 1.1),
+                        ),
+                        TextSpan(
+                          text: nome.isEmpty ? firstName : nome,
+                          style: TextStyle(color: t.textSecondary, fontSize: 22, fontWeight: FontWeight.w500, letterSpacing: -0.4, height: 1.1),
+                        ),
+                        const TextSpan(text: ' '),
+                        TextSpan(
+                          text: papelLabel,
+                          style: GoogleFonts.instrumentSerif(
+                            color: t.primary,
+                            fontStyle: FontStyle.italic,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: -0.4,
+                            height: 1.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _subDate(),
+                    style: TextStyle(color: t.textMuted, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ] else
+            const Spacer(),
           _ThemeToggle(isDark: isDark, onTap: onToggleTheme),
           const SizedBox(width: 10),
           if (onRefresh != null)

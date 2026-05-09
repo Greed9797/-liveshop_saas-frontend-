@@ -7,30 +7,48 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../routes/app_routes.dart';
 
+const _kLastEmailKey = 'auth.last_email';
+const _kRememberKey = 'auth.remember_email';
+const _storage = FlutterSecureStorage();
+
 class _LL {
+  // Semânticos invariantes nos dois modos.
   static const primary       = Color(0xFFFF5A1F);
   static const primaryHover  = Color(0xFFE64A0F);
   static const primarySoft   = Color(0xFFFFE8DC);
   static const primarySofter = Color(0xFFFFF3EC);
+  static const danger        = Color(0xFFD9402F);
 
-  static const bgBase      = Color(0xFFFDF6F1);
-  static const bgCard      = Color(0xFFFFFFFF);
-  static const bgInput     = Color(0xFFF7EFE8);
+  // Surface + text — theme-aware via BuildContext.
+  static bool _isDark(BuildContext c) =>
+      Theme.of(c).brightness == Brightness.dark;
 
-  static const textPrimary     = Color(0xFF1A1A1A);
-  static const textSecondary   = Color(0xFF4A4A4A);
-  static const textMuted       = Color(0xFF8A8A8A);
-  static const textPlaceholder = Color(0xFFB6ADA6);
+  static Color bgBase(BuildContext c) =>
+      _isDark(c) ? const Color(0xFF0E0E10) : const Color(0xFFFDF6F1);
+  static Color bgCard(BuildContext c) =>
+      _isDark(c) ? const Color(0xFF18181B) : const Color(0xFFFFFFFF);
+  static Color bgInput(BuildContext c) =>
+      _isDark(c) ? const Color(0xFF26262B) : const Color(0xFFF7EFE8);
 
-  static const border       = Color(0x141A1A1A); // rgba(26,26,26,.08)
-  static const borderInput  = Color(0x1A1A1A1A); // rgba(26,26,26,.10)
+  static Color textPrimary(BuildContext c) =>
+      _isDark(c) ? const Color(0xFFF5F0EB) : const Color(0xFF1A1A1A);
+  static Color textSecondary(BuildContext c) =>
+      _isDark(c) ? const Color(0xFFB8B2AC) : const Color(0xFF4A4A4A);
+  static Color textMuted(BuildContext c) =>
+      _isDark(c) ? const Color(0xFF75716D) : const Color(0xFF8A8A8A);
+  static Color textPlaceholder(BuildContext c) =>
+      _isDark(c) ? const Color(0xFF55535F) : const Color(0xFFB6ADA6);
 
-  static const danger = Color(0xFFD9402F);
+  static Color border(BuildContext c) =>
+      _isDark(c) ? const Color(0x1AFFFFFF) : const Color(0x141A1A1A);
+  static Color borderInput(BuildContext c) =>
+      _isDark(c) ? const Color(0x26FFFFFF) : const Color(0x1A1A1A1A);
 
   static const radiusMd = 12.0;
   static const radiusXl = 20.0;
@@ -73,6 +91,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailFocus = FocusNode();
   final _senhaFocus = FocusNode();
   bool _obscure = true;
+  bool _remember = false;
   String? _localError;
 
   @override
@@ -80,6 +99,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.initState();
     _emailFocus.addListener(() => setState(() {}));
     _senhaFocus.addListener(() => setState(() {}));
+    _restoreRememberedEmail();
+  }
+
+  void _showForgotPasswordDialog(BuildContext ctx) {
+    showDialog<void>(
+      context: ctx,
+      builder: (_) => AlertDialog(
+        backgroundColor: _LL.bgCard(ctx),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Esqueci a senha',
+            style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: _LL.textPrimary(ctx))),
+        content: Text(
+          'Entre em contato com o seu administrador (Grupo Livelab) ou envie um e-mail para contato@grupolivelab.com.br solicitando o reset.',
+          style: GoogleFonts.inter(
+              fontSize: 13.5,
+              color: _LL.textSecondary(ctx),
+              height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Fechar',
+                style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700, color: _LL.primary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _restoreRememberedEmail() async {
+    final remember = (await _storage.read(key: _kRememberKey)) == 'true';
+    final lastEmail = await _storage.read(key: _kLastEmailKey);
+    if (!mounted) return;
+    setState(() {
+      _remember = remember;
+      if (remember && lastEmail != null && lastEmail.isNotEmpty) {
+        _emailCtrl.text = lastEmail;
+      }
+    });
   }
 
   @override
@@ -110,6 +172,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
 
     if (ok) {
+      // Persistir / limpar email lembrado conforme preferência
+      await _storage.write(key: _kRememberKey, value: _remember ? 'true' : 'false');
+      if (_remember) {
+        await _storage.write(key: _kLastEmailKey, value: email);
+      } else {
+        await _storage.delete(key: _kLastEmailKey);
+      }
+      if (!mounted) return;
       final user = ref.read(authProvider).user!;
       final route = AppRoutes.routeForRole(
         user.papel,
@@ -132,18 +202,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         primaryTextTheme: inter,
       ),
       child: Scaffold(
-        backgroundColor: _LL.bgBase,
+        backgroundColor: _LL.bgBase(context),
         body: Stack(
           children: [
             // radial-gradient(120% 80% at 50% -10%, primarySoft 0%, bgBase 55%)
             Positioned.fill(
               child: DecoratedBox(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: RadialGradient(
-                    center: Alignment(0, -1.4),
+                    center: const Alignment(0, -1.4),
                     radius: 1.4,
-                    colors: [_LL.primarySoft, _LL.bgBase],
-                    stops: [0.0, 0.55],
+                    colors: [_LL.primarySoft, _LL.bgBase(context)],
+                    stops: const [0.0, 0.55],
                   ),
                 ),
               ),
@@ -165,6 +235,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onSubmit: _login,
                         isLoading: isLoading,
                         error: authError,
+                        remember: _remember,
+                        onRememberChanged: (v) => setState(() => _remember = v),
+                        onForgotPassword: () => _showForgotPasswordDialog(context),
                       ),
                     ),
                   ),
@@ -192,9 +265,9 @@ class _WelcomeCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(_LL.radiusXl),
       child: Container(
         decoration: BoxDecoration(
-          color: _LL.bgCard,
+          color: _LL.bgCard(context),
           borderRadius: BorderRadius.circular(_LL.radiusXl),
-          border: Border.all(color: _LL.border),
+          border: Border.all(color: _LL.border(context)),
           boxShadow: _LL.shadowLg,
         ),
         child: Stack(
@@ -237,7 +310,7 @@ class _WelcomeCard extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 14,
-                      color: _LL.textSecondary,
+                      color: _LL.textSecondary(context),
                       height: 1.5,
                     ),
                   ),
@@ -320,7 +393,7 @@ class _WelcomeTitle extends StatelessWidget {
         style: GoogleFonts.inter(
           fontSize: 36,
           fontWeight: FontWeight.w700,
-          color: _LL.textPrimary,
+          color: _LL.textPrimary(context),
           letterSpacing: -1.08,
           height: 1.1,
         ),
@@ -356,6 +429,9 @@ class _LoginForm extends StatelessWidget {
   final VoidCallback onSubmit;
   final bool isLoading;
   final String? error;
+  final bool remember;
+  final ValueChanged<bool> onRememberChanged;
+  final VoidCallback onForgotPassword;
 
   const _LoginForm({
     required this.emailCtrl,
@@ -367,6 +443,9 @@ class _LoginForm extends StatelessWidget {
     required this.onSubmit,
     required this.isLoading,
     required this.error,
+    required this.remember,
+    required this.onRememberChanged,
+    required this.onForgotPassword,
   });
 
   @override
@@ -396,10 +475,46 @@ class _LoginForm extends StatelessWidget {
             icon: Icon(
               obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
               size: 18,
-              color: _LL.textMuted,
+              color: _LL.textMuted(context),
             ),
             onPressed: onToggleObscure,
           ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            SizedBox(
+              height: 22,
+              width: 22,
+              child: Checkbox(
+                value: remember,
+                onChanged: (v) => onRememberChanged(v ?? false),
+                activeColor: _LL.primary,
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () => onRememberChanged(!remember),
+              child: Text('Lembrar e-mail',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    color: _LL.textSecondary(context),
+                    fontWeight: FontWeight.w500,
+                  )),
+            ),
+            const Spacer(),
+            InkWell(
+              onTap: onForgotPassword,
+              child: Text('Esqueci a senha',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    color: _LL.primary,
+                    fontWeight: FontWeight.w600,
+                  )),
+            ),
+          ],
         ),
         if (error != null) ...[
           const SizedBox(height: 14),
@@ -428,7 +543,7 @@ class _LoginForm extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _LLPrimaryButton(
           label: 'Entrar',
           isLoading: isLoading,
@@ -471,7 +586,7 @@ class _LLField extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 12.5,
             fontWeight: FontWeight.w600,
-            color: _LL.textSecondary,
+            color: _LL.textSecondary(context),
             letterSpacing: 0.1,
           ),
         ),
@@ -479,10 +594,10 @@ class _LLField extends StatelessWidget {
         AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           decoration: BoxDecoration(
-            color: focused ? Colors.white : _LL.bgInput,
+            color: focused ? Colors.white : _LL.bgInput(context),
             borderRadius: BorderRadius.circular(_LL.radiusMd),
             border: Border.all(
-              color: focused ? _LL.primary : _LL.borderInput,
+              color: focused ? _LL.primary : _LL.borderInput(context),
               width: 1,
             ),
             boxShadow: focused
@@ -496,11 +611,11 @@ class _LLField extends StatelessWidget {
             keyboardType: keyboardType,
             onSubmitted: onSubmitted,
             cursorColor: _LL.primary,
-            style: GoogleFonts.inter(fontSize: 14, color: _LL.textPrimary),
+            style: GoogleFonts.inter(fontSize: 14, color: _LL.textPrimary(context)),
             decoration: InputDecoration(
               isDense: true,
               hintText: hint,
-              hintStyle: GoogleFonts.inter(fontSize: 14, color: _LL.textPlaceholder),
+              hintStyle: GoogleFonts.inter(fontSize: 14, color: _LL.textPlaceholder(context)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               border: InputBorder.none,
               focusedBorder: InputBorder.none,

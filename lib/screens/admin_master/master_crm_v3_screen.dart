@@ -114,8 +114,6 @@ class _MasterCrmV3ScreenState extends ConsumerState<MasterCrmV3Screen> {
           children: [
             _Header(),
             const SizedBox(height: 18),
-            _ConstructionAlert(),
-            const SizedBox(height: 16),
             crmAsync.when(
               loading: () => const _LoadingBlock(),
               error: (e, _) => _ErrorBlock(error: e, onRetry: () => ref.invalidate(masterCrmProvider)),
@@ -150,8 +148,6 @@ class _MasterCrmV3ScreenState extends ConsumerState<MasterCrmV3Screen> {
                 onEdit: (lead) => showLeadDialog(context, lead: lead),
               ),
             ),
-            const SizedBox(height: 18),
-            const _PipelineAndFields(),
           ],
         ),
       ),
@@ -491,25 +487,9 @@ class _Kanban extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               runSpacing: 10,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Kanban de leads',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: _C.textPrimary(context),
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${leads.length} leads · ${_money.format(totalVal)} em pipeline · arraste para mover de etapa',
-                      style: GoogleFonts.inter(fontSize: 12, color: _C.textMuted(context)),
-                    ),
-                  ],
+                Text(
+                  '${leads.length} leads · ${_money.format(totalVal)} em pipeline · arraste para mover de etapa',
+                  style: GoogleFonts.inter(fontSize: 12, color: _C.textMuted(context)),
                 ),
                 Wrap(
                   spacing: 6,
