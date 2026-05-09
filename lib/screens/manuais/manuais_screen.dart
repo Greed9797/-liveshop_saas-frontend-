@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/manuais_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../design_system/design_system.dart';
@@ -26,6 +27,105 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
   ];
   String _categoria = 'Todos';
   String _busca = '';
+
+  Future<void> _abrirAddDialog(BuildContext context) async {
+    final tituloCtrl = TextEditingController();
+    final urlCtrl = TextEditingController();
+    final paginasCtrl = TextEditingController();
+    String? categoria = 'Operação';
+    var destaque = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) {
+        return StatefulBuilder(builder: (ctx, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.xl)),
+            title: const Text('Novo manual'),
+            content: SizedBox(
+              width: 420,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppTextField(
+                      controller: tituloCtrl, hint: 'Título do material *'),
+                  const SizedBox(height: AppSpacing.x3),
+                  AppTextField(
+                      controller: urlCtrl,
+                      hint: 'URL (https://...) *',
+                      keyboardType: TextInputType.url),
+                  const SizedBox(height: AppSpacing.x3),
+                  DropdownButtonFormField<String>(
+                    initialValue: categoria,
+                    decoration: const InputDecoration(labelText: 'Categoria'),
+                    items: const [
+                      DropdownMenuItem(value: 'Operação', child: Text('Operação')),
+                      DropdownMenuItem(value: 'Comercial', child: Text('Comercial')),
+                      DropdownMenuItem(value: 'Equipe', child: Text('Equipe')),
+                      DropdownMenuItem(value: 'Legal', child: Text('Legal')),
+                      DropdownMenuItem(value: 'Marca', child: Text('Marca')),
+                    ],
+                    onChanged: (v) => setDialogState(() => categoria = v),
+                  ),
+                  const SizedBox(height: AppSpacing.x3),
+                  AppTextField(
+                      controller: paginasCtrl,
+                      hint: 'Páginas (opcional)',
+                      keyboardType: TextInputType.number),
+                  const SizedBox(height: AppSpacing.x3),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Destacar como essencial'),
+                    value: destaque,
+                    onChanged: (v) => setDialogState(() => destaque = v),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              AppSecondaryButton(
+                  label: 'Cancelar',
+                  onPressed: () => Navigator.pop(dialogCtx)),
+              AppPrimaryButton(
+                label: 'Salvar',
+                onPressed: () async {
+                  final titulo = tituloCtrl.text.trim();
+                  final url = urlCtrl.text.trim();
+                  if (titulo.isEmpty || url.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Título e URL obrigatórios')),
+                    );
+                    return;
+                  }
+                  try {
+                    await ref.read(manuaisProvider.notifier).criar({
+                      'titulo': titulo,
+                      'url': url,
+                      if (categoria != null) 'categoria': categoria,
+                      if (paginasCtrl.text.trim().isNotEmpty)
+                        'paginas': int.tryParse(paginasCtrl.text.trim()),
+                      'destaque': destaque,
+                    });
+                    if (!context.mounted) return;
+                    Navigator.pop(dialogCtx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Manual adicionado')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(ApiService.extractErrorMessage(e))),
+                    );
+                  }
+                },
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
 
   Future<void> _launchManual(String url) async {
     final uri = Uri.tryParse(url);
@@ -57,6 +157,12 @@ class _ManuaisScreenState extends ConsumerState<ManuaisScreen> {
       title: 'Base de Conhecimento',
       subtitle: 'Acesse materiais, processos e documentos da operação.',
       actions: [
+        if (ref.watch(authProvider).user?.papel == 'franqueador_master')
+          AppPrimaryButton(
+            label: 'Adicionar',
+            icon: Icons.add_rounded,
+            onPressed: () => _abrirAddDialog(context),
+          ),
         IconButton(
           icon: const Icon(Icons.refresh),
           color: context.colors.textSecondary,

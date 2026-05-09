@@ -209,18 +209,22 @@ class ApresentadorasScreen extends ConsumerWidget {
                   AppTextField(controller: cidadeCtrl, hint: 'Cidade'),
                   const SizedBox(height: AppSpacing.x3),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                          child: AppTextField(
-                              controller: fixoCtrl, hint: 'Fixo R\$')),
+                      Expanded(child: _LabeledField(
+                          label: 'Fixo (R\$)',
+                          controller: fixoCtrl,
+                          hint: '0,00')),
                       const SizedBox(width: AppSpacing.x3),
-                      Expanded(
-                          child: AppTextField(
-                              controller: comissaoCtrl, hint: 'Comissão %')),
+                      Expanded(child: _LabeledField(
+                          label: 'Comissão (%)',
+                          controller: comissaoCtrl,
+                          hint: '0,0')),
                       const SizedBox(width: AppSpacing.x3),
-                      Expanded(
-                          child: AppTextField(
-                              controller: metaCtrl, hint: 'Meta diária GMV')),
+                      Expanded(child: _LabeledField(
+                          label: 'Meta diária GMV',
+                          controller: metaCtrl,
+                          hint: 'R\$ 0,00')),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.x3),
@@ -510,6 +514,33 @@ class _StepBadge extends StatelessWidget {
       child: Text(label,
           style: AppTypography.caption.copyWith(
               color: fg, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+
+class _LabeledField extends StatelessWidget {
+  const _LabeledField({
+    required this.label,
+    required this.controller,
+    this.hint,
+  });
+  final String label;
+  final TextEditingController controller;
+  final String? hint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w700,
+                color: context.colors.textSecondary)),
+        const SizedBox(height: 4),
+        AppTextField(controller: controller, hint: hint),
+      ],
     );
   }
 }

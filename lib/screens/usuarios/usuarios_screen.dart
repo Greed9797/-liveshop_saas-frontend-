@@ -43,34 +43,13 @@ class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
   }
 
   Future<void> _openNovoUsuario() async {
-    if (_tab == 0) {
-      await showDialog<void>(
-        context: context,
-        builder: (_) => const CriarUsuarioDialog(),
-      );
-    } else if (_tab == 1) {
-      await showDialog<void>(
-        context: context,
-        builder: (_) => const _ApresentadoraFormDialog(),
-      );
-    } else {
-      await showDialog<void>(
-        context: context,
-        builder: (_) => const _ClienteFormDialog(),
-      );
-    }
+    await showDialog<void>(
+      context: context,
+      builder: (_) => const CriarUsuarioDialog(),
+    );
   }
 
-  String get _novoLabel {
-    switch (_tab) {
-      case 1:
-        return 'Nova apresentadora';
-      case 2:
-        return 'Novo cliente';
-      default:
-        return 'Novo usuário';
-    }
-  }
+  String get _novoLabel => 'Novo usuário';
 
   @override
   Widget build(BuildContext context) {
@@ -87,15 +66,10 @@ class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
     final pad = r.isMobile ? 16.0 : 28.0;
 
     final usuariosAsync = ref.watch(usuariosProvider);
-    final apresentadorasAsync = ref.watch(apresentadorasProvider);
-    final clientesAsync = ref.watch(clientesProvider);
 
     final internos = (usuariosAsync.valueOrNull ?? const <Usuario>[])
         .where((u) => _papeisInternos.contains(u.papel))
         .toList();
-    final apresentadores =
-        apresentadorasAsync.valueOrNull ?? const <Apresentadora>[];
-    final clientes = clientesAsync.valueOrNull ?? const <Cliente>[];
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(pad, 16, pad, 28),
@@ -105,20 +79,10 @@ class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
           _pageHeader(t),
           const SizedBox(height: 18),
           _toolbar(t),
-          const SizedBox(height: 14),
-          _tabStrip(
-            t,
-            internosCount: internos.length,
-            apresentadoresCount: apresentadores.length,
-            clientesCount: clientes.length,
-          ),
           const SizedBox(height: 16),
-          if (_tab == 0)
-            _internosBody(t, usuariosAsync, internos)
-          else if (_tab == 1)
-            _apresentadoresBody(t, apresentadorasAsync, apresentadores)
-          else
-            _clientesBody(t, clientesAsync, clientes),
+          // Tabs Apresentadores + Clientes removidos — links dedicados no sidebar
+          // (Apresentadoras / Clientes do menu) cobrem essas listas.
+          _internosBody(t, usuariosAsync, internos),
         ],
       ),
     );

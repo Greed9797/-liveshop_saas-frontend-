@@ -278,7 +278,9 @@ class LivelabScaffold extends ConsumerWidget {
       ]),
       LivelabNavSection(label: 'Pessoas', items: [
         LivelabNavItem(label: 'Apresentadoras', icon: PhosphorIcons.microphone(), route: AppRoutes.apresentadoras),
-        LivelabNavItem(label: 'Equipe', icon: PhosphorIcons.usersThree(), route: AppRoutes.usuarios),
+        LivelabNavItem(label: 'Usuários internos', icon: PhosphorIcons.usersThree(), route: AppRoutes.usuarios),
+      ]),
+      LivelabNavSection(label: 'Análise & operação', items: [
         LivelabNavItem(label: 'Financeiro', icon: PhosphorIcons.wallet(), route: AppRoutes.financeiro, dot: true),
         LivelabNavItem(label: 'Analytics', icon: PhosphorIcons.chartLine(), route: AppRoutes.analyticsDashboard),
         LivelabNavItem(label: 'Base', icon: PhosphorIcons.book(), route: AppRoutes.manuais),

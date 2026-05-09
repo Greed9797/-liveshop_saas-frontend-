@@ -89,7 +89,11 @@ class _HomeScreenState extends State<HomeScreen> {
       'Boletos a vencer': AppRoutes.boletos,
       'Leads quentes': AppRoutes.leads,
     };
-    return source.map((c) {
+    // Esconde CTAs com count == 0 (exceto "Iniciar live agora" que é ação primária)
+    return source.where((c) {
+      if (c.title == 'Iniciar live agora') return true;
+      return (c.count ?? 0) > 0;
+    }).map((c) {
       final route = routeMap[c.title];
       return CtaItem(
         icon: c.icon,
@@ -130,9 +134,14 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
           KpiGrid(kpis: d.kpis, onKpiTap: _onKpiTap),
           const SizedBox(height: 22),
-          const SectionLabel(label: 'Atenção imediata'),
-          const SizedBox(height: 8),
-          AlertsRow(alerts: d.alerts, onAlertTap: _onAlertTap),
+          if (d.alerts.any((a) => (a.count ?? 0) > 0)) ...[
+            const SectionLabel(label: 'Atenção imediata'),
+            const SizedBox(height: 8),
+            AlertsRow(
+              alerts: d.alerts.where((a) => (a.count ?? 0) > 0).toList(),
+              onAlertTap: _onAlertTap,
+            ),
+          ],
           const SizedBox(height: 18),
           if (twoCol)
             Row(

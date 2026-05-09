@@ -571,10 +571,12 @@ class _Toolbar extends StatelessWidget {
           border: Border.all(color: context.llBorder),
           borderRadius: BorderRadius.circular(12)),
       child: LayoutBuilder(builder: (context, c) {
-        final compact = c.maxWidth < 720;
+        // Largura mínima necessária pra tudo caber em uma linha confortavelmente
+        final fitsInOneRow = c.maxWidth >= 980;
         final search = _SearchInput(controller: searchCtrl, onChanged: onSearch);
         final tabsRow = Wrap(
           spacing: 4,
+          runSpacing: 4,
           children: [
             for (final t in tabs)
               _Tab(
@@ -598,24 +600,28 @@ class _Toolbar extends StatelessWidget {
                 onTap: () {}),
           ],
         );
-        if (compact) {
+        if (!fitsInOneRow) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               search,
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Row(
-                children: [Expanded(child: tabsRow), actions],
+                children: [
+                  Expanded(child: tabsRow),
+                  const SizedBox(width: 8),
+                  actions,
+                ],
               ),
             ],
           );
         }
         return Row(
           children: [
-            Expanded(child: search),
-            const SizedBox(width: 8),
-            tabsRow,
-            const SizedBox(width: 8),
+            SizedBox(width: 320, child: search),
+            const SizedBox(width: 12),
+            Expanded(child: tabsRow),
+            const SizedBox(width: 12),
             actions,
           ],
         );

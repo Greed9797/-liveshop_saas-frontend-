@@ -56,6 +56,20 @@ class ManuaisNotifier extends AsyncNotifier<List<Manual>> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(_fetch);
   }
+
+  Future<Manual> criar(Map<String, dynamic> payload) async {
+    final resp = await ApiService.post('/manuais', data: payload);
+    final created = Manual.fromJson(resp.data as Map<String, dynamic>);
+    state = AsyncData([created, ...(state.valueOrNull ?? const [])]);
+    return created;
+  }
+
+  Future<void> remover(String id) async {
+    await ApiService.delete('/manuais/$id');
+    state = AsyncData(
+      (state.valueOrNull ?? const []).where((m) => m.id != id).toList(),
+    );
+  }
 }
 
 final manuaisProvider =

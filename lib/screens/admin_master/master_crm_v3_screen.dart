@@ -318,11 +318,11 @@ class _KpiGrid extends StatelessWidget {
       final cross = c.maxWidth < 720 ? 2 : 4;
       return GridView.count(
         crossAxisCount: cross,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        childAspectRatio: 2.6,
+        childAspectRatio: cross == 2 ? 3.4 : 4.4,
         children: [
           _KpiCard(
             icon: Icons.groups_outlined,
@@ -381,62 +381,73 @@ class _KpiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       decoration: BoxDecoration(
         color: _C.bgElev1(context),
         border: Border.all(color: _C.hairline(context)),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                alignment: Alignment.center,
-                child: Icon(icon, size: 14, color: iconColor),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  label,
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 13, color: iconColor),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
                     color: _C.textMuted(context),
-                    letterSpacing: 0.2,
+                    letterSpacing: 0.8,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.fade,
-            softWrap: false,
-            style: GoogleFonts.inter(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: _C.textPrimary(context),
-              letterSpacing: -0.6,
-              fontFeatures: const [FontFeature.tabularFigures()],
+                const SizedBox(height: 2),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.fade,
+                      softWrap: false,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: _C.textPrimary(context),
+                        letterSpacing: -0.3,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        sub,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                            fontSize: 10, color: _C.textFaint(context)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-          Text(
-            sub,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(fontSize: 11, color: _C.textFaint(context)),
           ),
         ],
       ),

@@ -589,7 +589,12 @@ class _TableRowData extends StatelessWidget {
   });
 
   factory _TableRowData.fromUnit(MasterConsolidatedUnit u) {
-    final isInadimplente = u.status == 'inadimplente';
+    final (label, color) = switch (u.status) {
+      'inadimplente' => ('Inadimplente', LL.live),
+      'inativo' => ('Inativa', const Color(0xFF75716D)),
+      'pendente' => ('Sem dados', LL.warning),
+      _ => ('Ativa', LL.success),
+    };
     return _TableRowData(
       unit: u.name,
       gross: _currency(u.grossRevenue),
@@ -597,8 +602,8 @@ class _TableRowData extends StatelessWidget {
       franchisor: _currency(u.franchisorRevenue),
       takeRate: '${u.takeRate.toStringAsFixed(1).replaceAll('.', ',')}%',
       growth: _signedPercent(u.growthPercent),
-      status: isInadimplente ? 'Inadimplente' : 'Ativa',
-      statusColor: isInadimplente ? LL.live : LL.success,
+      status: label,
+      statusColor: color,
     );
   }
 

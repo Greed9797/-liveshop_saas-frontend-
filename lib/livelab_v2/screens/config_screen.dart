@@ -392,14 +392,14 @@ class _PlanoSection extends StatelessWidget {
             const SizedBox(height: 8),
             Text.rich(TextSpan(children: [
               TextSpan(
-                  text: 'Plano Free',
+                  text: 'Plano Standard',
                   style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
                       color: context.llTextPrimary,
                       letterSpacing: -0.8)),
               TextSpan(
-                  text: ' · nenhum contrato ativo',
+                  text: ' · ativo',
                   style: LL.caption
                       .copyWith(fontSize: 12, fontWeight: FontWeight.w700)),
             ])),
@@ -437,21 +437,24 @@ class _PlanoSection extends StatelessWidget {
         const SizedBox(height: 14),
         LayoutBuilder(builder: (context, constraints) {
           final compact = constraints.maxWidth < 620;
+          // Planos alinhados aos enums do backend (atualizarTenantSchema):
+          // Standard / Plus / Premium / Master / Trial.
+          // Preços são placeholders comerciais — alterar quando comercial fechar tabela.
           final cards = const [
             _PlanCard(
-                name: 'Starter',
-                price: 'R\$ 0',
-                features: ['1 cabine', '4 lives/mês', 'Métricas básicas'],
+                name: 'Standard',
+                price: 'R\$ 297',
+                features: ['1 cabine', '8 lives/mês', 'Métricas básicas'],
                 current: true),
             _PlanCard(
-                name: 'Pro',
-                price: 'R\$ 490',
-                features: ['3 cabines', '20 lives/mês', 'Prime time'],
+                name: 'Plus',
+                price: 'R\$ 697',
+                features: ['3 cabines', '24 lives/mês', 'Prime time + alertas'],
                 highlight: true),
-            _PlanCard(name: 'Scale', price: 'R\$ 1.290', features: [
+            _PlanCard(name: 'Premium', price: 'R\$ 1.497', features: [
               'Cabines ilimitadas',
               'Lives ilimitadas',
-              'Suporte dedicado'
+              'Suporte dedicado + ROI assistido'
             ]),
           ];
           if (compact) {

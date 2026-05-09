@@ -245,9 +245,18 @@ class _UnitDrillDownCardState extends State<UnitDrillDownCard> {
   Widget build(BuildContext context) {
     final unit = widget.unit;
     final isInadimplente = unit.status == 'inadimplente';
+    final isPendente = unit.status == 'pendente';
+    final isInativo = unit.status == 'inativo';
     final regionLabel = unit.region == null || unit.region!.isEmpty
         ? 'Região não informada'
         : unit.region!;
+    final (statusLabel, statusColor) = isInadimplente
+        ? ('Inadimplente', LL.live)
+        : isInativo
+            ? ('Inativa', context.llTextMuted)
+            : isPendente
+                ? ('Sem dados no período', LL.warning)
+                : ('Ativa', LL.success);
 
     return LLCard(
       padding: EdgeInsets.zero,
@@ -275,13 +284,8 @@ class _UnitDrillDownCardState extends State<UnitDrillDownCard> {
                                     fontWeight: FontWeight.w900,
                                     color: context.llTextPrimary)),
                             AdminStatusPill(
-                                label: isInadimplente
-                                    ? 'Inadimplente'
-                                    : (unit.status == 'ativo'
-                                        ? 'Ativa'
-                                        : unit.status),
-                                color:
-                                    isInadimplente ? LL.live : LL.success),
+                                label: statusLabel,
+                                color: statusColor),
                           ],
                         ),
                         const SizedBox(height: 4),

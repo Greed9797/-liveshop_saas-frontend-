@@ -207,7 +207,7 @@ class _ClienteAgendaBodyState extends ConsumerState<ClienteAgendaBody> {
               foregroundColor: Colors.white,
               icon: Icon(PhosphorIcons.plus()),
               label: const Text(
-                'Nova Live',
+                'Solicitar nova live',
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
