@@ -255,22 +255,59 @@ class _CabinesScreenState extends State<CabinesScreen> {
     return LivelabScaffold(
       currentRoute: AppRoutes.cabines,
       onRefresh: _reload,
-      child: FutureBuilder<List<Cabin>>(
-        future: _future,
-        builder: (c, snap) {
-          if (snap.hasError) {
-            return Center(
-              child: Text(
-                'Erro ao carregar: ${snap.error}',
-                style: const TextStyle(color: Colors.red),
+      child: DefaultTabController(
+        length: 2,
+        child: Builder(builder: (ctx) {
+          final t = ctx.llTokens;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 12, 28, 0),
+                child: TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  labelColor: t.primary,
+                  unselectedLabelColor: t.textSecondary,
+                  indicatorColor: t.primary,
+                  labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w800, fontSize: 13),
+                  unselectedLabelStyle: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 13),
+                  tabs: const [
+                    Tab(text: 'Ao vivo'),
+                    Tab(text: 'Histórico'),
+                  ],
+                ),
               ),
-            );
-          }
-          if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return _content(snap.data!);
-        },
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    FutureBuilder<List<Cabin>>(
+                      future: _future,
+                      builder: (c, snap) {
+                        if (snap.hasError) {
+                          return Center(
+                            child: Text(
+                              'Erro ao carregar: ${snap.error}',
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          );
+                        }
+                        if (!snap.hasData) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        return _content(snap.data!);
+                      },
+                    ),
+                    const _HistoricoLivesTab(),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }),
       ),
     );
   }
@@ -471,6 +508,146 @@ class _CabinesScreenState extends State<CabinesScreen> {
           onPressed: () => _abrirNovaLiveDialog(all),
         ),
       ],
+    );
+  }
+}
+
+class _HistoricoLivesTab extends StatefulWidget {
+  const _HistoricoLivesTab();
+
+  @override
+  State<_HistoricoLivesTab> createState() => _HistoricoLivesTabState();
+}
+
+class _HistoricoLivesTabState extends State<_HistoricoLivesTab> {
+  late Future<List<Map<String, dynamic>>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _fetch();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetch() async {
+    final resp = await ApiService.get<List<dynamic>>('/lives',
+        params: const {'status': 'encerrada'});
+    return (resp.data as List)
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+  }
+
+  String _fmtDate(String? iso) {
+    if (iso == null) return '—';
+    try {
+      final d = DateTime.parse(iso).toLocal();
+      return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return iso;
+    }
+  }
+
+  String _fmtMoney(num? v) {
+    if (v == null || v == 0) return '—';
+    return 'R\$ ${(v / 1).toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.llTokens;
+    return RefreshIndicator(
+      onRefresh: () async => setState(() => _future = _fetch()),
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _future,
+        builder: (c, snap) {
+          if (snap.hasError) {
+            return Center(child: Text('Erro: ${snap.error}'));
+          }
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final lives = snap.data!;
+          if (lives.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.history, size: 48, color: t.textMuted),
+                  const SizedBox(height: 12),
+                  Text('Nenhuma live encerrada ainda',
+                      style: TextStyle(
+                          color: t.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 4),
+                  Text('O histórico aparece aqui após você encerrar uma live.',
+                      style: TextStyle(color: t.textMuted, fontSize: 12)),
+                ],
+              ),
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(28),
+            itemCount: lives.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (_, i) {
+              final l = lives[i];
+              final cabineNumero = l['cabine_numero']?.toString() ?? '?';
+              final clienteNome = l['cliente_nome']?.toString() ?? 'Cliente';
+              final apresentador = l['apresentador_nome']?.toString() ?? '—';
+              final iniciadoEm = l['iniciado_em']?.toString();
+              final encerradoEm = l['encerrado_em']?.toString();
+              final fat = (l['fat_gerado'] as num?) ?? 0;
+              return Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: t.bgElev1,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: t.border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: t.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text('C$cabineNumero',
+                          style: TextStyle(
+                              color: t.primary,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(clienteNome,
+                              style: TextStyle(
+                                  color: t.textPrimary,
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w800)),
+                          Text('$apresentador · ${_fmtDate(iniciadoEm)} → ${_fmtDate(encerradoEm)}',
+                              style: TextStyle(
+                                  color: t.textMuted, fontSize: 11.5)),
+                        ],
+                      ),
+                    ),
+                    Text(_fmtMoney(fat),
+                        style: TextStyle(
+                            color: t.success,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900)),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

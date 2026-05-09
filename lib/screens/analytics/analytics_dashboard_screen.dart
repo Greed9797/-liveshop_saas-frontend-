@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/analytics_dashboard.dart';
 import '../../providers/analytics_dashboard_provider.dart';
+import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../livelab/core/responsive.dart';
 import '../../livelab/theme/livelab_theme.dart';
@@ -254,6 +255,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
         _presetPill(t, AnalyticsPreset.dias14, filtros.preset),
         _presetPill(t, AnalyticsPreset.mes1, filtros.preset),
         _customRangeBtn(t, filtros.preset == AnalyticsPreset.custom),
+        _clienteFilterBtn(t, filtros.clienteId),
         const SizedBox(width: 8),
         Padding(
           padding: const EdgeInsets.only(left: 4),
@@ -270,6 +272,126 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
           ),
         ),
       ],
+    );
+  }
+
+  Widget _clienteFilterBtn(LlTokens t, String? selectedId) {
+    final clientesAsync = ref.watch(clientesProvider);
+    final clientes = clientesAsync.valueOrNull ?? const [];
+    final selecionado = selectedId == null
+        ? null
+        : clientes.where((c) => c.id == selectedId).firstOrNull;
+    final label = selecionado != null
+        ? selecionado.nome
+        : (selectedId == null ? 'Todos os clientes' : 'Cliente');
+    final isActive = selectedId != null;
+
+    return Material(
+      color: isActive ? t.primarySoft : t.bgElev1,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () async {
+          if (clientes.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Sem clientes carregados')),
+            );
+            return;
+          }
+          final picked = await showModalBottomSheet<String?>(
+            context: context,
+            backgroundColor: t.bgElev2,
+            shape: const RoundedRectangleBorder(
+              borderRadius:
+                  BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            builder: (sheetCtx) => SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Text('Filtrar por cliente',
+                            style: TextStyle(
+                                color: t.textPrimary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800)),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => Navigator.pop(sheetCtx, null),
+                          child: const Text('Limpar'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: clientes.length,
+                      itemBuilder: (_, i) {
+                        final c = clientes[i];
+                        final isSel = c.id == selectedId;
+                        return ListTile(
+                          leading: Icon(
+                            isSel
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
+                            color: isSel ? t.primary : t.textMuted,
+                          ),
+                          title: Text(c.nome,
+                              style: TextStyle(color: t.textPrimary)),
+                          subtitle: c.cidade != null && c.cidade!.isNotEmpty
+                              ? Text(c.cidade!,
+                                  style: TextStyle(color: t.textMuted, fontSize: 12))
+                              : null,
+                          onTap: () => Navigator.pop(sheetCtx, c.id),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+          if (!mounted) return;
+          // null distingue "limpar" de "cancelar". Como ambos retornam null,
+          // só alteramos quando o resultado vem via toque (Limpar ou item).
+          // Aqui assumimos toque qualquer = troca; cancelar via swipe não chama.
+          ref
+              .read(dashboardFiltrosProvider.notifier)
+              .setClienteId(picked);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            border: Border.all(color: isActive ? t.primary : t.border),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.person_outline,
+                  size: 14,
+                  color: isActive ? t.primary : t.textSecondary),
+              const SizedBox(width: 6),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 160),
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isActive ? t.primary : t.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
