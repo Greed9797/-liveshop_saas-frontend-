@@ -21,7 +21,6 @@ import '../screens/solicitacoes/solicitacoes_screen.dart';
 import '../screens/cliente/cliente_agenda_screen.dart';
 import '../screens/cliente/cliente_ao_vivo_screen.dart';
 import '../screens/cliente/cliente_reservas_screen.dart';
-import '../screens/cliente/cliente_historico_screen.dart';
 import '../screens/cliente/cliente_lives_screen.dart';
 import '../livelab_v2/admin_v2_routes.dart';
 import '../livelab_v2/cliente_v2_routes.dart';
@@ -409,16 +408,7 @@ class AppRoutes {
           settings: settings,
         );
 
-      case clienteHistorico:
-        return buildPremiumRoute(
-          child: const RoleRouteGuard(
-            allowedRoles: {'cliente_parceiro'},
-            fallbackRoute: login,
-            unauthenticatedRoute: login,
-            child: ClienteHistoricoScreen(),
-          ),
-          settings: settings,
-        );
+      // clienteHistorico removed (legacy screen deleted)
 
       case clienteAoVivo:
         return buildPremiumRoute(

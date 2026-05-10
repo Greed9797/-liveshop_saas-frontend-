@@ -8,6 +8,7 @@ import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../widgets/nota_timeline.dart';
+import '../../widgets/skeleton_list.dart';
 import '../../widgets/responsive_grid.dart';
 
 // ── Métricas provider ─────────────────────────────────────────────────────────
@@ -65,7 +66,7 @@ class ClientesLeadsScreen extends ConsumerWidget {
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.x6),
         child: clientesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(itemCount: 6, itemHeight: 80),
           error: (error, _) => Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,

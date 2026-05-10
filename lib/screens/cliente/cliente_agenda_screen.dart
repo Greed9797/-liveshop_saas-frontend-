@@ -12,6 +12,7 @@ import '../../design_system/app_typography.dart';
 import '../../providers/cliente_agenda_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
+import '../../widgets/skeleton_list.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -164,9 +165,7 @@ class _ClienteAgendaBodyState extends ConsumerState<ClienteAgendaBody> {
               ),
               Expanded(
                 child: agendaAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  loading: () => const SkeletonList(itemCount: 4, itemHeight: 100),
                   error: (error, _) => _ErrorView(
                     message: ApiService.extractErrorMessage(error),
                     onRetry: () =>

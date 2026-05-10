@@ -147,7 +147,7 @@ class _ExcelenciaContent extends StatelessWidget {
                     const SizedBox(width: AppSpacing.x3),
                     AppPrimaryButton(
                       label: 'Configurar agora',
-                      onPressed: () {},
+                      onPressed: null, // Feature pending
                     ),
                   ],
                 ),
@@ -549,7 +549,7 @@ class _ActionItem extends StatelessWidget {
           AppGhostButton(
             label: 'Abrir',
             icon: Icons.arrow_forward,
-            onPressed: () {},
+            onPressed: null, // Feature pending
           ),
         ],
       ),

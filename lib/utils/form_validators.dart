@@ -172,4 +172,20 @@ class FormValidators {
     }
     return null;
   }
+
+  // ───────────────────────────── TikTok ──────────────────────────────
+
+  /// TikTok @username: 2-24 chars, letras/números/underscore/ponto.
+  /// Strip leading @ se houver. Empty passes — combine com [required] quando
+  /// obrigatório (ex: criação de contrato). Sincronizado com regex do backend
+  /// (migration 075: clientes_tiktok_username_format / contratos_tiktok_username_format).
+  static String? tiktokUsername(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim().replaceAll(RegExp(r'^@'), '');
+    if (trimmed.isEmpty) return null;
+    if (!RegExp(r'^[a-zA-Z0-9_.]{2,24}$').hasMatch(trimmed)) {
+      return 'Formato inválido (2-24 chars: letras/números/_/.)';
+    }
+    return null;
+  }
 }

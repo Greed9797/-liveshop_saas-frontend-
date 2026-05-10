@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/cliente_perfil_provider.dart';
 import '../../services/api_service.dart';
+import '../../utils/form_validators.dart';
 import '../core/ll_theme.dart';
 import '../widgets/ll_components.dart';
 
@@ -337,7 +339,116 @@ class _ContaSection extends ConsumerWidget {
                     onTap: savingPassword ? null : onSavePassword)),
           ]),
         ),
+        // W3-A: cliente_parceiro pode adicionar/atualizar o próprio @TikTok.
+        // Backend filtra por user_id (sub do JWT), então só edita o próprio cliente.
+        if (user?.papel == 'cliente_parceiro') ...[
+          const SizedBox(height: 14),
+          const _TikTokClienteCard(),
+        ],
       ]),
+    );
+  }
+}
+
+/// W3-A: card de configuração do @TikTok do cliente_parceiro.
+/// Lê/escreve via [clientePerfilProvider] + [atualizarTiktokUsername].
+/// Usa [LLCard] + [LLButton] do design system livelab_v2 pra consistência.
+class _TikTokClienteCard extends ConsumerStatefulWidget {
+  const _TikTokClienteCard();
+
+  @override
+  ConsumerState<_TikTokClienteCard> createState() => _TikTokClienteCardState();
+}
+
+class _TikTokClienteCardState extends ConsumerState<_TikTokClienteCard> {
+  final _ctrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _saving = false;
+  bool _hydrated = false;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final raw = _ctrl.text.trim().replaceAll(RegExp(r'^@'), '');
+    setState(() => _saving = true);
+    try {
+      await atualizarTiktokUsername(ref, raw.isEmpty ? null : raw);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(raw.isEmpty
+            ? 'Conta TikTok removida.'
+            : '@TikTok atualizada: @$raw'),
+        backgroundColor: LL.success,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(ApiService.extractErrorMessage(e)),
+        backgroundColor: LL.live,
+      ));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final perfilAsync = ref.watch(clientePerfilProvider);
+
+    perfilAsync.whenData((perfil) {
+      if (!_hydrated && perfil != null) {
+        _ctrl.text = perfil.tiktokUsername ?? '';
+        _hydrated = true;
+      }
+    });
+
+    return LLCard(
+      padding: const EdgeInsets.all(20),
+      child: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.music_note, size: 18, color: context.llTextPrimary),
+            const SizedBox(width: 8),
+            Text('Conta TikTok',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: context.llTextPrimary)),
+          ]),
+          const SizedBox(height: 4),
+          Text(
+              'Adicione o @ da sua loja pra puxarmos métricas das suas lives automaticamente.',
+              style: LL.caption.copyWith(fontSize: 11.5)),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _ctrl,
+            keyboardType: TextInputType.text,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              hintText: 'lojinha_oficial',
+              prefixText: '@ ',
+            ),
+            validator: FormValidators.tiktokUsername,
+            onFieldSubmitted: (_) => _save(),
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: LLButton(
+              label: _saving ? 'Salvando...' : 'Salvar',
+              onTap: _saving ? null : _save,
+            ),
+          ),
+        ]),
+      ),
     );
   }
 }

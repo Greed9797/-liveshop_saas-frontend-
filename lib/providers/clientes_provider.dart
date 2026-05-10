@@ -46,6 +46,22 @@ class ClientesNotifier extends AsyncNotifier<List<Cliente>> {
     final resp = await ApiService.get('/cep/$cep');
     return resp.data as Map<String, dynamic>;
   }
+
+  /// W3-A: atualiza apenas o @TikTok de um cliente (PATCH parcial).
+  /// Aceita `null` pra remover. Strip do `@` leading garante consistência.
+  /// Não usa `Cliente.fromJson` porque o PATCH retorna payload reduzido —
+  /// faz refresh completo via [refresh] após sucesso pra recarregar a lista.
+  Future<void> atualizarTiktok(String clienteId, String? username) async {
+    final clean = username == null
+        ? null
+        : (username.trim().replaceAll(RegExp(r'^@'), '').isEmpty
+            ? null
+            : username.trim().replaceAll(RegExp(r'^@'), ''));
+    await ApiService.patch('/clientes/$clienteId', data: {
+      'tiktok_username': clean,
+    });
+    await refresh();
+  }
 }
 
 final clientesProvider =

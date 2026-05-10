@@ -18,6 +18,9 @@ class Cliente {
   // Horas do contrato ativo (null = sem contrato com horas)
   final double? horasContratadas;
   final double? horasRestantes;
+  // W3-A: @ TikTok do cliente — usado como fallback no connector quando o
+  // contrato não tem @ próprio (COALESCE(contratos, clientes) no backend).
+  final String? tiktokUsername;
 
   const Cliente({
     required this.id,
@@ -37,6 +40,7 @@ class Cliente {
     this.metaDiariaGmv = 0,
     this.horasContratadas,
     this.horasRestantes,
+    this.tiktokUsername,
   });
 
   factory Cliente.fromJson(Map<String, dynamic> j) => Cliente(
@@ -66,5 +70,6 @@ class Cliente {
         horasRestantes: j['horas_restantes'] == null
             ? null
             : double.tryParse(j['horas_restantes'].toString()),
+        tiktokUsername: j['tiktok_username'] as String?,
       );
 }

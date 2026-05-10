@@ -878,7 +878,7 @@ class _KanbanColumn extends StatelessWidget {
                             lead: lead,
                             currency: currency,
                             dragging: true,
-                            onTap: () {},
+                            onTap: () {}, // Disabled during drag
                           ),
                         ),
                       ),

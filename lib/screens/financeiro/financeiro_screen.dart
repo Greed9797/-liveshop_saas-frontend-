@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../design_system/app_components.dart';
+import '../../widgets/skeleton_list.dart';
 import '../../providers/financeiro_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
@@ -445,10 +446,7 @@ class _OperacionalTab extends ConsumerWidget {
       children: [
         // KPI strip
         resumoAsync.when(
-          loading: () => const SizedBox(
-            height: 140,
-            child: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () => const SkeletonList(itemCount: 3, itemHeight: 140),
           error: (e, _) => _errorBox(t, e),
           data: (r) => _kpiGrid(t, [
             _finKpiCard(
@@ -483,10 +481,7 @@ class _OperacionalTab extends ConsumerWidget {
             children: [
               _blockHeader(t, 'Fluxo de Caixa — período atual'),
               fluxoAsync.when(
-                loading: () => const SizedBox(
-                  height: 90,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
+                loading: () => const SkeletonList(itemCount: 1, itemHeight: 90),
                 error: (e, _) => _errorBox(t, e),
                 data: (fluxo) => _FluxoCaixaPanel(
                   t: t,

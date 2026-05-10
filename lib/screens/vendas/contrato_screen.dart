@@ -28,6 +28,11 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
   final _valoresFormKey = GlobalKey<FormState>();
   final _valorCtrl = TextEditingController(text: '2990.00');
   final _comissaoCtrl = TextEditingController(text: '5');
+  // W3-A: @ TikTok do contrato — obrigatório pra integração com a live.
+  final _tiktokCtrl = TextEditingController();
+  // Garante que só pré-preenchemos do cliente uma vez (evita sobrescrever
+  // edição manual a cada rebuild).
+  bool _tiktokPrefilled = false;
 
   String? get _clienteId {
     final args = ModalRoute.of(context)?.settings.arguments as Map?;
@@ -38,6 +43,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
   void dispose() {
     _valorCtrl.dispose();
     _comissaoCtrl.dispose();
+    _tiktokCtrl.dispose();
     super.dispose();
   }
 
@@ -50,12 +56,14 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
     final comissaoPct = double.tryParse(_comissaoCtrl.text) ?? 0;
     setState(() => _loading = true);
     try {
+      final tiktokRaw = _tiktokCtrl.text.trim();
       final result =
           await ref.read(contratosProvider.notifier).criarComDetalhes(
                 clienteId: clienteId,
                 valorFixo: valorFixo,
                 comissaoPct: comissaoPct,
                 pacoteId: _selectedPacote?.id,
+                tiktokUsername: tiktokRaw.isEmpty ? null : tiktokRaw,
               );
       if (mounted) {
         setState(() {
@@ -142,6 +150,14 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
       for (final c in clientes) {
         if (c.id == clienteId) {
           cliente = c;
+          // Pré-preenche @TikTok com o do cliente, uma única vez.
+          // Sem RegExp em hot path — barato e idempotente.
+          if (!_tiktokPrefilled &&
+              _tiktokCtrl.text.trim().isEmpty &&
+              (c.tiktokUsername?.isNotEmpty ?? false)) {
+            _tiktokCtrl.text = c.tiktokUsername!;
+            _tiktokPrefilled = true;
+          }
           break;
         }
       }
@@ -316,6 +332,27 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                         validator: FormValidators.composite([
                           FormValidators.required(),
                           FormValidators.percentage,
+                        ]),
+                      ),
+                      const SizedBox(height: AppSpacing.x2),
+                      // W3-A: @TikTok obrigatório pra integração com a live.
+                      // Auto-preenchido com cliente.tiktokUsername; pode ser
+                      // sobrescrito (cada contrato pode ter um @ próprio).
+                      TextFormField(
+                        controller: _tiktokCtrl,
+                        keyboardType: TextInputType.text,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        textInputAction: TextInputAction.done,
+                        style: AppTypography.bodyMedium,
+                        decoration: InputDecoration(
+                          hintText: 'Conta TikTok do cliente — ex: lojinha_oficial',
+                          prefixText: '@ ',
+                          prefixStyle: AppTypography.bodyMedium
+                              .copyWith(color: context.colors.textSecondary),
+                        ),
+                        validator: FormValidators.composite([
+                          FormValidators.required('Informe o @TikTok do cliente'),
+                          FormValidators.tiktokUsername,
                         ]),
                       ),
                     ],

@@ -8,6 +8,7 @@ import '../../providers/cliente_dashboard_provider.dart'
     show ClienteDashboard, LiveAtiva, ProximaReserva, ClientePeriod, clientePeriodProvider, clienteDashboardProvider;
 import '../../providers/cliente_lives_provider.dart';
 import '../../routes/app_routes.dart';
+import '../../widgets/skeleton_list.dart';
 
 // ---------------------------------------------------------------------------
 // Main screen
@@ -94,7 +95,7 @@ class _AoVivoTab extends ConsumerWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.x6),
       child: dashAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkeletonList(itemCount: 5, itemHeight: 120),
         error: (error, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

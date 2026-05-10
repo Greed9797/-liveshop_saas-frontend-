@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/admin_master.dart';
 import '../../models/lead.dart';
 import '../../providers/admin_master_provider.dart';
 import '../../providers/leads_provider.dart';
@@ -117,11 +118,18 @@ class _MasterCrmV3ScreenState extends ConsumerState<MasterCrmV3Screen> {
             crmAsync.when(
               loading: () => const _LoadingBlock(),
               error: (e, _) => _ErrorBlock(error: e, onRetry: () => ref.invalidate(masterCrmProvider)),
-              data: (crm) => _KpiGrid(
-                totalLeads: crm.summary.totalLeads,
-                leadPool: crm.summary.leadPool,
-                estimatedValue: crm.summary.estimatedValue,
-                pendingContracts: crm.summary.pendingContracts,
+              data: (crm) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _KpiGrid(
+                    totalLeads: crm.summary.totalLeads,
+                    leadPool: crm.summary.leadPool,
+                    estimatedValue: crm.summary.estimatedValue,
+                    pendingContracts: crm.summary.pendingContracts,
+                  ),
+                  const SizedBox(height: 16),
+                  _PipelineRealCard(crm: crm),
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -1161,6 +1169,260 @@ class _ErrorBlock extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// =============================================================
+// Pipeline real (W3-C) — agregação cross-tenant do backend.
+// Cards por etapa com count + valor; clique abre modal com top 5 unidades.
+// =============================================================
+
+class _PipelineRealCard extends StatelessWidget {
+  final MasterCrmData crm;
+  const _PipelineRealCard({required this.crm});
+
+  Color _stageColor(BuildContext ctx, String stageId) {
+    switch (stageId) {
+      case 'lead_novo':
+      case 'contato_iniciado':
+      case 'reuniao_agendada':
+        return _C.info;
+      case 'proposta_enviada':
+      case 'em_negociacao':
+        return _C.primary;
+      case 'aguardando_assinatura':
+        return _C.warning;
+      case 'ganho':
+        return _C.success;
+      case 'perdido':
+        return const Color(0xFF7A7A82);
+      default:
+        return _C.textMuted(ctx);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final totals = crm.totals;
+    return _SectionCard(
+      title: 'Pipeline cross-tenant',
+      subtitle:
+          'agregação real de leads em todas as unidades — clique numa etapa para o top 5 por unidade',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Totals strip
+          Wrap(
+            spacing: 18,
+            runSpacing: 8,
+            children: [
+              _MiniStat(
+                label: 'leads totais',
+                value: '${totals.leadsTotal}',
+              ),
+              _MiniStat(
+                label: 'valor pipeline',
+                value: _money.format(totals.valorTotal),
+              ),
+              _MiniStat(
+                label: 'novos 7d',
+                value: '${totals.leadsUltimos7d}',
+              ),
+              _MiniStat(
+                label: 'taxa ganho 30d',
+                value: '${totals.taxaGanhos30d.toStringAsFixed(1)}%',
+              ),
+              if (totals.motivoPerdaTop != null)
+                _MiniStat(
+                  label: 'principal motivo perda',
+                  value: totals.motivoPerdaTop!,
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Stage rows
+          for (final stage in crm.pipeline)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: stage.porTenant.isEmpty
+                    ? null
+                    : () => _showStageDrillDown(context, stage),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 6,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: _stageColor(context, stage.stageId),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          stage.label,
+                          style: GoogleFonts.inter(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w500,
+                            color: _C.textPrimary(context),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${stage.count} leads',
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          color: _C.textSecondary(context),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Text(
+                        _money.format(stage.value),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _C.textPrimary(context),
+                        ),
+                      ),
+                      if (stage.porTenant.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                          color: _C.textMuted(context),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showStageDrillDown(BuildContext context, MasterPipelineStage stage) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: _C.bgElev1(ctx),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 480),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: _stageColor(ctx, stage.stageId),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      stage.label,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _C.textPrimary(ctx),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    icon: Icon(Icons.close, color: _C.textMuted(ctx)),
+                    splashRadius: 18,
+                  ),
+                ],
+              ),
+              Text(
+                'top 5 unidades nesta etapa',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: _C.textMuted(ctx),
+                ),
+              ),
+              const SizedBox(height: 12),
+              for (final t in stage.porTenant)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          t.tenantNome,
+                          style: GoogleFonts.inter(
+                            fontSize: 13.5,
+                            color: _C.textPrimary(ctx),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        '${t.count} · ${_money.format(t.value)}',
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: _C.textSecondary(ctx),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  final String label;
+  final String value;
+  const _MiniStat({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: GoogleFonts.inter(
+            fontSize: 9.5,
+            color: _C.textMuted(context),
+            letterSpacing: 0.6,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: _C.textPrimary(context),
+          ),
+        ),
+      ],
     );
   }
 }

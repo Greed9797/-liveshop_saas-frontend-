@@ -49,24 +49,107 @@ class MasterHistoryPoint {
   }
 }
 
-class MasterPipelineStage {
-  final String stage;
+class MasterPipelineTenant {
+  final String tenantId;
+  final String tenantNome;
   final int count;
   final double value;
 
-  const MasterPipelineStage({
-    required this.stage,
+  const MasterPipelineTenant({
+    required this.tenantId,
+    required this.tenantNome,
     required this.count,
     required this.value,
   });
 
-  factory MasterPipelineStage.fromJson(Map<String, dynamic> json) {
-    return MasterPipelineStage(
-      stage: _toStringValue(json['stage']),
+  factory MasterPipelineTenant.fromJson(Map<String, dynamic> json) {
+    return MasterPipelineTenant(
+      tenantId: _toStringValue(json['tenant_id']),
+      tenantNome: _toStringValue(json['tenant_nome']),
       count: _toInt(json['count']),
       value: _toDouble(json['value']),
     );
   }
+}
+
+class MasterPipelineStage {
+  final String stage; // label PT-BR (legado)
+  final String stageId; // enum DB (lead_novo, ganho, ...) — vazio se backend antigo
+  final String label;
+  final int count;
+  final double value;
+  final List<MasterPipelineTenant> porTenant;
+
+  const MasterPipelineStage({
+    required this.stage,
+    required this.stageId,
+    required this.label,
+    required this.count,
+    required this.value,
+    required this.porTenant,
+  });
+
+  factory MasterPipelineStage.fromJson(Map<String, dynamic> json) {
+    final stageLabel = _toStringValue(json['stage']);
+    final tenants = (json['por_tenant'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => MasterPipelineTenant.fromJson(Map<String, dynamic>.from(m)))
+        .toList();
+    return MasterPipelineStage(
+      stage: stageLabel,
+      stageId: _toStringValue(json['stage_id']),
+      label: _toStringValue(json['label']).isNotEmpty
+          ? _toStringValue(json['label'])
+          : stageLabel,
+      count: _toInt(json['count']),
+      value: _toDouble(json['value']),
+      porTenant: tenants,
+    );
+  }
+}
+
+class MasterCrmTotals {
+  final int leadsTotal;
+  final double valorTotal;
+  final int leadsUltimos7d;
+  final double taxaGanhos30d;
+  final int ganhos30d;
+  final int leads30d;
+  final String? motivoPerdaTop;
+
+  const MasterCrmTotals({
+    required this.leadsTotal,
+    required this.valorTotal,
+    required this.leadsUltimos7d,
+    required this.taxaGanhos30d,
+    required this.ganhos30d,
+    required this.leads30d,
+    required this.motivoPerdaTop,
+  });
+
+  factory MasterCrmTotals.fromJson(Map<String, dynamic> json) {
+    final motivo = json['motivo_perda_top'];
+    return MasterCrmTotals(
+      leadsTotal: _toInt(json['leads_total']),
+      valorTotal: _toDouble(json['valor_total']),
+      leadsUltimos7d: _toInt(json['leads_ultimos_7d']),
+      taxaGanhos30d: _toDouble(json['taxa_ganhos_30d']),
+      ganhos30d: _toInt(json['ganhos_30d']),
+      leads30d: _toInt(json['leads_30d']),
+      motivoPerdaTop:
+          motivo is String && motivo.isNotEmpty ? motivo : null,
+    );
+  }
+
+  static const empty = MasterCrmTotals(
+    leadsTotal: 0,
+    valorTotal: 0,
+    leadsUltimos7d: 0,
+    taxaGanhos30d: 0,
+    ganhos30d: 0,
+    leads30d: 0,
+    motivoPerdaTop: null,
+  );
 }
 
 class MasterDashboardCards {
@@ -562,6 +645,7 @@ class MasterCrmData {
   final bool isPlaceholder;
   final MasterCrmSummary summary;
   final List<MasterPipelineStage> pipeline;
+  final MasterCrmTotals totals;
   final List<String> recommendedFields;
   final String message;
 
@@ -569,6 +653,7 @@ class MasterCrmData {
     required this.isPlaceholder,
     required this.summary,
     required this.pipeline,
+    required this.totals,
     required this.recommendedFields,
     required this.message,
   });
@@ -578,6 +663,7 @@ class MasterCrmData {
         .map((item) => item.toString())
         .toList();
 
+    final totalsRaw = json['totals'];
     return MasterCrmData(
       isPlaceholder: json['is_placeholder'] == true,
       summary: MasterCrmSummary.fromJson(
@@ -586,6 +672,9 @@ class MasterCrmData {
       pipeline: _toMapList(
         json['pipeline'],
       ).map(MasterPipelineStage.fromJson).toList(),
+      totals: totalsRaw is Map
+          ? MasterCrmTotals.fromJson(Map<String, dynamic>.from(totalsRaw))
+          : MasterCrmTotals.empty,
       recommendedFields: fields,
       message: _toStringValue(json['message']),
     );

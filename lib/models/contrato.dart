@@ -31,6 +31,8 @@ class Contrato {
   final double horasContratadas;
   final double horasConsumidas;
   double get horasRestantes => horasContratadas - horasConsumidas;
+  // W3-A: @ TikTok do contrato — quando null, connector cai no @ do cliente.
+  final String? tiktokUsername;
 
   const Contrato({
     required this.id,
@@ -62,6 +64,7 @@ class Contrato {
     this.pacoteId,
     this.horasContratadas = 0,
     this.horasConsumidas = 0,
+    this.tiktokUsername,
   });
 
   factory Contrato.fromJson(Map<String, dynamic> j) => Contrato(
@@ -118,5 +121,6 @@ class Contrato {
             (j['horas_contratadas'] as num? ?? 0).toDouble(),
         horasConsumidas:
             (j['horas_consumidas'] as num? ?? 0).toDouble(),
+        tiktokUsername: j['tiktok_username'] as String?,
       );
 }

@@ -31,12 +31,14 @@ class ContratosNotifier extends Notifier<void> {
     required double valorFixo,
     required double comissaoPct,
     String? pacoteId,
+    String? tiktokUsername,
   }) async {
     final result = await criarComDetalhes(
       clienteId: clienteId,
       valorFixo: valorFixo,
       comissaoPct: comissaoPct,
       pacoteId: pacoteId,
+      tiktokUsername: tiktokUsername,
     );
     return result['id'] as String;
   }
@@ -46,12 +48,21 @@ class ContratosNotifier extends Notifier<void> {
     required double valorFixo,
     required double comissaoPct,
     String? pacoteId,
+    // W3-A: @ TikTok do contrato. Quando null, backend tenta auto-preencher
+    // a partir de clientes.tiktok_username e retorna 400 se ambos estiverem vazios.
+    String? tiktokUsername,
   }) async {
+    final cleanTiktok = tiktokUsername == null
+        ? null
+        : (tiktokUsername.trim().replaceAll(RegExp(r'^@'), '').isEmpty
+            ? null
+            : tiktokUsername.trim().replaceAll(RegExp(r'^@'), ''));
     final resp = await ApiService.post('/contratos', data: {
       'cliente_id': clienteId,
       'valor_fixo': valorFixo,
       'comissao_pct': comissaoPct,
       if (pacoteId != null) 'pacote_id': pacoteId,
+      if (cleanTiktok != null) 'tiktok_username': cleanTiktok,
     });
     return resp.data as Map<String, dynamic>;
   }

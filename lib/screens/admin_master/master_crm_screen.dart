@@ -190,9 +190,7 @@ class MasterCrmScreen extends ConsumerWidget {
                           ),
                           _SummaryLine(
                             label: 'Modo',
-                            value: crm.isPlaceholder
-                                ? 'Sem integração'
-                                : 'Integrado',
+                            value: 'Integrado',
                           ),
                         ],
                       ),

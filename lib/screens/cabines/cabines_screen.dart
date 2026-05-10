@@ -1045,7 +1045,7 @@ class _OperationalActions extends StatelessWidget {
     return AppSecondaryButton(
       label: 'MANUTENÇÃO',
       icon: Icons.build_circle_outlined,
-      onPressed: () {},
+      onPressed: null, // Feature pending
     );
   }
 }
@@ -2069,7 +2069,7 @@ class _CabinesEmptyState extends StatelessWidget {
               const SizedBox(height: AppSpacing.x6),
               AppSecondaryButton(
                 label: 'Abrir chamada',
-                onPressed: () {},
+                onPressed: null, // Feature pending
                 icon: Icons.support_agent_rounded,
               ),
             ],

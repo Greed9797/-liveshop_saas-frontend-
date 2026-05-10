@@ -35,16 +35,6 @@ class CabineStatus {
             ? 0
             : int.tryParse(j['duracao_min'].toString()) ?? 0,
       );
-
-  Map<String, dynamic> toMockMap() => {
-        'numero': numero,
-        'status': status,
-        'apresentador': apresentador,
-        'cliente': clienteNome,
-        'viewer_count': viewerCount,
-        'gmv_atual': gmvAtual,
-        'duracao_min': duracaoMin,
-      };
 }
 
 class RankingEntry {
