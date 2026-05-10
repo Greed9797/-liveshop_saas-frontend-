@@ -230,6 +230,11 @@ class LivelabScaffold extends ConsumerWidget {
     final isMaster = papel == 'franqueador_master';
     final isCliente = papel == 'cliente_parceiro';
     final isApresentador = papel == 'apresentador';
+    final isAuditor = papel == 'auditor';
+    final canSeeAuditLog = isMaster ||
+        papel == 'franqueado' ||
+        papel == 'gerente' ||
+        isAuditor;
 
     if (isCliente) {
       return [
@@ -258,7 +263,19 @@ class LivelabScaffold extends ConsumerWidget {
           LivelabNavItem(label: 'Consolidado', icon: PhosphorIcons.chartBar(), route: AppRoutes.masterConsolidated),
           LivelabNavItem(label: 'CRM', icon: PhosphorIcons.shoppingCart(), route: AppRoutes.masterCrm),
           LivelabNavItem(label: 'Franqueados', icon: PhosphorIcons.users(), route: AppRoutes.masterFranqueados),
+          LivelabNavItem(label: 'Gerentes regionais', icon: PhosphorIcons.usersThree(), route: AppRoutes.masterRegionalManagers),
+          LivelabNavItem(label: 'Log de auditoria', icon: PhosphorIcons.fileMagnifyingGlass(), route: AppRoutes.auditLog),
           LivelabNavItem(label: 'Configurações', icon: PhosphorIcons.gear(), route: AppRoutes.configuracoes),
+        ]),
+      ];
+    }
+
+    if (isAuditor) {
+      return [
+        LivelabNavSection(items: [
+          LivelabNavItem(label: 'Home', icon: PhosphorIcons.house(), route: AppRoutes.home),
+          LivelabNavItem(label: 'Log de auditoria', icon: PhosphorIcons.fileMagnifyingGlass(), route: AppRoutes.auditLog),
+          LivelabNavItem(label: 'Conhecimento', icon: PhosphorIcons.book(), route: AppRoutes.knowledgeBase),
         ]),
       ];
     }
@@ -283,6 +300,8 @@ class LivelabScaffold extends ConsumerWidget {
       LivelabNavSection(label: 'Análise & operação', items: [
         LivelabNavItem(label: 'Financeiro', icon: PhosphorIcons.wallet(), route: AppRoutes.financeiro, dot: true),
         LivelabNavItem(label: 'Analytics', icon: PhosphorIcons.chartLine(), route: AppRoutes.analyticsDashboard),
+        if (canSeeAuditLog)
+          LivelabNavItem(label: 'Log de auditoria', icon: PhosphorIcons.fileMagnifyingGlass(), route: AppRoutes.auditLog),
         LivelabNavItem(label: 'Conhecimento', icon: PhosphorIcons.book(), route: AppRoutes.knowledgeBase),
         LivelabNavItem(label: 'Config', icon: PhosphorIcons.gear(), route: AppRoutes.configuracoes),
       ]),

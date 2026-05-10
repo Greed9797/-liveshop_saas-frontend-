@@ -224,16 +224,19 @@ class _CabineCardState extends State<CabineCard> {
                                   ),
                           ),
                           // Lápis de edição
-                          GestureDetector(
-                            onTap: onEditTiktokUsername,
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding: const EdgeInsets.all(2),
-                              child: Icon(
-                                Icons.edit_outlined,
-                                size: 12,
-                                color: context.colors.textSecondary,
-                              ),
+                          IconButton(
+                            tooltip: 'Editar TikTok username',
+                            onPressed: onEditTiktokUsername,
+                            iconSize: 12,
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.all(2),
+                            constraints: const BoxConstraints(
+                              minWidth: 20,
+                              minHeight: 20,
+                            ),
+                            icon: Icon(
+                              Icons.edit_outlined,
+                              color: context.colors.textSecondary,
                             ),
                           ),
                         ],

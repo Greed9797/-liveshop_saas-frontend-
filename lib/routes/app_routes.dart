@@ -6,6 +6,7 @@ import '../screens/usuarios/usuarios_screen.dart';
 import '../screens/analytics/analytics_dashboard_screen.dart';
 import '../screens/apresentadoras/apresentadoras_screen.dart';
 import '../screens/auditoria/analise_credito_screen.dart';
+import '../screens/auditoria/audit_log_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/boletos/boletos_screen.dart';
 import '../livelab/features/cabines/cabines_repository.dart';
@@ -21,6 +22,7 @@ import '../screens/cliente/cliente_historico_screen.dart';
 import '../screens/cliente/cliente_lives_screen.dart';
 import '../livelab_v2/admin_v2_routes.dart';
 import '../livelab_v2/cliente_v2_routes.dart';
+import '../screens/admin_master/regional_managers_screen.dart';
 import '../screens/configuracoes/configuracoes_screen.dart';
 import '../screens/excelencia/excelencia_screen.dart';
 import '../screens/financeiro/financeiro_screen.dart';
@@ -71,6 +73,7 @@ class AppRoutes {
   static const baseConhecimento = '/base-conhecimento';
   static const carteiraClientes = '/carteira-clientes';
   static const auditoriaContratos = '/auditoria-contratos';
+  static const auditLog = '/auditoria/log';
   static const clientesLeads = '/clientes-leads';
   static const clientes = '/clientes';
   static const configuracoes = '/configuracoes';
@@ -86,6 +89,15 @@ class AppRoutes {
   static const onboarding = '/onboarding';
   static const usuarios = '/usuarios';
   static const masterFranqueados = '/master/franqueados';
+  static const masterRegionalManagers = '/master/gerentes-regionais';
+
+  // Papéis que enxergam o painel /master/* — franqueador_master vê tudo,
+  // gerente_regional vê subset filtrado pelo backend (user_tenant_access).
+  static const Set<String> _masterRoles = {
+    'franqueador_master',
+    'admin_master',
+    'gerente_regional',
+  };
 
   // Knowledge Base (KB)
   static const knowledgeBase = '/conhecimento';
@@ -124,6 +136,7 @@ class AppRoutes {
     'produtor_live',
     'marketing',
     'comercial_readonly',
+    'gerente_regional',
   };
   static const Set<String> _commercialRoles = {
     'franqueado',
@@ -167,6 +180,7 @@ class AppRoutes {
     switch (role) {
       case 'franqueador_master':
       case 'admin_master':
+      case 'gerente_regional':
         return masterDashboard;
       case 'franqueado':
       case 'gerente':
@@ -309,7 +323,7 @@ class AppRoutes {
       case masterDashboard:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master'},
+            allowedRoles: _masterRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
             child: MasterHomeV2(),
@@ -320,7 +334,7 @@ class AppRoutes {
       case masterUnits:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master'},
+            allowedRoles: _masterRoles,
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
             child: MasterUnidadesV2(),
@@ -331,7 +345,7 @@ class AppRoutes {
       case masterConsolidated:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master'},
+            allowedRoles: _masterRoles,
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
             child: MasterConsolidadoV2(),
@@ -342,7 +356,7 @@ class AppRoutes {
       case masterCrm:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master'},
+            allowedRoles: _masterRoles,
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
             child: MasterCrmV2(),
@@ -553,6 +567,17 @@ class AppRoutes {
           settings: settings,
         );
 
+      case auditLog:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'franqueador_master', 'franqueado', 'auditor'},
+            fallbackRoute: home,
+            unauthenticatedRoute: login,
+            child: AuditLogScreen(),
+          ),
+          settings: settings,
+        );
+
       case configuracoes:
         return buildPremiumRoute(
           child: const RoleRouteGuard(
@@ -716,6 +741,17 @@ class AppRoutes {
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
             child: MasterFranqueadosV2(),
+          ),
+          settings: settings,
+        );
+
+      case masterRegionalManagers:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'franqueador_master'},
+            fallbackRoute: masterDashboard,
+            unauthenticatedRoute: login,
+            child: RegionalManagersScreen(),
           ),
           settings: settings,
         );

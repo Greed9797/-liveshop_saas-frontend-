@@ -130,11 +130,15 @@ class _SenhaFieldState extends State<_SenhaField> {
             ),
           ),
           const SizedBox(width: AppSpacing.x2),
-          GestureDetector(
-            onTap: _copy,
-            child: Icon(
+          IconButton(
+            tooltip: _copied ? 'Copiado' : 'Copiar senha',
+            onPressed: _copy,
+            iconSize: 18,
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            icon: Icon(
               _copied ? Icons.check_circle_rounded : Icons.copy_rounded,
-              size: 18,
               color: _copied ? AppColors.success : AppColors.textMuted,
             ),
           ),

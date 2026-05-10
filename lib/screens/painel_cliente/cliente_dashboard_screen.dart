@@ -567,16 +567,18 @@ class _MetaCard extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    InkWell(
-                      onTap: () => _showMetaDialog(context, ref, dashboard),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          PhosphorIcons.pencilSimple(),
-                          size: 16,
-                          color: t.textMuted,
-                        ),
+                    IconButton(
+                      tooltip: 'Editar meta',
+                      onPressed: () =>
+                          _showMetaDialog(context, ref, dashboard),
+                      iconSize: 16,
+                      padding: const EdgeInsets.all(4),
+                      visualDensity: VisualDensity.compact,
+                      constraints:
+                          const BoxConstraints(minWidth: 24, minHeight: 24),
+                      icon: Icon(
+                        PhosphorIcons.pencilSimple(),
+                        color: t.textMuted,
                       ),
                     ),
                   ],

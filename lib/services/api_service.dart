@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -294,6 +295,29 @@ class ApiService {
 
   static Future<Response<T>> delete<T>(String path) =>
       _runRequest(() => _dio.delete(path));
+
+  /// GET binário (CSV/PDF) — retorna `{ bytes, filename, contentType }`.
+  /// `filename` extraído de `Content-Disposition` quando disponível.
+  static Future<({Uint8List bytes, String? filename, String? contentType})>
+      downloadBytes(String path, {Map<String, dynamic>? params}) async {
+    final r = await _runRequest<List<int>>(
+      () => _dio.get<List<int>>(
+        path,
+        queryParameters: params,
+        options: Options(responseType: ResponseType.bytes),
+      ),
+    );
+    final bytes = Uint8List.fromList(r.data ?? const []);
+    final disposition = r.headers.value('content-disposition') ?? '';
+    String? filename;
+    final m = RegExp(r'filename="?([^"]+)"?').firstMatch(disposition);
+    if (m != null) filename = m.group(1);
+    return (
+      bytes: bytes,
+      filename: filename,
+      contentType: r.headers.value('content-type'),
+    );
+  }
 
   /// Opens an SSE connection to the backend and emits real-time snapshots.
   /// Reconnects with exponential backoff (1s → 30s max) on transport errors.

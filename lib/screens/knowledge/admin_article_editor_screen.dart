@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -9,6 +11,7 @@ import '../../providers/knowledge_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../widgets/knowledge/markdown_renderer.dart';
+import '../../widgets/knowledge/video_block.dart';
 
 class AdminArticleEditorScreen extends ConsumerStatefulWidget {
   /// Pode ser passado quando navegando para edição. Se null, é criação.
@@ -596,31 +599,62 @@ class _PreviewColumn extends StatefulWidget {
 }
 
 class _PreviewColumnState extends State<_PreviewColumn> {
+  static const Duration _debounceWindow = Duration(milliseconds: 500);
+  Timer? _debounce;
+
+  // Snapshot debounced — preview só rebuilda quando este muda.
+  late String _debouncedTitulo;
+  late String _debouncedExcerpt;
+  late String _debouncedContent;
+  late String _debouncedVideoUrl;
+  late KbVideoProvider _debouncedProvider;
+
   @override
   void initState() {
     super.initState();
-    widget.titulo.addListener(_rebuild);
-    widget.excerpt.addListener(_rebuild);
-    widget.content.addListener(_rebuild);
-    widget.videoUrl.addListener(_rebuild);
+    _debouncedTitulo = widget.titulo.text;
+    _debouncedExcerpt = widget.excerpt.text;
+    _debouncedContent = widget.content.text;
+    _debouncedVideoUrl = widget.videoUrl.text;
+    _debouncedProvider = widget.videoProvider;
+    widget.titulo.addListener(_scheduleRebuild);
+    widget.excerpt.addListener(_scheduleRebuild);
+    widget.content.addListener(_scheduleRebuild);
+    widget.videoUrl.addListener(_scheduleRebuild);
   }
 
   @override
   void didUpdateWidget(covariant _PreviewColumn old) {
     super.didUpdateWidget(old);
-    if (old.videoProvider != widget.videoProvider) _rebuild();
+    if (old.videoProvider != widget.videoProvider) {
+      // troca de provider é evento discreto — rebuild imediato
+      _flushNow();
+    }
   }
 
-  void _rebuild() {
-    if (mounted) setState(() {});
+  void _scheduleRebuild() {
+    _debounce?.cancel();
+    _debounce = Timer(_debounceWindow, _flushNow);
+  }
+
+  void _flushNow() {
+    if (!mounted) return;
+    setState(() {
+      _debouncedTitulo = widget.titulo.text;
+      _debouncedExcerpt = widget.excerpt.text;
+      _debouncedContent = widget.content.text;
+      _debouncedVideoUrl = widget.videoUrl.text;
+      _debouncedProvider = widget.videoProvider;
+    });
   }
 
   @override
   void dispose() {
-    widget.titulo.removeListener(_rebuild);
-    widget.excerpt.removeListener(_rebuild);
-    widget.content.removeListener(_rebuild);
-    widget.videoUrl.removeListener(_rebuild);
+    _debounce?.cancel();
+    widget.titulo.removeListener(_scheduleRebuild);
+    widget.excerpt.removeListener(_scheduleRebuild);
+    widget.content.removeListener(_scheduleRebuild);
+    widget.videoUrl.removeListener(_scheduleRebuild);
     super.dispose();
   }
 
@@ -645,16 +679,17 @@ class _PreviewColumnState extends State<_PreviewColumn> {
         ),
         const SizedBox(height: AppSpacing.x4),
         Text(
-          widget.titulo.text.trim().isEmpty
-              ? 'Título do artigo'
-              : widget.titulo.text,
+          _debouncedTitulo.trim().isEmpty ? 'Título do artigo' : _debouncedTitulo,
           style: AppTypography.h1.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: AppSpacing.x4),
-        // (vídeo via VideoBlock seria pesado em preview; mostramos apenas excerpt + markdown)
-        if (widget.excerpt.text.trim().isNotEmpty) ...[
+        // VideoBlock acima do markdown (debounce 500ms evita rebuild de iframe a cada keystroke).
+        if (_debouncedProvider != KbVideoProvider.none &&
+            _debouncedVideoUrl.trim().isNotEmpty)
+          VideoBlock(provider: _debouncedProvider, url: _debouncedVideoUrl),
+        if (_debouncedExcerpt.trim().isNotEmpty) ...[
           Text(
-            widget.excerpt.text,
+            _debouncedExcerpt,
             style: AppTypography.bodyLarge.copyWith(
               color: AppColors.textSecondary,
               fontSize: 18,
@@ -665,14 +700,14 @@ class _PreviewColumnState extends State<_PreviewColumn> {
           const Divider(color: AppColors.borderLight, height: 1),
           const SizedBox(height: AppSpacing.x4),
         ],
-        if (widget.content.text.trim().isEmpty)
+        if (_debouncedContent.trim().isEmpty)
           Text(
             'A pré-visualização do conteúdo aparece aqui.',
             style: AppTypography.bodyMedium
                 .copyWith(color: AppColors.textMuted),
           )
         else
-          MarkdownRenderer(data: widget.content.text),
+          MarkdownRenderer(data: _debouncedContent),
       ],
     );
   }

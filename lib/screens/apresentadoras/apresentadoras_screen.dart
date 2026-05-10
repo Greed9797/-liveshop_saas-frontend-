@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../design_system/design_system.dart';
 import '../../models/apresentadora.dart';
 import '../../providers/apresentadoras_provider.dart';
+import '../../providers/disponibilidade_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
+import '../../widgets/calendar_week_view.dart';
+import '../../widgets/disponibilidade_modal.dart';
 
 class ApresentadorasScreen extends ConsumerWidget {
   const ApresentadorasScreen({super.key});
@@ -49,6 +53,11 @@ class ApresentadorasScreen extends ConsumerWidget {
                   itemBuilder: (context, index) => _ApresentadoraCard(
                     item: items[index],
                     onEdit: () => _openForm(context, ref, items[index]),
+                    onCalendario: () => DisponibilidadeModal.open(
+                      context: context,
+                      apresentadoraId: items[index].id,
+                      apresentadoraNome: items[index].nome,
+                    ),
                   ),
                 ),
         ),
@@ -409,18 +418,28 @@ class ApresentadorasScreen extends ConsumerWidget {
       double.tryParse(value.replaceAll(',', '.')) ?? 0;
 }
 
-class _ApresentadoraCard extends StatelessWidget {
+class _ApresentadoraCard extends ConsumerWidget {
   final Apresentadora item;
   final VoidCallback onEdit;
+  final VoidCallback onCalendario;
 
-  const _ApresentadoraCard({required this.item, required this.onEdit});
+  const _ApresentadoraCard({
+    required this.item,
+    required this.onEdit,
+    required this.onCalendario,
+  });
 
   static final _money = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
   static final _moneyInt =
       NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 0);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dispoAsync = ref.watch(disponibilidadeProvider(item.id));
+    final dispoStatus = dispoAsync.maybeWhen(
+      data: avaliarDisponibilidadeAgora,
+      orElse: () => null,
+    );
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.x4),
       borderColor: context.colors.borderSubtle,
@@ -471,12 +490,40 @@ class _ApresentadoraCard extends StatelessWidget {
                         .copyWith(color: context.colors.textMuted),
                   ),
                 ],
+                if (dispoStatus != null) ...[
+                  const SizedBox(height: AppSpacing.x1),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: dispoStatus.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        dispoStatus.label,
+                        style: AppTypography.caption
+                            .copyWith(color: dispoStatus.color),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
           AppBadge(
             label: item.ativo ? 'ATIVA' : 'INATIVA',
             type: item.ativo ? AppBadgeType.success : AppBadgeType.neutral,
+          ),
+          IconButton(
+            tooltip: 'Calendário',
+            onPressed: onCalendario,
+            icon: Icon(PhosphorIcons.calendarBlank()),
+            color: context.colors.textSecondary,
           ),
           IconButton(
             onPressed: onEdit,

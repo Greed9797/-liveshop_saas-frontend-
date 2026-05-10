@@ -6,6 +6,7 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 import '../../design_system/design_system.dart';
 import '../../models/knowledge_article.dart';
+import 'panda_iframe.dart';
 
 /// Bloco de vídeo embed para um artigo da Knowledge Base.
 ///
@@ -110,8 +111,11 @@ class _PandaFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // No Flutter Web, WebView (webview_flutter) é limitado.
-    // V1: render fallback elegante com link externo.
+    // No Flutter Web, embedamos via HtmlElementView (iframe nativo).
+    // Em mobile/desktop, mostramos fallback "Abrir no Panda".
+    if (kIsWeb) {
+      return PandaIframeView(url: url);
+    }
     return Container(
       color: AppColors.bgMuted,
       alignment: Alignment.center,
@@ -141,9 +145,7 @@ class _PandaFallback extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.x2),
           Text(
-            kIsWeb
-                ? 'A reprodução embutida não está disponível nesta versão. Abra o vídeo no Panda em uma nova aba.'
-                : 'Toque para abrir o vídeo no Panda.',
+            'Toque para abrir o vídeo no Panda.',
             style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted),
             textAlign: TextAlign.center,
           ),

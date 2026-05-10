@@ -21,7 +21,7 @@ class AdminKnowledgeCategoriesScreen extends ConsumerWidget {
       currentRoute: AppRoutes.knowledgeBase,
       eyebrow: 'CONHECIMENTO',
       title: 'Categorias',
-      subtitle: 'Organize os artigos por área. Drag & drop futuro.',
+      subtitle: 'Organize os artigos por área. Arraste pelo punho para reordenar.',
       actions: [
         AppGhostButton(
           label: 'Voltar',
@@ -55,14 +55,46 @@ class AdminKnowledgeCategoriesScreen extends ConsumerWidget {
               onAction: () => _openEditor(context, ref, null),
             );
           }
-          return ListView.separated(
+          return ReorderableListView.builder(
             padding: const EdgeInsets.all(AppSpacing.x4),
             itemCount: cats.length,
-            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.x3),
-            itemBuilder: (_, i) => _CategoryRow(
-              category: cats[i],
-              onEdit: () => _openEditor(context, ref, cats[i]),
-              onDelete: () => _confirmDelete(context, ref, cats[i]),
+            buildDefaultDragHandles: false,
+            proxyDecorator: (child, index, animation) => Material(
+              color: Colors.transparent,
+              elevation: 8,
+              shadowColor: Colors.black.withValues(alpha: 0.2),
+              borderRadius: AppRadius.lgR,
+              child: child,
+            ),
+            onReorder: (oldIndex, newIndex) async {
+              if (newIndex > oldIndex) newIndex -= 1;
+              if (oldIndex == newIndex) return;
+              final next = [...cats];
+              final moved = next.removeAt(oldIndex);
+              next.insert(newIndex, moved);
+              try {
+                await ref
+                    .read(knowledgeCategoriesProvider.notifier)
+                    .reordenar(next.map((c) => c.id).toList());
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(ApiService.extractErrorMessage(e))),
+                  );
+                }
+              }
+            },
+            itemBuilder: (_, i) => Padding(
+              key: ValueKey('kb-cat-${cats[i].id}'),
+              padding: EdgeInsets.only(
+                bottom: i == cats.length - 1 ? 0 : AppSpacing.x3,
+              ),
+              child: _CategoryRow(
+                index: i,
+                category: cats[i],
+                onEdit: () => _openEditor(context, ref, cats[i]),
+                onDelete: () => _confirmDelete(context, ref, cats[i]),
+              ),
             ),
           );
         },
@@ -126,11 +158,13 @@ class AdminKnowledgeCategoriesScreen extends ConsumerWidget {
 }
 
 class _CategoryRow extends StatelessWidget {
+  final int index;
   final KnowledgeCategory category;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _CategoryRow({
+    required this.index,
     required this.category,
     required this.onEdit,
     required this.onDelete,
@@ -142,6 +176,20 @@ class _CategoryRow extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.x4),
       child: Row(
         children: [
+          ReorderableDragStartListener(
+            index: index,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.grab,
+              child: Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.x3),
+                child: Icon(
+                  PhosphorIcons.dotsSixVertical(),
+                  color: AppColors.textMuted,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
           Container(
             width: 44,
             height: 44,

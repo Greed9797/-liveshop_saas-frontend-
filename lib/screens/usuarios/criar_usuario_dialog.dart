@@ -43,6 +43,8 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
     // Tier 3 — comercial / marketing
     ('marketing', 'Marketing'),
     ('comercial_readonly', 'Comercial (somente leitura)'),
+    // Tier 4 — multi-tenant (acesso configurado em /master/gerentes-regionais)
+    ('gerente_regional', 'Gerente Regional (multi-unidade)'),
   ];
 
   @override

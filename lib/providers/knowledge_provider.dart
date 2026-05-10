@@ -70,6 +70,32 @@ class KnowledgeCategoriesNotifier
       (state.valueOrNull ?? const []).where((c) => c.id != id).toList(),
     );
   }
+
+  /// Reordena categorias atualizando sort_order (1-indexed) na ordem do array.
+  /// Otimista: atualiza state imediatamente, faz rollback em caso de erro.
+  Future<void> reordenar(List<String> orderedIds) async {
+    final current = state.valueOrNull ?? const <KnowledgeCategory>[];
+    final byId = {for (final c in current) c.id: c};
+    final reordered = <KnowledgeCategory>[
+      for (final id in orderedIds)
+        if (byId.containsKey(id)) byId[id]!,
+    ];
+    // defensivo: itens fora do array (não deveria) ficam ao final
+    for (final c in current) {
+      if (!orderedIds.contains(c.id)) reordered.add(c);
+    }
+    state = AsyncData(reordered);
+    try {
+      await ApiService.post<dynamic>(
+        '/knowledge/categories/reorder',
+        data: {'ids': orderedIds},
+      );
+    } catch (e) {
+      // rollback
+      state = AsyncData(current);
+      rethrow;
+    }
+  }
 }
 
 final knowledgeCategoriesProvider = AsyncNotifierProvider<
