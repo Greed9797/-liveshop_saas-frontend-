@@ -76,9 +76,17 @@ class CabinesNotifier extends AsyncNotifier<List<Cabine>> {
     await refresh();
   }
 
-  Future<void> encerrarLive(String liveId, double fatGerado) async {
-    await ApiService.patch('/lives/$liveId/encerrar',
-        data: {'fat_gerado': fatGerado});
+  Future<void> encerrarLive(
+    String liveId,
+    double fatGerado, {
+    int? qtdPedidos,
+    String? resumo,
+  }) async {
+    await ApiService.patch('/lives/$liveId/encerrar', data: {
+      'fat_gerado': fatGerado,
+      if (qtdPedidos != null) 'qtd_pedidos': qtdPedidos,
+      if (resumo != null && resumo.trim().isNotEmpty) 'resumo': resumo.trim(),
+    });
     await refresh();
   }
 

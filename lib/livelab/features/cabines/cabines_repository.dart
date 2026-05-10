@@ -18,7 +18,12 @@ abstract class CabinesRepository {
     String? apresentadorId,
     String? titulo,
   });
-  Future<void> encerrarLive(String liveId, {double fatGerado = 0});
+  Future<void> encerrarLive(
+    String liveId, {
+    double fatGerado = 0,
+    int? qtdPedidos,
+    String? resumo,
+  });
 }
 
 class ApiCabinesRepository extends CabinesRepository {
@@ -100,9 +105,16 @@ class ApiCabinesRepository extends CabinesRepository {
   }
 
   @override
-  Future<void> encerrarLive(String liveId, {double fatGerado = 0}) async {
+  Future<void> encerrarLive(
+    String liveId, {
+    double fatGerado = 0,
+    int? qtdPedidos,
+    String? resumo,
+  }) async {
     await ApiService.patch('/lives/$liveId/encerrar', data: {
       'fat_gerado': fatGerado,
+      if (qtdPedidos != null) 'qtd_pedidos': qtdPedidos,
+      if (resumo != null && resumo.trim().isNotEmpty) 'resumo': resumo.trim(),
     });
   }
 

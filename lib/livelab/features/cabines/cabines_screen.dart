@@ -130,42 +130,110 @@ class _CabinesScreenState extends State<CabinesScreen> {
       _toast('Sem live ativa nesta cabine', error: true);
       return;
     }
-    final fatCtrl = TextEditingController(text: c.gmv > 0 ? c.gmv.toStringAsFixed(2) : '0');
+    final fatCtrl = TextEditingController(text: c.gmv > 0 ? c.gmv.toStringAsFixed(2) : '');
+    final qtdCtrl = TextEditingController();
+    final resumoCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('Encerrar live · Cabine ${c.number.toString().padLeft(2, '0')}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Informe o faturamento gerado na live (R\$):'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: fatCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                prefixText: 'R\$ ',
-                hintText: '0.00',
-              ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Preencha os dados consolidados da live para encerrar.',
+                  style: TextStyle(color: Theme.of(ctx).hintColor, fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: fatCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'GMV total (R\$) *',
+                    prefixText: 'R\$ ',
+                    hintText: '0,00',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    final n = double.tryParse((v ?? '').replaceAll(',', '.'));
+                    if (n == null) return 'Valor inválido';
+                    if (n < 0) return 'Não pode ser negativo';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: qtdCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Qtd de pedidos *',
+                    hintText: '0',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    final n = int.tryParse((v ?? '').trim());
+                    if (n == null) return 'Número obrigatório';
+                    if (n < 0) return 'Não pode ser negativo';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: resumoCtrl,
+                  maxLines: 3,
+                  maxLength: 2000,
+                  decoration: const InputDecoration(
+                    labelText: 'Resumo (opcional)',
+                    hintText: 'Observações da live, destaques, problemas...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700, foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Encerrar'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.pop(ctx, true);
+              }
+            },
+            child: const Text('Encerrar e salvar'),
           ),
         ],
       ),
     );
+
     if (ok != true) return;
     final fat = double.tryParse(fatCtrl.text.replaceAll(',', '.')) ?? 0;
+    final qtd = int.tryParse(qtdCtrl.text.trim());
+    final resumo = resumoCtrl.text.trim().isEmpty ? null : resumoCtrl.text.trim();
+
     await _runAction(
       c,
-      () => widget.repository.encerrarLive(liveId, fatGerado: fat),
-      'Live encerrada · R\$ ${fat.toStringAsFixed(2)}',
+      () => widget.repository.encerrarLive(
+        liveId,
+        fatGerado: fat,
+        qtdPedidos: qtd,
+        resumo: resumo,
+      ),
+      'Live encerrada · R\$ ${fat.toStringAsFixed(2)} · ${qtd ?? 0} pedidos',
     );
   }
 
