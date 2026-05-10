@@ -144,8 +144,20 @@ class _MasterCrmV3ScreenState extends ConsumerState<MasterCrmV3Screen> {
                 onFilterChange: (f) => setState(() => _filter = f),
                 movingId: _movingId,
                 onMove: (lead, newStage) => _moveLead(lead, newStage),
-                onCreate: () => showLeadDialog(context),
-                onEdit: (lead) => showLeadDialog(context, lead: lead),
+                onCreate: () async {
+                  final ok = await showLeadDialog(context);
+                  if (ok == true && mounted) {
+                    // KPIs vêm de /crm/summary (masterCrmProvider). Sem invalidar,
+                    // criar/editar/deletar lead deixa os cards estagnados.
+                    ref.invalidate(masterCrmProvider);
+                  }
+                },
+                onEdit: (lead) async {
+                  final ok = await showLeadDialog(context, lead: lead);
+                  if (ok == true && mounted) {
+                    ref.invalidate(masterCrmProvider);
+                  }
+                },
               ),
             ),
           ],
@@ -175,6 +187,8 @@ class _MasterCrmV3ScreenState extends ConsumerState<MasterCrmV3Screen> {
     setState(() => _movingId = lead.id);
     try {
       await ref.read(leadsProvider.notifier).moverEtapa(lead.id, newStage);
+      // KPI summary depende de etapa — invalida pra recalcular.
+      if (mounted) ref.invalidate(masterCrmProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/tenants_provider.dart';
 import '../../services/api_service.dart';
 import '../../design_system/design_system.dart';
+import '../../utils/form_validators.dart';
 import '../../widgets/temp_password_dialog.dart';
 
 class CriarFranquiaDialog extends ConsumerStatefulWidget {
@@ -46,6 +47,7 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
           padding: const EdgeInsets.all(AppSpacing.x6),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -67,8 +69,7 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
                   TextFormField(
                     controller: _nomeCtrl,
                     decoration: _dec('Ex: Livelab SP Faria Lima'),
-                    validator: (v) =>
-                        (v?.trim().isEmpty ?? true) ? 'Obrigatório' : null,
+                    validator: FormValidators.required(),
                   ),
                   const SizedBox(height: AppSpacing.x3),
 
@@ -81,6 +82,7 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
                           TextFormField(
                             controller: _cnpjCtrl,
                             decoration: _dec('00.000.000/0001-00'),
+                            validator: FormValidators.cnpj,
                           ),
                         ],
                       ),
@@ -95,6 +97,7 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
                             controller: _telefoneCtrl,
                             keyboardType: TextInputType.phone,
                             decoration: _dec('(11) 9 0000-0000'),
+                            validator: FormValidators.telefoneBr,
                           ),
                         ],
                       ),
@@ -107,11 +110,7 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
                     controller: _emailContatoCtrl,
                     keyboardType: TextInputType.emailAddress,
                     decoration: _dec('contato@unidade.com.br'),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return null;
-                      if (!v.contains('@')) return 'E-mail inválido';
-                      return null;
-                    },
+                    validator: FormValidators.email,
                   ),
                   const SizedBox(height: AppSpacing.x6),
 
@@ -122,8 +121,7 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
                   TextFormField(
                     controller: _ownerNomeCtrl,
                     decoration: _dec('Nome completo'),
-                    validator: (v) =>
-                        (v?.trim().isEmpty ?? true) ? 'Obrigatório' : null,
+                    validator: FormValidators.required(),
                   ),
                   const SizedBox(height: AppSpacing.x3),
 
@@ -132,24 +130,19 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
                     controller: _ownerEmailCtrl,
                     keyboardType: TextInputType.emailAddress,
                     decoration: _dec('email@unidade.com.br'),
-                    validator: (v) {
-                      if (v?.trim().isEmpty ?? true) return 'Obrigatório';
-                      if (!v!.contains('@')) return 'E-mail inválido';
-                      return null;
-                    },
+                    validator: FormValidators.composite([
+                      FormValidators.required(),
+                      FormValidators.email,
+                    ]),
                   ),
                   const SizedBox(height: AppSpacing.x3),
 
                   _Label('Senha temporária (opcional)'),
                   TextFormField(
                     controller: _ownerSenhaCtrl,
-                    decoration: _dec('Deixe em branco para gerar automaticamente'),
-                    validator: (v) {
-                      final s = v?.trim() ?? '';
-                      if (s.isEmpty) return null;
-                      if (s.length < 6) return 'Mínimo 6 caracteres';
-                      return null;
-                    },
+                    decoration:
+                        _dec('Deixe em branco para gerar automaticamente'),
+                    validator: FormValidators.minLength(8),
                   ),
                   const SizedBox(height: AppSpacing.x6),
 

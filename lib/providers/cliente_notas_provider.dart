@@ -2,11 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/cliente_nota.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class ClienteNotasNotifier
     extends FamilyAsyncNotifier<List<ClienteNota>, String> {
   @override
-  Future<List<ClienteNota>> build(String clienteId) async => _fetch(clienteId);
+  Future<List<ClienteNota>> build(String clienteId) async {
+    // BUGFIX: faltava auth guard.
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) return const [];
+    return _fetch(clienteId);
+  }
 
   Future<List<ClienteNota>> _fetch(String clienteId) async {
     final r = await ApiService.get('/clientes/$clienteId/notas');

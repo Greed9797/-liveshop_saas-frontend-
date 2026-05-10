@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class ClienteLiveAtual {
   final String liveId;
@@ -78,7 +79,15 @@ class ClienteCabineDetailState {
 class ClienteCabineDetailNotifier
     extends FamilyAsyncNotifier<ClienteCabineDetailState, String> {
   @override
-  Future<ClienteCabineDetailState> build(String arg) => _fetch(arg);
+  Future<ClienteCabineDetailState> build(String arg) async {
+    // BUGFIX: faltava auth guard — após logout o provider tentava GET
+    // /cabines/:id/cliente em background e gerava 401s.
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
+    return _fetch(arg);
+  }
 
   Future<ClienteCabineDetailState> _fetch(String cabineId) async {
     final res = await ApiService.get<Map<String, dynamic>>(

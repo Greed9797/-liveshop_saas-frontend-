@@ -6,6 +6,7 @@ import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../design_system/design_system.dart';
 import '../../utils/doc_validators.dart';
+import '../../utils/form_validators.dart';
 
 class CadastroClienteScreen extends ConsumerStatefulWidget {
   const CadastroClienteScreen({super.key});
@@ -16,6 +17,8 @@ class CadastroClienteScreen extends ConsumerStatefulWidget {
 
 class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
   final _pageCtrl = PageController();
+  final _step1FormKey = GlobalKey<FormState>();
+  final _step2FormKey = GlobalKey<FormState>();
   final _docFormKey = GlobalKey<FormState>();
   int _step = 0;
   bool _loading = false;
@@ -92,20 +95,11 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
 
   void _nextStep() {
     if (_step == 0) {
-      if (_nomeCtrl.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nome é obrigatório')),
-        );
-        return;
-      }
-      final phoneDigits = _celularCtrl.text.replaceAll(RegExp(r'\D'), '');
-      if (phoneDigits.length < 10 || phoneDigits.length > 11) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Celular inválido — informe 10 ou 11 dígitos')),
-        );
-        return;
-      }
-      if (!(_docFormKey.currentState?.validate() ?? true)) return;
+      final step1Valid = _step1FormKey.currentState?.validate() ?? true;
+      final docValid = _docFormKey.currentState?.validate() ?? true;
+      if (!step1Valid || !docValid) return;
+    } else if (_step == 1) {
+      if (!(_step2FormKey.currentState?.validate() ?? true)) return;
     }
     if (_step < 3) {
       setState(() => _step++);
@@ -205,34 +199,52 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
     );
   }
 
-  Widget _step1() => SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Dados Pessoais',
-                style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSpacing.x4),
-            _field('Nome Completo *', _nomeCtrl),
-            _field('Celular (WhatsApp) *', _celularCtrl,
-                type: TextInputType.phone),
-            _field('Email', _emailCtrl, type: TextInputType.emailAddress),
-            _docField(),
-          ],
+  Widget _step1() => Form(
+        key: _step1FormKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Dados Pessoais',
+                  style: AppTypography.bodyLarge
+                      .copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: AppSpacing.x4),
+              _field('Nome Completo *', _nomeCtrl,
+                  validator: FormValidators.required()),
+              _field('Celular (WhatsApp) *', _celularCtrl,
+                  type: TextInputType.phone,
+                  validator: FormValidators.composite([
+                    FormValidators.required(),
+                    FormValidators.telefoneBr,
+                  ])),
+              _field('Email', _emailCtrl,
+                  type: TextInputType.emailAddress,
+                  validator: FormValidators.email),
+              _docField(),
+            ],
+          ),
         ),
       );
 
-  Widget _step2() => SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Dados Comerciais',
-                style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSpacing.x4),
-            _field('Razão Social', _razaoCtrl),
-            _field('Faturamento Anual R\$', _fatCtrl,
-                type: TextInputType.number),
-            _field('Nicho (ex: Moda, Eletrônicos)', _nichoCtrl),
-          ],
+  Widget _step2() => Form(
+        key: _step2FormKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Dados Comerciais',
+                  style: AppTypography.bodyLarge
+                      .copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: AppSpacing.x4),
+              _field('Razão Social', _razaoCtrl),
+              _field('Faturamento Anual R\$', _fatCtrl,
+                  type: TextInputType.number,
+                  validator: FormValidators.nonNegativeNumber),
+              _field('Nicho (ex: Moda, Eletrônicos)', _nichoCtrl),
+            ],
+          ),
         ),
       );
 
@@ -445,13 +457,14 @@ class _CadastroClienteScreenState extends ConsumerState<CadastroClienteScreen> {
   }
 
   Widget _field(String label, TextEditingController ctrl,
-          {TextInputType? type}) =>
+          {TextInputType? type, String? Function(String?)? validator}) =>
       Padding(
         padding: const EdgeInsets.only(bottom: 14),
         child: AppTextField(
           controller: ctrl,
           keyboardType: type,
           hint: label,
+          validator: validator,
         ),
       );
 }

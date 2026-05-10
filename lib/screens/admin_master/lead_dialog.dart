@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/lead.dart';
 import '../../providers/leads_provider.dart';
+import '../../utils/form_validators.dart';
 
 class _D {
   static const bg          = Color(0xFF16161A);
@@ -276,7 +277,7 @@ class _LeadFormState extends ConsumerState<_LeadForm> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _Field(label: 'Nome do lead *', controller: _nome),
+                    _Field(label: 'Nome do lead *', controller: _nome, validator: FormValidators.required()),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -293,16 +294,17 @@ class _LeadFormState extends ConsumerState<_LeadForm> {
                     Row(
                       children: [
                         Expanded(child: _Field(label: 'Origem', controller: _origem, hint: 'ex: bio_cliente, indicação, outbound')),
+
                         const SizedBox(width: 10),
-                        Expanded(child: _Field(label: 'Valor (R\$)', controller: _valor, keyboard: TextInputType.number)),
+                        Expanded(child: _Field(label: 'Valor (R\$)', controller: _valor, keyboard: TextInputType.number, validator: FormValidators.nonNegativeNumber)),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(child: _Field(label: 'E-mail', controller: _email, keyboard: TextInputType.emailAddress)),
+                        Expanded(child: _Field(label: 'E-mail', controller: _email, keyboard: TextInputType.emailAddress, validator: FormValidators.email)),
                         const SizedBox(width: 10),
-                        Expanded(child: _Field(label: 'WhatsApp', controller: _whatsapp, keyboard: TextInputType.phone)),
+                        Expanded(child: _Field(label: 'WhatsApp', controller: _whatsapp, keyboard: TextInputType.phone, validator: FormValidators.telefoneBr)),
                       ],
                     ),
                     if (_extras.isNotEmpty) ...[
@@ -355,7 +357,8 @@ class _Field extends StatelessWidget {
   final String? hint;
   final bool multiline;
   final TextInputType? keyboard;
-  const _Field({required this.label, required this.controller, this.hint, this.multiline = false, this.keyboard});
+  final String? Function(String?)? validator;
+  const _Field({required this.label, required this.controller, this.hint, this.multiline = false, this.keyboard, this.validator});
 
   @override
   Widget build(BuildContext context) {
@@ -364,8 +367,10 @@ class _Field extends StatelessWidget {
       children: [
         Text(label, style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w600, color: _D.textSec, letterSpacing: 0.1)),
         const SizedBox(height: 6),
-        TextField(
+        TextFormField(
           controller: controller,
+          validator: validator,
+          autovalidateMode: validator != null ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
           minLines: multiline ? 3 : 1,
           maxLines: multiline ? 5 : 1,
           keyboardType: keyboard,

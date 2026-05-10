@@ -108,6 +108,10 @@ class CabinesNotifier extends AsyncNotifier<List<Cabine>> {
 
   Future<void> criar(Map<String, dynamic> payload) async {
     await ApiService.post('/cabines', data: payload);
+    // BUGFIX: antes não atualizava state nem invalidava providers operacionais —
+    // após criar cabine, lista ficava stale até refresh manual e a tela de
+    // Agenda também seguia sem a nova cabine listada.
+    await refresh();
   }
 
   Future<void> deletar(String id) async {

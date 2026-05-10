@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/api_service.dart';
+import '../auth_provider.dart';
 
 // --- Models simplificados para a tela de detalhe ---
 
@@ -110,7 +111,15 @@ class CabineDetailNotifier
 
   @override
   Future<CabineDetailState> build(String arg) async {
+    // BUGFIX: faltava auth guard — após logout o polling continuava em
+    // background gerando 401s e impedindo limpeza correta.
+    final authState = ref.watch(authProvider);
     ref.onDispose(() => _pollTimer?.cancel());
+    if (!authState.isAuthenticated) {
+      _pollTimer?.cancel();
+      _pollTimer = null;
+      throw Exception('Não autenticado');
+    }
 
     final historico = await _fetchHistorico(arg);
     final liveAtual = await _fetchLiveAtual(arg);

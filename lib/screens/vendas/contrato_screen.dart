@@ -10,6 +10,7 @@ import '../../providers/clientes_provider.dart';
 import '../../providers/pacotes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../design_system/design_system.dart';
+import '../../utils/form_validators.dart';
 
 class ContratoScreen extends ConsumerStatefulWidget {
   const ContratoScreen({super.key});
@@ -24,6 +25,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
   double _horasContratadas = 0;
   double _horasConsumidas = 0;
 
+  final _valoresFormKey = GlobalKey<FormState>();
   final _valorCtrl = TextEditingController(text: '2990.00');
   final _comissaoCtrl = TextEditingController(text: '5');
 
@@ -42,6 +44,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
   Future<void> _criarContrato() async {
     final clienteId = _clienteId;
     if (clienteId == null || _contratoId != null) return;
+    if (!(_valoresFormKey.currentState?.validate() ?? false)) return;
     final valorFixo =
         double.tryParse(_valorCtrl.text.replaceAll(',', '.')) ?? 0;
     final comissaoPct = double.tryParse(_comissaoCtrl.text) ?? 0;
@@ -290,17 +293,33 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                     style: AppTypography.bodyMedium
                         .copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: AppSpacing.x3),
-                AppTextField(
-                  controller: _valorCtrl,
-                  hint: 'Valor mensal mínimo R\$',
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                ),
-                const SizedBox(height: AppSpacing.x2),
-                AppTextField(
-                  controller: _comissaoCtrl,
-                  hint: '% sobre faturamento',
-                  keyboardType: TextInputType.number,
+                Form(
+                  key: _valoresFormKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  child: Column(
+                    children: [
+                      AppTextField(
+                        controller: _valorCtrl,
+                        hint: 'Valor mensal mínimo R\$',
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        validator: FormValidators.composite([
+                          FormValidators.required(),
+                          FormValidators.positiveNumber,
+                        ]),
+                      ),
+                      const SizedBox(height: AppSpacing.x2),
+                      AppTextField(
+                        controller: _comissaoCtrl,
+                        hint: '% sobre faturamento',
+                        keyboardType: TextInputType.number,
+                        validator: FormValidators.composite([
+                          FormValidators.required(),
+                          FormValidators.percentage,
+                        ]),
+                      ),
+                    ],
+                  ),
                 ),
                 const Spacer(),
                 if (_loading)

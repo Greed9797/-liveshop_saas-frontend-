@@ -1,10 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/usuario.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class UsuariosNotifier extends AsyncNotifier<List<Usuario>> {
   @override
   Future<List<Usuario>> build() async {
+    // BUGFIX: provider sem auth guard — após logout fazia GET /usuarios em
+    // background, gerando 401 spam até a tela login.
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) return const [];
     return _fetch();
   }
 

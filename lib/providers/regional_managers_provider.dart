@@ -2,11 +2,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/regional_manager.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 /// Lista todos os usuários com papel `gerente_regional` + unidades atribuídas.
 class RegionalManagersNotifier extends AsyncNotifier<List<RegionalManager>> {
   @override
-  Future<List<RegionalManager>> build() async => _fetch();
+  Future<List<RegionalManager>> build() async {
+    // BUGFIX: faltava auth guard — após logout fazia GET em background
+    // gerando 401s.
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) return const [];
+    return _fetch();
+  }
 
   Future<List<RegionalManager>> _fetch() async {
     final resp = await ApiService.get('/master/regional-managers');

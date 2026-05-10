@@ -9,6 +9,7 @@ import '../../providers/apresentadoras_provider.dart';
 import '../../providers/disponibilidade_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
+import '../../utils/form_validators.dart';
 import '../../widgets/calendar_week_view.dart';
 import '../../widgets/disponibilidade_modal.dart';
 
@@ -92,6 +93,8 @@ class ApresentadorasScreen extends ConsumerWidget {
     final usuarioEmailCtrl = TextEditingController(text: item?.email ?? '');
     final usuarioSenhaCtrl = TextEditingController();
     var senhaVisivel = false;
+    final dadosFormKey = GlobalKey<FormState>();
+    final usuarioFormKey = GlobalKey<FormState>();
 
     showModalBottomSheet<void>(
       context: context,
@@ -143,10 +146,18 @@ class ApresentadorasScreen extends ConsumerWidget {
                     ),
                     if (criarUsuario) ...[
                       const SizedBox(height: AppSpacing.x3),
+                      Form(
+                        key: usuarioFormKey,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        child: Column(children: [
                       AppTextField(
                         controller: usuarioEmailCtrl,
                         hint: 'E-mail de acesso *',
                         keyboardType: TextInputType.emailAddress,
+                        validator: FormValidators.composite([
+                          FormValidators.required(),
+                          FormValidators.email,
+                        ]),
                       ),
                       const SizedBox(height: AppSpacing.x3),
                       Row(children: [
@@ -155,6 +166,10 @@ class ApresentadorasScreen extends ConsumerWidget {
                             controller: usuarioSenhaCtrl,
                             hint: 'Senha *',
                             obscureText: !senhaVisivel,
+                            validator: FormValidators.composite([
+                              FormValidators.required(),
+                              FormValidators.strongPassword,
+                            ]),
                           ),
                         ),
                         IconButton(
@@ -179,6 +194,8 @@ class ApresentadorasScreen extends ConsumerWidget {
                         style: AppTypography.caption
                             .copyWith(color: context.colors.textMuted),
                       ),
+                        ]),
+                      ),
                     ] else
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
@@ -189,13 +206,23 @@ class ApresentadorasScreen extends ConsumerWidget {
                         ),
                       ),
                   ] else ...[
-                  AppTextField(controller: nomeCtrl, hint: 'Nome *'),
+                  Form(
+                    key: dadosFormKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    child: Column(children: [
+                  AppTextField(
+                    controller: nomeCtrl,
+                    hint: 'Nome *',
+                    validator: FormValidators.required(),
+                  ),
                   const SizedBox(height: AppSpacing.x3),
                   Row(
                     children: [
                       Expanded(
                           child: AppTextField(
-                              controller: telefoneCtrl, hint: 'Telefone')),
+                              controller: telefoneCtrl,
+                              hint: 'Telefone',
+                              validator: FormValidators.telefoneBr)),
                       const SizedBox(width: AppSpacing.x3),
                       Expanded(
                           child: AppTextField(
@@ -207,11 +234,15 @@ class ApresentadorasScreen extends ConsumerWidget {
                     children: [
                       Expanded(
                           child: AppTextField(
-                              controller: emailCtrl, hint: 'E-mail')),
+                              controller: emailCtrl,
+                              hint: 'E-mail',
+                              validator: FormValidators.email)),
                       const SizedBox(width: AppSpacing.x3),
                       Expanded(
                           child: AppTextField(
-                              controller: cpfCtrl, hint: 'CPF/CNPJ')),
+                              controller: cpfCtrl,
+                              hint: 'CPF/CNPJ',
+                              validator: FormValidators.cpfOrCnpj)),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.x3),
@@ -223,17 +254,20 @@ class ApresentadorasScreen extends ConsumerWidget {
                       Expanded(child: _LabeledField(
                           label: 'Fixo (R\$)',
                           controller: fixoCtrl,
-                          hint: '0,00')),
+                          hint: '0,00',
+                          validator: FormValidators.nonNegativeNumber)),
                       const SizedBox(width: AppSpacing.x3),
                       Expanded(child: _LabeledField(
                           label: 'Comissão (%)',
                           controller: comissaoCtrl,
-                          hint: '0,0')),
+                          hint: '0,0',
+                          validator: FormValidators.percentage)),
                       const SizedBox(width: AppSpacing.x3),
                       Expanded(child: _LabeledField(
                           label: 'Meta diária GMV',
                           controller: metaCtrl,
-                          hint: 'R\$ 0,00')),
+                          hint: 'R\$ 0,00',
+                          validator: FormValidators.nonNegativeNumber)),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.x3),
@@ -276,6 +310,8 @@ class ApresentadorasScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+                    ]),
+                  ),
                   ], // fim do step 0
                   const SizedBox(height: AppSpacing.x5),
                   Row(
@@ -296,39 +332,17 @@ class ApresentadorasScreen extends ConsumerWidget {
                         label: step == 0 ? 'Próximo' : 'Salvar',
                         onPressed: () async {
                           if (step == 0) {
-                            final nome = nomeCtrl.text.trim();
-                            if (nome.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Informe o nome.')),
-                              );
-                              return;
-                            }
+                            final dadosValid =
+                                dadosFormKey.currentState?.validate() ?? false;
+                            if (!dadosValid) return;
                             setState(() => step = 1);
                             return;
                           }
                           // step == 1: validar usuário se habilitado e salvar
                           if (criarUsuario) {
-                            final email = usuarioEmailCtrl.text.trim();
-                            final senha = usuarioSenhaCtrl.text;
-                            if (email.isEmpty ||
-                                !email.contains('@') ||
-                                !email.contains('.')) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('E-mail inválido.')),
-                              );
-                              return;
-                            }
-                            if (senha.length < 8 ||
-                                !RegExp(r'[A-Za-z]').hasMatch(senha) ||
-                                !RegExp(r'\d').hasMatch(senha)) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Senha precisa de mín 8 caracteres com letra e número.'),
-                                ),
-                              );
-                              return;
-                            }
+                            final usuarioValid =
+                                usuarioFormKey.currentState?.validate() ?? false;
+                            if (!usuarioValid) return;
                           }
                           final data = <String, dynamic>{
                             'nome': nomeCtrl.text.trim(),
@@ -571,10 +585,12 @@ class _LabeledField extends StatelessWidget {
     required this.label,
     required this.controller,
     this.hint,
+    this.validator,
   });
   final String label;
   final TextEditingController controller;
   final String? hint;
+  final String? Function(String?)? validator;
 
   @override
   Widget build(BuildContext context) {
@@ -586,7 +602,8 @@ class _LabeledField extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 color: context.colors.textSecondary)),
         const SizedBox(height: 4),
-        AppTextField(controller: controller, hint: hint),
+        AppTextField(
+            controller: controller, hint: hint, validator: validator),
       ],
     );
   }

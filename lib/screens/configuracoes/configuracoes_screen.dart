@@ -17,6 +17,7 @@ import '../../routes/app_routes.dart';
 import '../../design_system/design_system.dart';
 import '../../services/api_service.dart';
 import '../../services/clipboard_service.dart';
+import '../../utils/form_validators.dart';
 
 class ConfiguracoesScreen extends ConsumerStatefulWidget {
   const ConfiguracoesScreen({super.key});
@@ -689,7 +690,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
   Widget _field(String label, TextEditingController ctrl,
       {bool enabled = true,
       bool obscureText = false,
-      TextInputType? keyboardType}) {
+      TextInputType? keyboardType,
+      String? Function(String?)? validator}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.x4),
       child: Opacity(
@@ -700,7 +702,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
               controller: ctrl,
               obscureText: obscureText,
               keyboardType: keyboardType,
-              hint: label),
+              hint: label,
+              validator: validator),
         ),
       ),
     );
@@ -1004,13 +1007,16 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
             _field('Meta Diária de GMV (R\$)', _metaCtrl,
                 enabled: _isEditingGeral,
                 keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true)),
+                    const TextInputType.numberWithOptions(decimal: true),
+                validator: FormValidators.nonNegativeNumber),
             _field('Telefone de contato', _telefoneCtrl,
                 enabled: _isEditingGeral,
-                keyboardType: TextInputType.phone),
+                keyboardType: TextInputType.phone,
+                validator: FormValidators.telefoneBr),
             _field('E-mail de contato', _emailContatoCtrl,
                 enabled: _isEditingGeral,
-                keyboardType: TextInputType.emailAddress),
+                keyboardType: TextInputType.emailAddress,
+                validator: FormValidators.email),
             _logoUploadArea(),
           ],
         ),
@@ -1260,16 +1266,33 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
       onSave: _salvarNovaSenha,
       children: [
         _field('Senha atual *', _senhaAtualCtrl,
-            enabled: _isEditingSeguranca, obscureText: true),
+            enabled: _isEditingSeguranca,
+            obscureText: true,
+            validator: _isEditingSeguranca ? FormValidators.required() : null),
         _field('Nova senha *', _senhaCtrl,
-            enabled: _isEditingSeguranca, obscureText: true),
+            enabled: _isEditingSeguranca,
+            obscureText: true,
+            validator: _isEditingSeguranca
+                ? FormValidators.composite([
+                    FormValidators.required(),
+                    FormValidators.minLength(6),
+                  ])
+                : null),
         if (_isEditingSeguranca && _senhaCtrl.text.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.x2),
           _PasswordStrengthBar(strength: _passwordStrength(_senhaCtrl.text)),
           const SizedBox(height: AppSpacing.x4),
         ],
         _field('Confirmar nova senha *', _senhaConfirmCtrl,
-            enabled: _isEditingSeguranca, obscureText: true),
+            enabled: _isEditingSeguranca,
+            obscureText: true,
+            validator: _isEditingSeguranca
+                ? (v) {
+                    if (v == null || v.isEmpty) return 'Obrigatório';
+                    if (v != _senhaCtrl.text) return 'Senhas não coincidem';
+                    return null;
+                  }
+                : null),
       ],
     );
   }

@@ -346,8 +346,10 @@ class _ClientesContentState extends ConsumerState<_ClientesContent> {
 
   Future<void> _moverParaOnboarding(Cliente cliente) async {
     try {
+      // Status válidos em clientes_status_check: 'ativo' (não 'ganho', que é
+      // crm_etapa de lead). Promover para onboarding = mover pro status 'ativo'.
       await ApiService.patch('/clientes/${cliente.id}',
-          data: {'status': 'ganho'});
+          data: {'status': 'ativo'});
       ref.read(clientesProvider.notifier).refresh();
       ref.invalidate(_clientesMetricasProvider);
       if (mounted) {

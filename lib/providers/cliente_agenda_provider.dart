@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/api_service.dart';
+import 'auth_provider.dart';
+import 'cliente_cabines_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Models
@@ -97,6 +99,12 @@ String _fmtDate(DateTime d) =>
 class ClienteAgendaNotifier extends AsyncNotifier<AgendaState> {
   @override
   Future<AgendaState> build() async {
+    // BUGFIX: faltava auth guard — após logout, o provider continuava fazendo
+    // GET /cliente/agenda em background gerando 401s e quebrando tela.
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      throw Exception('Não autenticado');
+    }
     final monday = _mondayOf(DateTime.now());
     return _load(monday);
   }
@@ -156,6 +164,11 @@ class ClienteAgendaNotifier extends AsyncNotifier<AgendaState> {
     };
 
     final response = await ApiService.post('/cliente/solicitacao', data: body);
+    // BUGFIX: antes não atualizava nem invalidava nada — após criar
+    // solicitação, agenda continuava mostrando o slot livre até o usuário
+    // trocar de semana. Recarrega semana atual e invalida cabines.
+    await refresh();
+    ref.invalidate(clienteCabinesProvider);
     return response.data as Map<String, dynamic>;
   }
 

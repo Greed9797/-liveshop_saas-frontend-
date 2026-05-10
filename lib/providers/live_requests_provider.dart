@@ -1,11 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/live_request.dart';
 import '../services/api_service.dart';
+import 'auth_provider.dart';
 
 class LiveRequestsNotifier
     extends FamilyAsyncNotifier<List<LiveRequest>, String> {
   @override
-  Future<List<LiveRequest>> build(String cabineId) => _fetch();
+  Future<List<LiveRequest>> build(String cabineId) async {
+    // BUGFIX: faltava auth guard — após logout, FamilyAsyncNotifier seguia
+    // disparando GETs background e gerando 401 em loop.
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) return const [];
+    return _fetch();
+  }
 
   Future<List<LiveRequest>> _fetch() async {
     final resp =
