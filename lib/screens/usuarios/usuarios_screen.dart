@@ -597,6 +597,44 @@ class _MoreMenuInterno extends StatelessWidget {
                   ? 'Usuário reativado'
                   : 'Usuário desativado'),
             ));
+          } else if (v == 'reenviar') {
+            await ref
+                .read(usuariosProvider.notifier)
+                .reenviarConvite(u.id);
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              backgroundColor: t.info,
+              content: const Text('Convite reenviado. Validade 72h.'),
+            ));
+          } else if (v == 'force-logout') {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (_) => AlertDialog(
+                title: const Text('Forçar logout'),
+                content: Text(
+                  'Isso invalida TODAS as sessões ativas de ${u.nome}. Continuar?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Cancelar'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Confirmar', style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+            );
+            if (confirm != true) return;
+            await ref
+                .read(usuariosProvider.notifier)
+                .forceLogout(u.id);
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              backgroundColor: t.warning,
+              content: const Text('Sessões invalidadas'),
+            ));
           }
         } catch (e) {
           if (!context.mounted) return;
@@ -637,6 +675,24 @@ class _MoreMenuInterno extends StatelessWidget {
                     color: u.ativo ? t.danger : t.success,
                     fontSize: 13,
                     fontWeight: FontWeight.w600)),
+          ]),
+        ),
+        PopupMenuItem(
+          value: 'reenviar',
+          child: Row(children: [
+            Icon(Icons.mail_outline, size: 16, color: t.textPrimary),
+            const SizedBox(width: 8),
+            Text('Reenviar convite',
+                style: TextStyle(color: t.textPrimary, fontSize: 13)),
+          ]),
+        ),
+        PopupMenuItem(
+          value: 'force-logout',
+          child: Row(children: [
+            Icon(Icons.logout, size: 16, color: t.danger),
+            const SizedBox(width: 8),
+            Text('Forçar logout',
+                style: TextStyle(color: t.danger, fontSize: 13)),
           ]),
         ),
       ],

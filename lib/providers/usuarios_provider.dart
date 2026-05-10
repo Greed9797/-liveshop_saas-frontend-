@@ -58,6 +58,18 @@ class UsuariosNotifier extends AsyncNotifier<List<Usuario>> {
     );
   }
 
+  // Reenviar convite para usuário que ainda não aceitou
+  Future<void> reenviarConvite(String id) async {
+    await ApiService.post('/usuarios/$id/reenviar-convite', data: {});
+    // Não precisa fazer refresh — o convite é silencioso
+  }
+
+  // Force logout — invalida todas as sessões do usuário
+  Future<void> forceLogout(String id) async {
+    await ApiService.post('/usuarios/$id/force-logout', data: {});
+    // Não precisa fazer refresh — logout é remoto
+  }
+
   Usuario _inativo(Usuario u) => Usuario(
         id: u.id,
         nome: u.nome,
