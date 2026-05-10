@@ -7,6 +7,7 @@ import '../../models/cliente.dart';
 import '../../providers/clientes_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
+import '../../widgets/nota_timeline.dart';
 import '../../widgets/responsive_grid.dart';
 
 // ── Métricas provider ─────────────────────────────────────────────────────────
@@ -523,27 +524,36 @@ class _KanbanCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.x2),
               AppBadge(label: _statusLabel, type: _badgeType),
-              if (_podeIniciarOnboarding) ...[
-                const SizedBox(width: AppSpacing.x1),
-                PopupMenuButton<String>(
-                  icon: Icon(
-                    Icons.more_vert,
-                    size: 16,
-                    color: context.colors.textMuted,
+              const SizedBox(width: AppSpacing.x1),
+              PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.more_vert,
+                  size: 16,
+                  color: context.colors.textMuted,
+                ),
+                onSelected: (value) {
+                  if (value == 'onboarding') {
+                    onMoverParaOnboarding(cliente);
+                  } else if (value == 'historico') {
+                    showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (_) => _HistoricoSheet(cliente: cliente),
+                    );
+                  }
+                },
+                itemBuilder: (_) => [
+                  const PopupMenuItem(
+                    value: 'historico',
+                    child: Text('Histórico (notas)'),
                   ),
-                  onSelected: (value) {
-                    if (value == 'onboarding') {
-                      onMoverParaOnboarding(cliente);
-                    }
-                  },
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(
+                  if (_podeIniciarOnboarding)
+                    const PopupMenuItem(
                       value: 'onboarding',
                       child: Text('Mover para Onboarding'),
                     ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ],
           ),
 
@@ -618,4 +628,53 @@ class _KanbanCard extends StatelessWidget {
         'onboarding' => 'ONBOARDING',
         _ => cliente.status.toUpperCase(),
       };
+}
+
+class _HistoricoSheet extends StatelessWidget {
+  final Cliente cliente;
+  const _HistoricoSheet({required this.cliente});
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    return Padding(
+      padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: mq.size.height * 0.85),
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.colors.bgCard,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(16),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderLight,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(cliente.nome,
+                  style: AppTypography.h2.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 16),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: NotaTimeline(clienteId: cliente.id),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
