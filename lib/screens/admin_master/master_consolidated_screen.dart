@@ -8,8 +8,6 @@ import '../../providers/admin_master_provider.dart';
 import '../../design_system/design_system.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/app_scaffold.dart';
-import '../../widgets/metric_card.dart';
-import '../../widgets/status_badge.dart';
 
 List<String> _consolidatedPeriods([int count = 6]) {
   final now = DateTime.now();
@@ -657,7 +655,7 @@ class _ConsolidatedTable extends StatelessWidget {
                               ),
                             ),
                           ),
-                          DataCell(StatusBadge(status: unit.status)),
+                          DataCell(AppBadge.status(unit.status)),
                         ],
                       ),
                     )

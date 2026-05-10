@@ -3,48 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
-import '../../design_system/app_colors.dart' as ds_colors;
-import '../../design_system/app_colors_theme.dart';
-import '../../design_system/app_screen_scaffold.dart';
-import '../../design_system/app_tokens.dart' as ds_tokens;
-import '../../design_system/app_typography.dart' as ds_typography;
+import '../../design_system/design_system.dart';
 import '../../providers/cliente_dashboard_provider.dart'
     show ClienteDashboard, LiveAtiva, ProximaReserva, ClientePeriod, clientePeriodProvider, clienteDashboardProvider;
 import '../../providers/cliente_lives_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/metric_card.dart';
-
-// ---------------------------------------------------------------------------
-// Local aliases
-// ---------------------------------------------------------------------------
-
-class _AppColors {
-  static const primary = ds_colors.AppColors.primary;
-  static const primaryLight = ds_colors.AppColors.primaryLight;
-  static const success = ds_colors.AppColors.success;
-  static const info = ds_colors.AppColors.info;
-  static const warning = ds_colors.AppColors.warning;
-  static const lilac = ds_colors.AppColors.lilac;
-}
-
-class _AppSpacing {
-  static const xs = ds_tokens.AppSpacing.x1;
-  static const sm = ds_tokens.AppSpacing.x2;
-  static const md = ds_tokens.AppSpacing.x4;
-  static const lg = ds_tokens.AppSpacing.x6;
-  static const xl = ds_tokens.AppSpacing.x8;
-  static const x3l = ds_tokens.AppSpacing.x12;
-  static const screenPadding = ds_tokens.AppSpacing.x6;
-}
-
-class _AppTypography {
-  static const h2 = ds_typography.AppTypography.h2;
-  static const h3 = ds_typography.AppTypography.h3;
-  static const bodyLarge = ds_typography.AppTypography.bodyLarge;
-  static const bodySmall = ds_typography.AppTypography.bodySmall;
-  static const caption = ds_typography.AppTypography.caption;
-}
 
 // ---------------------------------------------------------------------------
 // Main screen
@@ -129,7 +92,7 @@ class _AoVivoTab extends ConsumerWidget {
     final dashAsync = ref.watch(clienteDashboardProvider);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(_AppSpacing.screenPadding),
+      padding: const EdgeInsets.all(AppSpacing.x6),
       child: dashAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
@@ -137,7 +100,7 @@ class _AoVivoTab extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Erro: $error'),
-              const SizedBox(height: _AppSpacing.md),
+              const SizedBox(height: AppSpacing.x4),
               ElevatedButton.icon(
                 onPressed: () =>
                     ref.read(clienteDashboardProvider.notifier).refresh(),
@@ -184,34 +147,34 @@ class _LiveActiveView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _LiveHeader(live: live),
-        const SizedBox(height: _AppSpacing.lg),
+        const SizedBox(height: AppSpacing.x6),
         LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 480;
             final tiles = <Widget>[
               _MetricTile(
                 icon: PhosphorIcons.currencyDollar(),
-                iconColor: _AppColors.success,
+                iconColor: AppColors.success,
                 label: 'GMV Atual',
                 value: _currency.format(live.gmvAtual),
                 large: true,
               ),
               _MetricTile(
                 icon: PhosphorIcons.users(),
-                iconColor: _AppColors.info,
+                iconColor: AppColors.info,
                 label: 'Viewers',
                 value: '–',
                 large: true,
               ),
               _MetricTile(
                 icon: PhosphorIcons.shoppingCartSimple(),
-                iconColor: _AppColors.primary,
+                iconColor: AppColors.primary,
                 label: 'Pedidos',
                 value: '${live.pedidos}',
               ),
               _MetricTile(
                 icon: PhosphorIcons.coinVertical(),
-                iconColor: _AppColors.warning,
+                iconColor: AppColors.warning,
                 label: 'Comissão Projetada',
                 value: _currency.format(live.comissaoProjetada),
               ),
@@ -220,8 +183,8 @@ class _LiveActiveView extends StatelessWidget {
             if (isWide) {
               return GridView.count(
                 crossAxisCount: 2,
-                crossAxisSpacing: _AppSpacing.md,
-                mainAxisSpacing: _AppSpacing.md,
+                crossAxisSpacing: AppSpacing.x4,
+                mainAxisSpacing: AppSpacing.x4,
                 childAspectRatio: 2.6,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -233,7 +196,7 @@ class _LiveActiveView extends StatelessWidget {
               children: tiles
                   .map(
                     (tile) => Padding(
-                      padding: const EdgeInsets.only(bottom: _AppSpacing.md),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.x4),
                       child: tile,
                     ),
                   )
@@ -241,9 +204,9 @@ class _LiveActiveView extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: _AppSpacing.lg),
+        const SizedBox(height: AppSpacing.x6),
         _EngagementRow(live: live),
-        const SizedBox(height: _AppSpacing.lg),
+        const SizedBox(height: AppSpacing.x6),
         _ActionButtons(),
       ],
     );
@@ -258,10 +221,10 @@ class _LiveHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      borderColor: _AppColors.success,
+      borderColor: AppColors.success,
       padding: const EdgeInsets.symmetric(
-        horizontal: _AppSpacing.lg,
-        vertical: _AppSpacing.md,
+        horizontal: AppSpacing.x6,
+        vertical: AppSpacing.x4,
       ),
       child: Row(
         children: [
@@ -269,28 +232,28 @@ class _LiveHeader extends StatelessWidget {
             width: 10,
             height: 10,
             decoration: const BoxDecoration(
-              color: _AppColors.success,
+              color: AppColors.success,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: _AppSpacing.sm),
+          const SizedBox(width: AppSpacing.x2),
           Expanded(
             child: Text(
               '🔴 Você está ao vivo! — Cabine ${live.cabineNumero}',
-              style: _AppTypography.bodyLarge.copyWith(
+              style: AppTypography.bodyLarge.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: _AppSpacing.sm),
+          const SizedBox(width: AppSpacing.x2),
           Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: _AppSpacing.md,
-              vertical: _AppSpacing.xs,
+              horizontal: AppSpacing.x4,
+              vertical: AppSpacing.x1,
             ),
             decoration: BoxDecoration(
               color: context.colors.bgMuted,
-              borderRadius: BorderRadius.circular(ds_tokens.AppRadius.full),
+              borderRadius: BorderRadius.circular(AppRadius.full),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -303,7 +266,7 @@ class _LiveHeader extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   '${live.duracaoMin} min',
-                  style: _AppTypography.caption.copyWith(
+                  style: AppTypography.caption.copyWith(
                     fontWeight: FontWeight.w600,
                     color: context.colors.textSecondary,
                   ),
@@ -335,7 +298,7 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: const EdgeInsets.all(_AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.x6),
       child: Row(
         children: [
           Container(
@@ -343,11 +306,11 @@ class _MetricTile extends StatelessWidget {
             height: large ? 52 : 44,
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(ds_tokens.AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(icon, color: iconColor, size: large ? 26 : 22),
           ),
-          const SizedBox(width: _AppSpacing.md),
+          const SizedBox(width: AppSpacing.x4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,7 +318,7 @@ class _MetricTile extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: (large ? _AppTypography.h2 : _AppTypography.h3)
+                  style: (large ? AppTypography.h2 : AppTypography.h3)
                       .copyWith(
                     fontWeight: FontWeight.w800,
                     color: context.colors.textPrimary,
@@ -366,7 +329,7 @@ class _MetricTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   label,
-                  style: _AppTypography.caption.copyWith(
+                  style: AppTypography.caption.copyWith(
                     color: context.colors.textSecondary,
                   ),
                 ),
@@ -387,22 +350,22 @@ class _EngagementRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: const EdgeInsets.all(_AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.x4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'ENGAJAMENTO',
-            style: _AppTypography.caption.copyWith(
+            style: AppTypography.caption.copyWith(
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
               color: context.colors.textMuted,
             ),
           ),
-          const SizedBox(height: _AppSpacing.md),
+          const SizedBox(height: AppSpacing.x4),
           Wrap(
-            spacing: _AppSpacing.sm,
-            runSpacing: _AppSpacing.sm,
+            spacing: AppSpacing.x2,
+            runSpacing: AppSpacing.x2,
             children: [
               _EngagementChip(
                 icon: PhosphorIcons.heart(),
@@ -411,12 +374,12 @@ class _EngagementRow extends StatelessWidget {
               ),
               _EngagementChip(
                 icon: PhosphorIcons.chatCircle(),
-                iconColor: _AppColors.info,
+                iconColor: AppColors.info,
                 label: '${live.comentarios} comentários',
               ),
               _EngagementChip(
                 icon: PhosphorIcons.shareNetwork(),
-                iconColor: _AppColors.lilac,
+                iconColor: AppColors.lilac,
                 label: '${live.shares} shares',
               ),
             ],
@@ -442,12 +405,12 @@ class _EngagementChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: _AppSpacing.md,
-        vertical: _AppSpacing.sm,
+        horizontal: AppSpacing.x4,
+        vertical: AppSpacing.x2,
       ),
       decoration: BoxDecoration(
         color: context.colors.bgMuted,
-        borderRadius: BorderRadius.circular(ds_tokens.AppRadius.full),
+        borderRadius: BorderRadius.circular(AppRadius.full),
         border: Border.all(color: context.colors.borderSubtle),
       ),
       child: Row(
@@ -457,7 +420,7 @@ class _EngagementChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: _AppTypography.caption.copyWith(
+            style: AppTypography.caption.copyWith(
               fontWeight: FontWeight.w600,
               color: context.colors.textPrimary,
             ),
@@ -479,7 +442,7 @@ class _EmptyState extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppCard(
-          padding: const EdgeInsets.all(_AppSpacing.xl),
+          padding: const EdgeInsets.all(AppSpacing.x8),
           child: Row(
             children: [
               Container(
@@ -487,7 +450,7 @@ class _EmptyState extends StatelessWidget {
                 height: 56,
                 decoration: BoxDecoration(
                   color: context.colors.bgMuted,
-                  borderRadius: BorderRadius.circular(ds_tokens.AppRadius.lg),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Icon(
                   PhosphorIcons.wifiSlash(),
@@ -495,14 +458,14 @@ class _EmptyState extends StatelessWidget {
                   color: context.colors.textMuted,
                 ),
               ),
-              const SizedBox(width: _AppSpacing.md),
+              const SizedBox(width: AppSpacing.x4),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Sem live ativa no momento',
-                      style: _AppTypography.bodyLarge.copyWith(
+                      style: AppTypography.bodyLarge.copyWith(
                         fontWeight: FontWeight.w700,
                         color: context.colors.textPrimary,
                       ),
@@ -510,7 +473,7 @@ class _EmptyState extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       'Suas métricas aparecerão aqui assim que uma transmissão for iniciada.',
-                      style: _AppTypography.caption.copyWith(
+                      style: AppTypography.caption.copyWith(
                         color: context.colors.textSecondary,
                       ),
                     ),
@@ -521,10 +484,10 @@ class _EmptyState extends StatelessWidget {
           ),
         ),
         if (proximaReserva != null) ...[
-          const SizedBox(height: _AppSpacing.lg),
+          const SizedBox(height: AppSpacing.x6),
           _ProximaReservaCard(reserva: proximaReserva!),
         ],
-        const SizedBox(height: _AppSpacing.lg),
+        const SizedBox(height: AppSpacing.x6),
         _ActionButtons(),
       ],
     );
@@ -557,8 +520,8 @@ class _ProximaReservaCard extends StatelessWidget {
     final ativadoEm = reserva.ativadoEm;
 
     return AppCard(
-      borderColor: _AppColors.primary.withValues(alpha: 0.4),
-      padding: const EdgeInsets.all(_AppSpacing.lg),
+      borderColor: AppColors.primary.withValues(alpha: 0.4),
+      padding: const EdgeInsets.all(AppSpacing.x6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -567,26 +530,26 @@ class _ProximaReservaCard extends StatelessWidget {
               Icon(
                 PhosphorIcons.calendarCheck(),
                 size: 18,
-                color: _AppColors.primary,
+                color: AppColors.primary,
               ),
-              const SizedBox(width: _AppSpacing.sm),
+              const SizedBox(width: AppSpacing.x2),
               Text(
                 'Próxima Reserva',
-                style: _AppTypography.bodyLarge.copyWith(
+                style: AppTypography.bodyLarge.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: _AppSpacing.md),
+          const SizedBox(height: AppSpacing.x4),
           _ReservaRow(
             label: 'Cabine',
             value: 'Cabine ${reserva.cabineNumero}',
           ),
-          const SizedBox(height: _AppSpacing.sm),
+          const SizedBox(height: AppSpacing.x2),
           _ReservaRow(label: 'Status', value: _statusLabel),
           if (ativadoEm != null) ...[
-            const SizedBox(height: _AppSpacing.sm),
+            const SizedBox(height: AppSpacing.x2),
             _ReservaRow(
               label: 'Ativada em',
               value: _dateFormat.format(ativadoEm.toLocal()),
@@ -612,14 +575,14 @@ class _ReservaRow extends StatelessWidget {
           width: 100,
           child: Text(
             label,
-            style: _AppTypography.caption.copyWith(
+            style: AppTypography.caption.copyWith(
               color: context.colors.textMuted,
             ),
           ),
         ),
         Text(
           value,
-          style: _AppTypography.bodySmall.copyWith(
+          style: AppTypography.bodySmall.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -642,21 +605,21 @@ class _ActionButtons extends StatelessWidget {
             icon: Icon(
               PhosphorIcons.calendarBlank(),
               size: 18,
-              color: _AppColors.primary,
+              color: AppColors.primary,
             ),
             label: const Text('Ver agenda'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: _AppColors.primary,
-              side: const BorderSide(color: _AppColors.primary),
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
               padding: const EdgeInsets.symmetric(
-                  horizontal: _AppSpacing.md, vertical: _AppSpacing.sm),
+                  horizontal: AppSpacing.x4, vertical: AppSpacing.x2),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(ds_tokens.AppRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
             ),
           ),
         ),
-        const SizedBox(width: _AppSpacing.md),
+        const SizedBox(width: AppSpacing.x4),
         Expanded(
           child: OutlinedButton.icon(
             onPressed: () =>
@@ -664,16 +627,16 @@ class _ActionButtons extends StatelessWidget {
             icon: Icon(
               PhosphorIcons.plusCircle(),
               size: 18,
-              color: _AppColors.primary,
+              color: AppColors.primary,
             ),
             label: const Text('Solicitar nova live'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: _AppColors.primary,
-              side: const BorderSide(color: _AppColors.primary),
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
               padding: const EdgeInsets.symmetric(
-                  horizontal: _AppSpacing.md, vertical: _AppSpacing.sm),
+                  horizontal: AppSpacing.x4, vertical: AppSpacing.x2),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(ds_tokens.AppRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
             ),
           ),
@@ -701,8 +664,8 @@ class _HistoricoTab extends ConsumerWidget {
         // Period selector toolbar
         Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: _AppSpacing.screenPadding,
-              vertical: _AppSpacing.sm),
+              horizontal: AppSpacing.x6,
+              vertical: AppSpacing.x2),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [_HistoryPeriodSelector(period: period)],
@@ -710,7 +673,7 @@ class _HistoricoTab extends ConsumerWidget {
         ),
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(_AppSpacing.screenPadding),
+            padding: const EdgeInsets.all(AppSpacing.x6),
             child: livesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(
@@ -718,7 +681,7 @@ class _HistoricoTab extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Erro: $error'),
-                    const SizedBox(height: _AppSpacing.md),
+                    const SizedBox(height: AppSpacing.x4),
                     ElevatedButton.icon(
                       onPressed: () => ref.invalidate(clienteLivesProvider),
                       icon: const Icon(Icons.refresh_rounded),
@@ -752,15 +715,15 @@ class _HistoricoContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: _AppSpacing.md,
-          runSpacing: _AppSpacing.md,
+          spacing: AppSpacing.x4,
+          runSpacing: AppSpacing.x4,
           children: [
             _MetricBox(
               child: MetricCard(
                 label: 'GMV',
                 value: _currency.format(resumo.gmvTotal),
                 icon: Icons.payments_rounded,
-                iconColor: _AppColors.primary,
+                iconColor: AppColors.primary,
               ),
             ),
             _MetricBox(
@@ -768,7 +731,7 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'ITENS VENDIDOS',
                 value: '${resumo.itensVendidos}',
                 icon: Icons.inventory_2_outlined,
-                iconColor: _AppColors.info,
+                iconColor: AppColors.info,
               ),
             ),
             _MetricBox(
@@ -776,7 +739,7 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'LIVES',
                 value: '${resumo.totalLives}',
                 icon: Icons.video_library_rounded,
-                iconColor: _AppColors.primary,
+                iconColor: AppColors.primary,
               ),
             ),
             _MetricBox(
@@ -784,7 +747,7 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'HORAS',
                 value: resumo.horasLive.toStringAsFixed(1),
                 icon: Icons.schedule_rounded,
-                iconColor: _AppColors.lilac,
+                iconColor: AppColors.lilac,
               ),
             ),
             _MetricBox(
@@ -792,7 +755,7 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'INVESTIDO',
                 value: _currency.format(resumo.valorInvestidoLives),
                 icon: Icons.savings_rounded,
-                iconColor: _AppColors.warning,
+                iconColor: AppColors.warning,
               ),
             ),
             _MetricBox(
@@ -800,7 +763,7 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'ROAS',
                 value: resumo.roas.toStringAsFixed(2),
                 icon: Icons.show_chart_rounded,
-                iconColor: _AppColors.success,
+                iconColor: AppColors.success,
               ),
             ),
             _MetricBox(
@@ -808,7 +771,7 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'VIEWERS',
                 value: '${resumo.viewerCount}',
                 icon: Icons.visibility_rounded,
-                iconColor: _AppColors.info,
+                iconColor: AppColors.info,
               ),
             ),
             _MetricBox(
@@ -816,15 +779,15 @@ class _HistoricoContent extends StatelessWidget {
                 label: 'COMENTÁRIOS',
                 value: '${resumo.commentsCount}',
                 icon: Icons.forum_rounded,
-                iconColor: _AppColors.primaryLight,
+                iconColor: AppColors.primaryLight,
               ),
             ),
           ],
         ),
-        const SizedBox(height: _AppSpacing.x3l),
+        const SizedBox(height: AppSpacing.x12),
         if (data.lives.isEmpty)
           AppCard(
-            boxShadow: const [],
+            shadow: const [],
             child: Text(
               'Nenhuma live registrada neste período.',
               style: TextStyle(color: context.colors.textSecondary),
@@ -835,7 +798,7 @@ class _HistoricoContent extends StatelessWidget {
             children: data.lives
                 .map(
                   (live) => Padding(
-                    padding: const EdgeInsets.only(bottom: _AppSpacing.md),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.x4),
                     child: _LiveHistoryCard(live: live),
                   ),
                 )
@@ -870,7 +833,7 @@ class _HistoryPeriodSelector extends ConsumerWidget {
 
     return AppCard(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      boxShadow: const [],
+      shadow: const [],
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -886,7 +849,7 @@ class _HistoryPeriodSelector extends ConsumerWidget {
             child: Text(
               label,
               textAlign: TextAlign.center,
-              style: _AppTypography.bodySmall.copyWith(
+              style: AppTypography.bodySmall.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -897,7 +860,7 @@ class _HistoryPeriodSelector extends ConsumerWidget {
                 ref.read(clientePeriodProvider.notifier).state = period.next(),
             icon: const Icon(Icons.chevron_right_rounded),
           ),
-          const SizedBox(width: _AppSpacing.xs),
+          const SizedBox(width: AppSpacing.x1),
           IconButton(
             tooltip: 'Atualizar',
             onPressed: () => ref.invalidate(clienteLivesProvider),
@@ -921,7 +884,7 @@ class _LiveHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: const EdgeInsets.all(_AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.x6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -932,7 +895,7 @@ class _LiveHistoryCard extends StatelessWidget {
                   live.iniciadoEm == null
                       ? 'Live'
                       : _date.format(live.iniciadoEm!.toLocal()),
-                  style: _AppTypography.bodyLarge.copyWith(
+                  style: AppTypography.bodyLarge.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -940,10 +903,10 @@ class _LiveHistoryCard extends StatelessWidget {
               _StatusPill(status: live.status),
             ],
           ),
-          const SizedBox(height: _AppSpacing.md),
+          const SizedBox(height: AppSpacing.x4),
           Wrap(
-            spacing: _AppSpacing.lg,
-            runSpacing: _AppSpacing.md,
+            spacing: AppSpacing.x6,
+            runSpacing: AppSpacing.x4,
             children: [
               _DetailMetric(
                 label: 'Duração',
@@ -998,13 +961,13 @@ class _DetailMetric extends StatelessWidget {
         children: [
           Text(
             label,
-            style: _AppTypography.caption
+            style: AppTypography.caption
                 .copyWith(color: context.colors.textMuted),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: _AppTypography.bodySmall.copyWith(
+            style: AppTypography.bodySmall.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -1025,19 +988,19 @@ class _StatusPill extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: _AppSpacing.md,
-        vertical: _AppSpacing.xs,
+        horizontal: AppSpacing.x4,
+        vertical: AppSpacing.x1,
       ),
       decoration: BoxDecoration(
         color: (isLive
-                ? _AppColors.success
+                ? AppColors.success
                 : context.colors.borderSubtle)
             .withValues(alpha: isLive ? 1 : 0.7),
-        borderRadius: BorderRadius.circular(ds_tokens.AppRadius.full),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Text(
         isLive ? 'AO VIVO' : 'ENCERRADA',
-        style: _AppTypography.caption.copyWith(
+        style: AppTypography.caption.copyWith(
           color: isLive ? context.colors.bgCard : context.colors.textPrimary,
           fontWeight: FontWeight.bold,
         ),

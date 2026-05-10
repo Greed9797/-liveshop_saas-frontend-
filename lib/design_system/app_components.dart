@@ -80,6 +80,8 @@ class AppPrimaryButton extends StatelessWidget {
   final IconData? icon;
   final bool isLoading;
   final bool fullWidth;
+  final Color? color;
+  final bool outlined;
 
   const AppPrimaryButton({
     super.key,
@@ -88,17 +90,22 @@ class AppPrimaryButton extends StatelessWidget {
     this.icon,
     this.isLoading = false,
     this.fullWidth = false,
+    this.color,
+    this.outlined = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = color ?? AppColors.primary;
+    final fgColor = outlined ? bgColor : AppColors.textOnPrimary;
+
     final child = isLoading
-        ? const SizedBox(
+        ? SizedBox(
             height: 20,
             width: 20,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation(AppColors.textOnPrimary),
+              valueColor: AlwaysStoppedAnimation(fgColor),
             ),
           )
         : Row(
@@ -115,19 +122,31 @@ class AppPrimaryButton extends StatelessWidget {
 
     final button = SizedBox(
       height: 40,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textOnPrimary,
-          shadowColor: AppColors.primary.withValues(alpha: 0.45),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.full)),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-        ),
-        child: child,
-      ),
+      child: outlined
+          ? OutlinedButton(
+              onPressed: isLoading ? null : onPressed,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: bgColor,
+                side: BorderSide(color: bgColor, width: 1.5),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.full)),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              child: child,
+            )
+          : ElevatedButton(
+              onPressed: isLoading ? null : onPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: bgColor,
+                foregroundColor: fgColor,
+                shadowColor: bgColor.withValues(alpha: 0.45),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.full)),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              child: child,
+            ),
     );
 
     return fullWidth ? SizedBox(width: double.infinity, child: button) : button;
@@ -268,6 +287,38 @@ class AppBadge extends StatelessWidget {
     this.type = AppBadgeType.success,
     this.showDot = true,
   });
+
+  factory AppBadge.status(String status) {
+    final cfg = _statusConfigs[status] ?? _statusConfigs['default']!;
+    return AppBadge(
+      label: cfg.$1,
+      type: cfg.$2,
+      showDot: true,
+    );
+  }
+
+  static const _statusConfigs = <String, (String, AppBadgeType)>{
+    'ativo':        ('ATIVO',        AppBadgeType.success),
+    'inativo':      ('INATIVO',      AppBadgeType.neutral),
+    'ativa':        ('ATIVA',        AppBadgeType.success),
+    'ao_vivo':      ('AO VIVO',      AppBadgeType.live),
+    'reservada':    ('RESERVADA',    AppBadgeType.warning),
+    'enviado':      ('ENVIADO',      AppBadgeType.warning),
+    'em_analise':   ('EM ANÁLISE',   AppBadgeType.warning),
+    'negociacao':   ('NEGOCIAÇÃO',   AppBadgeType.warning),
+    'inadimplente': ('INADIMPLENTE', AppBadgeType.danger),
+    'recomendacao': ('RECOMENDAÇÃO', AppBadgeType.neutral),
+    'disponivel':   ('DISPONÍVEL',   AppBadgeType.neutral),
+    'manutencao':   ('MANUTENÇÃO',   AppBadgeType.danger),
+    'pendente':     ('PENDENTE',     AppBadgeType.warning),
+    'aprovada':     ('APROVADA',     AppBadgeType.success),
+    'recusada':     ('RECUSADA',     AppBadgeType.danger),
+    'encerrada':    ('ENCERRADA',    AppBadgeType.neutral),
+    'pago':         ('PAGO',         AppBadgeType.success),
+    'vencido':      ('VENCIDO',      AppBadgeType.danger),
+    'suspenso':     ('SUSPENSO',     AppBadgeType.danger),
+    'default':      ('N/A',          AppBadgeType.neutral),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -1405,3 +1456,103 @@ class MetricCardRebrand extends StatelessWidget {
     );
   }
 }
+class MetricCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? delta;
+  final bool? deltaPositive;
+  final String? subtitle;
+  final IconData? icon;
+  final Color? iconColor;
+
+  const MetricCard({
+    super.key,
+    required this.label,
+    required this.value,
+    this.delta,
+    this.deltaPositive,
+    this.subtitle,
+    this.icon,
+    this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.x5),
+      shadow: AppShadows.sm,
+      borderColor: Colors.transparent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              if (icon != null)
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: context.colors.bgMuted,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 18,
+                    color: iconColor ?? AppColors.primary,
+                  ),
+                ),
+              if (icon != null) const SizedBox(width: AppSpacing.x3),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: context.colors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.x4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    style: AppTypography.h2.copyWith(
+                      color: context.colors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+              if (delta != null || subtitle != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    delta ?? subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.caption.copyWith(
+                      color: delta != null
+                          ? ((deltaPositive ?? true) ? AppColors.success : AppColors.danger)
+                          : context.colors.textMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+

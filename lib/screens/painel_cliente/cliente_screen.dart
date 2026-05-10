@@ -9,8 +9,7 @@ import '../../design_system/app_tokens.dart' as ds_tokens;
 import '../../design_system/app_typography.dart' as ds_typography;
 import '../../providers/cliente_dashboard_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/metric_card.dart';
+import '../../design_system/app_components.dart';
 
 class AppColors {
   static const primary = ds_colors.AppColors.primary;
@@ -243,7 +242,7 @@ class _PeriodSelector extends ConsumerWidget {
 
     return AppCard(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      boxShadow: const [],
+      shadow: const [],
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -515,7 +514,7 @@ class _BenchmarkSection extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         if (nicho == null && geral == null)
           AppCard(
-            boxShadow: const [],
+            shadow: const [],
             child: Text(
               'Os dados comparativos ainda estão em processamento.',
               style: TextStyle(color: context.colors.textSecondary),

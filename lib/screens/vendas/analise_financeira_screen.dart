@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/contrato.dart';
 import '../../widgets/app_scaffold.dart';
-import '../../widgets/action_button.dart';
 import '../../widgets/banner_alerta_comercial.dart';
 import '../../providers/contratos_provider.dart';
 import '../../routes/app_routes.dart';
@@ -261,7 +260,7 @@ class _AprovadoView extends StatelessWidget {
           const SizedBox(height: AppSpacing.x2),
           const Text('Cliente aprovado para contrato ativo!'),
           const SizedBox(height: AppSpacing.x6),
-          ActionButton(
+          AppPrimaryButton(
               label: 'CONTINUAR',
               onPressed: onContinuar,
               color: AppColors.success),
@@ -308,12 +307,12 @@ class _RecusadoView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ActionButton(
+              AppPrimaryButton(
                   label: 'ASSUMIR RISCO',
                   onPressed: onAssumir,
                   color: AppColors.warning),
               const SizedBox(width: AppSpacing.x3),
-              ActionButton(
+              AppPrimaryButton(
                   label: 'CANCELAR',
                   onPressed: onCancelar,
                   outlined: true,

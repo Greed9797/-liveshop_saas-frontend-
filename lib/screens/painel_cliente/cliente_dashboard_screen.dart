@@ -18,7 +18,6 @@ import '../../providers/cliente_dashboard_provider.dart'
 import '../../providers/cliente_lives_provider.dart'
     show ClienteLive, ClienteLivesResponse, clienteLivesProvider;
 import '../../routes/app_routes.dart';
-import '../../widgets/metric_card.dart';
 import 'dart:math' as math;
 
 // ---------------------------------------------------------------------------

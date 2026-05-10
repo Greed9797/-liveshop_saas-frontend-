@@ -7,7 +7,6 @@ import '../../providers/admin_master_provider.dart';
 import '../../design_system/design_system.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/app_scaffold.dart';
-import '../../widgets/metric_card.dart';
 
 String _crmMoney(double value) {
   return NumberFormat.currency(

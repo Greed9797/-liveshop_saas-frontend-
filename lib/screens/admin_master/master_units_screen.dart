@@ -7,8 +7,6 @@ import '../../providers/admin_master_provider.dart';
 import '../../design_system/design_system.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/app_scaffold.dart';
-import '../../widgets/metric_card.dart';
-import '../../widgets/status_badge.dart';
 
 List<String> _unitPeriods([int count = 6]) {
   final now = DateTime.now();
@@ -301,7 +299,7 @@ class _UnitExpansionCard extends StatelessWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(unit.name, style: AppTypography.h3),
-                  StatusBadge(status: unit.status),
+                  AppBadge.status(unit.status),
                 ],
               ),
               const SizedBox(height: AppSpacing.x2),
@@ -528,7 +526,7 @@ class _ClientsSection extends StatelessWidget {
                         DataCell(
                           SizedBox(width: 200, child: Text(client.name)),
                         ),
-                        DataCell(StatusBadge(status: client.status)),
+                        DataCell(AppBadge.status(client.status)),
                         DataCell(Text(_money(client.grossRevenue))),
                         DataCell(Text(_pct(client.contractPercent))),
                         DataCell(Text(_money(client.franchisorRevenue))),
@@ -562,7 +560,7 @@ class _ClientsSection extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            StatusBadge(status: client.status),
+                            AppBadge.status(client.status),
                           ],
                         ),
                         const SizedBox(height: AppSpacing.x2),

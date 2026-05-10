@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/app_scaffold.dart';
-import '../../widgets/status_badge.dart';
-import '../../widgets/metric_card.dart';
 import '../../providers/franqueado_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../design_system/design_system.dart';
@@ -144,7 +142,7 @@ class _UnidadesContent extends StatelessWidget {
                               ),
                               const SizedBox(width: AppSpacing.x2),
                             ],
-                            StatusBadge(status: u.status),
+                            AppBadge.status(u.status),
                           ],
                         ),
                       );

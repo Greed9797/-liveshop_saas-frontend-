@@ -20,7 +20,6 @@ import '../../widgets/cabine_card.dart';
 import '../../widgets/responsive_grid.dart';
 import '../../widgets/reservar_cabine_modal.dart';
 import '../../widgets/skeleton_list.dart';
-import '../../widgets/status_badge.dart';
 import '../solicitacoes/solicitacoes_screen.dart';
 
 class CabinesScreen extends ConsumerStatefulWidget {
@@ -1295,7 +1294,7 @@ class _SelectedCabinePanelState extends ConsumerState<_SelectedCabinePanel> {
                                 .copyWith(fontWeight: FontWeight.w700),
                           ),
                         ),
-                        StatusBadge(status: cabine.status),
+                        AppBadge.status(cabine.status),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.x3),

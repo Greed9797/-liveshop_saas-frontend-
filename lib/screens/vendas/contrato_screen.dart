@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 import '../../widgets/app_scaffold.dart';
-import '../../widgets/action_button.dart';
 import '../../models/cliente.dart';
 import '../../models/pacote.dart';
 import '../../providers/contratos_provider.dart';
@@ -314,14 +313,14 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                     onPressed: _criarContrato,
                   ),
                 ] else ...[
-                  ActionButton(
+                  AppPrimaryButton(
                     label: 'ASSINAR AGORA',
                     icon: Icons.draw_outlined,
                     color: AppColors.success,
                     onPressed: _abrirPadAssinatura,
                   ),
                   const SizedBox(height: AppSpacing.x3),
-                  ActionButton(
+                  AppPrimaryButton(
                     label: 'ENVIAR POR WHATSAPP',
                     icon: Icons.send_outlined,
                     outlined: true,

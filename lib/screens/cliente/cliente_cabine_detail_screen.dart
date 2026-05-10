@@ -10,7 +10,6 @@ import '../../providers/cliente_cabine_detail_provider.dart';
 import '../../providers/live_requests_provider.dart';
 import '../../providers/live_stream_provider.dart';
 import '../../services/api_service.dart';
-import '../../widgets/status_badge.dart';
 
 class ClienteCabineDetailScreen extends ConsumerStatefulWidget {
   final String cabineId;
@@ -511,7 +510,7 @@ class _LiveHistoricoCard extends StatelessWidget {
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
-              StatusBadge(status: live.status),
+              AppBadge.status(live.status),
             ],
           ),
           const SizedBox(height: AppSpacing.x2),
@@ -1013,7 +1012,7 @@ class _LiveRequestTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.x2),
-          StatusBadge(status: request.status),
+          AppBadge.status(request.status),
         ],
       ),
     );

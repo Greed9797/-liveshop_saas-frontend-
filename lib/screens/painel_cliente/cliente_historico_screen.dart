@@ -11,8 +11,7 @@ import '../../providers/cliente_dashboard_provider.dart'
     show ClientePeriod, clientePeriodProvider;
 import '../../providers/cliente_lives_provider.dart';
 import '../../routes/app_routes.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/metric_card.dart';
+import '../../design_system/app_components.dart';
 
 class AppColors {
   static const primary = ds_colors.AppColors.primary;
@@ -186,7 +185,7 @@ class _HistoricoContent extends StatelessWidget {
         const SizedBox(height: AppSpacing.x3l),
         if (data.lives.isEmpty)
           AppCard(
-            boxShadow: const [],
+            shadow: const [],
             child: Text(
               'Nenhuma live registrada neste período.',
               style: TextStyle(color: context.colors.textSecondary),
@@ -232,7 +231,7 @@ class _HistoryPeriodSelector extends ConsumerWidget {
 
     return AppCard(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      boxShadow: const [],
+      shadow: const [],
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

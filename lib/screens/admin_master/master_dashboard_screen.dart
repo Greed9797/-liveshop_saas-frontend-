@@ -8,7 +8,6 @@ import '../../providers/admin_master_provider.dart';
 import '../../design_system/design_system.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/app_scaffold.dart';
-import '../../widgets/metric_card.dart';
 
 List<String> _recentPeriods([int count = 6]) {
   final now = DateTime.now();

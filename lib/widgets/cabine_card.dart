@@ -4,8 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../models/cabine.dart';
-import '../design_system/design_system.dart' hide AppCard;
-import 'app_card.dart';
+import '../design_system/design_system.dart';
 
 /// Card de cabine modernizado.
 class CabineCard extends StatefulWidget {
