@@ -81,9 +81,23 @@ All named routes are wrapped in `RoleRouteGuard`. The guard checks `authProvider
 `onGenerateRoute` handles routes with typed arguments (e.g., `Cabine` object for `/cabines/detalhe`). Always type-check `settings.arguments` and return an error scaffold on mismatch.
 
 Initial route is determined by `AppRoutes.routeForRole(papel)`:
-- `franqueador_master` → `/franqueado`
-- `franqueado` → `/`
+- `franqueador_master` / `admin_master` → `/master`
+- `franqueado` / `gerente` / `gerente_comercial` / `financeiro` / `operacional` → `/`
+- `apresentador` / `apresentadora` → `/cabines`
 - `cliente_parceiro` → `/cliente`
+- **Papéis novos (migration 064)** → `/`:
+  - Tier 1: `financeiro_readonly`, `auditor`
+  - Tier 2: `suporte`, `produtor_live`
+  - Tier 3: `marketing`, `comercial_readonly`
+
+Total: 15 papéis ativos. Grupos espelham `src/config/role_groups.js` do backend:
+- `_internalRoles` — todos administrativos + read-only + suporte + marketing
+- `_commercialRoles` — vendas + auditor + suporte + marketing + comercial_readonly
+- `_financeRoles` — financeiro stack + financeiro_readonly + auditor
+- `_opsRoles` — operacional + auditor + suporte + produtor_live + comercial_readonly
+- `_cabineRoles` — frente live + auditor + suporte + produtor_live + marketing + comercial_readonly
+
+`gerente_regional` (Tier 4) não implementado — requer multi-tenant em Fase C.
 
 ### Design system (`lib/theme/`)
 
