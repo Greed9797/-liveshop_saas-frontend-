@@ -25,6 +25,11 @@ import '../screens/configuracoes/configuracoes_screen.dart';
 import '../screens/excelencia/excelencia_screen.dart';
 import '../screens/financeiro/financeiro_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
+import '../screens/knowledge/admin_article_editor_screen.dart';
+import '../screens/knowledge/knowledge_article_screen.dart';
+import '../screens/knowledge/knowledge_category_screen.dart';
+import '../screens/knowledge/knowledge_home_screen.dart';
+import '../models/knowledge_article.dart';
 import '../screens/painel_cliente/carteira_clientes_screen.dart';
 import '../screens/recomendacoes/recomendacoes_screen.dart';
 import '../screens/vendas/analise_financeira_screen.dart';
@@ -80,6 +85,26 @@ class AppRoutes {
   static const onboarding = '/onboarding';
   static const usuarios = '/usuarios';
   static const masterFranqueados = '/master/franqueados';
+
+  // Knowledge Base (KB)
+  static const knowledgeBase = '/conhecimento';
+  static const knowledgeCategory = '/conhecimento/c';
+  static const knowledgeArticle = '/conhecimento/a';
+  static const adminKnowledgeNew = '/master/conhecimento/novo';
+  static const adminKnowledgeEdit = '/master/conhecimento/editar';
+
+  static const Set<String> _knowledgeReadRoles = {
+    'franqueador_master',
+    'admin_master',
+    'franqueado',
+    'gerente',
+    'gerente_comercial',
+    'financeiro',
+    'operacional',
+    'apresentador',
+    'apresentadora',
+    'cliente_parceiro',
+  };
 
   static const Set<String> _internalRoles = {
     'franqueado',
@@ -137,6 +162,10 @@ class AppRoutes {
   static Map<String, WidgetBuilder> get routes => {};
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    // Knowledge Base — rotas dinâmicas com slug/id no path.
+    final dynamicRoute = _knowledgeDynamicRoute(settings);
+    if (dynamicRoute != null) return dynamicRoute;
+
     switch (settings.name) {
       case login:
         return buildPremiumRoute(
@@ -658,9 +687,89 @@ class AppRoutes {
           settings: settings,
         );
 
+      case knowledgeBase:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: _knowledgeReadRoles,
+            fallbackRoute: login,
+            unauthenticatedRoute: login,
+            child: KnowledgeHomeScreen(),
+          ),
+          settings: settings,
+        );
+
+      case adminKnowledgeNew:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'franqueador_master', 'admin_master'},
+            fallbackRoute: knowledgeBase,
+            unauthenticatedRoute: login,
+            child: AdminArticleEditorScreen(),
+          ),
+          settings: settings,
+        );
+
       default:
         return null;
     }
+  }
+
+  /// Resolves dynamic Knowledge Base routes:
+  ///   - /conhecimento/c/<slug>      → category screen
+  ///   - /conhecimento/a/<slug>      → article screen
+  ///   - /master/conhecimento/editar/<id> → editor screen
+  static Route<dynamic>? _knowledgeDynamicRoute(RouteSettings settings) {
+    final name = settings.name;
+    if (name == null) return null;
+
+    if (name.startsWith('$knowledgeCategory/')) {
+      final slug = name.substring(knowledgeCategory.length + 1);
+      if (slug.isEmpty) return null;
+      return buildPremiumRoute(
+        child: RoleRouteGuard(
+          allowedRoles: _knowledgeReadRoles,
+          fallbackRoute: login,
+          unauthenticatedRoute: login,
+          child: KnowledgeCategoryScreen(slug: slug),
+        ),
+        settings: settings,
+      );
+    }
+
+    if (name.startsWith('$knowledgeArticle/')) {
+      final slug = name.substring(knowledgeArticle.length + 1);
+      if (slug.isEmpty) return null;
+      return buildPremiumRoute(
+        child: RoleRouteGuard(
+          allowedRoles: _knowledgeReadRoles,
+          fallbackRoute: login,
+          unauthenticatedRoute: login,
+          child: KnowledgeArticleScreen(slug: slug),
+        ),
+        settings: settings,
+      );
+    }
+
+    if (name.startsWith('$adminKnowledgeEdit/')) {
+      final id = name.substring(adminKnowledgeEdit.length + 1);
+      if (id.isEmpty) return null;
+      final args = settings.arguments;
+      final preloaded = args is KnowledgeArticle ? args : null;
+      return buildPremiumRoute(
+        child: RoleRouteGuard(
+          allowedRoles: const {'franqueador_master', 'admin_master'},
+          fallbackRoute: knowledgeBase,
+          unauthenticatedRoute: login,
+          child: AdminArticleEditorScreen(
+            articleId: id,
+            article: preloaded,
+          ),
+        ),
+        settings: settings,
+      );
+    }
+
+    return null;
   }
 }
 

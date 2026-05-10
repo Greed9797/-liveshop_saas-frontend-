@@ -26,6 +26,10 @@ dependencies:
   web: ^0.5.0
   animations: ^2.0.11
   image_picker: ^1.2.1
+  flutter_markdown: ^0.7.4+3
+  youtube_player_iframe: ^5.1.2
+  webview_flutter: ^4.4.0
+  markdown: ^7.2.2
 
 dev_dependencies:
   flutter_test:
