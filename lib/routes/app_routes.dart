@@ -7,7 +7,10 @@ import '../screens/analytics/analytics_dashboard_screen.dart';
 import '../screens/apresentadoras/apresentadoras_screen.dart';
 import '../screens/auditoria/analise_credito_screen.dart';
 import '../screens/auditoria/audit_log_screen.dart';
+import '../screens/auth/aceitar_convite_screen.dart';
+import '../screens/auth/esqueci_senha_screen.dart';
 import '../screens/auth/login_screen.dart';
+import '../screens/auth/redefinir_senha_screen.dart';
 import '../screens/boletos/boletos_screen.dart';
 import '../livelab/features/cabines/cabines_repository.dart';
 import '../livelab/features/cabines/cabines_screen.dart';
@@ -45,6 +48,10 @@ import 'app_page_transitions.dart';
 
 class AppRoutes {
   static const login = '/login';
+  // F4: rotas públicas de recuperação/convite (sem RoleRouteGuard).
+  static const esqueciSenha = '/esqueci-senha';
+  static const redefinirSenha = '/redefinir-senha';
+  static const aceitarConvite = '/aceitar-convite';
   static const home = '/';
   static const vendas = '/vendas';
   static const comercial = '/comercial';
@@ -217,6 +224,33 @@ class AppRoutes {
       case login:
         return buildPremiumRoute(
           child: const LoginScreen(),
+          settings: settings,
+        );
+
+      // F4: rotas públicas — sem RoleRouteGuard (parte do auth flow).
+      case esqueciSenha:
+        return buildPremiumRoute(
+          child: const EsqueciSenhaScreen(),
+          settings: settings,
+        );
+
+      case redefinirSenha:
+        return buildPremiumRoute(
+          child: RedefinirSenhaScreen(
+            initialToken: settings.arguments is String
+                ? settings.arguments as String
+                : null,
+          ),
+          settings: settings,
+        );
+
+      case aceitarConvite:
+        return buildPremiumRoute(
+          child: AceitarConviteScreen(
+            initialToken: settings.arguments is String
+                ? settings.arguments as String
+                : null,
+          ),
           settings: settings,
         );
 

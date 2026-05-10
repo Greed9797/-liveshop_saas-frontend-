@@ -6,6 +6,9 @@ import '../../services/api_service.dart';
 import '../../design_system/design_system.dart';
 import '../../widgets/temp_password_dialog.dart';
 
+// F4: fluxo de convite via email é o padrão. TempPasswordDialog só aparece
+// quando o backend responde com senha_temporaria (fallback dev sem RESEND_API_KEY).
+
 class CriarUsuarioDialog extends ConsumerStatefulWidget {
   const CriarUsuarioDialog({super.key});
 
@@ -17,7 +20,6 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nomeCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
-  final _senhaCtrl = TextEditingController();
 
   String _papel = 'gerente';
   String? _clienteId;
@@ -51,7 +53,6 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
   void dispose() {
     _nomeCtrl.dispose();
     _emailCtrl.dispose();
-    _senhaCtrl.dispose();
     super.dispose();
   }
 
@@ -99,17 +100,32 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
                   ),
                   const SizedBox(height: AppSpacing.x4),
 
-                  _Label('Senha temporária (opcional)'),
-                  TextFormField(
-                    controller: _senhaCtrl,
-                    obscureText: false,
-                    decoration: _dec('Deixe em branco para gerar automaticamente'),
-                    validator: (v) {
-                      final s = v?.trim() ?? '';
-                      if (s.isEmpty) return null;
-                      if (s.length < 6) return 'Mínimo 6 caracteres';
-                      return null;
-                    },
+                  // F4: senha temporária removida — usuário define a própria
+                  // senha via link de convite enviado por email (validade 72h).
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.x3),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgMuted,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      border: Border.all(color: AppColors.borderLight),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.mail_outline,
+                            size: 18, color: AppColors.info),
+                        const SizedBox(width: AppSpacing.x2),
+                        Expanded(
+                          child: Text(
+                            'O convite será enviado por e-mail. O usuário define a própria senha ao aceitar (link válido por 72 horas).',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.x4),
 
@@ -205,14 +221,13 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _saving = true);
 
+    final emailDestino = _emailCtrl.text.trim();
     try {
-      final senhaCustom = _senhaCtrl.text.trim();
       final payload = <String, dynamic>{
         'nome': _nomeCtrl.text.trim(),
-        'email': _emailCtrl.text.trim(),
+        'email': emailDestino,
         'papel': _papel,
         if (_clienteId != null) 'cliente_id': _clienteId,
-        if (senhaCustom.isNotEmpty) 'senha_temporaria': senhaCustom,
       };
 
       final result =
@@ -221,12 +236,24 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
       if (!mounted) return;
       Navigator.of(context).pop();
 
-      await TempPasswordDialog.show(
-        context,
-        nome: result['nome'] as String? ?? _nomeCtrl.text.trim(),
-        email: result['email'] as String? ?? _emailCtrl.text.trim(),
-        senhaTemporaria: result['senha_temporaria'] as String,
-      );
+      // F4: caminho feliz — backend disparou email de convite.
+      // Fallback: ambiente sem RESEND_API_KEY ainda devolve senha_temporaria.
+      final inviteEnviado = result['invite_enviado'] == true;
+      final senhaTemporaria = result['senha_temporaria'] as String?;
+
+      if (inviteEnviado || senhaTemporaria == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Convite enviado para $emailDestino. Validade 72h.'),
+          backgroundColor: AppColors.success,
+        ));
+      } else {
+        await TempPasswordDialog.show(
+          context,
+          nome: result['nome'] as String? ?? _nomeCtrl.text.trim(),
+          email: result['email'] as String? ?? emailDestino,
+          senhaTemporaria: senhaTemporaria,
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

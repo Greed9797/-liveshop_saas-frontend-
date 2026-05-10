@@ -102,34 +102,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _restoreRememberedEmail();
   }
 
-  void _showForgotPasswordDialog(BuildContext ctx) {
-    showDialog<void>(
-      context: ctx,
-      builder: (_) => AlertDialog(
-        backgroundColor: _LL.bgCard(ctx),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Esqueci a senha',
-            style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: _LL.textPrimary(ctx))),
-        content: Text(
-          'Entre em contato com o seu administrador (Grupo Livelab) ou envie um e-mail para contato@grupolivelab.com.br solicitando o reset.',
-          style: GoogleFonts.inter(
-              fontSize: 13.5,
-              color: _LL.textSecondary(ctx),
-              height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Fechar',
-                style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700, color: _LL.primary)),
-          ),
-        ],
-      ),
-    );
+  // F4: navega pra fluxo real de recuperação (email + token).
+  void _goToForgotPassword(BuildContext ctx) {
+    Navigator.of(ctx).pushNamed(AppRoutes.esqueciSenha);
   }
 
   Future<void> _restoreRememberedEmail() async {
@@ -237,7 +212,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         error: authError,
                         remember: _remember,
                         onRememberChanged: (v) => setState(() => _remember = v),
-                        onForgotPassword: () => _showForgotPasswordDialog(context),
+                        onForgotPassword: () => _goToForgotPassword(context),
                       ),
                     ),
                   ),

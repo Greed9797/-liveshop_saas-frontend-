@@ -125,6 +125,12 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  /// F4: Auto-login após aceitar convite. Recebe o payload já validado
+  /// pelo endpoint /auth/aceitar-convite (tokens + user).
+  Future<void> acceptInviteSession(Map<String, dynamic> data) async {
+    await _persistSession(data, lastSensitiveAuthAt: DateTime.now());
+  }
+
   Future<void> completeOnboarding() async {
     final user = state.user;
     if (user == null) return;
