@@ -108,27 +108,47 @@ class AppRoutes {
     'cliente_parceiro',
   };
 
+  // Grupos de papéis — espelho de src/config/role_groups.js do backend.
+  // Inclui 6 papéis novos da migration 064 (Tier 1+2+3):
+  // financeiro_readonly, auditor, suporte, produtor_live,
+  // marketing, comercial_readonly.
   static const Set<String> _internalRoles = {
     'franqueado',
     'gerente',
     'gerente_comercial',
     'financeiro',
+    'financeiro_readonly',
     'operacional',
+    'auditor',
+    'suporte',
+    'produtor_live',
+    'marketing',
+    'comercial_readonly',
   };
   static const Set<String> _commercialRoles = {
     'franqueado',
     'gerente',
     'gerente_comercial',
+    'auditor',
+    'suporte',
+    'marketing',
+    'comercial_readonly',
   };
   static const Set<String> _financeRoles = {
     'franqueado',
     'gerente',
     'financeiro',
+    'financeiro_readonly',
+    'auditor',
   };
   static const Set<String> _opsRoles = {
     'franqueado',
     'gerente',
     'operacional',
+    'auditor',
+    'suporte',
+    'produtor_live',
+    'comercial_readonly',
   };
   static const Set<String> _cabineRoles = {
     'franqueado',
@@ -136,6 +156,11 @@ class AppRoutes {
     'operacional',
     'apresentador',
     'apresentadora',
+    'auditor',
+    'suporte',
+    'produtor_live',
+    'marketing',
+    'comercial_readonly',
   };
 
   static String routeForRole(String? role, {bool onboardingCompleted = true}) {
@@ -147,7 +172,13 @@ class AppRoutes {
       case 'gerente':
       case 'gerente_comercial':
       case 'financeiro':
+      case 'financeiro_readonly':
       case 'operacional':
+      case 'auditor':
+      case 'suporte':
+      case 'produtor_live':
+      case 'marketing':
+      case 'comercial_readonly':
         return home;
       case 'apresentador':
       case 'apresentadora':

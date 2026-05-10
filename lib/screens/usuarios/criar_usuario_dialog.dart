@@ -24,13 +24,25 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
   bool _saving = false;
 
   static const _papeis = [
+    // Administrativos / operacionais
     ('gerente', 'Gerente'),
     ('gerente_comercial', 'Gerente Comercial'),
     ('financeiro', 'Financeiro'),
     ('operacional', 'Operacional'),
+    // Frente de live
     ('apresentador', 'Apresentador'),
     ('apresentadora', 'Apresentadora'),
+    // Externos
     ('cliente_parceiro', 'Cliente Parceiro'),
+    // Tier 1 — read-only / auditoria
+    ('financeiro_readonly', 'Financeiro (somente leitura)'),
+    ('auditor', 'Auditor (read-only geral)'),
+    // Tier 2 — operacional / suporte
+    ('suporte', 'Suporte (Customer Success)'),
+    ('produtor_live', 'Produtor de Live'),
+    // Tier 3 — comercial / marketing
+    ('marketing', 'Marketing'),
+    ('comercial_readonly', 'Comercial (somente leitura)'),
   ];
 
   @override
