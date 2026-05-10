@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../design_system/app_components.dart';
 import '../../models/cabine.dart';
 import '../../models/cliente.dart';
 import '../../models/apresentadora.dart';
@@ -72,18 +73,16 @@ class _SolicitacoesScreenState extends ConsumerState<SolicitacoesScreen> {
           ),
         ),
         actions: [
-          TextButton(
+          AppSecondaryButton(
+            label: 'Cancelar',
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancelar',
-                style: TextStyle(color: t.textSecondary)),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: t.danger),
+          AppDangerButton(
+            label: 'Recusar',
             onPressed: () {
               if (motivoCtrl.text.trim().isEmpty) return;
               Navigator.pop(ctx, true);
             },
-            child: const Text('Recusar'),
           ),
         ],
       ),
@@ -1235,21 +1234,14 @@ class _NovoAgendamentoDialogState
         ),
       ),
       actions: [
-        TextButton(
+        AppSecondaryButton(
+          label: 'Cancelar',
           onPressed: _saving ? null : () => Navigator.pop(context),
-          child:
-              Text('Cancelar', style: TextStyle(color: t.textSecondary)),
         ),
-        FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: t.primary),
+        AppPrimaryButton(
+          label: 'Agendar',
+          isLoading: _saving,
           onPressed: _saving ? null : _salvar,
-          child: _saving
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white))
-              : const Text('Agendar'),
         ),
       ],
     );

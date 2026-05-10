@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../design_system/app_components.dart';
 import '../../providers/financeiro_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
@@ -848,14 +849,13 @@ class _CustoTile extends StatelessWidget {
                     style: TextStyle(color: t.textSecondary),
                   ),
                   actions: [
-                    TextButton(
+                    AppSecondaryButton(
+                      label: 'Cancelar',
                       onPressed: () => Navigator.of(ctx).pop(false),
-                      child: const Text('Cancelar'),
                     ),
-                    FilledButton(
-                      style: FilledButton.styleFrom(backgroundColor: t.danger),
+                    AppDangerButton(
+                      label: 'Excluir',
                       onPressed: () => Navigator.of(ctx).pop(true),
-                      child: const Text('Excluir'),
                     ),
                   ],
                 ),
@@ -958,13 +958,12 @@ void _showAdicionarCusto(
           ),
         ),
         actions: [
-          TextButton(
+          AppSecondaryButton(
+            label: 'Cancelar',
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancelar', style: TextStyle(color: t.textSecondary)),
           ),
-          FilledButton(
-            style:
-                FilledButton.styleFrom(backgroundColor: t.primary),
+          AppPrimaryButton(
+            label: 'Salvar',
             onPressed: () async {
               final valorStr = valorCtrl.text.replaceAll(',', '.');
               if (descCtrl.text.isEmpty || valorStr.isEmpty) return;
@@ -987,7 +986,6 @@ void _showAdicionarCusto(
                 }
               }
             },
-            child: const Text('Salvar'),
           ),
         ],
       ),

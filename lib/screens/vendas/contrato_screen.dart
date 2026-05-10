@@ -411,10 +411,10 @@ class _SignatureDialogState extends State<_SignatureDialog> {
             ),
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton.icon(
+              child: AppGhostButton(
+                label: 'Limpar',
                 onPressed: () => _ctrl.clear(),
-                icon: const Icon(Icons.refresh, size: 14),
-                label: Text('Limpar', style: AppTypography.caption),
+                icon: Icons.refresh,
               ),
             ),
             const SizedBox(height: AppSpacing.x2),
@@ -435,7 +435,7 @@ class _SignatureDialogState extends State<_SignatureDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: widget.onCancel, child: const Text('Cancelar')),
+        AppSecondaryButton(label: 'Cancelar', onPressed: widget.onCancel),
         AppPrimaryButton(
           onPressed: (_acceptedTerms && !_saving) ? _confirmar : null,
           isLoading: _saving,

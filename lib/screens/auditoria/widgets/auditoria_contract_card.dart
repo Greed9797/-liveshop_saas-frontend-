@@ -101,11 +101,10 @@ class AuditoriaContractCard extends StatelessWidget {
                 icon: Icons.block_rounded,
                 label: 'Reprovar',
               ),
-              TextButton.icon(
+              AppGhostButton(
+                label: 'Arquivar',
                 onPressed: onArquivar,
-                icon: Icon(Icons.archive_outlined,
-                    size: 16, color: context.colors.textSecondary),
-                label: const Text('Arquivar'),
+                icon: Icons.archive_outlined,
               ),
             ],
           ),

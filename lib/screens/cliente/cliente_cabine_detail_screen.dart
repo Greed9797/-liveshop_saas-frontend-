@@ -145,12 +145,12 @@ class _ClienteCabineDetailScreenState
                 Text('Erro ao carregar dados: $error',
                     textAlign: TextAlign.center),
                 const SizedBox(height: AppSpacing.x2),
-                TextButton(
+                AppGhostButton(
+                  label: 'Tentar novamente',
                   onPressed: () => ref
                       .read(clienteCabineDetailProvider(widget.cabineId)
                           .notifier)
                       .refresh(),
-                  child: const Text('Tentar novamente'),
                 ),
               ],
             ),
@@ -846,31 +846,11 @@ class _SolicitarLiveSheetState
               ),
 
             // ── Botão enviar ──
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.x3),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-              ),
+            AppPrimaryButton(
+              label: 'Enviar Solicitação',
+              fullWidth: true,
+              isLoading: _isSubmitting,
               onPressed: _isSubmitting ? null : _submit,
-              child: _isSubmitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text(
-                      'Enviar Solicitação',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600),
-                    ),
             ),
 
             // ── Histórico de solicitações desta cabine ──

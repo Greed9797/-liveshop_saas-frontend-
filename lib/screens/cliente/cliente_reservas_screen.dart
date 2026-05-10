@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../design_system/app_colors.dart' as ds_colors;
+import '../../design_system/app_components.dart';
 import '../../design_system/app_tokens.dart' as ds_tokens;
 import '../../livelab/theme/livelab_theme.dart';
 import '../../routes/app_routes.dart';
@@ -119,10 +120,10 @@ class ClienteReservasBody extends ConsumerWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: ds_tokens.AppSpacing.x4),
-                  TextButton.icon(
+                  AppGhostButton(
+                    label: 'Tentar novamente',
                     onPressed: () => ref.read(clienteReservasProvider.notifier).refresh(),
-                    icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
-                    label: const Text('Tentar novamente'),
+                    icon: Icons.refresh,
                   ),
                 ],
               ),
@@ -189,17 +190,10 @@ class _Header extends StatelessWidget {
             color: t.textMuted,
           ),
           const SizedBox(width: 6),
-          FilledButton.icon(
+          AppPrimaryButton(
+            label: 'Solicitar live',
             onPressed: onSolicitar,
-            icon: Icon(PhosphorIcons.plusCircle(), size: 15),
-            label: const Text('Solicitar live'),
-            style: FilledButton.styleFrom(
-              backgroundColor: t.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-            ),
+            icon: Icons.add_circle_outline,
           ),
         ],
       ),
@@ -247,17 +241,10 @@ class _EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            FilledButton.icon(
+            AppPrimaryButton(
+              label: 'Solicitar live',
               onPressed: onSolicitar,
-              icon: Icon(PhosphorIcons.plusCircle(), size: 15),
-              label: const Text('Solicitar live'),
-              style: FilledButton.styleFrom(
-                backgroundColor: t.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
-                textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-              ),
+              icon: Icons.add_circle_outline,
             ),
           ],
         ),

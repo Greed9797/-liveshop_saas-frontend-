@@ -369,10 +369,10 @@ class _ConsolidatedHeader extends StatelessWidget {
                 onChanged: onSortChanged,
               ),
             ),
-            FilledButton.icon(
+            AppPrimaryButton(
+              label: 'Atualizar',
               onPressed: onRefresh,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Atualizar'),
+              icon: Icons.refresh_rounded,
             ),
           ],
         ),
@@ -699,9 +699,9 @@ class _ConsolidatedErrorState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.x4),
-            FilledButton(
+            AppPrimaryButton(
+              label: 'Tentar novamente',
               onPressed: onRetry,
-              child: const Text('Tentar novamente'),
             ),
           ],
         ),

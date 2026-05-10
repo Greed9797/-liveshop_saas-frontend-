@@ -78,10 +78,9 @@ class TempPasswordDialog extends StatelessWidget {
         ],
       ),
       actions: [
-        FilledButton(
+        AppPrimaryButton(
+          label: 'Entendi, já copiei',
           onPressed: () => Navigator.of(context).pop(),
-          style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
-          child: const Text('Entendi, já copiei'),
         ),
       ],
     );

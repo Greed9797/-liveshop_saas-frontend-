@@ -101,11 +101,11 @@ class _AoVivoTab extends ConsumerWidget {
             children: [
               Text('Erro: $error'),
               const SizedBox(height: AppSpacing.x4),
-              ElevatedButton.icon(
+              AppPrimaryButton(
+                label: 'Tentar novamente',
                 onPressed: () =>
                     ref.read(clienteDashboardProvider.notifier).refresh(),
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Tentar novamente'),
+                icon: Icons.refresh_rounded,
               ),
             ],
           ),
@@ -599,46 +599,24 @@ class _ActionButtons extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: OutlinedButton.icon(
+          child: AppPrimaryButton(
+            label: 'Ver agenda',
+            outlined: true,
+            fullWidth: true,
             onPressed: () =>
                 Navigator.pushNamed(context, AppRoutes.clienteReservas),
-            icon: Icon(
-              PhosphorIcons.calendarBlank(),
-              size: 18,
-              color: AppColors.primary,
-            ),
-            label: const Text('Ver agenda'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: const BorderSide(color: AppColors.primary),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.x4, vertical: AppSpacing.x2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-            ),
+            icon: Icons.calendar_today,
           ),
         ),
         const SizedBox(width: AppSpacing.x4),
         Expanded(
-          child: OutlinedButton.icon(
+          child: AppPrimaryButton(
+            label: 'Solicitar nova live',
+            outlined: true,
+            fullWidth: true,
             onPressed: () =>
                 Navigator.pushNamed(context, AppRoutes.clienteAgenda),
-            icon: Icon(
-              PhosphorIcons.plusCircle(),
-              size: 18,
-              color: AppColors.primary,
-            ),
-            label: const Text('Solicitar nova live'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: const BorderSide(color: AppColors.primary),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.x4, vertical: AppSpacing.x2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-            ),
+            icon: Icons.add_circle_outline,
           ),
         ),
       ],
@@ -682,10 +660,10 @@ class _HistoricoTab extends ConsumerWidget {
                   children: [
                     Text('Erro: $error'),
                     const SizedBox(height: AppSpacing.x4),
-                    ElevatedButton.icon(
+                    AppPrimaryButton(
+                      label: 'Tentar novamente',
                       onPressed: () => ref.invalidate(clienteLivesProvider),
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Tentar novamente'),
+                      icon: Icons.refresh_rounded,
                     ),
                   ],
                 ),

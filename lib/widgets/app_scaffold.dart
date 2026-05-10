@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../livelab/widgets/livelab_scaffold.dart';
 import '../providers/auth_provider.dart';
 import '../providers/configuracoes_provider.dart';
-import '../routes/app_routes.dart';
 import '../design_system/design_system.dart';
 import '../providers/boletos_provider.dart';
 
@@ -58,13 +57,10 @@ class AppScaffold extends ConsumerWidget {
               ),
               actions: [
                 if (alert.asaasPixCopiaCola != null)
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.success),
-                    icon: Icon(PhosphorIcons.copy(),
-                        size: 16, color: Colors.white),
-                    label: const Text('Copiar PIX',
-                        style: TextStyle(color: AppColors.textOnPrimary)),
+                  AppPrimaryButton(
+                    label: 'Copiar PIX',
+                    color: AppColors.success,
+                    icon: Icons.copy_rounded,
                     onPressed: () {
                       Clipboard.setData(
                         ClipboardData(text: alert.asaasPixCopiaCola!),
@@ -78,14 +74,14 @@ class AppScaffold extends ConsumerWidget {
                       Navigator.pop(ctx);
                     },
                   ),
-                TextButton(
+                AppSecondaryButton(
+                  label: 'Fechar',
                   onPressed: () {
                     ref
                         .read(billingAlertProvider.notifier)
                         .marcarVisto(alert.id);
                     Navigator.pop(ctx);
                   },
-                  child: const Text('Fechar'),
                 ),
               ],
             ),

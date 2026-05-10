@@ -35,9 +35,9 @@ class ClienteCabinesScreen extends ConsumerWidget {
                   style: AppTypography.bodyMedium,
                 ),
                 const SizedBox(height: AppSpacing.x4),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Tentar novamente'),
+                AppPrimaryButton(
+                  label: 'Tentar novamente',
+                  icon: Icons.refresh,
                   onPressed: () =>
                       ref.read(clienteCabinesProvider.notifier).refresh(),
                 ),

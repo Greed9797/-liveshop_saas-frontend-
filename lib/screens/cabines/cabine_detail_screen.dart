@@ -255,17 +255,9 @@ class _LivelabError extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            FilledButton(
+            AppPrimaryButton(
+              label: 'Tentar novamente',
               onPressed: onRetry,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text('Tentar novamente'),
             ),
           ],
         ),
@@ -1183,27 +1175,16 @@ class _TiktokChannelCardState extends ConsumerState<_TiktokChannelCard> {
             ),
           )
         else ...[
-          TextButton(
+          AppSecondaryButton(
+            label: 'Cancelar',
             onPressed: () => setState(() {
               _editing = false;
               _ctrl.text = widget.username ?? '';
             }),
-            child: Text(
-              'Cancelar',
-              style: TextStyle(color: context.colors.textMuted),
-            ),
           ),
-          FilledButton(
+          AppPrimaryButton(
+            label: 'Salvar',
             onPressed: _save,
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: const Text('Salvar'),
           ),
         ],
       ],
@@ -1429,14 +1410,13 @@ class _CloserNotifyCardState extends ConsumerState<_CloserNotifyCard> {
           onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
         ),
         actions: [
-          TextButton(
+          AppSecondaryButton(
+            label: 'Cancelar',
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+          AppPrimaryButton(
+            label: 'Enviar',
             onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Enviar'),
           ),
         ],
       ),
@@ -1597,34 +1577,11 @@ class _CloserNotifyCardState extends ConsumerState<_CloserNotifyCard> {
                 ),
               ),
               const SizedBox(width: 10),
-              FilledButton(
+              AppPrimaryButton(
+                label: 'Enviar',
                 onPressed: _sending ? null : _sendCustom,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 2,
-                  shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                ),
-                child: _sending
-                    ? const SizedBox(
-                        width: 16, height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                        ),
-                      )
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.send_rounded, size: 16),
-                          SizedBox(width: 6),
-                          Text('Enviar'),
-                        ],
-                      ),
+                isLoading: _sending,
+                icon: Icons.send_rounded,
               ),
             ],
           ),

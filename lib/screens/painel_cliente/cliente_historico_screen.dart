@@ -79,10 +79,10 @@ class ClienteHistoricoScreen extends ConsumerWidget {
                   children: [
                     Text('Erro: $error'),
                     const SizedBox(height: AppSpacing.md),
-                    ElevatedButton.icon(
+                    AppPrimaryButton(
+                      label: 'Tentar novamente',
                       onPressed: () => ref.invalidate(clienteLivesProvider),
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Tentar novamente'),
+                      icon: Icons.refresh_rounded,
                     ),
                   ],
                 ),

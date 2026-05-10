@@ -742,19 +742,14 @@ class _MetaEditDialogState extends State<_MetaEditDialog> {
         ],
       ),
       actions: [
-        TextButton(
+        AppSecondaryButton(
+          label: 'Cancelar',
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
         ),
-        FilledButton(
+        AppPrimaryButton(
+          label: 'Salvar',
+          isLoading: _saving,
           onPressed: _saving ? null : _save,
-          child: _saving
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Salvar'),
         ),
       ],
     );
@@ -812,21 +807,11 @@ class _ProximasLivesCard extends ConsumerWidget {
                   style: TextStyle(fontSize: 12, color: t.textMuted),
                 ),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
+                AppPrimaryButton(
+                  label: 'Solicitar nova live',
+                  outlined: true,
                   onPressed: () => _onSolicitarLive(context),
-                  icon: Icon(PhosphorIcons.plus(), size: 14),
-                  label: const Text('Solicitar nova live'),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: t.primary),
-                    foregroundColor: t.primary,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 9),
-                    textStyle: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                  ),
+                  icon: Icons.add,
                 ),
               ],
             )
@@ -970,21 +955,12 @@ class _PendenciasCard extends StatelessWidget {
 class _NovaLiveCta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () => Navigator.of(context).pushNamed(AppRoutes.clienteAgenda),
-        icon: Icon(PhosphorIcons.plus(), size: 18),
-        label: const Text('Solicitar nova live'),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
-          side: const BorderSide(color: AppColors.primary),
-          foregroundColor: AppColors.primary,
-          textStyle: AppTypography.bodySmall.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+    return AppPrimaryButton(
+      label: 'Solicitar nova live',
+      outlined: true,
+      fullWidth: true,
+      onPressed: () => Navigator.of(context).pushNamed(AppRoutes.clienteAgenda),
+      icon: Icons.add,
     );
   }
 }

@@ -460,14 +460,9 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
           AppSecondaryButton(
               label: 'Cancelar',
               onPressed: () => Navigator.of(dialogContext).pop(false)),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger,
-                foregroundColor: AppColors.textOnPrimary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md))),
+          AppDangerButton(
+            label: 'Deletar',
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Deletar'),
           ),
         ],
       ),
@@ -502,14 +497,9 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
               AppSecondaryButton(
                   label: 'Cancelar',
                   onPressed: () => Navigator.of(dialogContext).pop(false)),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.danger,
-                    foregroundColor: AppColors.textOnPrimary,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md))),
+              AppDangerButton(
+                label: 'Liberar e Deletar',
                 onPressed: () => Navigator.of(dialogContext).pop(true),
-                child: const Text('Liberar e Deletar'),
               ),
             ],
           ),
@@ -1184,11 +1174,9 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                 ),
               ),
               if (isConnected)
-                TextButton.icon(
-                  icon: Icon(Icons.link_off, size: 16, color: AppColors.danger),
-                  label: Text('Desconectar',
-                      style: AppTypography.caption
-                          .copyWith(color: AppColors.danger)),
+                AppDangerButton(
+                  label: 'Desconectar',
+                  icon: Icons.link_off,
                   onPressed: () async {
                     await ref.read(tiktokStatusProvider.notifier).disconnect();
                     ref.invalidate(configuracoesProvider);

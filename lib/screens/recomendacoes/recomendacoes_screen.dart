@@ -213,9 +213,9 @@ class RecomendacoesScreen extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(
+          AppSecondaryButton(
+            label: 'Cancelar',
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
           ),
           AppPrimaryButton(
             onPressed: () async {

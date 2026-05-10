@@ -156,26 +156,15 @@ class _CriarFranquiaDialogState extends ConsumerState<CriarFranquiaDialog> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      TextButton(
+                      AppSecondaryButton(
+                        label: 'Cancelar',
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancelar'),
                       ),
                       const SizedBox(width: AppSpacing.x3),
-                      FilledButton(
+                      AppPrimaryButton(
+                        label: 'Criar franquia',
                         onPressed: _saving ? null : _submit,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                        ),
-                        child: _saving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text('Criar franquia'),
+                        isLoading: _saving,
                       ),
                     ],
                   ),

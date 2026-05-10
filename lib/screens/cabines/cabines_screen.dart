@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import 'package:phosphor_flutter/phosphor_flutter.dart';
-
 import '../../models/cabine.dart';
 import '../../models/fila_ativacao_item.dart';
 import '../lives/registrar_live_manual_dialog.dart';
@@ -241,11 +239,13 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen>
               ),
             ),
             actions: [
-              TextButton(
+              AppSecondaryButton(
+                label: 'Cancelar',
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancelar'),
               ),
-              FilledButton(
+              AppPrimaryButton(
+                label: 'Salvar',
+                isLoading: saving,
                 onPressed: saving
                     ? null
                     : () async {
@@ -268,12 +268,6 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen>
                           setDlg(() => saving = false);
                         }
                       },
-                child: saving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('Salvar'),
               ),
             ],
           );
@@ -413,10 +407,10 @@ class _CabinesScreenState extends ConsumerState<CabinesScreen>
       subtitle:
           'Visão operacional da unidade: ao vivo, reservadas e rendimento.',
       actions: [
-        FilledButton.icon(
+        AppPrimaryButton(
+          label: 'Registrar Live',
           onPressed: _registrarLiveManual,
-          icon: Icon(PhosphorIcons.videoCamera(), size: 16),
-          label: const Text('Registrar Live'),
+          icon: Icons.videocam_rounded,
         ),
       ],
       child: Column(
@@ -1167,11 +1161,13 @@ class _SelectedCabinePanelState extends ConsumerState<_SelectedCabinePanel> {
             ),
           ),
           actions: [
-            TextButton(
+            AppSecondaryButton(
+              label: 'Cancelar',
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar'),
             ),
-            FilledButton(
+            AppPrimaryButton(
+              label: 'Adicionar',
+              isLoading: saving,
               onPressed: saving
                   ? null
                   : () async {
@@ -1202,12 +1198,6 @@ class _SelectedCabinePanelState extends ConsumerState<_SelectedCabinePanel> {
                         setDlg(() => saving = false);
                       }
                     },
-              child: saving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Adicionar'),
             ),
           ],
         ),
@@ -1424,18 +1414,11 @@ class _SelectedCabinePanelState extends ConsumerState<_SelectedCabinePanel> {
                               Padding(
                                 padding: const EdgeInsets.only(
                                     bottom: AppSpacing.x1),
-                                child: TextButton.icon(
+                                child: AppGhostButton(
+                                  label: '+ Apresentador',
                                   onPressed: () => _addApresentador(
                                       context, ref, cabine),
-                                  icon: const Icon(Icons.person_add_outlined,
-                                      size: 14),
-                                  label: const Text('+ Apresentador'),
-                                  style: TextButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    textStyle: AppTypography.bodySmall,
-                                  ),
+                                  icon: Icons.person_add_outlined,
                                 ),
                               ),
                             if (cabine.tiktokUsername != null &&

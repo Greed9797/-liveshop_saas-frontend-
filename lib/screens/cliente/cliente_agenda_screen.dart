@@ -5,6 +5,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../design_system/app_colors.dart';
 import '../../design_system/app_colors_theme.dart';
+import '../../design_system/app_components.dart';
 import '../../design_system/app_screen_scaffold.dart';
 import '../../design_system/app_tokens.dart';
 import '../../design_system/app_typography.dart';
@@ -312,18 +313,10 @@ class _WeekNavigator extends StatelessWidget {
       ),
       child: Row(
         children: [
-          TextButton.icon(
+          AppGhostButton(
+            label: 'Anterior',
             onPressed: onPrev,
-            icon: Icon(
-              PhosphorIcons.caretLeft(),
-              size: 16,
-              color: AppColors.primary,
-            ),
-            label: const Text(
-              'Anterior',
-              style: TextStyle(color: AppColors.primary, fontSize: 13),
-            ),
-            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+            icon: Icons.chevron_left,
           ),
           Expanded(
             child: Text(
@@ -335,19 +328,10 @@ class _WeekNavigator extends StatelessWidget {
               ),
             ),
           ),
-          TextButton.icon(
+          AppGhostButton(
+            label: 'Proxima',
             onPressed: onNext,
-            icon: Icon(
-              PhosphorIcons.caretRight(),
-              size: 16,
-              color: AppColors.primary,
-            ),
-            label: const Text(
-              'Proxima',
-              style: TextStyle(color: AppColors.primary, fontSize: 13),
-            ),
-            iconAlignment: IconAlignment.end,
-            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+            icon: Icons.chevron_right,
           ),
         ],
       ),
@@ -778,14 +762,10 @@ class _ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.x4),
-            ElevatedButton.icon(
+            AppPrimaryButton(
+              label: 'Tentar novamente',
               onPressed: onRetry,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-              icon: Icon(PhosphorIcons.arrowClockwise()),
-              label: const Text('Tentar novamente'),
+              icon: Icons.refresh,
             ),
           ],
         ),
@@ -1075,25 +1055,10 @@ class _StepTipo extends StatelessWidget {
           );
         }),
         const SizedBox(height: AppSpacing.x6),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: tipoSelecionado != null ? onNext : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              disabledBackgroundColor:
-                  AppColors.primary.withValues(alpha: 0.3),
-            ),
-            child: const Text(
-              'Proximo',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-            ),
-          ),
+        AppPrimaryButton(
+          label: 'Proximo',
+          onPressed: tipoSelecionado != null ? onNext : null,
+          fullWidth: true,
         ),
       ],
     );
@@ -1204,25 +1169,10 @@ class _StepDuracao extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.x6),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: duracaoSelecionada != null ? onNext : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              disabledBackgroundColor:
-                  AppColors.primary.withValues(alpha: 0.3),
-            ),
-            child: const Text(
-              'Proximo',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-            ),
-          ),
+        AppPrimaryButton(
+          label: 'Proximo',
+          onPressed: duracaoSelecionada != null ? onNext : null,
+          fullWidth: true,
         ),
       ],
     );
@@ -1337,35 +1287,11 @@ class _StepConfirmacao extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.x6),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: submitting ? null : onSubmit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              disabledBackgroundColor:
-                  AppColors.primary.withValues(alpha: 0.4),
-            ),
-            child: submitting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text(
-                    'Enviar solicitacao',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                  ),
-          ),
+        AppPrimaryButton(
+          label: 'Enviar solicitacao',
+          onPressed: submitting ? null : onSubmit,
+          isLoading: submitting,
+          fullWidth: true,
         ),
       ],
     );
