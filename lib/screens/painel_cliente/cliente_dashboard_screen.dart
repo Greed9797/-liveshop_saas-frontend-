@@ -954,7 +954,7 @@ class _PendenciasCard extends StatelessWidget {
             child: Text(
               'Você tem $count live(s) aguardando confirmação da unidade.',
               style: AppTypography.bodySmall.copyWith(
-                color: AppColors.warningFg,
+                color: AppColors.warning,
                 fontWeight: FontWeight.w600,
               ),
             ),

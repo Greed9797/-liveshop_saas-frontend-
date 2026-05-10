@@ -269,7 +269,7 @@ class AppBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, fg) = switch (type) {
       AppBadgeType.success => (AppColors.successBg, AppColors.success),
-      AppBadgeType.warning => (AppColors.warningBg, AppColors.warningFg),
+      AppBadgeType.warning => (AppColors.warningBg, AppColors.warning),
       AppBadgeType.danger => (AppColors.dangerBg, AppColors.danger),
       AppBadgeType.neutral => (context.colors.bgMuted, context.colors.textSecondary),
       AppBadgeType.info => (AppColors.infoBg, AppColors.info),

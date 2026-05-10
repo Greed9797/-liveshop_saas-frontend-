@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../design_system/design_system.dart';
+import '../design_system/design_system.dart';
 
 class HeatmapWidget extends StatelessWidget {
   final List<List<double>> matrix;

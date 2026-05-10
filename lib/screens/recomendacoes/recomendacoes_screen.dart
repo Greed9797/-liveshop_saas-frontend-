@@ -67,7 +67,7 @@ class RecomendacoesScreen extends ConsumerWidget {
                       label: 'Pendentes',
                       value: '$pendentes',
                       sub: 'em acompanhamento',
-                      valueColor: AppColors.warningFg,
+                      valueColor: AppColors.warning,
                     ),
                   ],
                 );

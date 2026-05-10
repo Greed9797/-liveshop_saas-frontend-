@@ -95,7 +95,7 @@ class _BoletosTabState extends ConsumerState<BoletosTab> {
         content: const Text(
           'Pagamento online indisponível no momento. Use o código de barras ou PIX manualmente.',
         ),
-        backgroundColor: AppColors.warningFg,
+        backgroundColor: AppColors.warning,
         duration: const Duration(seconds: 3),
       ),
     );
