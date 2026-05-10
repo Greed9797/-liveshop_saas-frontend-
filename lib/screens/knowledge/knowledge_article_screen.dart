@@ -84,16 +84,36 @@ class KnowledgeArticleScreen extends ConsumerWidget {
   }
 }
 
-class _ArticleBody extends StatelessWidget {
+class _ArticleBody extends ConsumerWidget {
   final KnowledgeArticle article;
   const _ArticleBody({required this.article});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final updated = article.atualizadoEm;
     final updatedLabel = updated != null
         ? 'Atualizado em ${_formatDate(updated)}'
         : null;
+
+    // Buscar artigos da mesma categoria pra navegação ant/prox
+    final siblings = article.categorySlug != null
+        ? ref.watch(knowledgeArticlesProvider).valueOrNull?.where((a) =>
+            a.categorySlug == article.categorySlug &&
+            a.status == KbArticleStatus.published).toList()
+        : null;
+    KnowledgeArticle? prev;
+    KnowledgeArticle? next;
+    if (siblings != null && siblings.length > 1) {
+      siblings.sort((a, b) {
+        final cmp = a.sortOrder.compareTo(b.sortOrder);
+        if (cmp != 0) return cmp;
+        return (a.publishedAt ?? DateTime(0))
+            .compareTo(b.publishedAt ?? DateTime(0));
+      });
+      final idx = siblings.indexWhere((a) => a.id == article.id);
+      if (idx > 0) prev = siblings[idx - 1];
+      if (idx >= 0 && idx < siblings.length - 1) next = siblings[idx + 1];
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(28, 4, 28, 48),
@@ -218,6 +238,38 @@ class _ArticleBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.x6),
         ],
 
+        // Navegação anterior/próximo (mesma categoria)
+        if (prev != null || next != null) ...[
+          const Divider(color: AppColors.borderLight, height: 1),
+          const SizedBox(height: AppSpacing.x4),
+          Row(
+            children: [
+              Expanded(
+                child: prev != null
+                    ? _NavCard(
+                        article: prev,
+                        label: 'Anterior',
+                        icon: PhosphorIcons.arrowLeft(),
+                        alignment: CrossAxisAlignment.start,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              const SizedBox(width: AppSpacing.x3),
+              Expanded(
+                child: next != null
+                    ? _NavCard(
+                        article: next,
+                        label: 'Próximo',
+                        icon: PhosphorIcons.arrowRight(),
+                        alignment: CrossAxisAlignment.end,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.x6),
+        ],
+
         // Footer — voltar para categoria
         if (article.categorySlug != null &&
             article.categorySlug!.isNotEmpty)
@@ -241,6 +293,63 @@ class _ArticleBody extends StatelessWidget {
     ];
     final m = months[(d.month - 1).clamp(0, 11)];
     return '${d.day.toString().padLeft(2, '0')} de $m de ${d.year}';
+  }
+}
+
+class _NavCard extends StatelessWidget {
+  final KnowledgeArticle article;
+  final String label;
+  final IconData icon;
+  final CrossAxisAlignment alignment;
+
+  const _NavCard({
+    required this.article,
+    required this.label,
+    required this.icon,
+    required this.alignment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      onTap: () => Navigator.of(context).pushReplacementNamed(
+        '${AppRoutes.knowledgeArticle}/${article.slug}',
+      ),
+      padding: const EdgeInsets.all(AppSpacing.x4),
+      child: Column(
+        crossAxisAlignment: alignment,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (alignment == CrossAxisAlignment.start) ...[
+                Icon(icon, size: 14, color: AppColors.textMuted),
+                const SizedBox(width: 4),
+              ],
+              Text(label.toUpperCase(),
+                  style: AppTypography.caption.copyWith(
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5)),
+              if (alignment == CrossAxisAlignment.end) ...[
+                const SizedBox(width: 4),
+                Icon(icon, size: 14, color: AppColors.textMuted),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(article.titulo,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: alignment == CrossAxisAlignment.end
+                  ? TextAlign.right
+                  : TextAlign.left,
+              style: AppTypography.bodyMedium
+                  .copyWith(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
   }
 }
 

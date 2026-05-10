@@ -56,13 +56,21 @@ class _KnowledgeHomeScreenState extends ConsumerState<KnowledgeHomeScreen> {
       subtitle:
           'Tutoriais, manuais e respostas rápidas para dominar a plataforma.',
       actions: [
-        if (isMaster)
+        if (isMaster) ...[
+          AppGhostButton(
+            label: 'Categorias',
+            icon: PhosphorIcons.folders(),
+            onPressed: () => Navigator.of(context)
+                .pushNamed(AppRoutes.adminKnowledgeCategories),
+          ),
+          const SizedBox(width: AppSpacing.x2),
           AppPrimaryButton(
             label: 'Novo artigo',
             icon: PhosphorIcons.plus(),
             onPressed: () =>
                 Navigator.of(context).pushNamed(AppRoutes.adminKnowledgeNew),
           ),
+        ],
       ],
       child: ListView(
         padding: const EdgeInsets.fromLTRB(28, 4, 28, 32),

@@ -26,6 +26,7 @@ import '../screens/excelencia/excelencia_screen.dart';
 import '../screens/financeiro/financeiro_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
 import '../screens/knowledge/admin_article_editor_screen.dart';
+import '../screens/knowledge/admin_categories_screen.dart';
 import '../screens/knowledge/knowledge_article_screen.dart';
 import '../screens/knowledge/knowledge_category_screen.dart';
 import '../screens/knowledge/knowledge_home_screen.dart';
@@ -92,6 +93,7 @@ class AppRoutes {
   static const knowledgeArticle = '/conhecimento/a';
   static const adminKnowledgeNew = '/master/conhecimento/novo';
   static const adminKnowledgeEdit = '/master/conhecimento/editar';
+  static const adminKnowledgeCategories = '/master/conhecimento/categorias';
 
   static const Set<String> _knowledgeReadRoles = {
     'franqueador_master',
@@ -705,6 +707,17 @@ class AppRoutes {
             fallbackRoute: knowledgeBase,
             unauthenticatedRoute: login,
             child: AdminArticleEditorScreen(),
+          ),
+          settings: settings,
+        );
+
+      case adminKnowledgeCategories:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'franqueador_master', 'admin_master'},
+            fallbackRoute: knowledgeBase,
+            unauthenticatedRoute: login,
+            child: AdminKnowledgeCategoriesScreen(),
           ),
           settings: settings,
         );

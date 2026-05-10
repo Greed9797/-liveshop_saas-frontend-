@@ -459,6 +459,26 @@ class _FormColumn extends StatelessWidget {
               prefixIcon:
                   Icon(PhosphorIcons.link(), size: 18, color: AppColors.textMuted),
             ),
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            validator: (v) {
+              final s = (v ?? '').trim();
+              if (s.isEmpty) return 'URL obrigatória pra este provider';
+              final uri = Uri.tryParse(s);
+              if (uri == null || !uri.hasAbsolutePath || uri.host.isEmpty) {
+                return 'URL inválida';
+              }
+              if (videoProvider == KbVideoProvider.youtube) {
+                final ok = uri.host.contains('youtube.com') ||
+                    uri.host.contains('youtu.be');
+                if (!ok) return 'Deve ser link do YouTube';
+              } else if (videoProvider == KbVideoProvider.panda) {
+                final ok = uri.host.contains('pandavideo.com') ||
+                    uri.host.contains('tv.pandavideo') ||
+                    uri.host.contains('player-vz');
+                if (!ok) return 'Deve ser link do Panda Video';
+              }
+              return null;
+            },
           ),
         ],
         const SizedBox(height: AppSpacing.x5),
