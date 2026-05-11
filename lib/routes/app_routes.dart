@@ -5,8 +5,6 @@ import '../screens/onboarding/onboarding_screen.dart';
 import '../screens/usuarios/usuarios_screen.dart';
 import '../screens/analytics/analytics_dashboard_screen.dart';
 import '../screens/apresentadoras/apresentadoras_screen.dart';
-import '../screens/auditoria/analise_credito_screen.dart';
-import '../screens/auditoria/audit_log_screen.dart';
 import '../screens/auth/aceitar_convite_screen.dart';
 import '../screens/auth/esqueci_senha_screen.dart';
 import '../screens/auth/login_screen.dart';
@@ -22,16 +20,11 @@ import '../screens/cliente/cliente_agenda_screen.dart';
 import '../screens/cliente/cliente_ao_vivo_screen.dart';
 import '../screens/cliente/cliente_reservas_screen.dart';
 import '../screens/cliente/cliente_lives_screen.dart';
-import '../livelab_v2/admin_v2_routes.dart';
 import '../livelab_v2/cliente_v2_routes.dart';
-import '../screens/admin_master/regional_managers_screen.dart';
-import '../screens/admin_master/tiktok_apps_screen.dart';
 import '../screens/configuracoes/configuracoes_screen.dart';
 import '../screens/excelencia/excelencia_screen.dart';
 import '../screens/financeiro/financeiro_screen.dart';
 import '../screens/manuais/manuais_screen.dart';
-import '../screens/knowledge/admin_article_editor_screen.dart';
-import '../screens/knowledge/admin_categories_screen.dart';
 import '../screens/knowledge/knowledge_article_screen.dart';
 import '../screens/knowledge/knowledge_category_screen.dart';
 import '../screens/knowledge/knowledge_home_screen.dart';
@@ -45,6 +38,27 @@ import '../screens/vendas/contrato_screen.dart';
 import '../screens/vendas/vendas_screen.dart';
 import '../widgets/role_route_guard.dart';
 import 'app_page_transitions.dart';
+
+// W6-A: Deferred (lazy) imports.
+// Bundles os chunks abaixo em arquivos `*.part.js` separados — só baixados
+// quando o usuário navega para a rota correspondente. Cliente_parceiro,
+// franqueado e apresentador NÃO baixam essas libs no load inicial.
+//
+// IMPORTANTE: NÃO converter pra import normal — esses prefixos são usados
+// no body via `<prefix>.loadLibrary()` e `<prefix>.ClassName()`. Linters
+// que removem "imports não usados" precisam ignorar `deferred as`.
+// ignore_for_file: directives_ordering, library_prefixes
+import '../livelab_v2/admin_v2_routes.dart' deferred as adminV2;
+import '../screens/admin_master/regional_managers_screen.dart'
+    deferred as regionalMgr;
+import '../screens/admin_master/tiktok_apps_screen.dart' deferred as tiktokApps;
+import '../screens/auditoria/analise_credito_screen.dart'
+    deferred as auditCredito;
+import '../screens/auditoria/audit_log_screen.dart' deferred as auditLogLib;
+import '../screens/knowledge/admin_article_editor_screen.dart'
+    deferred as kbEditor;
+import '../screens/knowledge/admin_categories_screen.dart'
+    deferred as kbCategories;
 
 class AppRoutes {
   static const login = '/login';
@@ -346,55 +360,70 @@ class AppRoutes {
 
       case franqueado:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master'},
+          child: RoleRouteGuard(
+            allowedRoles: const {'franqueador_master'},
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: MasterHomeV2(),
+            child: _LazyScreen(
+              loader: adminV2.loadLibrary,
+              builder: (_) => adminV2.MasterHomeV2(),
+            ),
           ),
           settings: settings,
         );
 
       case masterDashboard:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
+          child: RoleRouteGuard(
             allowedRoles: _masterRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: MasterHomeV2(),
+            child: _LazyScreen(
+              loader: adminV2.loadLibrary,
+              builder: (_) => adminV2.MasterHomeV2(),
+            ),
           ),
           settings: settings,
         );
 
       case masterUnits:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
+          child: RoleRouteGuard(
             allowedRoles: _masterRoles,
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: MasterUnidadesV2(),
+            child: _LazyScreen(
+              loader: adminV2.loadLibrary,
+              builder: (_) => adminV2.MasterUnidadesV2(),
+            ),
           ),
           settings: settings,
         );
 
       case masterConsolidated:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
+          child: RoleRouteGuard(
             allowedRoles: _masterRoles,
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: MasterConsolidadoV2(),
+            child: _LazyScreen(
+              loader: adminV2.loadLibrary,
+              builder: (_) => adminV2.MasterConsolidadoV2(),
+            ),
           ),
           settings: settings,
         );
 
       case masterCrm:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
+          child: RoleRouteGuard(
             allowedRoles: _masterRoles,
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: MasterCrmV2(),
+            child: _LazyScreen(
+              loader: adminV2.loadLibrary,
+              builder: (_) => adminV2.MasterCrmV2(),
+            ),
           ),
           settings: settings,
         );
@@ -491,11 +520,14 @@ class AppRoutes {
 
       case leads:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
+          child: RoleRouteGuard(
             allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: MasterCrmV2(),
+            child: _LazyScreen(
+              loader: adminV2.loadLibrary,
+              builder: (_) => adminV2.MasterCrmV2(),
+            ),
           ),
           settings: settings,
         );
@@ -573,33 +605,42 @@ class AppRoutes {
       case clientes:
       case clientesLeads:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
+          child: RoleRouteGuard(
             allowedRoles: _commercialRoles,
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: MasterCrmV2(),
+            child: _LazyScreen(
+              loader: adminV2.loadLibrary,
+              builder: (_) => adminV2.MasterCrmV2(),
+            ),
           ),
           settings: settings,
         );
 
       case auditoriaContratos:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master'},
+          child: RoleRouteGuard(
+            allowedRoles: const {'franqueador_master'},
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: AnaliseCreditoScreen(),
+            child: _LazyScreen(
+              loader: auditCredito.loadLibrary,
+              builder: (_) => auditCredito.AnaliseCreditoScreen(),
+            ),
           ),
           settings: settings,
         );
 
       case auditLog:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master', 'franqueado', 'auditor'},
+          child: RoleRouteGuard(
+            allowedRoles: const {'franqueador_master', 'franqueado', 'auditor'},
             fallbackRoute: home,
             unauthenticatedRoute: login,
-            child: AuditLogScreen(),
+            child: _LazyScreen(
+              loader: auditLogLib.loadLibrary,
+              builder: (_) => auditLogLib.AuditLogScreen(),
+            ),
           ),
           settings: settings,
         );
@@ -762,33 +803,42 @@ class AppRoutes {
 
       case masterFranqueados:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master'},
+          child: RoleRouteGuard(
+            allowedRoles: const {'franqueador_master'},
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: MasterFranqueadosV2(),
+            child: _LazyScreen(
+              loader: adminV2.loadLibrary,
+              builder: (_) => adminV2.MasterFranqueadosV2(),
+            ),
           ),
           settings: settings,
         );
 
       case masterRegionalManagers:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master'},
+          child: RoleRouteGuard(
+            allowedRoles: const {'franqueador_master'},
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: RegionalManagersScreen(),
+            child: _LazyScreen(
+              loader: regionalMgr.loadLibrary,
+              builder: (_) => regionalMgr.RegionalManagersScreen(),
+            ),
           ),
           settings: settings,
         );
 
       case masterTiktokApps:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master'},
+          child: RoleRouteGuard(
+            allowedRoles: const {'franqueador_master'},
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
-            child: TiktokAppsScreen(),
+            child: _LazyScreen(
+              loader: tiktokApps.loadLibrary,
+              builder: (_) => tiktokApps.TiktokAppsScreen(),
+            ),
           ),
           settings: settings,
         );
@@ -806,22 +856,28 @@ class AppRoutes {
 
       case adminKnowledgeNew:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master', 'admin_master'},
+          child: RoleRouteGuard(
+            allowedRoles: const {'franqueador_master', 'admin_master'},
             fallbackRoute: knowledgeBase,
             unauthenticatedRoute: login,
-            child: AdminArticleEditorScreen(),
+            child: _LazyScreen(
+              loader: kbEditor.loadLibrary,
+              builder: (_) => kbEditor.AdminArticleEditorScreen(),
+            ),
           ),
           settings: settings,
         );
 
       case adminKnowledgeCategories:
         return buildPremiumRoute(
-          child: const RoleRouteGuard(
-            allowedRoles: {'franqueador_master', 'admin_master'},
+          child: RoleRouteGuard(
+            allowedRoles: const {'franqueador_master', 'admin_master'},
             fallbackRoute: knowledgeBase,
             unauthenticatedRoute: login,
-            child: AdminKnowledgeCategoriesScreen(),
+            child: _LazyScreen(
+              loader: kbCategories.loadLibrary,
+              builder: (_) => kbCategories.AdminKnowledgeCategoriesScreen(),
+            ),
           ),
           settings: settings,
         );
@@ -877,9 +933,12 @@ class AppRoutes {
           allowedRoles: const {'franqueador_master', 'admin_master'},
           fallbackRoute: knowledgeBase,
           unauthenticatedRoute: login,
-          child: AdminArticleEditorScreen(
-            articleId: id,
-            article: preloaded,
+          child: _LazyScreen(
+            loader: kbEditor.loadLibrary,
+            builder: (_) => kbEditor.AdminArticleEditorScreen(
+              articleId: id,
+              article: preloaded,
+            ),
           ),
         ),
         settings: settings,
@@ -938,6 +997,82 @@ class _CabineNotFoundScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// W6-A: Lazy loader para deferred screens. Mostra spinner enquanto o
+/// chunk JS faz download/parse, depois renderiza o widget real.
+/// Em produção (Flutter Web release) gera arquivos `*.part.js` separados.
+class _LazyScreen extends StatefulWidget {
+  const _LazyScreen({
+    required this.loader,
+    required this.builder,
+  });
+
+  /// Future retornado por `someLib.loadLibrary()`.
+  final Future<void> Function() loader;
+
+  /// Builder chamado após o chunk estar carregado.
+  final Widget Function(BuildContext context) builder;
+
+  @override
+  State<_LazyScreen> createState() => _LazyScreenState();
+}
+
+class _LazyScreenState extends State<_LazyScreen> {
+  late final Future<void> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = widget.loader();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _future,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snap.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Falha ao carregar tela',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${snap.error}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Voltar'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+        return widget.builder(context);
+      },
     );
   }
 }

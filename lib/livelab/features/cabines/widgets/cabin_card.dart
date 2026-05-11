@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/tokens.dart';
 import '../../../theme/livelab_theme.dart';
 import '../../../core/format.dart';
 import '../../../widgets/ll_status_pill.dart';
 import '../cabines_models.dart';
+import '../../../../providers/tiktok_live_status_provider.dart';
+import '../../../../models/tiktok_live_status.dart';
 
-class CabinCard extends StatefulWidget {
+class CabinCard extends ConsumerStatefulWidget {
   const CabinCard({
     super.key,
     required this.cabin,
@@ -29,10 +32,10 @@ class CabinCard extends StatefulWidget {
   final bool busy;
 
   @override
-  State<CabinCard> createState() => _CabinCardState();
+  ConsumerState<CabinCard> createState() => _CabinCardState();
 }
 
-class _CabinCardState extends State<CabinCard> {
+class _CabinCardState extends ConsumerState<CabinCard> {
   int _activeTab = 0; // 0 = agenda, 1 = história
 
   @override
@@ -156,6 +159,10 @@ class _CabinCardState extends State<CabinCard> {
                 ],
               ),
             ),
+            if (c.liveAtualId != null) ...[
+              const SizedBox(height: LlSpacing.sm),
+              _tiktokBadge(t, c.liveAtualId!),
+            ],
           ],
         );
       case CabinStatus.busy:
@@ -240,6 +247,64 @@ class _CabinCardState extends State<CabinCard> {
             style: TextStyle(color: t.textMuted, fontSize: 9, letterSpacing: 0.6, fontWeight: FontWeight.w600),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Badge que indica o estado do TikTok connector para esta live.
+  Widget _tiktokBadge(LlTokens t, String liveId) {
+    final asyncStatus = ref.watch(tiktokLiveStatusProvider(liveId));
+    final status = asyncStatus.valueOrNull ?? TiktokLiveStatus.disconnected;
+
+    final (bg, fg, dot, label) = switch (status.status) {
+      'connected'    => (t.successSoft, t.success,      t.success,      'TikTok ativo'),
+      'connecting'   => (t.warningSoft, t.warning,      t.warning,      'Conectando...'),
+      'error'        => (t.dangerSoft,  t.danger,       t.danger,       'Erro: ${status.error ?? "desconhecido"}'),
+      _              => (t.bgElev2,     t.textMuted,    t.textFaint,    'Aguardando @TikTok'),
+    };
+
+    // Formata lastSyncAt em pt-BR para tooltip
+    final syncLabel = status.lastSyncAt != null
+        ? () {
+            final d = status.lastSyncAt!.toLocal();
+            final hh = d.hour.toString().padLeft(2, '0');
+            final mm = d.minute.toString().padLeft(2, '0');
+            final ss = d.second.toString().padLeft(2, '0');
+            return 'Última sync: $hh:$mm:$ss';
+          }()
+        : 'Sem sync recente';
+
+    return Tooltip(
+      message: syncLabel,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(LlRadius.pill),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: fg,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

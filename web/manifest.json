@@ -2,11 +2,16 @@
     "name": "Livelab — LiveShop SaaS",
     "short_name": "Livelab",
     "start_url": ".",
+    "scope": "/",
     "display": "standalone",
+    "display_override": ["standalone", "minimal-ui"],
     "background_color": "#FFFFFF",
     "theme_color": "#E8673C",
-    "description": "Plataforma de gestão para franquias de estúdios de Live Shop.",
+    "description": "Plataforma multi-tenant para gestão de franquias de estúdios de Live Shop TikTok.",
     "orientation": "portrait-primary",
+    "lang": "pt-BR",
+    "dir": "ltr",
+    "categories": ["business", "productivity"],
     "prefer_related_applications": false,
     "icons": [
         {
@@ -30,6 +35,15 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "og-image.png",
+            "sizes": "1200x630",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "LiveShop SaaS dashboard"
         }
     ]
 }

@@ -9,6 +9,7 @@ import '../../models/cliente.dart';
 import '../../providers/usuarios_provider.dart';
 import '../../providers/apresentadoras_provider.dart';
 import '../../providers/clientes_provider.dart';
+import '../../providers/convites_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../widgets/temp_password_dialog.dart';
@@ -26,8 +27,10 @@ class UsuariosScreen extends ConsumerStatefulWidget {
 }
 
 class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
-  int _tab = 0; // 0 internos, 1 apresentadores, 2 clientes
+  int _tab = 0; // 0 internos, 1 convites pendentes
   String _search = '';
+  // Seleção múltipla para reenvio em bulk
+  final Set<String> _selecionados = {};
 
   static const _papeisInternos = [
     'gerente',
@@ -40,6 +43,7 @@ class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
     ref.read(usuariosProvider.notifier).refresh();
     ref.read(apresentadorasProvider.notifier).refresh();
     ref.read(clientesProvider.notifier).refresh();
+    ref.read(convitesProvider.notifier).refresh();
   }
 
   Future<void> _openNovoUsuario() async {
@@ -66,10 +70,12 @@ class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
     final pad = r.isMobile ? 16.0 : 28.0;
 
     final usuariosAsync = ref.watch(usuariosProvider);
+    final convitesAsync = ref.watch(convitesProvider);
 
     final internos = (usuariosAsync.valueOrNull ?? const <Usuario>[])
         .where((u) => _papeisInternos.contains(u.papel))
         .toList();
+    final convites = convitesAsync.valueOrNull ?? const <ConvitePendente>[];
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(pad, 16, pad, 28),
@@ -80,9 +86,12 @@ class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
           const SizedBox(height: 18),
           _toolbar(t),
           const SizedBox(height: 16),
-          // Tabs Apresentadores + Clientes removidos — links dedicados no sidebar
-          // (Apresentadoras / Clientes do menu) cobrem essas listas.
-          _internosBody(t, usuariosAsync, internos),
+          _tabStrip(t,
+              internosCount: internos.length,
+              convitesCount: convites.length),
+          const SizedBox(height: 16),
+          if (_tab == 0) _internosBody(t, usuariosAsync, internos),
+          if (_tab == 1) _convitesBody(t, convitesAsync, convites),
         ],
       ),
     );
@@ -241,13 +250,11 @@ class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
   Widget _tabStrip(
     LlTokens t, {
     required int internosCount,
-    required int apresentadoresCount,
-    required int clientesCount,
+    required int convitesCount,
   }) {
     final tabs = [
-      (Icons.people_outline, 'Internos', internosCount),
-      (Icons.mic_none_rounded, 'Apresentadores', apresentadoresCount),
-      (Icons.shopping_bag_outlined, 'Clientes', clientesCount),
+      (Icons.people_outline, 'Usuários ativos', internosCount),
+      (Icons.mail_outline_rounded, 'Convites pendentes', convitesCount),
     ];
     return Wrap(
       spacing: 8,
@@ -341,49 +348,161 @@ class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
     );
   }
 
-  Widget _apresentadoresBody(
-      LlTokens t, AsyncValue async, List<Apresentadora> list) {
+
+  // ─── Convites pendentes ────────────────────────────────────────────────────
+
+  Widget _convitesBody(
+      LlTokens t, AsyncValue<List<ConvitePendente>> async, List<ConvitePendente> convites) {
     return async.when(
       loading: () => const _LoadingBox(),
       error: (e, _) => _errorBox(t, e),
       data: (_) {
-        final filtered =
-            list.where((a) => _matchesSearch(a.nome, a.email)).toList();
+        final filtered = convites
+            .where((c) => _matchesSearch(c.nome, c.email))
+            .toList();
         if (filtered.isEmpty) {
           return _emptyBox(t,
-              icon: Icons.mic_off,
-              title: 'Nenhuma apresentadora',
-              sub: 'Cadastre apresentadoras para começar.');
+              icon: Icons.mail_outlined,
+              title: 'Nenhum convite pendente',
+              sub: 'Todos os usuários convidados já aceitaram.');
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: filtered
-              .map((a) => _ApresentadoraRow(t: t, a: a))
-              .toList(),
+          children: [
+            // Toolbar de seleção bulk
+            if (_selecionados.isNotEmpty) _bulkToolbar(t),
+            if (_selecionados.isNotEmpty) const SizedBox(height: 10),
+            ...filtered.map((c) => _ConviteRow(
+                  t: t,
+                  convite: c,
+                  selecionado: _selecionados.contains(c.id),
+                  onToggle: () => setState(() {
+                    if (_selecionados.contains(c.id)) {
+                      _selecionados.remove(c.id);
+                    } else {
+                      _selecionados.add(c.id);
+                    }
+                  }),
+                  onCancelar: () => _cancelarConvite(t, c),
+                )),
+          ],
         );
       },
     );
   }
 
-  Widget _clientesBody(LlTokens t, AsyncValue async, List<Cliente> list) {
-    return async.when(
-      loading: () => const _LoadingBox(),
-      error: (e, _) => _errorBox(t, e),
-      data: (_) {
-        final filtered =
-            list.where((c) => _matchesSearch(c.nome, c.email)).toList();
-        if (filtered.isEmpty) {
-          return _emptyBox(t,
-              icon: Icons.shopping_bag_outlined,
-              title: 'Nenhum cliente',
-              sub: 'Cadastre um cliente parceiro para começar.');
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: filtered.map((c) => _ClienteRow(t: t, c: c)).toList(),
-        );
-      },
+  Widget _bulkToolbar(LlTokens t) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: t.primarySoft,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: t.primary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '${_selecionados.length} selecionado${_selecionados.length > 1 ? 's' : ''}',
+            style: TextStyle(
+                color: t.primary, fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+          const Spacer(),
+          TextButton(
+            onPressed: () => setState(() => _selecionados.clear()),
+            child: Text('Limpar', style: TextStyle(color: t.textSecondary, fontSize: 13)),
+          ),
+          const SizedBox(width: 8),
+          Material(
+            color: t.primary,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => _reenviarBulk(t),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.send_rounded, size: 14, color: Colors.white),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Reenviar selecionados',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  Future<void> _reenviarBulk(LlTokens t) async {
+    final ids = _selecionados.toList();
+    try {
+      final result = await ref
+          .read(convitesProvider.notifier)
+          .reenviarBulk(ids);
+      if (!mounted) return;
+      final n = result['reenviados'] as int? ?? 0;
+      final falhas = (result['falhas'] as List?)?.length ?? 0;
+      final msg = falhas > 0
+          ? '$n convite(s) reenviado(s). $falhas falha(s).'
+          : '$n convite(s) reenviado(s) com sucesso.';
+      setState(() => _selecionados.clear());
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: falhas > 0 ? t.warning : t.success,
+        content: Text(msg),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: t.danger,
+        content: Text(ApiService.extractErrorMessage(e)),
+      ));
+    }
+  }
+
+  Future<void> _cancelarConvite(LlTokens t, ConvitePendente c) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Cancelar convite'),
+        content: Text('Deseja cancelar o convite de ${c.nome}? O usuário será removido permanentemente.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Não'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Cancelar convite',
+                style: TextStyle(color: t.danger, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await ref.read(convitesProvider.notifier).cancelar(c.id);
+      if (!mounted) return;
+      setState(() => _selecionados.remove(c.id));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: t.success,
+        content: Text('Convite de ${c.nome} cancelado.'),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: t.danger,
+        content: Text(ApiService.extractErrorMessage(e)),
+      ));
+    }
   }
 }
 
@@ -1655,6 +1774,162 @@ class _LoadingBox extends StatelessWidget {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 60),
       child: Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ConviteRow — linha de convite pendente com badge de status e ações
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ConviteRow extends StatelessWidget {
+  final LlTokens t;
+  final ConvitePendente convite;
+  final bool selecionado;
+  final VoidCallback onToggle;
+  final VoidCallback onCancelar;
+
+  const _ConviteRow({
+    required this.t,
+    required this.convite,
+    required this.selecionado,
+    required this.onToggle,
+    required this.onCancelar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final expirou = convite.expirou;
+    final dias = convite.diasRestantes;
+    final badgeColor = expirou ? t.danger : (dias != null && dias <= 1 ? t.warning : t.info);
+    final badgeLabel = expirou
+        ? 'EXPIRADO'
+        : dias == null
+            ? 'SEM PRAZO'
+            : dias == 0
+                ? 'EXPIRA HOJE'
+                : 'EXPIRA EM ${dias}d';
+
+    final papelLabel = _papelLabels[convite.papel] ?? convite.papel;
+
+    return _rowShell(
+      t,
+      child: Row(
+        children: [
+          // Checkbox seleção
+          GestureDetector(
+            onTap: onToggle,
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: selecionado ? t.primary : Colors.transparent,
+                border: Border.all(
+                    color: selecionado ? t.primary : t.border, width: 2),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: selecionado
+                  ? const Icon(Icons.check, size: 13, color: Colors.white)
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Avatar
+          _avatar(t, convite.nome,
+              bg: expirou
+                  ? t.danger.withValues(alpha: 0.12)
+                  : t.info.withValues(alpha: 0.12),
+              fg: expirou ? t.danger : t.info),
+          const SizedBox(width: 12),
+          // Nome + email + papel
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  convite.nome,
+                  style: TextStyle(
+                      color: t.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  convite.email,
+                  style: TextStyle(color: t.textSecondary, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  papelLabel,
+                  style: TextStyle(
+                      color: t.textMuted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Badge de status expiração
+          _statusPill(t, label: badgeLabel, color: badgeColor),
+          const SizedBox(width: 10),
+          // Menu de ações
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: t.textMuted, size: 20),
+            color: t.bgElev1,
+            onSelected: (v) async {
+              if (v == 'reenviar') {
+                try {
+                  await ApiService.post(
+                    '/usuarios/${convite.id}/reenviar-convite',
+                    data: {},
+                  );
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    backgroundColor: t.info,
+                    content: const Text('Convite reenviado. Validade 72h.'),
+                  ));
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    backgroundColor: t.danger,
+                    content: Text(ApiService.extractErrorMessage(e)),
+                  ));
+                }
+              } else if (v == 'cancelar') {
+                onCancelar();
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'reenviar',
+                child: Row(children: [
+                  Icon(Icons.send_rounded, size: 16, color: t.info),
+                  const SizedBox(width: 8),
+                  Text('Reenviar convite',
+                      style: TextStyle(color: t.textPrimary, fontSize: 13)),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'cancelar',
+                child: Row(children: [
+                  Icon(Icons.cancel_outlined, size: 16, color: t.danger),
+                  const SizedBox(width: 8),
+                  Text('Cancelar convite',
+                      style: TextStyle(
+                          color: t.danger,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600)),
+                ]),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
