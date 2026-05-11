@@ -429,6 +429,7 @@ class _TikTokClienteCardState extends ConsumerState<_TikTokClienteCard> {
               style: LL.caption.copyWith(fontSize: 11.5)),
           const SizedBox(height: 14),
           TextFormField(
+            key: const ValueKey('config_tiktok_field'),
             controller: _ctrl,
             keyboardType: TextInputType.text,
             textInputAction: TextInputAction.done,

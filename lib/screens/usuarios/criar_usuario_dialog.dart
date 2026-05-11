@@ -5,6 +5,7 @@ import '../../providers/clientes_provider.dart';
 import '../../services/api_service.dart';
 import '../../design_system/design_system.dart';
 import '../../widgets/temp_password_dialog.dart';
+import '../../utils/form_validators.dart';
 
 // F4: fluxo de convite via email é o padrão. TempPasswordDialog só aparece
 // quando o backend responde com senha_temporaria (fallback dev sem RESEND_API_KEY).
@@ -70,6 +71,7 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
           padding: const EdgeInsets.all(AppSpacing.x6),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -82,8 +84,7 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
                   TextFormField(
                     controller: _nomeCtrl,
                     decoration: _dec('Nome completo'),
-                    validator: (v) =>
-                        (v?.trim().isEmpty ?? true) ? 'Obrigatório' : null,
+                    validator: FormValidators.required(),
                   ),
                   const SizedBox(height: AppSpacing.x4),
 
@@ -92,11 +93,10 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
                     decoration: _dec('email@empresa.com'),
-                    validator: (v) {
-                      if (v?.trim().isEmpty ?? true) return 'Obrigatório';
-                      if (!v!.contains('@')) return 'E-mail inválido';
-                      return null;
-                    },
+                    validator: FormValidators.composite([
+                      FormValidators.required(),
+                      FormValidators.email,
+                    ]),
                   ),
                   const SizedBox(height: AppSpacing.x4),
 

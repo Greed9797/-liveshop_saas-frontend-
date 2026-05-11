@@ -435,6 +435,7 @@ class _LoginForm extends StatelessWidget {
           focusNode: emailFocus,
           keyboardType: TextInputType.emailAddress,
           hint: 'voce@exemplo.com',
+          fieldKey: const ValueKey('login_email'),
         ),
         const SizedBox(height: 16),
         _LLField(
@@ -444,6 +445,7 @@ class _LoginForm extends StatelessWidget {
           obscure: obscure,
           hint: '••••••••',
           onSubmitted: (_) => onSubmit(),
+          fieldKey: const ValueKey('login_senha'),
           suffix: IconButton(
             splashRadius: 20,
             tooltip: obscure ? 'Mostrar senha' : 'Ocultar senha',
@@ -481,6 +483,7 @@ class _LoginForm extends StatelessWidget {
             ),
             const Spacer(),
             InkWell(
+              key: const ValueKey('login_esqueci_senha'),
               onTap: onForgotPassword,
               child: Text('Esqueci a senha',
                   style: GoogleFonts.inter(
@@ -520,6 +523,7 @@ class _LoginForm extends StatelessWidget {
         ],
         const SizedBox(height: 20),
         _LLPrimaryButton(
+          key: const ValueKey('login_submit'),
           label: 'Entrar',
           isLoading: isLoading,
           onTap: onSubmit,
@@ -538,6 +542,7 @@ class _LLField extends StatelessWidget {
   final TextInputType? keyboardType;
   final Widget? suffix;
   final ValueChanged<String>? onSubmitted;
+  final Key? fieldKey;
 
   const _LLField({
     required this.label,
@@ -548,6 +553,7 @@ class _LLField extends StatelessWidget {
     this.keyboardType,
     this.suffix,
     this.onSubmitted,
+    this.fieldKey,
   });
 
   @override
@@ -580,6 +586,7 @@ class _LLField extends StatelessWidget {
                 : null,
           ),
           child: TextField(
+            key: fieldKey,
             controller: controller,
             focusNode: focusNode,
             obscureText: obscure,
@@ -609,7 +616,7 @@ class _LLPrimaryButton extends StatefulWidget {
   final String label;
   final bool isLoading;
   final VoidCallback onTap;
-  const _LLPrimaryButton({required this.label, required this.isLoading, required this.onTap});
+  const _LLPrimaryButton({super.key, required this.label, required this.isLoading, required this.onTap});
 
   @override
   State<_LLPrimaryButton> createState() => _LLPrimaryButtonState();

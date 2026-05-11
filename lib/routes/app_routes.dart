@@ -25,6 +25,7 @@ import '../screens/cliente/cliente_lives_screen.dart';
 import '../livelab_v2/admin_v2_routes.dart';
 import '../livelab_v2/cliente_v2_routes.dart';
 import '../screens/admin_master/regional_managers_screen.dart';
+import '../screens/admin_master/tiktok_apps_screen.dart';
 import '../screens/configuracoes/configuracoes_screen.dart';
 import '../screens/excelencia/excelencia_screen.dart';
 import '../screens/financeiro/financeiro_screen.dart';
@@ -96,6 +97,7 @@ class AppRoutes {
   static const usuarios = '/usuarios';
   static const masterFranqueados = '/master/franqueados';
   static const masterRegionalManagers = '/master/gerentes-regionais';
+  static const masterTiktokApps = '/master/tiktok-apps';
 
   // Papéis que enxergam o painel /master/* — franqueador_master vê tudo,
   // gerente_regional vê subset filtrado pelo backend (user_tenant_access).
@@ -776,6 +778,17 @@ class AppRoutes {
             fallbackRoute: masterDashboard,
             unauthenticatedRoute: login,
             child: RegionalManagersScreen(),
+          ),
+          settings: settings,
+        );
+
+      case masterTiktokApps:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: {'franqueador_master'},
+            fallbackRoute: masterDashboard,
+            unauthenticatedRoute: login,
+            child: TiktokAppsScreen(),
           ),
           settings: settings,
         );

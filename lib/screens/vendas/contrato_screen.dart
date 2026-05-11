@@ -339,6 +339,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                       // Auto-preenchido com cliente.tiktokUsername; pode ser
                       // sobrescrito (cada contrato pode ter um @ próprio).
                       TextFormField(
+                        key: const ValueKey('contrato_tiktok'),
                         controller: _tiktokCtrl,
                         keyboardType: TextInputType.text,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -363,6 +364,7 @@ class _ContratoScreenState extends ConsumerState<ContratoScreen> {
                   const Center(child: CircularProgressIndicator())
                 else if (_contratoId == null) ...[
                   AppPrimaryButton(
+                    key: const ValueKey('contrato_criar_btn'),
                     label: 'CRIAR CONTRATO',
                     icon: Icons.description_outlined,
                     fullWidth: true,

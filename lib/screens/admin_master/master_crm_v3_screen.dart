@@ -14,6 +14,7 @@ import '../../models/lead.dart';
 import '../../providers/admin_master_provider.dart';
 import '../../providers/leads_provider.dart';
 import '../../widgets/crm/lead_filter.dart';
+import '../../widgets/skeleton_list.dart';
 import 'lead_dialog.dart';
 
 class _C {
@@ -956,33 +957,6 @@ class _TypeTag extends StatelessWidget {
 // PIPELINE + CAMPOS
 // =============================================================
 
-class _PipelineAndFields extends StatelessWidget {
-  const _PipelineAndFields();
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (_, c) {
-      final isWide = c.maxWidth > 800;
-      const gap = 12.0;
-      final pipeline = _PipelineCard();
-      final fields = _FieldsCard();
-      if (isWide) {
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: pipeline),
-              const SizedBox(width: gap),
-              Expanded(child: fields),
-            ],
-          ),
-        );
-      }
-      return Column(children: [pipeline, const SizedBox(height: gap), fields]);
-    });
-  }
-}
-
 class _PipelineCard extends StatelessWidget {
   static const _items = [
     (Color(0xFF5AC8FA), 'Lead captado'),
@@ -1117,16 +1091,7 @@ class _LoadingBlock extends StatelessWidget {
   const _LoadingBlock();
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 120,
-      decoration: BoxDecoration(
-        color: _C.bgElev1(context),
-        border: Border.all(color: _C.hairline(context)),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      alignment: Alignment.center,
-      child: const CircularProgressIndicator(color: _C.primary),
-    );
+    return const SkeletonList(itemCount: 4, itemHeight: 80);
   }
 }
 

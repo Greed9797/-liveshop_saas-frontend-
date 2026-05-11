@@ -8,6 +8,7 @@ import 'design_system/design_system.dart';
 import 'routes/app_navigator.dart';
 import 'routes/app_routes.dart';
 import 'services/api_service.dart';
+import 'services/sentry_service.dart';
 import 'config/e2e_bootstrap.dart';
 
 const bool isE2ETesting = bool.fromEnvironment(
@@ -34,7 +35,14 @@ void main() async {
     );
     FlutterError.onError = (details) {
       FlutterError.presentError(details);
-      // Sentry capture seria aqui (frontend)
+      // Reporta erros não tratados ao Sentry (no-op se SENTRY_DSN ausente).
+      if (SentryService.enabled) {
+        SentryService.capture(
+          details.exception,
+          stackTrace: details.stack,
+          tags: const {'source': 'flutter_error_handler'},
+        );
+      }
     };
   }
 
@@ -78,10 +86,25 @@ void main() async {
     }
   }
 
-  runApp(UncontrolledProviderScope(
-    container: container,
-    child: const LiveShopApp(),
-  ));
+  // Se autenticado, propaga user para o Sentry (no-op se DSN ausente).
+  final restoredUser = container.read(authProvider).user;
+  if (restoredUser != null && SentryService.enabled) {
+    await SentryService.setUser(
+      id: restoredUser.id,
+      email: restoredUser.email,
+      papel: restoredUser.papel,
+      tenantId: restoredUser.tenantId,
+    );
+  }
+
+  // Sentry.init wrapping runApp captura erros assíncronos do framework.
+  // Quando SENTRY_DSN não está setado, init() roda appRunner direto (no-op).
+  await SentryService.init(() async {
+    runApp(UncontrolledProviderScope(
+      container: container,
+      child: const LiveShopApp(),
+    ));
+  });
 }
 
 /// Widget de fallback global quando algum descendente lança exception

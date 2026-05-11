@@ -30,6 +30,7 @@ dependencies:
   youtube_player_iframe: ^5.2.0
   webview_flutter: ^4.10.0
   markdown: ^7.2.2
+  sentry_flutter: ^8.9.0
 
 dev_dependencies:
   flutter_test:

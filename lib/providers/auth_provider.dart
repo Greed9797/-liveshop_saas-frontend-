@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
+import '../services/sentry_service.dart';
 
 const _sensitiveAuthWindow = Duration(minutes: 5);
 
@@ -42,9 +43,18 @@ class AuthNotifier extends Notifier<AuthState> {
     final userJson = Map<String, dynamic>.from(data['user'] as Map);
     await ApiService.saveUser(userJson);
 
+    final user = User.fromJson(userJson);
     state = AuthState(
-      user: User.fromJson(userJson),
+      user: user,
       lastSensitiveAuthAt: lastSensitiveAuthAt,
+    );
+
+    // Sentry user tagging — no-op se SENTRY_DSN ausente.
+    await SentryService.setUser(
+      id: user.id,
+      email: user.email,
+      papel: user.papel,
+      tenantId: user.tenantId,
     );
   }
 
@@ -148,6 +158,7 @@ class AuthNotifier extends Notifier<AuthState> {
       // Ignora falhas de rede — limpa tokens localmente de qualquer forma.
     }
     await ApiService.clearTokens();
+    await SentryService.clearUser();
     state = const AuthState();
   }
 
@@ -155,6 +166,7 @@ class AuthNotifier extends Notifier<AuthState> {
     String message = 'Sessão expirada. Faça login novamente.',
   ]) async {
     await ApiService.clearTokens();
+    await SentryService.clearUser();
     state = AuthState(error: message);
   }
 }

@@ -1,7 +1,10 @@
 // Trigger browser download de CSV/text em Flutter Web.
-// Usa dart:html — só funciona em build web. Em mobile this throws (não usar).
+// Usa conditional import: dart:html em web; stub em VM/mobile (evita erro em testes).
 import 'dart:convert';
-import 'dart:html' as html;
+
+import 'web_download_stub.dart'
+    // ignore: uri_does_not_exist
+    if (dart.library.html) 'web_download_html.dart';
 
 void downloadTextFile({
   required String filename,
@@ -10,15 +13,7 @@ void downloadTextFile({
 }) {
   // BOM para Excel reconhecer UTF-8 corretamente.
   final bytes = utf8.encode('﻿$content');
-  final blob = html.Blob([bytes], mimeType);
-  final url = html.Url.createObjectUrlFromBlob(blob);
-  final anchor = html.AnchorElement(href: url)
-    ..download = filename
-    ..style.display = 'none';
-  html.document.body!.append(anchor);
-  anchor.click();
-  anchor.remove();
-  html.Url.revokeObjectUrl(url);
+  platformDownload(filename: filename, bytes: bytes, mimeType: mimeType);
 }
 
 String csvEscape(String v) {

@@ -13,6 +13,7 @@ import '../../livelab/theme/livelab_theme.dart';
 import '../../livelab/theme/tokens.dart';
 import '../../livelab/widgets/livelab_scaffold.dart';
 import '../boletos/boletos_screen.dart';
+import '../../utils/form_validators.dart';
 
 class FinanceiroScreen extends ConsumerStatefulWidget {
   const FinanceiroScreen({super.key});
@@ -892,6 +893,7 @@ void _showAdicionarCusto(
   LlTokens t, {
   _Categoria? categoria,
 }) {
+  final formKey = GlobalKey<FormState>();
   final descCtrl = TextEditingController(text: categoria?.label);
   final valorCtrl = TextEditingController();
   String tipo = categoria?.valor ?? 'outros';
@@ -906,50 +908,59 @@ void _showAdicionarCusto(
             style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w700)),
         content: SizedBox(
           width: 360,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: descCtrl,
-                style: TextStyle(color: t.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Descrição',
-                  labelStyle: TextStyle(color: t.textMuted),
-                  border: const OutlineInputBorder(),
+          child: Form(
+            key: formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: descCtrl,
+                  style: TextStyle(color: t.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Descrição *',
+                    labelStyle: TextStyle(color: t.textMuted),
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: FormValidators.required(),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: valorCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                style: TextStyle(color: t.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'R\$ Valor',
-                  labelStyle: TextStyle(color: t.textMuted),
-                  border: const OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: valorCtrl,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  style: TextStyle(color: t.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'R\$ Valor *',
+                    labelStyle: TextStyle(color: t.textMuted),
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: FormValidators.composite([
+                    FormValidators.required(),
+                    FormValidators.positiveNumber,
+                  ]),
                 ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: tipo,
-                dropdownColor: t.bgElev1,
-                style: TextStyle(color: t.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Categoria',
-                  labelStyle: TextStyle(color: t.textMuted),
-                  border: const OutlineInputBorder(),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: tipo,
+                  dropdownColor: t.bgElev1,
+                  style: TextStyle(color: t.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Categoria',
+                    labelStyle: TextStyle(color: t.textMuted),
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'aluguel', child: Text('Aluguel')),
+                    DropdownMenuItem(value: 'salario', child: Text('Salários')),
+                    DropdownMenuItem(value: 'energia', child: Text('Energia')),
+                    DropdownMenuItem(value: 'internet', child: Text('Internet')),
+                    DropdownMenuItem(value: 'outros', child: Text('Outros')),
+                  ],
+                  onChanged: (v) => setState(() => tipo = v ?? 'outros'),
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'aluguel', child: Text('Aluguel')),
-                  DropdownMenuItem(value: 'salario', child: Text('Salários')),
-                  DropdownMenuItem(value: 'energia', child: Text('Energia')),
-                  DropdownMenuItem(value: 'internet', child: Text('Internet')),
-                  DropdownMenuItem(value: 'outros', child: Text('Outros')),
-                ],
-                onChanged: (v) => setState(() => tipo = v ?? 'outros'),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         actions: [
@@ -960,8 +971,8 @@ void _showAdicionarCusto(
           AppPrimaryButton(
             label: 'Salvar',
             onPressed: () async {
+              if (!(formKey.currentState?.validate() ?? false)) return;
               final valorStr = valorCtrl.text.replaceAll(',', '.');
-              if (descCtrl.text.isEmpty || valorStr.isEmpty) return;
               final valor = double.tryParse(valorStr);
               if (valor == null || valor <= 0) return;
               Navigator.pop(ctx);

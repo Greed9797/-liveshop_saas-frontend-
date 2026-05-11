@@ -18,14 +18,21 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="theme-color" content="#E8673C">
   <meta name="description" content="LiveShop SaaS — gestão de franquias de Live Shop">
 
   <!-- Defesa em camadas: CSP em meta tag espelha header do firebase.json
        (caso assets sirvam fora do Firebase Hosting, headers podem não chegar). -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'wasm-unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://liveshop-saas-api-production.up.railway.app https://www.gstatic.com https://fonts.gstatic.com; worker-src 'self' blob:; manifest-src 'self'">
 
+  <!-- Performance: preconnect to canvaskit CDN + Google Fonts (reduz handshake TLS) -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Livelab">
   <link rel="apple-touch-icon" href="favicon.png">
@@ -35,6 +42,16 @@
 
   <title>Livelab</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Flutter Web: força canvaskit do CDN gstatic (engineRevision usado pelo bootstrap).
+       Reduz bundle servido pelo Firebase em ~6.8MB (canvaskit.wasm não vem do nosso server).
+       useLocalCanvasKit=false garante fallback para CDN mesmo com config customizada. -->
+  <script>
+    window.flutterConfiguration = {
+      canvasKitBaseUrl: "https://www.gstatic.com/flutter-canvaskit/425cfb54d01a9472b3e81d9e76fd63a4a44cfbcb/",
+      useLocalCanvasKit: false
+    };
+  </script>
 </head>
 <body>
   <!--

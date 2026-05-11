@@ -6,13 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/cabine.dart';
-import '../../models/usuario.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cabines_provider.dart';
 import '../../providers/configuracoes_provider.dart';
 import '../../providers/pacotes_provider.dart';
 import '../../providers/tiktok_provider.dart';
-import '../../providers/usuarios_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../design_system/design_system.dart';
 import '../../services/api_service.dart';
@@ -1179,15 +1177,19 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                   ],
                 ),
               ),
-              if (isConnected)
+              if (isConnected) ...[
+                OutlinedButton.icon(
+                  onPressed: _testarTiktokConnection,
+                  icon: const Icon(Icons.health_and_safety_outlined, size: 16),
+                  label: const Text('Testar conexão'),
+                ),
+                const SizedBox(width: AppSpacing.x2),
                 AppDangerButton(
                   label: 'Desconectar',
                   icon: Icons.link_off,
-                  onPressed: () async {
-                    await ref.read(tiktokStatusProvider.notifier).disconnect();
-                    ref.invalidate(configuracoesProvider);
-                  },
+                  onPressed: _confirmarDesconectarTiktok,
                 ),
+              ],
             ],
           ),
         ),
@@ -1221,6 +1223,61 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
         // Shop ID
         _field('TikTok Shop ID', _tiktokShopCtrl, enabled: _isEditingTiktok),
       ],
+    );
+  }
+
+  Future<void> _testarTiktokConnection() async {
+    try {
+      final resp = await ApiService.get('/tiktok/status');
+      final data = resp.data as Map<String, dynamic>;
+      final connected = (data['connected'] as bool?) ?? false;
+      ref.invalidate(tiktokStatusProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(connected
+            ? 'Conexão TikTok ativa.'
+            : 'Token TikTok ausente ou expirado — reconecte.'),
+        backgroundColor: connected ? AppColors.success : AppColors.warning,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiService.extractErrorMessage(e))),
+      );
+    }
+  }
+
+  Future<void> _confirmarDesconectarTiktok() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl)),
+        title: const Text('Desconectar TikTok?'),
+        content: const Text(
+          'Lives ativas dependem desse token para coletar métricas. '
+          'Ao desconectar, o connector será encerrado e você precisará '
+          'autorizar novamente.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Desconectar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await ref.read(tiktokStatusProvider.notifier).disconnect();
+    ref.invalidate(configuracoesProvider);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('TikTok desconectado.')),
     );
   }
 

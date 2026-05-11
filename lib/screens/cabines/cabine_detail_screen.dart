@@ -14,6 +14,7 @@ import '../../providers/live_stream_provider.dart';
 import '../../design_system/design_system.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
+import '../../widgets/skeleton_list.dart';
 
 
 enum _Tone { blue, green, orange, pink, red, purple, yellow, cyan }
@@ -217,15 +218,9 @@ class _LivelabLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: SizedBox(
-        width: 36,
-        height: 36,
-        child: CircularProgressIndicator(
-          strokeWidth: 2.5,
-          valueColor: AlwaysStoppedAnimation(AppColors.primary),
-        ),
-      ),
+    return const Padding(
+      padding: EdgeInsets.all(24),
+      child: SkeletonList(itemCount: 5, itemHeight: 88),
     );
   }
 }

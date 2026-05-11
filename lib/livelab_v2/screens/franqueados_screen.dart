@@ -591,13 +591,11 @@ class _Toolbar extends StatelessWidget {
           children: [
             _IconBtn(
                 icon: Icons.tune_rounded,
-                tooltip: 'Ordenar',
-                onTap: () {}),
+                tooltip: 'Ordenar'),
             const SizedBox(width: 4),
             _IconBtn(
                 icon: Icons.file_download_outlined,
-                tooltip: 'Exportar',
-                onTap: () {}),
+                tooltip: 'Exportar'),
           ],
         );
         if (!fitsInOneRow) {
@@ -717,10 +715,10 @@ class _Tab extends StatelessWidget {
 }
 
 class _IconBtn extends StatelessWidget {
-  const _IconBtn({required this.icon, required this.tooltip, required this.onTap});
+  const _IconBtn({required this.icon, required this.tooltip, this.onTap});
   final IconData icon;
   final String tooltip;
-  final VoidCallback onTap;
+  final VoidCallback? onTap; // null = visually disabled (feature not yet implemented)
 
   @override
   Widget build(BuildContext context) {
@@ -1115,9 +1113,9 @@ class _StatusActions extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _AcessarBtn(onTap: () {}),
+            _AcessarBtn(), // navigation not yet wired
             const SizedBox(width: 4),
-            _IconBtn(icon: Icons.more_horiz, tooltip: 'Mais opções', onTap: () {}),
+            _IconBtn(icon: Icons.more_horiz, tooltip: 'Mais opções'), // actions not yet implemented
           ],
         ),
       ],
@@ -1174,8 +1172,8 @@ class _StatusPill extends StatelessWidget {
 }
 
 class _AcessarBtn extends StatelessWidget {
-  const _AcessarBtn({required this.onTap});
-  final VoidCallback onTap;
+  const _AcessarBtn({this.onTap});
+  final VoidCallback? onTap; // null = visually disabled (navigation not yet wired)
 
   @override
   Widget build(BuildContext context) {
