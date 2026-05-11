@@ -23,6 +23,10 @@ abstract class CabinesRepository {
     double fatGerado = 0,
     int? qtdPedidos,
     String? resumo,
+    int? manualLikes,
+    int? manualViews,
+    int? manualOrders,
+    double? manualGmv,
   });
 }
 
@@ -110,11 +114,19 @@ class ApiCabinesRepository extends CabinesRepository {
     double fatGerado = 0,
     int? qtdPedidos,
     String? resumo,
+    int? manualLikes,
+    int? manualViews,
+    int? manualOrders,
+    double? manualGmv,
   }) async {
     await ApiService.patch('/lives/$liveId/encerrar', data: {
       'fat_gerado': fatGerado,
       if (qtdPedidos != null) 'qtd_pedidos': qtdPedidos,
       if (resumo != null && resumo.trim().isNotEmpty) 'resumo': resumo.trim(),
+      if (manualLikes != null) 'manual_likes': manualLikes,
+      if (manualViews != null) 'manual_views': manualViews,
+      if (manualOrders != null) 'manual_orders': manualOrders,
+      if (manualGmv != null) 'manual_gmv': manualGmv,
     });
   }
 

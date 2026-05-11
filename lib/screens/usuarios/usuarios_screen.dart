@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../models/usuario.dart';
 import '../../models/apresentadora.dart';
 import '../../models/cliente.dart';
+import '../apresentadoras/apresentadoras_screen.dart';
 import '../../providers/usuarios_provider.dart';
 import '../../providers/apresentadoras_provider.dart';
 import '../../providers/clientes_provider.dart';
@@ -71,11 +72,13 @@ class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
 
     final usuariosAsync = ref.watch(usuariosProvider);
     final convitesAsync = ref.watch(convitesProvider);
+    final apresentadorasAsync = ref.watch(apresentadorasProvider);
 
     final internos = (usuariosAsync.valueOrNull ?? const <Usuario>[])
         .where((u) => _papeisInternos.contains(u.papel))
         .toList();
     final convites = convitesAsync.valueOrNull ?? const <ConvitePendente>[];
+    final apresentadoras = apresentadorasAsync.valueOrNull ?? const <Apresentadora>[];
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(pad, 16, pad, 28),
@@ -88,10 +91,12 @@ class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
           const SizedBox(height: 16),
           _tabStrip(t,
               internosCount: internos.length,
-              convitesCount: convites.length),
+              convitesCount: convites.length,
+              apresentadorasCount: apresentadoras.length),
           const SizedBox(height: 16),
           if (_tab == 0) _internosBody(t, usuariosAsync, internos),
           if (_tab == 1) _convitesBody(t, convitesAsync, convites),
+          if (_tab == 2) const ApresentadorasScreen(embedded: true),
         ],
       ),
     );
@@ -251,10 +256,12 @@ class _UsuariosScreenState extends ConsumerState<UsuariosScreen> {
     LlTokens t, {
     required int internosCount,
     required int convitesCount,
+    required int apresentadorasCount,
   }) {
     final tabs = [
       (Icons.people_outline, 'Usuários ativos', internosCount),
       (Icons.mail_outline_rounded, 'Convites pendentes', convitesCount),
+      (Icons.videocam_outlined, 'Apresentadoras', apresentadorasCount),
     ];
     return Wrap(
       spacing: 8,

@@ -135,6 +135,7 @@ class LivelabScaffold extends ConsumerWidget {
                         onToggleTheme: () => ref.read(themeModeProvider.notifier).toggle(),
                         onRefresh: onRefresh ?? () => _hardRefresh(context),
                         onBell: () => _openNotifications(context),
+                        showGreeting: _isHomeRoute(currentRoute, auth.user?.papel),
                       ),
                       Expanded(child: child),
                     ],
@@ -265,7 +266,6 @@ class LivelabScaffold extends ConsumerWidget {
           LivelabNavItem(label: 'Franqueados', icon: PhosphorIcons.users(), route: AppRoutes.masterFranqueados),
           LivelabNavItem(label: 'Gerentes regionais', icon: PhosphorIcons.usersThree(), route: AppRoutes.masterRegionalManagers),
           LivelabNavItem(label: 'TikTok Apps', icon: PhosphorIcons.tiktokLogo(), route: AppRoutes.masterTiktokApps),
-          LivelabNavItem(label: 'Log de auditoria', icon: PhosphorIcons.fileMagnifyingGlass(), route: AppRoutes.auditLog),
           LivelabNavItem(label: 'Configurações', icon: PhosphorIcons.gear(), route: AppRoutes.configuracoes),
         ]),
       ];
@@ -275,7 +275,7 @@ class LivelabScaffold extends ConsumerWidget {
       return [
         LivelabNavSection(items: [
           LivelabNavItem(label: 'Home', icon: PhosphorIcons.house(), route: AppRoutes.home),
-          LivelabNavItem(label: 'Log de auditoria', icon: PhosphorIcons.fileMagnifyingGlass(), route: AppRoutes.auditLog),
+          LivelabNavItem(label: 'Configurações', icon: PhosphorIcons.gear(), route: AppRoutes.configuracoes),
           LivelabNavItem(label: 'Conhecimento', icon: PhosphorIcons.book(), route: AppRoutes.knowledgeBase),
         ]),
       ];
@@ -292,17 +292,13 @@ class LivelabScaffold extends ConsumerWidget {
       ]),
       LivelabNavSection(label: 'Cabines', items: [
         LivelabNavItem(label: 'Cabines', icon: PhosphorIcons.videoCamera(), route: AppRoutes.cabines, dot: true),
-        LivelabNavItem(label: 'Solicitações', icon: PhosphorIcons.calendarCheck(), route: AppRoutes.solicitacoes, dot: true),
       ]),
       LivelabNavSection(label: 'Pessoas', items: [
-        LivelabNavItem(label: 'Apresentadoras', icon: PhosphorIcons.microphone(), route: AppRoutes.apresentadoras),
         LivelabNavItem(label: 'Usuários internos', icon: PhosphorIcons.usersThree(), route: AppRoutes.usuarios),
       ]),
       LivelabNavSection(label: 'Análise & operação', items: [
         LivelabNavItem(label: 'Financeiro', icon: PhosphorIcons.wallet(), route: AppRoutes.financeiro, dot: true),
         LivelabNavItem(label: 'Analytics', icon: PhosphorIcons.chartLine(), route: AppRoutes.analyticsDashboard),
-        if (canSeeAuditLog)
-          LivelabNavItem(label: 'Log de auditoria', icon: PhosphorIcons.fileMagnifyingGlass(), route: AppRoutes.auditLog),
         LivelabNavItem(label: 'Conhecimento', icon: PhosphorIcons.book(), route: AppRoutes.knowledgeBase),
         LivelabNavItem(label: 'Config', icon: PhosphorIcons.gear(), route: AppRoutes.configuracoes),
       ]),

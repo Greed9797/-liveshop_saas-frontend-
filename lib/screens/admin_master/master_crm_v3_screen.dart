@@ -107,66 +107,125 @@ class _MasterCrmV3ScreenState extends ConsumerState<MasterCrmV3Screen> {
     final crmAsync = ref.watch(masterCrmProvider);
     final leadsAsync = ref.watch(leadsProvider);
 
-    return Material(
-      color: _C.bgBase(context),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 18, 24, 32),
+    return DefaultTabController(
+      length: 2,
+      child: Material(
+        color: _C.bgBase(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Header(),
-            const SizedBox(height: 18),
-            crmAsync.when(
-              loading: () => const _LoadingBlock(),
-              error: (e, _) => _ErrorBlock(error: e, onRetry: () => ref.invalidate(masterCrmProvider)),
-              data: (crm) => Column(
+            SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _KpiGrid(
-                    totalLeads: crm.summary.totalLeads,
-                    leadPool: crm.summary.leadPool,
-                    estimatedValue: crm.summary.estimatedValue,
-                    pendingContracts: crm.summary.pendingContracts,
-                  ),
-                  const SizedBox(height: 16),
-                  _PipelineRealCard(crm: crm),
+                  _Header(),
+                  const SizedBox(height: 18),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            LeadFilterBuilder(
-              filters: _advFilters,
-              onChanged: (f) => setState(() => _advFilters = f),
-              bg: _C.bgElev1(context),
-              border: _C.hairline(context),
-              text: _C.textPrimary(context),
-              textMuted: _C.textMuted(context),
-              primary: _C.primary,
+            // TabBar
+            Container(
+              color: _C.bgElev1(context),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: TabBar(
+                labelColor: _C.primary,
+                unselectedLabelColor: _C.textSecondary(context),
+                indicatorColor: _C.primary,
+                tabs: const [
+                  Tab(text: 'Kanban'),
+                  Tab(text: 'Dashboard'),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            leadsAsync.when(
-              loading: () => const _LoadingBlock(),
-              error: (e, _) => _ErrorBlock(error: e, onRetry: () => ref.invalidate(leadsProvider)),
-              data: (leads) => _Kanban(
-                leads: _applyFilter(leads),
-                filter: _filter,
-                onFilterChange: (f) => setState(() => _filter = f),
-                movingId: _movingId,
-                onMove: (lead, newStage) => _moveLead(lead, newStage),
-                onCreate: () async {
-                  final ok = await showLeadDialog(context);
-                  if (ok == true && mounted) {
-                    // KPIs vêm de /crm/summary (masterCrmProvider). Sem invalidar,
-                    // criar/editar/deletar lead deixa os cards estagnados.
-                    ref.invalidate(masterCrmProvider);
-                  }
-                },
-                onEdit: (lead) async {
-                  final ok = await showLeadDialog(context, lead: lead);
-                  if (ok == true && mounted) {
-                    ref.invalidate(masterCrmProvider);
-                  }
-                },
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // Tab 1: Kanban
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        crmAsync.when(
+                          loading: () => const _LoadingBlock(),
+                          error: (e, _) => _ErrorBlock(error: e, onRetry: () => ref.invalidate(masterCrmProvider)),
+                          data: (crm) => Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _KpiGrid(
+                                totalLeads: crm.summary.totalLeads,
+                                leadPool: crm.summary.leadPool,
+                                estimatedValue: crm.summary.estimatedValue,
+                                pendingContracts: crm.summary.pendingContracts,
+                              ),
+                              const SizedBox(height: 16),
+                              _PipelineRealCard(crm: crm),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        LeadFilterBuilder(
+                          filters: _advFilters,
+                          onChanged: (f) => setState(() => _advFilters = f),
+                          bg: _C.bgElev1(context),
+                          border: _C.hairline(context),
+                          text: _C.textPrimary(context),
+                          textMuted: _C.textMuted(context),
+                          primary: _C.primary,
+                        ),
+                        const SizedBox(height: 16),
+                        leadsAsync.when(
+                          loading: () => const _LoadingBlock(),
+                          error: (e, _) => _ErrorBlock(error: e, onRetry: () => ref.invalidate(leadsProvider)),
+                          data: (leads) => _Kanban(
+                            leads: _applyFilter(leads),
+                            filter: _filter,
+                            onFilterChange: (f) => setState(() => _filter = f),
+                            movingId: _movingId,
+                            onMove: (lead, newStage) => _moveLead(lead, newStage),
+                            onCreate: () async {
+                              final ok = await showLeadDialog(context);
+                              if (ok == true && mounted) {
+                                // KPIs vêm de /crm/summary (masterCrmProvider). Sem invalidar,
+                                // criar/editar/deletar lead deixa os cards estagnados.
+                                ref.invalidate(masterCrmProvider);
+                              }
+                            },
+                            onEdit: (lead) async {
+                              final ok = await showLeadDialog(context, lead: lead);
+                              if (ok == true && mounted) {
+                                ref.invalidate(masterCrmProvider);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Tab 2: Dashboard
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                    child: crmAsync.when(
+                      loading: () => const _LoadingBlock(),
+                      error: (e, _) => _ErrorBlock(error: e, onRetry: () => ref.invalidate(masterCrmProvider)),
+                      data: (crm) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _KpiGrid(
+                            totalLeads: crm.summary.totalLeads,
+                            leadPool: crm.summary.leadPool,
+                            estimatedValue: crm.summary.estimatedValue,
+                            pendingContracts: crm.summary.pendingContracts,
+                          ),
+                          const SizedBox(height: 16),
+                          _PipelineRealCard(crm: crm),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

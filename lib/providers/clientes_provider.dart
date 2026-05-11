@@ -42,6 +42,12 @@ class ClientesNotifier extends AsyncNotifier<List<Cliente>> {
     return updated;
   }
 
+  Future<void> deletar(String id) async {
+    await ApiService.delete('/clientes/$id');
+    final current = state.valueOrNull ?? [];
+    state = AsyncData(current.where((c) => c.id != id).toList());
+  }
+
   Future<Map<String, dynamic>> buscarCep(String cep) async {
     final resp = await ApiService.get('/cep/$cep');
     return resp.data as Map<String, dynamic>;

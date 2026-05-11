@@ -115,7 +115,7 @@ class _SearchBar extends StatelessWidget {
       child: Row(
         children: [
           Icon(PhosphorIcons.magnifyingGlass(),
-              size: 18, color: AppColors.textMuted),
+              size: 18, color: AppColors.textSecondary),
           const SizedBox(width: AppSpacing.x3),
           Expanded(
             child: TextField(
@@ -134,7 +134,7 @@ class _SearchBar extends StatelessWidget {
           if (controller.text.isNotEmpty)
             IconButton(
               icon: Icon(PhosphorIcons.x(), size: 16),
-              color: AppColors.textMuted,
+              color: AppColors.textSecondary,
               tooltip: 'Limpar',
               onPressed: onClear,
             ),

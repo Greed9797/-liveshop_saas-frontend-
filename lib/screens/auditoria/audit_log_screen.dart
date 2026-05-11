@@ -11,7 +11,8 @@ import '../../providers/audit_log_provider.dart';
 import '../../routes/app_routes.dart';
 
 class AuditLogScreen extends ConsumerStatefulWidget {
-  const AuditLogScreen({super.key});
+  final bool embedded;
+  const AuditLogScreen({super.key, this.embedded = false});
 
   @override
   ConsumerState<AuditLogScreen> createState() => _AuditLogScreenState();
@@ -57,6 +58,32 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
     final filtros = ref.watch(auditLogFiltrosProvider);
     final pageAsync = ref.watch(auditLogProvider);
 
+    final content = SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.x6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _FiltrosCard(
+            filtros: filtros,
+            actions: _commonActions,
+            entities: _entityTypes,
+          ),
+          const SizedBox(height: AppSpacing.x6),
+          pageAsync.when(
+            loading: () => const _AuditLogSkeleton(),
+            error: (e, _) => _ErrorBox(message: '$e', onRetry: () {
+              ref.read(auditLogProvider.notifier).refresh();
+            }),
+            data: (page) => page.itens.isEmpty
+                ? const _EmptyState()
+                : _AuditLogTable(page: page),
+          ),
+        ],
+      ),
+    );
+
+    if (widget.embedded) return content;
+
     return AppScreenScaffold(
       currentRoute: AppRoutes.auditLog,
       eyebrow: 'AUDITORIA',
@@ -69,29 +96,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
           onPressed: () => ref.read(auditLogProvider.notifier).refresh(),
         ),
       ],
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.x6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _FiltrosCard(
-              filtros: filtros,
-              actions: _commonActions,
-              entities: _entityTypes,
-            ),
-            const SizedBox(height: AppSpacing.x6),
-            pageAsync.when(
-              loading: () => const _AuditLogSkeleton(),
-              error: (e, _) => _ErrorBox(message: '$e', onRetry: () {
-                ref.read(auditLogProvider.notifier).refresh();
-              }),
-              data: (page) => page.itens.isEmpty
-                  ? const _EmptyState()
-                  : _AuditLogTable(page: page),
-            ),
-          ],
-        ),
-      ),
+      child: content,
     );
   }
 }

@@ -33,7 +33,6 @@ class _CriarUsuarioDialogState extends ConsumerState<CriarUsuarioDialog> {
     ('financeiro', 'Financeiro'),
     ('operacional', 'Operacional'),
     // Frente de live
-    ('apresentador', 'Apresentador'),
     ('apresentadora', 'Apresentadora'),
     // Externos
     ('cliente_parceiro', 'Cliente Parceiro'),

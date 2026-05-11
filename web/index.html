@@ -47,8 +47,10 @@
   <meta name="twitter:image" content="https://app.grupolivelab.com.br/og-image.png">
 
   <!-- Defesa em camadas: CSP em meta tag espelha header do firebase.json
-       (caso assets sirvam fora do Firebase Hosting, headers podem não chegar). -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'wasm-unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://liveshop-saas-api-production.up.railway.app https://www.gstatic.com https://fonts.gstatic.com; worker-src 'self' blob:; manifest-src 'self'">
+       (caso assets sirvam fora do Firebase Hosting, headers podem não chegar).
+       NOTA: frame-ancestors não é suportado em meta tags (só em headers HTTP).
+       O header correto está em firebase.json via X-Frame-Options: DENY. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'wasm-unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://liveshop-saas-api-production.up.railway.app https://www.gstatic.com https://fonts.gstatic.com; worker-src 'self' blob:; manifest-src 'self'">
 
   <!-- Performance: preconnect to canvaskit CDN + Google Fonts (reduz handshake TLS) -->
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -67,29 +69,9 @@
 
   <link rel="manifest" href="manifest.json">
 
-  <!-- Structured data: Organization (Schema.org) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "LiveShop SaaS",
-    "alternateName": "Livelab",
-    "url": "https://app.grupolivelab.com.br",
-    "logo": "https://app.grupolivelab.com.br/icons/Icon-512.png",
-    "description": "Plataforma multi-tenant para gestão de franquias de estúdios de Live Shop TikTok.",
-    "areaServed": "BR"
-  }
-  </script>
-
-  <!-- Flutter Web: força canvaskit do CDN gstatic (engineRevision usado pelo bootstrap).
-       Reduz bundle servido pelo Firebase em ~6.8MB (canvaskit.wasm não vem do nosso server).
-       useLocalCanvasKit=false garante fallback para CDN mesmo com config customizada. -->
-  <script>
-    window.flutterConfiguration = {
-      canvasKitBaseUrl: "https://www.gstatic.com/flutter-canvaskit/425cfb54d01a9472b3e81d9e76fd63a4a44cfbcb/",
-      useLocalCanvasKit: false
-    };
-  </script>
+  <!-- Structured data: Organization (Schema.org) — externalizado para inline.js (CSP compliance) -->
+  <!-- Flutter Web config — externalizado para inline.js (CSP compliance) -->
+  <script src="inline.js"></script>
 </head>
 <body>
   <!-- Pre-render fallback: bots e crawlers leem este conteúdo quando JS desabilitado -->

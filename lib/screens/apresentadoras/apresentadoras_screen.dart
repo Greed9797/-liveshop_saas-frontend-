@@ -14,11 +14,47 @@ import '../../widgets/calendar_week_view.dart';
 import '../../widgets/disponibilidade_modal.dart';
 
 class ApresentadorasScreen extends ConsumerWidget {
-  const ApresentadorasScreen({super.key});
+  final bool embedded;
+  const ApresentadorasScreen({super.key, this.embedded = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(apresentadorasProvider);
+
+    final content = Padding(
+      padding: const EdgeInsets.all(AppSpacing.x6),
+      child: async.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(
+          child: Text(ApiService.extractErrorMessage(error)),
+        ),
+        data: (items) => items.isEmpty
+            ? Center(
+                child: Text(
+                  'Nenhuma apresentadora cadastrada.',
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: context.colors.textSecondary),
+                ),
+              )
+            : ListView.separated(
+                itemCount: items.length,
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: AppSpacing.x3),
+                itemBuilder: (context, index) => _ApresentadoraCard(
+                  item: items[index],
+                  onEdit: () => _openForm(context, ref, items[index]),
+                  onCalendario: () => DisponibilidadeModal.open(
+                    context: context,
+                    apresentadoraId: items[index].id,
+                    apresentadoraNome: items[index].nome,
+                  ),
+                ),
+              ),
+      ),
+    );
+
+    if (embedded) return content;
+
     return AppScreenScaffold(
       currentRoute: AppRoutes.apresentadoras,
       eyebrow: 'Pessoas',
@@ -32,37 +68,7 @@ class ApresentadorasScreen extends ConsumerWidget {
           onPressed: () => _openForm(context, ref),
         ),
       ],
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.x6),
-        child: async.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(
-            child: Text(ApiService.extractErrorMessage(error)),
-          ),
-          data: (items) => items.isEmpty
-              ? Center(
-                  child: Text(
-                    'Nenhuma apresentadora cadastrada.',
-                    style: AppTypography.bodyMedium
-                        .copyWith(color: context.colors.textSecondary),
-                  ),
-                )
-              : ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(height: AppSpacing.x3),
-                  itemBuilder: (context, index) => _ApresentadoraCard(
-                    item: items[index],
-                    onEdit: () => _openForm(context, ref, items[index]),
-                    onCalendario: () => DisponibilidadeModal.open(
-                      context: context,
-                      apresentadoraId: items[index].id,
-                      apresentadoraNome: items[index].nome,
-                    ),
-                  ),
-                ),
-        ),
-      ),
+      child: content,
     );
   }
 

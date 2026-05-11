@@ -290,6 +290,19 @@ class ApiService {
   static Future<Response<T>> post<T>(String path, {dynamic data}) =>
       _runRequest(() => _dio.post(path, data: data));
 
+  /// POST multipart/form-data — usado para upload de arquivos.
+  static Future<Response<T>> postFormData<T>(
+    String path, {
+    required FormData formData,
+  }) =>
+      _runRequest(
+        () => _dio.post(
+          path,
+          data: formData,
+          options: Options(contentType: 'multipart/form-data'),
+        ),
+      );
+
   static Future<Response<T>> patch<T>(String path, {dynamic data}) =>
       _runRequest(() => _dio.patch(path, data: data));
 

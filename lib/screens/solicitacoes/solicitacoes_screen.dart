@@ -1059,8 +1059,8 @@ class _NovoAgendamentoDialogState
         if (_apresentadora != null) 'apresentadora_id': _apresentadora!.id,
         'data_solicitada':
             '${_data!.year}-${_data!.month.toString().padLeft(2, '0')}-${_data!.day.toString().padLeft(2, '0')}',
-        'hora_inicio': '${_fmtTime(_horaInicio)}:00',
-        'hora_fim': '${_fmtTime(_horaFim)}:00',
+        'hora_inicio': _fmtTime(_horaInicio),
+        'hora_fim': _fmtTime(_horaFim),
         if (_obsCtrl.text.trim().isNotEmpty)
           'observacao': _obsCtrl.text.trim(),
       });

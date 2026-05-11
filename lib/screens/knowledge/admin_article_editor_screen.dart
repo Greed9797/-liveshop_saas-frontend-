@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../design_system/design_system.dart';
@@ -45,6 +48,7 @@ class _AdminArticleEditorScreenState
   KbArticleStatus _status = KbArticleStatus.draft;
   bool _destaque = false;
   bool _saving = false;
+  bool _uploadingCover = false;
   KnowledgeArticle? _loaded;
 
   @override
@@ -138,6 +142,63 @@ class _AdminArticleEditorScreenState
       'destaque': _destaque,
       'sort_order': int.tryParse(_sortOrderCtrl.text.trim()) ?? 0,
     };
+  }
+
+  /// Retorna os bytes da imagem prontos para upload (max 2 MB).
+  /// image_picker já aplica quality:80 e maxWidth:1600 ao selecionar.
+  /// Quando flutter_image_compress for adicionado ao pubspec, pode-se
+  /// substituir por FlutterImageCompress.compressWithList para maior controle.
+  Future<Uint8List> _prepareImageBytes(Uint8List original) async {
+    return original;
+  }
+
+  Future<void> _pickAndUploadCover() async {
+    final picker = ImagePicker();
+    final XFile? picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 80,
+    );
+    if (picked == null) return;
+    setState(() => _uploadingCover = true);
+    try {
+      final bytes = await picked.readAsBytes();
+      final compressed = await _prepareImageBytes(bytes);
+
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          compressed,
+          filename: picked.name,
+          contentType: DioMediaType.parse(
+            picked.mimeType ?? 'image/jpeg',
+          ),
+        ),
+      });
+
+      final resp = await ApiService.postFormData(
+        '/knowledge/upload-cover',
+        formData: formData,
+      );
+      final url = (resp.data as Map<String, dynamic>)['url'] as String?;
+      if (url != null && mounted) {
+        setState(() => _coverUrlCtrl.text = url);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Imagem de capa carregada')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Erro ao fazer upload: ${ApiService.extractErrorMessage(e)}',
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingCover = false);
+    }
   }
 
   Future<void> _save({required bool publish}) async {
@@ -236,6 +297,8 @@ class _AdminArticleEditorScreenState
             status: _status,
             destaque: _destaque,
             categoriesAsync: categoriesAsync,
+            uploadingCover: _uploadingCover,
+            onPickCover: _pickAndUploadCover,
             onCategoryChanged: (id) => setState(() => _categoryId = id),
             onVideoProviderChanged: (p) =>
                 setState(() => _videoProvider = p),
@@ -330,6 +393,8 @@ class _FormColumn extends StatelessWidget {
   final KbArticleStatus status;
   final bool destaque;
   final AsyncValue<List<KnowledgeCategory>> categoriesAsync;
+  final bool uploadingCover;
+  final VoidCallback onPickCover;
   final ValueChanged<String?> onCategoryChanged;
   final ValueChanged<KbVideoProvider> onVideoProviderChanged;
   final ValueChanged<KbArticleStatus> onStatusChanged;
@@ -348,6 +413,8 @@ class _FormColumn extends StatelessWidget {
     required this.status,
     required this.destaque,
     required this.categoriesAsync,
+    required this.uploadingCover,
+    required this.onPickCover,
     required this.onCategoryChanged,
     required this.onVideoProviderChanged,
     required this.onStatusChanged,
@@ -486,14 +553,99 @@ class _FormColumn extends StatelessWidget {
         ],
         const SizedBox(height: AppSpacing.x5),
 
-        _Label('Imagem de capa (URL)'),
+        _Label('Imagem de capa'),
+        // Preview da imagem carregada (se houver URL)
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: coverUrlCtrl,
+          builder: (context, value, _) {
+            final url = value.text.trim();
+            if (url.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.x3),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                child: Image.network(
+                  url,
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: AppColors.bgMuted,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(PhosphorIcons.warning(), size: 16, color: AppColors.textMuted),
+                        const SizedBox(width: AppSpacing.x2),
+                        Text('URL inválida ou imagem indisponível',
+                            style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        // Botão de upload
+        Material(
+          color: AppColors.bgCard,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: InkWell(
+            onTap: uploadingCover ? null : onPickCover,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.x5,
+                vertical: AppSpacing.x4,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.borderLight),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (uploadingCover)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
+                    )
+                  else
+                    Icon(PhosphorIcons.uploadSimple(),
+                        size: 18, color: AppColors.primary),
+                  const SizedBox(width: AppSpacing.x2),
+                  Text(
+                    uploadingCover ? 'Enviando...' : 'Selecionar imagem',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: uploadingCover
+                          ? AppColors.textMuted
+                          : AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.x3),
+        // Fallback: campo URL manual
         TextFormField(
           controller: coverUrlCtrl,
           style: AppTypography.bodyMedium,
           decoration: InputDecoration(
-            hintText: 'https://… (opcional)',
+            hintText: 'Ou cole uma URL diretamente (opcional)',
             prefixIcon:
-                Icon(PhosphorIcons.image(), size: 18, color: AppColors.textMuted),
+                Icon(PhosphorIcons.link(), size: 18, color: AppColors.textMuted),
           ),
         ),
         const SizedBox(height: AppSpacing.x5),

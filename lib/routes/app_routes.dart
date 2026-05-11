@@ -29,6 +29,7 @@ import '../screens/knowledge/knowledge_article_screen.dart';
 import '../screens/knowledge/knowledge_category_screen.dart';
 import '../screens/knowledge/knowledge_home_screen.dart';
 import '../models/knowledge_article.dart';
+import '../screens/clientes/clientes_lista_screen.dart';
 import '../screens/painel_cliente/carteira_clientes_screen.dart';
 import '../screens/recomendacoes/recomendacoes_screen.dart';
 import '../screens/vendas/analise_financeira_screen.dart';
@@ -603,6 +604,16 @@ class AppRoutes {
         );
 
       case clientes:
+        return buildPremiumRoute(
+          child: const RoleRouteGuard(
+            allowedRoles: _commercialRoles,
+            fallbackRoute: home,
+            unauthenticatedRoute: login,
+            child: ClientesListaScreen(),
+          ),
+          settings: settings,
+        );
+
       case clientesLeads:
         return buildPremiumRoute(
           child: RoleRouteGuard(

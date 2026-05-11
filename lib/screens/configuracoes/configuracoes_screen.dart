@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/cabine.dart';
 import '../../providers/auth_provider.dart';
+import '../auditoria/audit_log_screen.dart';
 import '../../providers/cabines_provider.dart';
 import '../../providers/configuracoes_provider.dart';
 import '../../providers/pacotes_provider.dart';
@@ -541,6 +542,8 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
         return _buildPacotes();
       case 5:
         return _buildCabines();
+      case 6:
+        return const AuditLogScreen(embedded: true);
       default:
         return _buildGeral(conf);
     }
@@ -608,6 +611,12 @@ class _ConfiguracoesScreenState extends ConsumerState<ConfiguracoesScreen> {
                     label: 'Cabines',
                     isActive: _selectedSection == 5,
                     onTap: () => setState(() => _selectedSection = 5),
+                  ),
+                  _NavItem(
+                    icon: Icons.manage_search_outlined,
+                    label: 'Auditoria',
+                    isActive: _selectedSection == 6,
+                    onTap: () => setState(() => _selectedSection = 6),
                   ),
                 ],
               ),

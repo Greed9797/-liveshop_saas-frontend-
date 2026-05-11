@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../routes/app_routes.dart';
+import '../../../screens/solicitacoes/solicitacoes_screen.dart';
 import '../../../services/api_service.dart';
 import '../../core/responsive.dart';
 import '../../theme/tokens.dart';
@@ -135,9 +137,11 @@ class _CabinesScreenState extends State<CabinesScreen> {
     final resumoCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
+    // Passo 1: dados consolidados (GMV, pedidos, resumo)
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Encerrar live · Cabine ${c.number.toString().padLeft(2, '0')}'),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
@@ -221,9 +225,30 @@ class _CabinesScreenState extends State<CabinesScreen> {
     );
 
     if (ok != true) return;
+
     final fat = double.tryParse(fatCtrl.text.replaceAll(',', '.')) ?? 0;
     final qtd = int.tryParse(qtdCtrl.text.trim());
     final resumo = resumoCtrl.text.trim().isEmpty ? null : resumoCtrl.text.trim();
+
+    // Passo 2: métricas manuais (opcional)
+    int? manualLikes;
+    int? manualViews;
+    int? manualOrders;
+    double? manualGmv;
+
+    if (mounted) {
+      final metricsResult = await showDialog<_ManualMetrics?>(
+        context: context,
+        builder: (ctx) => _MetricasManualDialog(cabineNumero: c.number),
+      );
+      if (metricsResult != null) {
+        manualLikes  = metricsResult.likes;
+        manualViews  = metricsResult.views;
+        manualOrders = metricsResult.orders;
+        manualGmv    = metricsResult.gmv;
+      }
+      // metricsResult == null significa "Pular" — encerra sem métricas manuais
+    }
 
     await _runAction(
       c,
@@ -232,6 +257,10 @@ class _CabinesScreenState extends State<CabinesScreen> {
         fatGerado: fat,
         qtdPedidos: qtd,
         resumo: resumo,
+        manualLikes:  manualLikes,
+        manualViews:  manualViews,
+        manualOrders: manualOrders,
+        manualGmv:    manualGmv,
       ),
       'Live encerrada · R\$ ${fat.toStringAsFixed(2)} · ${qtd ?? 0} pedidos',
     );
@@ -324,7 +353,7 @@ class _CabinesScreenState extends State<CabinesScreen> {
       currentRoute: AppRoutes.cabines,
       onRefresh: _reload,
       child: DefaultTabController(
-        length: 2,
+        length: 3,
         child: Builder(builder: (ctx) {
           final t = ctx.llTokens;
           return Column(
@@ -345,6 +374,7 @@ class _CabinesScreenState extends State<CabinesScreen> {
                   tabs: const [
                     Tab(text: 'Ao vivo'),
                     Tab(text: 'Histórico'),
+                    Tab(text: 'Solicitações'),
                   ],
                 ),
               ),
@@ -370,6 +400,7 @@ class _CabinesScreenState extends State<CabinesScreen> {
                       },
                     ),
                     const _HistoricoLivesTab(),
+                    const SolicitacoesScreen(embedded: true),
                   ],
                 ),
               ),
@@ -665,6 +696,10 @@ class _HistoricoLivesTabState extends State<_HistoricoLivesTab> {
               final iniciadoEm = l['iniciado_em']?.toString();
               final encerradoEm = l['encerrado_em']?.toString();
               final fat = (l['fat_gerado'] as num?) ?? 0;
+              final manualLikes  = l['manual_likes'] as int?;
+              final manualViews  = l['manual_views'] as int?;
+              final manualOrders = l['manual_orders'] as int?;
+              final hasManual = manualLikes != null || manualViews != null || manualOrders != null;
               return Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -672,43 +707,62 @@ class _HistoricoLivesTabState extends State<_HistoricoLivesTab> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: t.border),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: t.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text('C$cabineNumero',
-                          style: TextStyle(
-                              color: t.primary,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 12)),
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: t.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text('C$cabineNumero',
+                              style: TextStyle(
+                                  color: t.primary,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12)),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(clienteNome,
+                                  style: TextStyle(
+                                      color: t.textPrimary,
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w800)),
+                              Text('$apresentador · ${_fmtDate(iniciadoEm)} → ${_fmtDate(encerradoEm)}',
+                                  style: TextStyle(
+                                      color: t.textMuted, fontSize: 11.5)),
+                            ],
+                          ),
+                        ),
+                        Text(_fmtMoney(fat),
+                            style: TextStyle(
+                                color: t.success,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900)),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    if (hasManual) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
                         children: [
-                          Text(clienteNome,
-                              style: TextStyle(
-                                  color: t.textPrimary,
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w800)),
-                          Text('$apresentador · ${_fmtDate(iniciadoEm)} → ${_fmtDate(encerradoEm)}',
-                              style: TextStyle(
-                                  color: t.textMuted, fontSize: 11.5)),
+                          if (manualLikes != null)
+                            _MetricaBadge(label: 'Likes', value: manualLikes.toString(), tokens: t),
+                          if (manualViews != null)
+                            _MetricaBadge(label: 'Views', value: manualViews.toString(), tokens: t),
+                          if (manualOrders != null)
+                            _MetricaBadge(label: 'Vendas', value: manualOrders.toString(), tokens: t),
                         ],
                       ),
-                    ),
-                    Text(_fmtMoney(fat),
-                        style: TextStyle(
-                            color: t.success,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900)),
+                    ],
                   ],
                 ),
               );
@@ -716,6 +770,155 @@ class _HistoricoLivesTabState extends State<_HistoricoLivesTab> {
           );
         },
       ),
+    );
+  }
+}
+
+// ─── Badge para exibir métricas manuais no histórico ─────────────────────────
+
+class _MetricaBadge extends StatelessWidget {
+  const _MetricaBadge({
+    required this.label,
+    required this.value,
+    required this.tokens,
+  });
+  final String label;
+  final String value;
+  final LlTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: tokens.info.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: tokens.info.withValues(alpha: 0.25)),
+      ),
+      child: Text(
+        '$label: $value',
+        style: TextStyle(color: tokens.info, fontSize: 11, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+// ─── Métricas manuais ao encerrar live ───────────────────────────────────────
+
+class _ManualMetrics {
+  final int? likes;
+  final int? views;
+  final int? orders;
+  final double? gmv;
+
+  const _ManualMetrics({this.likes, this.views, this.orders, this.gmv});
+}
+
+class _MetricasManualDialog extends StatefulWidget {
+  final int cabineNumero;
+  const _MetricasManualDialog({required this.cabineNumero});
+
+  @override
+  State<_MetricasManualDialog> createState() => _MetricasManualDialogState();
+}
+
+class _MetricasManualDialogState extends State<_MetricasManualDialog> {
+  final _likesCtrl = TextEditingController();
+  final _viewsCtrl = TextEditingController();
+  final _ordersCtrl = TextEditingController();
+  final _gmvCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _likesCtrl.dispose();
+    _viewsCtrl.dispose();
+    _ordersCtrl.dispose();
+    _gmvCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textPrimary = theme.textTheme.bodyMedium?.color ?? Colors.black87;
+    final textMuted = theme.hintColor;
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(
+        'Registrar métricas da live',
+        style: TextStyle(color: textPrimary, fontWeight: FontWeight.w600),
+      ),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Opcional — preencha os dados da transmissão',
+                style: TextStyle(color: textMuted, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _likesCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Likes recebidos',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _viewsCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Visualizações',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _ordersCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Vendas realizadas',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _gmvCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'GMV total (R\$)',
+                  prefixText: 'R\$ ',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: Text('Pular', style: TextStyle(color: textMuted)),
+        ),
+        FilledButton(
+          onPressed: () {
+            final metrics = _ManualMetrics(
+              likes: int.tryParse(_likesCtrl.text.trim()),
+              views: int.tryParse(_viewsCtrl.text.trim()),
+              orders: int.tryParse(_ordersCtrl.text.trim()),
+              gmv: double.tryParse(_gmvCtrl.text.trim().replaceAll(',', '.')),
+            );
+            Navigator.of(context).pop(metrics);
+          },
+          child: const Text('Salvar e encerrar'),
+        ),
+      ],
     );
   }
 }
