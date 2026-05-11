@@ -148,24 +148,6 @@ class _MasterCrmV3ScreenState extends ConsumerState<MasterCrmV3Screen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        crmAsync.when(
-                          loading: () => const _LoadingBlock(),
-                          error: (e, _) => _ErrorBlock(error: e, onRetry: () => ref.invalidate(masterCrmProvider)),
-                          data: (crm) => Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _KpiGrid(
-                                totalLeads: crm.summary.totalLeads,
-                                leadPool: crm.summary.leadPool,
-                                estimatedValue: crm.summary.estimatedValue,
-                                pendingContracts: crm.summary.pendingContracts,
-                              ),
-                              const SizedBox(height: 16),
-                              _PipelineRealCard(crm: crm),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
                         LeadFilterBuilder(
                           filters: _advFilters,
                           onChanged: (f) => setState(() => _advFilters = f),
