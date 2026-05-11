@@ -37,6 +37,8 @@ class ApresentadorasScreen extends ConsumerWidget {
                 ),
               )
             : ListView.separated(
+                shrinkWrap: embedded,
+                physics: embedded ? const NeverScrollableScrollPhysics() : null,
                 itemCount: items.length,
                 separatorBuilder: (_, __) =>
                     const SizedBox(height: AppSpacing.x3),

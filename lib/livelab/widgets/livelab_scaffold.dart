@@ -266,6 +266,7 @@ class LivelabScaffold extends ConsumerWidget {
           LivelabNavItem(label: 'Franqueados', icon: PhosphorIcons.users(), route: AppRoutes.masterFranqueados),
           LivelabNavItem(label: 'Gerentes regionais', icon: PhosphorIcons.usersThree(), route: AppRoutes.masterRegionalManagers),
           LivelabNavItem(label: 'TikTok Apps', icon: PhosphorIcons.tiktokLogo(), route: AppRoutes.masterTiktokApps),
+          LivelabNavItem(label: 'Conhecimento', icon: PhosphorIcons.book(), route: AppRoutes.adminKnowledgeCategories),
           LivelabNavItem(label: 'Configurações', icon: PhosphorIcons.gear(), route: AppRoutes.configuracoes),
         ]),
       ];
