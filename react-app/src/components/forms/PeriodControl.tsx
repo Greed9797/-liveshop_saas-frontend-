@@ -1,0 +1,18 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import type { Period } from '../../types/models'
+import { periodLabel, shiftPeriod } from '../../utils/format'
+import { Button } from '../ui/Button'
+
+export function PeriodControl({ period, onChange }: { period: Period; onChange: (period: Period) => void }) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface p-1">
+      <Button variant="ghost" icon={ChevronLeft} aria-label="Período anterior" onClick={() => onChange(shiftPeriod(period, -1))}>
+        <span className="sr-only">Anterior</span>
+      </Button>
+      <span className="min-w-36 px-2 text-center text-sm font-semibold capitalize text-ink">{periodLabel(period)}</span>
+      <Button variant="ghost" icon={ChevronRight} aria-label="Próximo período" onClick={() => onChange(shiftPeriod(period, 1))}>
+        <span className="sr-only">Próximo</span>
+      </Button>
+    </div>
+  )
+}

@@ -1,3 +1,41 @@
+# LiveShop SaaS — Frontend
+
+## Nova versão React/Vite
+
+Uma nova aplicação React foi criada em `react-app/` para migração do Flutter Web/CanvasKit para Vercel.
+
+```bash
+cd react-app
+npm install
+cp .env.example .env.local
+npm run dev
+npm run build
+```
+
+Configure a API com:
+
+```bash
+VITE_API_URL=http://127.0.0.1:3001/v1
+```
+
+Deploy Vercel:
+
+- Root Directory: `react-app`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Environment Variable: `VITE_API_URL=https://.../v1`
+
+Antes do deploy Vercel funcionar no navegador, o backend Railway precisa permitir o domínio final em `CORS_ORIGIN`. A validação de 2026-05-12 mostrou que `app.grupolivelab.com.br` e `livelab-3601f.web.app` estão permitidos, mas `localhost` e domínios Vercel não cadastrados são bloqueados.
+
+Status da migração:
+
+- Migrado: login, shell responsivo, dashboard unidade, master, unidades, consolidado, CRM, cliente, lives, cabines, solicitações, apresentadoras, analytics, financeiro e base de conhecimento.
+- Pendente: detalhes avançados de cabine/live com SSE, agenda completa do cliente, perfil/configurações do cliente, contratos/usuários/auditoria e E2E Playwright.
+
+Plano completo: `MIGRATION_PLAN.md`.
+
+---
+
 # LiveShop SaaS — Frontend (Flutter Web)
 
 App Flutter Web para a plataforma multi-tenant LiveShop. Painel para franqueador master, franqueados, gerentes, apresentadores e clientes-parceiros (lojistas).
