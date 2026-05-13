@@ -5,3 +5,5 @@ dist
 .env.*.local
 *.log
 .vercel
+playwright-report
+test-results

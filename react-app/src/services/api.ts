@@ -5,11 +5,13 @@ export const unauthorizedEventName = 'livelab:unauthorized'
 
 function resolveBaseUrl(): string {
   const raw = import.meta.env.VITE_API_URL?.trim() || 'http://127.0.0.1:3001/v1'
+  if (raw.startsWith('/')) return raw.replace(/\/+$/, '') || '/'
+
   let url: URL
   try {
     url = new URL(raw)
   } catch {
-    throw new Error('VITE_API_URL inválida. Use uma URL absoluta, ex: https://api.exemplo.com/v1')
+    throw new Error('VITE_API_URL inválida. Use uma URL absoluta ou um caminho relativo, ex: https://api.exemplo.com/v1 ou /v1')
   }
 
   const isLocal = url.hostname === 'localhost' || url.hostname === '127.0.0.1'

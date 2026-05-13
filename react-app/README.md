@@ -22,6 +22,14 @@ Para backend local:
 VITE_API_URL=http://127.0.0.1:3001/v1
 ```
 
+Para QA local contra Railway sem depender do CORS do navegador:
+
+```bash
+VITE_API_URL=/v1
+VITE_DEV_API_PROXY_TARGET=https://liveshop-saas-api-production.up.railway.app
+VITE_DEV_API_PROXY_ORIGIN=https://livelab-3601f.web.app
+```
+
 ## Build
 
 ```bash
@@ -68,5 +76,27 @@ Validação feita em 2026-05-12: Railway responde `/health`, aceita preflight de
 
 - Upload multipart de logo no onboarding quando o backend expuser endpoint próprio.
 - CRUD admin da Knowledge Base se a base passar a ser gerenciada pelo painel.
-- E2E real contra Railway com usuários de teste por papel.
+- Expandir E2E real para CRUDs destrutivos quando houver massa de teste dedicada.
 - Smoke test no domínio Vercel e, depois, em `app.grupolivelab.com.br`.
+
+## QA ponta a ponta
+
+O roteiro completo está em `../QA_E2E_ROTEIRO.md`.
+
+Gates técnicos:
+
+```bash
+npm run typecheck
+npm run test
+npm run build
+npm audit --audit-level=moderate
+```
+
+E2E com Playwright:
+
+```bash
+npx playwright install chromium
+npm run e2e
+```
+
+Antes de rodar o E2E, exporte localmente as variáveis dos três perfis de teste (`E2E_MASTER_*`, `E2E_FRANQUEADO_*`, `E2E_CLIENTE_*`). Não grave senhas em arquivos versionados.
