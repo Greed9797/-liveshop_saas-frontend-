@@ -1,0 +1,237 @@
+import { Building2, CircleDollarSign, Receipt, TrendingDown, TrendingUp, Users, WalletCards, Zap } from 'lucide-react'
+import { FormEvent, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { PageHeader } from '../components/ui/PageHeader'
+import { MetricCard } from '../components/ui/MetricCard'
+import { LinePanel } from '../components/charts/Charts'
+import { Card, CardBody, CardHeader } from '../components/ui/Card'
+import { DataTable } from '../components/ui/DataTable'
+import { Button } from '../components/ui/Button'
+import { ErrorState, LoadingState } from '../components/ui/States'
+import { createFinanceiroCusto, deleteFinanceiroCusto, getBoletos, getFinanceiroCustos, getFinanceiroFaturamento, getFinanceiroFluxo, getFinanceiroResumo } from '../services/domain'
+import { extractErrorMessage } from '../services/api'
+import { asArray, asNumber, asString, currentPeriod, formatDate, formatMoney, periodToParam } from '../utils/format'
+import { historyPoints, metric, moneyMetric } from './page-helpers'
+import type { JsonRecord } from '../types/models'
+
+const icons = [CircleDollarSign, TrendingUp, TrendingDown, Receipt]
+
+export function FinanceiroPage() {
+  const [tab, setTab] = useState<'operacional' | 'cliente' | 'recebiveis' | 'boletos'>('operacional')
+  const [custo, setCusto] = useState({
+    descricao: '',
+    valor: '',
+    tipo: 'outros',
+    competencia: periodToParam(currentPeriod()),
+  })
+  const client = useQueryClient()
+  const resumo = useQuery({ queryKey: ['financeiro-resumo'], queryFn: () => getFinanceiroResumo() })
+  const fluxo = useQuery({ queryKey: ['financeiro-fluxo'], queryFn: () => getFinanceiroFluxo() })
+  const faturamento = useQuery({ queryKey: ['financeiro-faturamento'], queryFn: () => getFinanceiroFaturamento() })
+  const custos = useQuery({ queryKey: ['financeiro-custos', custo.competencia], queryFn: () => getFinanceiroCustos({ mes: custo.competencia }) })
+  const boletos = useQuery({ queryKey: ['boletos'], queryFn: getBoletos })
+  const createCusto = useMutation({
+    mutationFn: createFinanceiroCusto,
+    onSuccess: () => {
+      setCusto((current) => ({ ...current, descricao: '', valor: '' }))
+      void client.invalidateQueries({ queryKey: ['financeiro-custos'] })
+      void client.invalidateQueries({ queryKey: ['financeiro-resumo'] })
+      void client.invalidateQueries({ queryKey: ['financeiro-fluxo'] })
+    },
+  })
+  const deleteCusto = useMutation({
+    mutationFn: deleteFinanceiroCusto,
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['financeiro-custos'] })
+      void client.invalidateQueries({ queryKey: ['financeiro-resumo'] })
+      void client.invalidateQueries({ queryKey: ['financeiro-fluxo'] })
+    },
+  })
+
+  if (resumo.isLoading || fluxo.isLoading || faturamento.isLoading || custos.isLoading || boletos.isLoading) return <LoadingState />
+  if (resumo.isError) return <ErrorState message={extractErrorMessage(resumo.error)} onRetry={() => void resumo.refetch()} />
+
+  const raw = resumo.data ?? {}
+  const clientes = asArray<JsonRecord>(faturamento.data?.clientes ?? faturamento.data?.por_cliente ?? faturamento.data?.items ?? faturamento.data)
+  const custosRows = custos.data ?? []
+  const boletosRows = boletos.data ?? []
+  const boletosVencidos = boletosRows.filter((item) => asString(item.status).toLowerCase() === 'vencido').length
+  const metrics = [
+    moneyMetric('Receita', raw.receita ?? raw.fat_bruto ?? raw.fat_total, 'período atual', 'brand'),
+    moneyMetric('Recebido', raw.recebido ?? raw.pago, 'caixa confirmado', 'success'),
+    moneyMetric('Em aberto', raw.em_aberto ?? raw.a_receber, 'pendente de pagamento', 'warning'),
+    metric('Boletos vencidos', raw.boletos_vencidos ?? boletosVencidos, 'requer cobrança', 'danger'),
+  ]
+
+  function setCustoField(key: keyof typeof custo, value: string) {
+    setCusto((current) => ({ ...current, [key]: value }))
+  }
+
+  function onCustoSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    createCusto.mutate({
+      descricao: custo.descricao,
+      valor: asNumber(custo.valor),
+      tipo: custo.tipo,
+      competencia: custo.competencia,
+    })
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader eyebrow="Financeiro" accent="Resumo" title="da unidade" subtitle="Receita, fluxo de caixa, faturamento e pendências." />
+
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface p-1">
+        {[
+          ['operacional', CircleDollarSign, 'Operacional'],
+          ['cliente', Users, 'Por cliente'],
+          ['recebiveis', TrendingUp, 'Recebíveis'],
+          ['boletos', WalletCards, 'Boletos'],
+        ].map(([key, Icon, label]) => (
+          <button
+            key={String(key)}
+            className={tab === key ? 'inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-bold text-white' : 'inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-ink-muted hover:bg-surface-muted'}
+            onClick={() => setTab(key as typeof tab)}
+          >
+            <Icon className="h-4 w-4" />
+            {label as string}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'operacional' ? (
+        <>
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {metrics.map((item, index) => (
+              <MetricCard key={item.label} metric={item} icon={icons[index]} />
+            ))}
+          </section>
+
+          <section className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+            <LinePanel title="Fluxo de caixa" data={historyPoints(fluxo.data?.items ?? fluxo.data?.fluxo ?? fluxo.data?.history)} />
+            <Card>
+              <CardHeader>
+                <p className="text-base font-bold text-ink">Custos do mês</p>
+                <p className="mt-1 text-xs text-ink-muted">CRUD conectado a `/financeiro/custos`.</p>
+              </CardHeader>
+              <CardBody className="space-y-3">
+                <form className="grid gap-3" onSubmit={onCustoSubmit}>
+                  <input className="design-input h-11 w-full px-4" placeholder="Descrição" value={custo.descricao} onChange={(event) => setCustoField('descricao', event.target.value)} required />
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <input className="design-input h-11 w-full px-4" type="number" min="0" step="0.01" placeholder="Valor" value={custo.valor} onChange={(event) => setCustoField('valor', event.target.value)} required />
+                    <select className="design-input h-11 w-full px-4" value={custo.tipo} onChange={(event) => setCustoField('tipo', event.target.value)}>
+                      {['aluguel', 'salario', 'energia', 'internet', 'outros'].map((tipo) => <option key={tipo} value={tipo}>{tipo}</option>)}
+                    </select>
+                    <input className="design-input h-11 w-full px-4" type="month" value={custo.competencia} onChange={(event) => setCustoField('competencia', event.target.value)} required />
+                  </div>
+                  {createCusto.isError || custos.isError ? <p className="rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">{extractErrorMessage(createCusto.error ?? custos.error)}</p> : null}
+                  <Button type="submit" icon={Receipt} isLoading={createCusto.isPending}>Adicionar custo</Button>
+                </form>
+                <div className="space-y-2 border-t border-line pt-3">
+                  {custosRows.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-line p-4 text-center text-xs text-ink-muted">Sem custos lançados no mês.</p>
+                  ) : null}
+                  {custosRows.map((item) => {
+                    const Icon = item.tipo === 'aluguel' ? Building2 : item.tipo === 'salario' ? Users : item.tipo === 'energia' ? Zap : Receipt
+                    return (
+                      <div key={asString(item.id)} className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface-muted p-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand"><Icon className="h-4 w-4" /></span>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-ink">{asString(item.descricao)}</p>
+                            <p className="text-xs text-ink-muted">{asString(item.tipo)} · {formatDate(asString(item.competencia, ''))}</p>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="num text-sm font-bold text-ink">{formatMoney(item.valor, true)}</span>
+                          <Button variant="ghost" disabled={deleteCusto.isPending} onClick={() => void deleteCusto.mutate(asString(item.id, ''))}>Excluir</Button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {deleteCusto.isError ? <p className="rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">{extractErrorMessage(deleteCusto.error)}</p> : null}
+                </div>
+              </CardBody>
+            </Card>
+          </section>
+        </>
+      ) : null}
+
+      {tab === 'cliente' ? (
+        <Card>
+          <CardHeader>
+            <p className="text-base font-bold text-ink">Faturamento por cliente</p>
+            <p className="mt-1 text-xs text-ink-muted">Participação da carteira no faturamento da unidade.</p>
+          </CardHeader>
+          <CardBody>
+            <DataTable<JsonRecord>
+              data={clientes}
+              columns={[
+                { key: 'cliente_nome', header: 'Cliente', render: (item) => asString(item.cliente_nome ?? item.nome) },
+                { key: 'nicho', header: 'Nicho', render: (item) => asString(item.nicho ?? item.segmento) },
+                { key: 'valor', header: 'Faturamento', align: 'right', render: (item) => formatMoney(item.valor ?? item.faturamento) },
+                { key: 'lives', header: 'Lives', align: 'right', render: (item) => asNumber(item.lives ?? item.total_lives).toLocaleString('pt-BR') },
+              ]}
+            />
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {tab === 'recebiveis' ? (
+        <section className="grid gap-4 xl:grid-cols-3">
+          {metrics.slice(0, 3).map((item, index) => (
+            <MetricCard key={item.label} metric={item} icon={icons[index]} />
+          ))}
+          <Card className="xl:col-span-3">
+            <CardHeader>
+              <p className="text-base font-bold text-ink">Bruto x líquido x pendências</p>
+            </CardHeader>
+            <CardBody className="space-y-4">
+              {metrics.slice(0, 3).map((item) => (
+                <div key={item.label} className="grid gap-2 md:grid-cols-[140px_1fr_140px] md:items-center">
+                  <span className="text-sm font-semibold text-ink">{item.label}</span>
+                  <span className="h-3 overflow-hidden rounded-full bg-surface-muted">
+                    <span className="block h-full w-full rounded-full bg-brand" />
+                  </span>
+                  <span className="num text-sm font-bold text-ink md:text-right">{item.value}</span>
+                </div>
+              ))}
+            </CardBody>
+          </Card>
+        </section>
+      ) : null}
+
+      {tab === 'boletos' ? (
+        <section className="grid gap-4 xl:grid-cols-3">
+          <MetricCard metric={metrics[3]} icon={Receipt} />
+          <Card className="xl:col-span-2">
+            <CardBody className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-base font-bold text-ink">Boletos e cobranças</p>
+                <p className="mt-1 text-sm text-ink-muted">{boletosRows.length} cobrança(s) retornada(s) por `/boletos`.</p>
+              </div>
+              <Link className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-ink transition hover:bg-surface-muted" to="/boletos">
+                <Receipt className="h-4 w-4" />
+                Abrir boletos
+              </Link>
+            </CardBody>
+          </Card>
+          <Card className="xl:col-span-3">
+            <CardBody>
+              <DataTable<JsonRecord>
+                data={boletosRows.slice(0, 8)}
+                columns={[
+                  { key: 'tipo', header: 'Tipo', render: (item) => asString(item.tipo) },
+                  { key: 'vencimento', header: 'Vencimento', render: (item) => formatDate(asString(item.vencimento, '')) },
+                  { key: 'status', header: 'Status', render: (item) => asString(item.status) },
+                  { key: 'valor', header: 'Valor', align: 'right', render: (item) => formatMoney(item.valor) },
+                ]}
+              />
+            </CardBody>
+          </Card>
+        </section>
+      ) : null}
+    </div>
+  )
+}
