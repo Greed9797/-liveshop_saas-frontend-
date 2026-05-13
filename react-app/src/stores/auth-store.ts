@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { User } from '../types/models'
 import { routeForRole } from '../utils/access'
-import { clearSession, restoreSession } from '../services/auth-storage'
+import { clearSession, restoreSession, saveUser } from '../services/auth-storage'
 import { extractErrorMessage, unauthorizedEventName } from '../services/api'
 import * as authService from '../services/auth'
 
@@ -12,11 +12,12 @@ interface AuthState {
   error: string | null
   bootstrap: () => void
   login: (email: string, senha: string) => Promise<string | null>
+  markOnboardingCompleted: () => void
   logout: () => Promise<void>
   expire: () => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isBootstrapped: false,
   isLoading: false,
@@ -38,6 +39,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ isLoading: false, error: message })
       return null
     }
+  },
+
+  markOnboardingCompleted: () => {
+    const user = get().user
+    if (!user) return
+    const updated = { ...user, onboarding_completed: true }
+    saveUser(updated)
+    set({ user: updated })
   },
 
   logout: async () => {

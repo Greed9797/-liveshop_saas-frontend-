@@ -38,7 +38,7 @@ export function KnowledgePage() {
         </CardHeader>
         <CardBody className="space-y-3">
           {(articles.data ?? []).map((article, index) => (
-            <div key={asString(article.id, String(index))} className="flex items-start justify-between gap-4 rounded-lg border border-line p-4">
+            <div key={asString(article.id, String(index))} className="flex items-start justify-between gap-4 rounded-2xl border border-line bg-surface-muted/50 p-4">
               <div className="flex gap-3">
                 <FileText className="mt-0.5 h-5 w-5 text-brand" />
                 <div>

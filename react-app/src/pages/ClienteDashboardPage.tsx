@@ -38,7 +38,7 @@ export function ClienteDashboardPage() {
       />
 
       {liveAtiva ? (
-        <Card className="border-brand/30 bg-orange-50">
+        <Card className="brand-soft-panel border-brand/30">
           <CardBody className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <Badge tone="success">ao vivo</Badge>
@@ -46,15 +46,15 @@ export function ClienteDashboardPage() {
               <p className="mt-1 text-sm text-ink-muted">{asString(liveAtiva.titulo ?? liveAtiva.cliente_nome, 'Live em andamento')}</p>
             </div>
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-lg bg-white p-3">
+              <div className="rounded-2xl bg-surface p-3 shadow-[var(--shadow-card)]">
                 <p className="text-xs text-ink-muted">GMV</p>
                 <p className="font-bold text-ink">{formatMoney(liveAtiva.gmv_atual ?? liveAtiva.gmv)}</p>
               </div>
-              <div className="rounded-lg bg-white p-3">
+              <div className="rounded-2xl bg-surface p-3 shadow-[var(--shadow-card)]">
                 <p className="text-xs text-ink-muted">Viewers</p>
                 <p className="font-bold text-ink">{asNumber(liveAtiva.viewer_count).toLocaleString('pt-BR')}</p>
               </div>
-              <div className="rounded-lg bg-white p-3">
+              <div className="rounded-2xl bg-surface p-3 shadow-[var(--shadow-card)]">
                 <p className="text-xs text-ink-muted">Pedidos</p>
                 <p className="font-bold text-ink">{asNumber(liveAtiva.total_orders).toLocaleString('pt-BR')}</p>
               </div>

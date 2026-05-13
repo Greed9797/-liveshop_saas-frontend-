@@ -26,16 +26,32 @@ export function getLeads() {
   return apiGet<Lead[]>('/leads')
 }
 
-export function createLead(payload: Partial<Lead>) {
+export function createLead(payload: JsonRecord) {
   return apiPost<Lead>('/leads', payload)
 }
 
-export function updateLead(id: string, payload: Partial<Lead>) {
+export function updateLead(id: string, payload: JsonRecord) {
   return apiPatch<Lead>(`/leads/${id}`, payload)
 }
 
 export function deleteLead(id: string) {
   return apiDelete(`/leads/${id}`)
+}
+
+export function addLeadContato(id: string, payload: JsonRecord) {
+  return apiPost<JsonRecord>(`/leads/${id}/contato`, payload)
+}
+
+export function addLeadTarefa(id: string, payload: JsonRecord) {
+  return apiPost<JsonRecord>(`/leads/${id}/tarefa`, payload)
+}
+
+export function getClientes() {
+  return apiGet<JsonRecord[]>('/clientes')
+}
+
+export function getContratos(params: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord[]>('/contratos', params)
 }
 
 export function getClienteDashboard(period: Period) {
@@ -46,8 +62,28 @@ export function getClienteLives(period: Period) {
   return apiGet<JsonRecord>('/cliente/lives', { mes: period.mes, ano: period.ano })
 }
 
-export function getClienteAgenda() {
-  return apiGet<JsonRecord>('/cliente/agenda')
+export function getClientePerfil() {
+  return apiGet<JsonRecord>('/cliente/perfil')
+}
+
+export function updateClienteTiktok(tiktok_username: string | null) {
+  return apiPost<JsonRecord>('/cliente/perfil/tiktok', { tiktok_username })
+}
+
+export function getClienteMeta(period: Period) {
+  return apiGet<JsonRecord>('/cliente/meta', { mes: period.mes, ano: period.ano })
+}
+
+export function updateClienteMeta(payload: JsonRecord) {
+  return apiPatch<JsonRecord>('/cliente/meta', payload)
+}
+
+export function getClienteAgenda(params: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord>('/cliente/agenda', params)
+}
+
+export function getClienteReservas() {
+  return apiGet<JsonRecord[]>('/cliente/reservas')
 }
 
 export function solicitarClienteLive(payload: JsonRecord) {
@@ -62,12 +98,32 @@ export function getCabinesFilaAtivacao() {
   return apiGet<JsonRecord[]>('/cabines/fila-ativacao')
 }
 
+export function createCabine(payload: JsonRecord) {
+  return apiPost<JsonRecord>('/cabines', payload)
+}
+
+export function updateCabine(id: string, payload: JsonRecord) {
+  return apiPatch<JsonRecord>(`/cabines/${id}`, payload)
+}
+
 export function liberarCabine(id: string) {
   return apiPatch(`/cabines/${id}/liberar`, {})
 }
 
-export function reservarCabine(id: string, clienteId: string) {
-  return apiPatch(`/cabines/${id}/reservar`, { cliente_id: clienteId })
+export function reservarCabine(id: string, contratoId: string) {
+  return apiPatch(`/cabines/${id}/reservar`, { contrato_id: contratoId })
+}
+
+export function atualizarStatusCabine(id: string, status: string) {
+  return apiPatch(`/cabines/${id}/status`, { status })
+}
+
+export function getCabineHistorico(id: string) {
+  return apiGet<JsonRecord>(`/cabines/${id}/historico`)
+}
+
+export function getCabineLiveAtual(id: string) {
+  return apiGet<JsonRecord>(`/cabines/${id}/live-atual`)
 }
 
 export function getLives() {
@@ -87,11 +143,27 @@ export function aprovarSolicitacao(id: string) {
 }
 
 export function recusarSolicitacao(id: string, motivo?: string) {
-  return apiPatch(`/solicitacoes/${id}/recusar`, { motivo })
+  return apiPatch(`/solicitacoes/${id}/recusar`, { motivo_recusa: motivo })
+}
+
+export function criarSolicitacao(payload: JsonRecord) {
+  return apiPost<JsonRecord>('/solicitacoes', payload)
 }
 
 export function getApresentadoras() {
   return apiGet<JsonRecord[]>('/apresentadoras')
+}
+
+export function createApresentadora(payload: JsonRecord) {
+  return apiPost<JsonRecord>('/apresentadoras', payload)
+}
+
+export function updateApresentadora(id: string, payload: JsonRecord) {
+  return apiPatch<JsonRecord>(`/apresentadoras/${id}`, payload)
+}
+
+export function deleteApresentadora(id: string) {
+  return apiDelete(`/apresentadoras/${id}`)
 }
 
 export function getAnalyticsDashboard(filters: Record<string, unknown> = {}) {
@@ -110,8 +182,36 @@ export function getFinanceiroFaturamento(filters: Record<string, unknown> = {}) 
   return apiGet<JsonRecord>('/financeiro/faturamento', filters)
 }
 
+export function getFinanceiroCustos(filters: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord[]>('/financeiro/custos', filters)
+}
+
+export function createFinanceiroCusto(payload: JsonRecord) {
+  return apiPost<JsonRecord>('/financeiro/custos', payload)
+}
+
+export function deleteFinanceiroCusto(id: string) {
+  return apiDelete(`/financeiro/custos/${id}`)
+}
+
 export function getBoletos() {
   return apiGet<JsonRecord[]>('/boletos')
+}
+
+export function getBoletoAlertas() {
+  return apiGet<JsonRecord | null>('/boletos/alertas')
+}
+
+export function getBoletoDetalhe(id: string) {
+  return apiGet<JsonRecord>(`/boletos/${id}`)
+}
+
+export function marcarBoletoVisto(id: string) {
+  return apiPatch(`/boletos/${id}/visto`, {})
+}
+
+export function marcarBoletoPago(id: string) {
+  return apiPatch(`/boletos/${id}/pagar`, {})
 }
 
 export function getConfiguracoes() {
@@ -120,6 +220,10 @@ export function getConfiguracoes() {
 
 export function updateConfiguracoes(payload: JsonRecord) {
   return apiPatch<JsonRecord>('/configuracoes', payload)
+}
+
+export function trocarSenha(payload: JsonRecord) {
+  return apiPatch<JsonRecord>('/auth/senha', payload)
 }
 
 export function getKnowledgeCategories() {

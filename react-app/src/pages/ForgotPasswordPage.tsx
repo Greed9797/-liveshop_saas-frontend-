@@ -26,8 +26,8 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#fdf6f1] px-4">
-      <section className="w-full max-w-md rounded-2xl border border-line bg-white p-8 shadow-xl shadow-black/10">
+    <main className="livelab-shell flex min-h-screen items-center justify-center px-4">
+      <section className="design-panel w-full max-w-md p-8">
         <Link to="/login" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-ink-muted hover:text-ink">
           <ArrowLeft className="h-4 w-4" />
           Voltar
@@ -37,14 +37,14 @@ export function ForgotPasswordPage() {
           <label className="block">
             <span className="text-sm font-semibold text-ink">E-mail</span>
             <input
-              className="mt-2 h-11 w-full rounded-lg border border-line bg-surface-muted px-4 outline-none focus:border-brand focus:ring-4 focus:ring-brand/10"
+              className="design-input mt-2 h-11 w-full px-4"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />
           </label>
-          {message ? <p className="rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">{message}</p> : null}
-          {error ? <p className="rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</p> : null}
+          {message ? <p className="rounded-2xl bg-[var(--success-soft)] px-4 py-3 text-sm font-medium text-[var(--success)]">{message}</p> : null}
+          {error ? <p className="rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">{error}</p> : null}
           <Button className="w-full" type="submit" icon={Mail} isLoading={loading}>
             Enviar link
           </Button>

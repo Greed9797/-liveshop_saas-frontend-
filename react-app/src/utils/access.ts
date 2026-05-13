@@ -103,6 +103,10 @@ export function hasRole(user: User | null, allowed?: Role[]): boolean {
   return Boolean(user && allowed.includes(user.papel))
 }
 
+export function needsClientOnboarding(user: User | null): boolean {
+  return user?.papel === 'cliente_parceiro' && user.onboarding_completed === false
+}
+
 export const menuItems: MenuItem[] = [
   { label: 'Home', path: '/', icon: Home, roles: internalRoles },
   { label: 'Master', path: '/master', icon: LayoutDashboard, roles: masterRoles },
@@ -113,6 +117,7 @@ export const menuItems: MenuItem[] = [
   { label: 'Cliente', path: '/cliente', icon: Gauge, roles: clienteRoles },
   { label: 'Lives', path: '/cliente/lives', icon: MonitorPlay, roles: clienteRoles },
   { label: 'Agenda', path: '/cliente/agenda', icon: CalendarClock, roles: clienteRoles },
+  { label: 'Configurações', path: '/cliente/configuracoes', icon: Settings, roles: clienteRoles },
   { label: 'Cabines', path: '/cabines', icon: Presentation, roles: cabineRoles },
   { label: 'Solicitações', path: '/solicitacoes', icon: ClipboardCheck, roles: opsRoles },
   { label: 'Apresentadoras', path: '/apresentadoras', icon: Users, roles: opsRoles },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { menuForUser, routeForRole } from './access'
+import { menuForUser, needsClientOnboarding, routeForRole } from './access'
 import type { User } from '../types/models'
 
 const baseUser: User = {
@@ -28,6 +28,14 @@ describe('routeForRole', () => {
   })
 })
 
+describe('needsClientOnboarding', () => {
+  it('only blocks client users with pending onboarding', () => {
+    expect(needsClientOnboarding({ ...baseUser, papel: 'cliente_parceiro', onboarding_completed: false })).toBe(true)
+    expect(needsClientOnboarding({ ...baseUser, papel: 'cliente_parceiro', onboarding_completed: true })).toBe(false)
+    expect(needsClientOnboarding({ ...baseUser, papel: 'franqueado', onboarding_completed: false })).toBe(false)
+  })
+})
+
 describe('menuForUser', () => {
   it('keeps role-specific menus separated', () => {
     const masterMenu = menuForUser({ ...baseUser, papel: 'franqueador_master' }).map((item) => item.path)
@@ -36,6 +44,9 @@ describe('menuForUser', () => {
     expect(masterMenu).toContain('/master')
     expect(masterMenu).not.toContain('/cliente')
     expect(clientMenu).toContain('/cliente')
+    expect(clientMenu).toContain('/cliente/agenda')
+    expect(clientMenu).toContain('/cliente/configuracoes')
+    expect(clientMenu).toContain('/boletos')
     expect(clientMenu).not.toContain('/cabines')
   })
 })

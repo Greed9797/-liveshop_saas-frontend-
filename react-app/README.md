@@ -13,13 +13,13 @@ npm run dev
 Configure a API em `.env.local`:
 
 ```bash
-VITE_API_URL=http://127.0.0.1:3001/v1
+VITE_API_URL=https://liveshop-saas-api-production.up.railway.app/v1
 ```
 
-Para usar Railway/staging:
+Para backend local:
 
 ```bash
-VITE_API_URL=https://liveshop-saas-api-production.up.railway.app/v1
+VITE_API_URL=http://127.0.0.1:3001/v1
 ```
 
 ## Build
@@ -54,14 +54,19 @@ Validação feita em 2026-05-12: Railway responde `/health`, aceita preflight de
 - Layout responsivo com sidebar por papel.
 - Dashboard de unidade.
 - Dashboard Master, unidades, consolidado e CRM.
-- Dashboard cliente parceiro e histórico de lives.
-- Cabines, solicitações, apresentadoras, analytics, financeiro e base de conhecimento.
+- Dashboard cliente parceiro, histórico de lives, agenda e configurações.
+- CRM com criação/edição de leads, mudança de etapa, contato, tarefa e exclusão.
+- Cabines com criação/edição, status, reserva por contrato, histórico, live atual e encerramento.
+- Solicitações com aprovar/recusar e criação de agendamento por papel permitido.
+- Apresentadoras/equipe com criação, edição, ativação/inativação e exclusão lógica.
+- Financeiro com custos, faturamento, fluxo de caixa, boletos e tela detalhada de cobranças.
+- Analytics e base de conhecimento em modo leitura.
 - API client centralizado em `src/services/api.ts`.
+- Matriz de contrato em `../ROUTE_CONTRACT.md`.
 
 ## Ainda falta
 
-- Fluxos avançados de edição/criação em CRM, contratos, usuários e Knowledge Base.
-- Detalhes de cabine/live com SSE.
-- Agenda completa do cliente parceiro.
-- Perfil/configurações do cliente parceiro.
-- E2E Playwright para login e smoke das rotas principais.
+- Upload multipart de logo no onboarding quando o backend expuser endpoint próprio.
+- CRUD admin da Knowledge Base se a base passar a ser gerenciada pelo painel.
+- E2E real contra Railway com usuários de teste por papel.
+- Smoke test no domínio Vercel e, depois, em `app.grupolivelab.com.br`.

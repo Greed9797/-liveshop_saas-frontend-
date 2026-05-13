@@ -44,7 +44,7 @@ export function MasterUnitsPage({ title = 'Unidades', mode }: { title?: string; 
         subtitle="Lista operacional das unidades com GMV, clientes, plano e status."
         actions={
           <>
-            <select className="h-10 rounded-md border border-line bg-white px-3 text-sm font-semibold text-ink" value={status} onChange={(event) => setStatus(event.target.value)}>
+            <select className="design-input h-10 px-3 text-sm font-semibold text-ink" value={status} onChange={(event) => setStatus(event.target.value)}>
               <option value="all">Todos</option>
               <option value="ativo">Ativos</option>
               <option value="setup">Setup</option>

@@ -12,15 +12,15 @@ export function DataTable<T extends object>({
   if (data.length === 0) return <EmptyState />
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-line bg-surface scrollbar-thin">
+    <div className="overflow-x-auto rounded-2xl border border-line bg-surface scrollbar-thin">
       <table className="min-w-full divide-y divide-line text-left text-sm">
-        <thead className="bg-surface-muted/70 text-xs font-bold uppercase tracking-wide text-ink-muted">
+        <thead className="bg-surface-muted/70 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-muted">
           <tr>
             {columns.map((column) => (
               <th
                 key={String(column.key)}
                 className={clsx(
-                  'px-4 py-3',
+                  'whitespace-nowrap px-4 py-3.5',
                   column.align === 'right' && 'text-right',
                   column.align === 'center' && 'text-center',
                 )}
@@ -32,12 +32,12 @@ export function DataTable<T extends object>({
         </thead>
         <tbody className="divide-y divide-line">
           {data.map((item, index) => (
-            <tr key={index} className="hover:bg-surface-muted/60">
+            <tr key={index} className="transition hover:bg-surface-muted/70">
               {columns.map((column) => (
                 <td
                   key={String(column.key)}
                   className={clsx(
-                    'px-4 py-3 text-ink',
+                    'px-4 py-4 text-ink',
                     column.align === 'right' && 'text-right',
                     column.align === 'center' && 'text-center',
                   )}

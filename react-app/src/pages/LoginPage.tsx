@@ -41,15 +41,15 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fdf6f1] px-4 py-8">
-      <div className="fixed inset-x-0 top-0 h-80 bg-[radial-gradient(120%_80%_at_50%_-10%,#ffe8dc_0%,#fdf6f1_55%)]" />
+    <div className="livelab-shell min-h-screen px-4 py-8">
+      <div className="fixed inset-x-0 top-0 h-80 bg-[radial-gradient(120%_80%_at_50%_-10%,var(--primary-soft)_0%,transparent_65%)]" />
       <main className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-xl items-center justify-center">
-        <section className="w-full overflow-hidden rounded-2xl border border-black/10 bg-white shadow-2xl shadow-black/10">
+        <section className="design-panel w-full overflow-hidden">
           <div className="relative px-6 py-8 sm:px-10 sm:py-10">
             <div className="absolute inset-x-0 -top-28 mx-auto h-72 w-72 rounded-full bg-brand-soft blur-3xl" />
             <div className="relative">
               <div className="mb-8 flex items-center gap-3">
-                <img src="/images/favicon.png" alt="" className="h-11 w-11 rounded-lg object-cover" />
+                <img src="/images/favicon.png" alt="" className="h-11 w-11 rounded-xl object-cover" />
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Livelab</p>
                   <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
@@ -62,7 +62,7 @@ export function LoginPage() {
                 <label className="block">
                   <span className="text-sm font-semibold text-ink">E-mail</span>
                   <input
-                    className="mt-2 h-12 w-full rounded-lg border border-line bg-[#f7efe8] px-4 text-ink outline-none transition focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
+                    className="design-input mt-2 h-12 w-full px-4"
                     type="email"
                     autoComplete="email"
                     value={email}
@@ -73,7 +73,7 @@ export function LoginPage() {
 
                 <label className="block">
                   <span className="text-sm font-semibold text-ink">Senha</span>
-                  <div className="mt-2 flex h-12 items-center rounded-lg border border-line bg-[#f7efe8] pr-2 transition focus-within:border-brand focus-within:bg-white focus-within:ring-4 focus-within:ring-brand/10">
+                  <div className="design-input mt-2 flex h-12 items-center pr-2">
                     <input
                       className="h-full min-w-0 flex-1 bg-transparent px-4 text-ink outline-none"
                       type={showSenha ? 'text' : 'password'}
@@ -84,7 +84,7 @@ export function LoginPage() {
                     />
                     <button
                       type="button"
-                      className="rounded-md p-2 text-ink-muted hover:bg-white"
+                      className="rounded-xl p-2 text-ink-muted hover:bg-surface"
                       aria-label={showSenha ? 'Ocultar senha' : 'Mostrar senha'}
                       onClick={() => setShowSenha((value) => !value)}
                     >
@@ -94,7 +94,7 @@ export function LoginPage() {
                 </label>
 
                 {localError || error ? (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  <div className="rounded-2xl border border-[var(--danger-soft)] bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">
                     {localError ?? error}
                   </div>
                 ) : null}

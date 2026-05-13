@@ -8,7 +8,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export function Card({ children, className, ...props }: CardProps) {
   return (
     <div
-      className={clsx('rounded-lg border border-line bg-surface shadow-sm shadow-black/5', className)}
+      className={clsx('design-card overflow-hidden transition-shadow duration-150 hover:shadow-[var(--shadow-card-lg)]', className)}
       {...props}
     >
       {children}
@@ -18,7 +18,7 @@ export function Card({ children, className, ...props }: CardProps) {
 
 export function CardHeader({ children, className, ...props }: CardProps) {
   return (
-    <div className={clsx('border-b border-line px-5 py-4', className)} {...props}>
+    <div className={clsx('border-b border-line px-5 py-4 md:px-6', className)} {...props}>
       {children}
     </div>
   )
@@ -26,7 +26,7 @@ export function CardHeader({ children, className, ...props }: CardProps) {
 
 export function CardBody({ children, className, ...props }: CardProps) {
   return (
-    <div className={clsx('p-5', className)} {...props}>
+    <div className={clsx('p-5 md:p-6', className)} {...props}>
       {children}
     </div>
   )

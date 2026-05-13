@@ -2,11 +2,11 @@ import clsx from 'clsx'
 
 const toneClass = {
   brand: 'bg-brand-soft text-brand',
-  success: 'bg-emerald-50 text-emerald-700',
-  warning: 'bg-amber-50 text-amber-700',
-  danger: 'bg-red-50 text-red-700',
-  info: 'bg-blue-50 text-blue-700',
-  neutral: 'bg-stone-100 text-stone-700',
+  success: 'bg-[var(--success-soft)] text-[var(--success)]',
+  warning: 'bg-[var(--warning-soft)] text-[var(--warning)]',
+  danger: 'bg-[var(--danger-soft)] text-[var(--danger)]',
+  info: 'bg-[var(--info-soft)] text-[var(--info)]',
+  neutral: 'bg-surface-muted text-ink-muted',
 }
 
 export function Badge({
@@ -19,7 +19,8 @@ export function Badge({
   className?: string
 }) {
   return (
-    <span className={clsx('inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold', toneClass[tone], className)}>
+    <span className={clsx('inline-flex h-[22px] items-center gap-1.5 rounded-full px-2.5 text-[11px] font-bold uppercase tracking-[0.04em]', toneClass[tone], className)}>
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
       {children}
     </span>
   )
@@ -27,7 +28,7 @@ export function Badge({
 
 export function statusTone(status?: string): keyof typeof toneClass {
   const normalized = status?.toLowerCase() ?? ''
-  if (['ativo', 'aprovada', 'pago', 'ao_vivo', 'em_andamento', 'livre'].includes(normalized)) return 'success'
+  if (['ativo', 'ativa', 'aprovada', 'confirmada', 'pago', 'ao_vivo', 'em_andamento', 'livre', 'disponivel'].includes(normalized)) return 'success'
   if (['pendente', 'reservada', 'em_analise', 'aguardando'].includes(normalized)) return 'warning'
   if (['cancelado', 'recusada', 'vencido', 'inadimplente', 'manutencao'].includes(normalized)) return 'danger'
   if (['encerrada', 'finalizada'].includes(normalized)) return 'info'

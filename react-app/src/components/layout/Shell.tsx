@@ -1,4 +1,4 @@
-import { LogOut, Menu, Search, X } from 'lucide-react'
+import { Bell, LogOut, Menu, Moon, Search, Sun, X } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
@@ -6,22 +6,43 @@ import { useAuthStore } from '../../stores/auth-store'
 import { menuForUser, roleLabel } from '../../utils/access'
 import { Button } from '../ui/Button'
 
-function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+function initials(name?: string) {
+  return (name ?? 'LL')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+}
+
+function Sidebar({ onNavigate, expanded = false }: { onNavigate?: () => void; expanded?: boolean }) {
   const user = useAuthStore((state) => state.user)
   const location = useLocation()
   const items = menuForUser(user)
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-line bg-white">
-      <div className="flex h-20 items-center gap-3 border-b border-line px-5">
-        <img src="/images/favicon.png" alt="" className="h-9 w-9 rounded-md object-cover" />
-        <div>
-          <p className="text-base font-bold text-ink">Livelab</p>
-          <p className="text-xs text-ink-muted">{user?.tenant_nome ?? 'LiveShop SaaS'}</p>
-        </div>
+    <aside
+      className={clsx(
+        'flex h-full flex-col border-r border-line bg-surface',
+        expanded ? 'w-72 px-3 py-4' : 'w-20 items-center px-0 py-5',
+      )}
+    >
+      <div className={clsx('mb-5 flex items-center', expanded ? 'w-full gap-3 px-2' : 'justify-center')}>
+        <img
+          src="/images/favicon.png"
+          alt=""
+          className="h-12 w-12 rounded-xl object-cover shadow-[0_6px_16px_-4px_rgba(255,90,31,0.5)]"
+        />
+        {expanded ? (
+          <div className="min-w-0">
+            <p className="truncate text-base font-extrabold tracking-[-0.04em] text-ink">Livelab</p>
+            <p className="truncate text-xs text-ink-muted">{user?.tenant_nome ?? 'LiveShop SaaS'}</p>
+          </div>
+        ) : null}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
+      <nav className={clsx('flex flex-1 flex-col gap-1 overflow-y-auto scrollbar-thin', expanded ? 'w-full px-1' : 'items-center')}>
         {items.map((item) => {
           const Icon = item.icon
           const selected = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)
@@ -30,22 +51,39 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               key={item.path}
               to={item.path}
               onClick={onNavigate}
+              title={item.label}
               className={clsx(
-                'mb-1 flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition',
+                'group relative flex items-center rounded-2xl text-sm font-semibold transition',
+                expanded ? 'h-11 gap-3 px-3' : 'h-14 w-14 justify-center',
                 selected ? 'bg-brand-soft text-brand' : 'text-ink-muted hover:bg-surface-muted hover:text-ink',
               )}
             >
-              <Icon className="h-4 w-4" />
-              <span>{item.label}</span>
+              {selected && !expanded ? <span className="absolute -left-3 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r bg-brand" /> : null}
+              <Icon className="h-5 w-5 shrink-0 stroke-[1.9]" />
+              {expanded ? (
+                <span className="truncate">{item.label}</span>
+              ) : (
+                <span className="pointer-events-none absolute left-[68px] z-50 hidden rounded-lg border border-line bg-surface px-2 py-1 text-xs font-semibold text-ink shadow-[var(--shadow-card)] group-hover:block">
+                  {item.label}
+                </span>
+              )}
             </NavLink>
           )
         })}
       </nav>
 
-      <div className="border-t border-line p-4">
-        <div className="rounded-lg bg-surface-muted p-3">
-          <p className="truncate text-sm font-bold text-ink">{user?.nome}</p>
-          <p className="mt-1 truncate text-xs text-ink-muted">{roleLabel(user?.papel)}</p>
+      <div className={clsx('border-t border-line pt-4', expanded ? 'w-full' : 'w-full px-3')}>
+        <div className={clsx('rounded-2xl bg-surface-muted', expanded ? 'p-3' : 'grid h-12 place-items-center')}>
+          {expanded ? (
+            <>
+              <p className="truncate text-sm font-bold text-ink">{user?.nome}</p>
+              <p className="mt-1 truncate text-xs text-ink-muted">{roleLabel(user?.papel)}</p>
+            </>
+          ) : (
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-brand to-[#ff8a3c] text-xs font-bold text-white">
+              {initials(user?.nome)}
+            </span>
+          )}
         </div>
       </div>
     </aside>
@@ -54,10 +92,12 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 export function Shell() {
   const [open, setOpen] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="livelab-shell min-h-screen" data-theme={theme}>
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:block">
         <Sidebar />
       </div>
@@ -66,34 +106,68 @@ export function Shell() {
         <div className="fixed inset-0 z-50 lg:hidden">
           <button className="absolute inset-0 bg-black/30" aria-label="Fechar menu" onClick={() => setOpen(false)} />
           <div className="relative h-full">
-            <Sidebar onNavigate={() => setOpen(false)} />
+            <Sidebar expanded onNavigate={() => setOpen(false)} />
           </div>
         </div>
       ) : null}
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-line bg-canvas/90 px-4 backdrop-blur md:px-8">
-          <div className="flex items-center gap-3">
+      <div className="lg:pl-20">
+        <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 px-4 py-3 backdrop-blur md:px-7 lg:hidden">
+          <div className="flex items-center justify-between">
             <button
-              className="rounded-md border border-line bg-white p-2 text-ink-muted lg:hidden"
+              className="grid h-11 w-11 place-items-center rounded-xl border border-line bg-surface text-ink-muted"
               aria-label="Abrir menu"
               onClick={() => setOpen(true)}
             >
               {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-            <div className="hidden items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm text-ink-muted md:flex">
-              <Search className="h-4 w-4" />
-              <span>Buscar no SaaS</span>
+            <div className="flex items-center gap-2">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-brand to-[#ff8a3c] text-xs font-bold text-white">
+                {initials(user?.nome)}
+              </span>
+              <div className="text-right">
+                <p className="text-sm font-bold text-ink">{user?.nome ?? 'Livelab'}</p>
+                <p className="text-xs text-ink-muted">{roleLabel(user?.papel)}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" icon={LogOut} onClick={() => void logout()}>
-              Sair
-            </Button>
           </div>
         </header>
 
-        <main className="px-4 py-6 md:px-8 lg:px-10">
+        <main className="min-h-screen px-4 py-6 md:px-7 lg:px-8 lg:py-5">
+          <div className="mb-6 hidden items-center justify-between lg:flex">
+            <div className="flex items-center gap-3">
+              <span className="grid h-13 w-13 place-items-center rounded-full bg-gradient-to-br from-brand to-[#ff8a3c] text-lg font-bold text-white shadow-[0_4px_12px_-2px_rgba(255,90,31,0.5)]">
+                {initials(user?.nome)}
+              </span>
+              <div>
+                <h1 className="m-0 text-[22px] font-bold leading-tight tracking-[-0.02em] text-ink">
+                  Boa tarde, <span className="font-medium text-[var(--text-secondary)]">{user?.nome?.split(' ')[0] ?? 'Admin'}</span>{' '}
+                  <span className="serif text-brand">{roleLabel(user?.papel).replace('Franqueador ', '')}</span>
+                </h1>
+                <p className="mt-1 text-sm text-ink-muted">{user?.tenant_nome ?? 'Operação Livelab'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="hidden h-12 items-center gap-2 rounded-2xl border border-line bg-surface px-4 text-sm text-ink-muted xl:flex">
+                <Search className="h-4 w-4" />
+                <span>Buscar no SaaS</span>
+              </div>
+              <button className="relative grid h-12 w-12 place-items-center rounded-2xl border border-line bg-surface text-ink-muted transition hover:bg-surface-muted" aria-label="Notificações">
+                <Bell className="h-5 w-5" />
+                <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full border-2 border-surface bg-brand" />
+              </button>
+              <button
+                className="grid h-12 w-12 place-items-center rounded-2xl border border-line bg-surface text-ink-muted transition hover:bg-surface-muted"
+                aria-label={theme === 'light' ? 'Ativar tema escuro' : 'Ativar tema claro'}
+                onClick={() => setTheme((value) => (value === 'light' ? 'dark' : 'light'))}
+              >
+                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </button>
+              <Button className="h-12" variant="secondary" icon={LogOut} onClick={() => void logout()}>
+                Sair
+              </Button>
+            </div>
+          </div>
           <Outlet />
         </main>
       </div>

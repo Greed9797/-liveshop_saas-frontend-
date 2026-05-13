@@ -54,6 +54,10 @@ export function saveSession(session: Session): void {
   write(userKey, JSON.stringify(session.user))
 }
 
+export function saveUser(user: User): void {
+  write(userKey, JSON.stringify(user))
+}
+
 export function updateAccessToken(accessToken: string, refreshToken?: string): void {
   write(accessKey, accessToken)
   if (refreshToken) write(refreshKey, refreshToken)

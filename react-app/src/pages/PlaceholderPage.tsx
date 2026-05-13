@@ -35,7 +35,7 @@ export function PlaceholderPage({ title, endpoint }: { title: string; endpoint: 
               }))}
             />
           ) : (
-            <pre className="overflow-auto rounded-lg bg-surface-muted p-4 text-xs text-ink-muted">{JSON.stringify(query.data ?? {}, null, 2)}</pre>
+            <pre className="overflow-auto rounded-2xl bg-surface-muted p-4 text-xs text-ink-muted">{JSON.stringify(query.data ?? {}, null, 2)}</pre>
           )}
         </CardBody>
       </Card>
