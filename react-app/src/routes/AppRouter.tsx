@@ -4,22 +4,21 @@ import { cabineRoles, clienteRoles, commercialRoles, financeRoles, internalRoles
 import { ProtectedRoute } from './ProtectedRoute'
 import { LoginPage } from '../pages/LoginPage'
 import { ForgotPasswordPage } from '../pages/ForgotPasswordPage'
+import { PublicRankingPage } from '../pages/PublicRankingPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { MasterDashboardPage } from '../pages/MasterDashboardPage'
 import { MasterUnitsPage } from '../pages/MasterUnitsPage'
 import { MasterConsolidatedPage } from '../pages/MasterConsolidatedPage'
-import { CrmPage } from '../pages/CrmPage'
+import { ComercialPage } from '../pages/ComercialPage'
 import { ClienteDashboardPage } from '../pages/ClienteDashboardPage'
 import { ClienteLivesPage } from '../pages/ClienteLivesPage'
 import { ClienteAgendaPage } from '../pages/ClienteAgendaPage'
-import { CabinesPage } from '../pages/CabinesPage'
+import { ConteudoPage } from '../pages/ConteudoPage'
 import { SolicitacoesPage } from '../pages/SolicitacoesPage'
-import { AnalyticsPage } from '../pages/AnalyticsPage'
 import { ApresentadorasPage } from '../pages/ApresentadorasPage'
 import { FinanceiroPage } from '../pages/FinanceiroPage'
 import { ConfiguracoesPage } from '../pages/ConfiguracoesPage'
 import { KnowledgePage } from '../pages/KnowledgePage'
-import { BoletosPage } from '../pages/BoletosPage'
 import { OnboardingPage } from '../pages/OnboardingPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 
@@ -29,6 +28,7 @@ export function AppRouter() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
+        <Route path="/ranking" element={<PublicRankingPage />} />
 
         <Route element={<ProtectedRoute allowedRoles={clienteRoles} />}>
           <Route path="/onboarding" element={<OnboardingPage />} />
@@ -48,8 +48,9 @@ export function AppRouter() {
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={[...masterRoles, ...commercialRoles]} />}>
-              <Route path="/master/crm" element={<CrmPage />} />
-              <Route path="/leads" element={<Navigate to="/master/crm" replace />} />
+              <Route path="/comercial" element={<ComercialPage />} />
+              <Route path="/master/crm" element={<Navigate to="/comercial" replace />} />
+              <Route path="/leads" element={<Navigate to="/comercial" replace />} />
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={['cliente_parceiro']} />}>
@@ -61,7 +62,8 @@ export function AppRouter() {
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={cabineRoles} />}>
-              <Route path="/cabines" element={<CabinesPage />} />
+              <Route path="/conteudo" element={<ConteudoPage />} />
+              <Route path="/cabines" element={<Navigate to="/conteudo" replace />} />
               <Route path="/agendamentos" element={<Navigate to="/solicitacoes" replace />} />
             </Route>
 
@@ -71,18 +73,18 @@ export function AppRouter() {
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={[...financeRoles, ...commercialRoles]} />}>
-              <Route path="/analytics-dashboard" element={<AnalyticsPage />} />
+              <Route path="/analytics-dashboard" element={<Navigate to="/conteudo?tab=analytics" replace />} />
             </Route>
 
-            <Route element={<ProtectedRoute allowedRoles={financeRoles} />}>
+            <Route element={<ProtectedRoute allowedRoles={[...financeRoles, 'cliente_parceiro']} />}>
               <Route path="/financeiro" element={<FinanceiroPage />} />
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={[...financeRoles, 'cliente_parceiro']} />}>
-              <Route path="/boletos" element={<BoletosPage />} />
+              <Route path="/boletos" element={<Navigate to="/financeiro?tab=boletos" replace />} />
             </Route>
 
-            <Route element={<ProtectedRoute allowedRoles={['franqueador_master', 'franqueado']} />}>
+            <Route element={<ProtectedRoute allowedRoles={['franqueador_master', 'admin_master', 'franqueado']} />}>
               <Route path="/configuracoes" element={<ConfiguracoesPage />} />
             </Route>
 

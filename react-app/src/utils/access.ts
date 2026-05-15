@@ -1,17 +1,14 @@
 import {
-  BarChart3,
   BookOpen,
   Building2,
   CalendarClock,
   ChartNoAxesCombined,
   CircleDollarSign,
-  ClipboardCheck,
   Gauge,
   Home,
   LayoutDashboard,
   MonitorPlay,
   Presentation,
-  Receipt,
   Settings,
   Store,
   Users,
@@ -92,7 +89,7 @@ export const clienteRoles: Role[] = ['cliente_parceiro']
 export function routeForRole(role?: Role, onboardingCompleted = true): string {
   if (!role) return '/login'
   if (masterRoles.includes(role)) return '/master'
-  if (role === 'apresentador' || role === 'apresentadora') return '/cabines'
+  if (role === 'apresentador' || role === 'apresentadora') return '/conteudo'
   if (role === 'cliente_parceiro') return onboardingCompleted ? '/cliente' : '/onboarding'
   if (internalRoles.includes(role)) return '/'
   return '/login'
@@ -112,20 +109,18 @@ export const menuItems: MenuItem[] = [
   { label: 'Master', path: '/master', icon: LayoutDashboard, roles: masterRoles },
   { label: 'Unidades', path: '/master/unidades', icon: Building2, roles: masterRoles },
   { label: 'Consolidado', path: '/master/consolidado', icon: ChartNoAxesCombined, roles: masterRoles },
-  { label: 'CRM', path: '/master/crm', icon: Workflow, roles: [...masterRoles, ...commercialRoles] },
+  { label: 'Comercial', path: '/comercial', icon: Workflow, roles: [...masterRoles, ...commercialRoles] },
   { label: 'Franqueados', path: '/master/franqueados', icon: Store, roles: ['franqueador_master'] },
   { label: 'Cliente', path: '/cliente', icon: Gauge, roles: clienteRoles },
   { label: 'Lives', path: '/cliente/lives', icon: MonitorPlay, roles: clienteRoles },
   { label: 'Agenda', path: '/cliente/agenda', icon: CalendarClock, roles: clienteRoles },
+  { label: 'Financeiro', path: '/financeiro?tab=boletos', icon: CircleDollarSign, roles: clienteRoles },
   { label: 'Configurações', path: '/cliente/configuracoes', icon: Settings, roles: clienteRoles },
-  { label: 'Cabines', path: '/cabines', icon: Presentation, roles: cabineRoles },
-  { label: 'Solicitações', path: '/solicitacoes', icon: ClipboardCheck, roles: opsRoles },
+  { label: 'Conteúdo', path: '/conteudo', icon: Presentation, roles: cabineRoles },
   { label: 'Apresentadoras', path: '/apresentadoras', icon: Users, roles: opsRoles },
-  { label: 'Analytics', path: '/analytics-dashboard', icon: BarChart3, roles: [...financeRoles, ...commercialRoles] },
   { label: 'Financeiro', path: '/financeiro', icon: CircleDollarSign, roles: financeRoles },
-  { label: 'Boletos', path: '/boletos', icon: Receipt, roles: [...financeRoles, 'cliente_parceiro'] },
   { label: 'Base', path: '/conhecimento', icon: BookOpen, roles: [...masterRoles, ...internalRoles, 'apresentador', 'apresentadora', 'cliente_parceiro'] },
-  { label: 'Configurações', path: '/configuracoes', icon: Settings, roles: ['franqueador_master', 'franqueado'] },
+  { label: 'Configurações', path: '/configuracoes', icon: Settings, roles: ['franqueador_master', 'admin_master', 'franqueado'] },
 ]
 
 export function menuForUser(user: User | null): MenuItem[] {

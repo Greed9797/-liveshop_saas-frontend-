@@ -6,6 +6,10 @@ export function getHomeDashboard() {
   return apiGet<JsonRecord>('/home/dashboard')
 }
 
+export function getPublicRanking(params: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord[]>('/public/ranking', params)
+}
+
 export function getMasterDashboard(period: Period) {
   return apiGet<JsonRecord>('/master/dashboard', { periodo: periodToParam(period) })
 }
@@ -48,6 +52,98 @@ export function addLeadTarefa(id: string, payload: JsonRecord) {
 
 export function getClientes() {
   return apiGet<JsonRecord[]>('/clientes')
+}
+
+export function getUsuarios(params: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord[]>('/usuarios', params)
+}
+
+export function getConvitesPendentes() {
+  return apiGet<JsonRecord[]>('/usuarios/convites-pendentes')
+}
+
+export function convidarUsuario(payload: JsonRecord) {
+  return apiPost<JsonRecord>('/usuarios/convidar', payload)
+}
+
+export function updateUsuario(id: string, payload: JsonRecord) {
+  return apiPatch<JsonRecord>(`/usuarios/${id}`, payload)
+}
+
+export function resetSenhaUsuario(id: string) {
+  return apiPost<JsonRecord>(`/usuarios/${id}/reset-senha`, {})
+}
+
+export function forceLogoutUsuario(id: string) {
+  return apiPost<JsonRecord>(`/usuarios/${id}/force-logout`, {})
+}
+
+export function reenviarConviteUsuario(id: string) {
+  return apiPost<JsonRecord>(`/usuarios/${id}/reenviar-convite`, {})
+}
+
+export function getMarcas(params: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord[]>('/marcas', params)
+}
+
+export function createMarca(payload: JsonRecord) {
+  return apiPost<JsonRecord>('/marcas', payload)
+}
+
+export function updateMarca(id: string, payload: JsonRecord) {
+  return apiPatch<JsonRecord>(`/marcas/${id}`, payload)
+}
+
+export function deleteMarca(id: string) {
+  return apiDelete(`/marcas/${id}`)
+}
+
+export function getAgenda(params: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord[]>('/agenda', params)
+}
+
+export function createAgendaEvento(payload: JsonRecord) {
+  return apiPost<JsonRecord>('/agenda', payload)
+}
+
+export function updateAgendaEvento(id: string, payload: JsonRecord) {
+  return apiPatch<JsonRecord>(`/agenda/${id}`, payload)
+}
+
+export function deleteAgendaEvento(id: string) {
+  return apiDelete(`/agenda/${id}`)
+}
+
+export function getVideos(params: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord[]>('/videos', params)
+}
+
+export function createVideo(payload: JsonRecord) {
+  return apiPost<JsonRecord>('/videos', payload)
+}
+
+export function updateVideo(id: string, payload: JsonRecord) {
+  return apiPatch<JsonRecord>(`/videos/${id}`, payload)
+}
+
+export function deleteVideo(id: string) {
+  return apiDelete(`/videos/${id}`)
+}
+
+export function getVendasAtribuidas(params: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord[]>('/vendas-atribuidas', params)
+}
+
+export function getComissoesResumo(params: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord>('/comissoes/resumo', params)
+}
+
+export function getComissoesApresentadoras(params: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord[]>('/comissoes/apresentadoras', params)
+}
+
+export function getComissoesMarcas(params: Record<string, unknown> = {}) {
+  return apiGet<JsonRecord[]>('/comissoes/marcas', params)
 }
 
 export function getContratos(params: Record<string, unknown> = {}) {

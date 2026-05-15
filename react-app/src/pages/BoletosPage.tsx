@@ -28,7 +28,7 @@ function copyText(value: unknown) {
   void navigator.clipboard.writeText(text)
 }
 
-export function BoletosPage() {
+export function BoletosPanel({ embedded = false }: { embedded?: boolean }) {
   const user = useCurrentUser()
   const canWrite = writeRoles.has(user?.papel ?? '')
   const [selectedId, setSelectedId] = useState('')
@@ -74,20 +74,22 @@ export function BoletosPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        eyebrow="Financeiro"
-        accent="Boletos"
-        title="e cobranças"
-        subtitle="Lista de cobranças, status de vencimento, link do gateway e ações permitidas por papel."
-        actions={
-          <Button variant="secondary" icon={RefreshCcw} onClick={() => {
-            void boletosQuery.refetch()
-            void alertaQuery.refetch()
-          }}>
-            Atualizar
-          </Button>
-        }
-      />
+      {!embedded ? (
+        <PageHeader
+          eyebrow="Financeiro"
+          accent="Boletos"
+          title="e cobranças"
+          subtitle="Lista de cobranças, status de vencimento, link do gateway e ações permitidas por papel."
+          actions={
+            <Button variant="secondary" icon={RefreshCcw} onClick={() => {
+              void boletosQuery.refetch()
+              void alertaQuery.refetch()
+            }}>
+              Atualizar
+            </Button>
+          }
+        />
+      ) : null}
 
       {alerta ? (
         <Card className="border-[var(--warning)]/35 bg-[var(--warning-soft)]">
@@ -220,4 +222,8 @@ export function BoletosPage() {
       </section>
     </div>
   )
+}
+
+export function BoletosPage() {
+  return <BoletosPanel />
 }

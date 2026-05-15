@@ -1,0 +1,213 @@
+import { KeyRound, LogOut, MailPlus, RefreshCcw, Shield, UserPlus } from 'lucide-react'
+import { FormEvent, useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Card, CardBody, CardHeader } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
+import { Badge, statusTone } from '../components/ui/Badge'
+import { DataTable } from '../components/ui/DataTable'
+import { ErrorState, LoadingState } from '../components/ui/States'
+import { asString } from '../utils/format'
+import { extractErrorMessage } from '../services/api'
+import {
+  convidarUsuario,
+  forceLogoutUsuario,
+  getApresentadoras,
+  getClientes,
+  getUsuarios,
+  reenviarConviteUsuario,
+  resetSenhaUsuario,
+  updateUsuario,
+} from '../services/domain'
+import type { JsonRecord } from '../types/models'
+
+const papeis = [
+  'gerente',
+  'gerente_comercial',
+  'financeiro',
+  'operacional',
+  'apresentador',
+  'apresentadora',
+  'cliente_parceiro',
+]
+
+const emptyForm = {
+  nome: '',
+  email: '',
+  papel: 'gerente',
+  cliente_id: '',
+  apresentadora_id: '',
+  senha_temporaria: '',
+}
+
+function ativoValue(value: unknown) {
+  return value === true || value === 'true'
+}
+
+export function SettingsUsuariosPanel() {
+  const client = useQueryClient()
+  const [form, setForm] = useState(emptyForm)
+  const [papelFilter, setPapelFilter] = useState('all')
+  const [ativoFilter, setAtivoFilter] = useState('all')
+  const usuarios = useQuery({
+    queryKey: ['usuarios', papelFilter, ativoFilter],
+    queryFn: () => getUsuarios({
+      ...(papelFilter !== 'all' ? { papel: papelFilter } : {}),
+      ...(ativoFilter !== 'all' ? { ativo: ativoFilter } : {}),
+    }),
+  })
+  const clientes = useQuery({ queryKey: ['clientes'], queryFn: getClientes })
+  const apresentadoras = useQuery({ queryKey: ['apresentadoras'], queryFn: getApresentadoras })
+
+  const inviteMutation = useMutation({
+    mutationFn: convidarUsuario,
+    onSuccess: () => {
+      setForm(emptyForm)
+      void client.invalidateQueries({ queryKey: ['usuarios'] })
+      void client.invalidateQueries({ queryKey: ['clientes'] })
+      void client.invalidateQueries({ queryKey: ['apresentadoras'] })
+    },
+  })
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: JsonRecord }) => updateUsuario(id, payload),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+  const resetMutation = useMutation({ mutationFn: resetSenhaUsuario })
+  const logoutMutation = useMutation({ mutationFn: forceLogoutUsuario })
+  const resendMutation = useMutation({
+    mutationFn: reenviarConviteUsuario,
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+
+  const rows = useMemo(() => usuarios.data ?? [], [usuarios.data])
+
+  if (usuarios.isLoading || clientes.isLoading || apresentadoras.isLoading) return <LoadingState />
+  if (usuarios.isError) return <ErrorState message={extractErrorMessage(usuarios.error)} onRetry={() => void usuarios.refetch()} />
+
+  function setField(key: keyof typeof emptyForm, value: string) {
+    setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    inviteMutation.mutate({
+      nome: form.nome,
+      email: form.email,
+      papel: form.papel,
+      ...(form.papel === 'cliente_parceiro' ? { cliente_id: form.cliente_id } : {}),
+      ...((form.papel === 'apresentador' || form.papel === 'apresentadora') && form.apresentadora_id ? { apresentadora_id: form.apresentadora_id } : {}),
+      ...(form.senha_temporaria ? { senha_temporaria: form.senha_temporaria } : {}),
+    })
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <p className="text-base font-bold text-ink">Enviar convite</p>
+        </CardHeader>
+        <CardBody>
+          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" onSubmit={onSubmit}>
+            <label className="block xl:col-span-2">
+              <span className="text-sm font-semibold text-ink">Nome</span>
+              <input className="design-input mt-2 h-11 w-full px-4" value={form.nome} onChange={(event) => setField('nome', event.target.value)} required />
+            </label>
+            <label className="block xl:col-span-2">
+              <span className="text-sm font-semibold text-ink">E-mail</span>
+              <input className="design-input mt-2 h-11 w-full px-4" type="email" value={form.email} onChange={(event) => setField('email', event.target.value)} required />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-ink">Papel</span>
+              <select className="design-input mt-2 h-11 w-full px-4" value={form.papel} onChange={(event) => setField('papel', event.target.value)}>
+                {papeis.map((papel) => <option key={papel} value={papel}>{papel}</option>)}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-ink">Cliente vinculado</span>
+              <select className="design-input mt-2 h-11 w-full px-4" value={form.cliente_id} onChange={(event) => setField('cliente_id', event.target.value)} required={form.papel === 'cliente_parceiro'}>
+                <option value="">Selecionar</option>
+                {(clientes.data ?? []).map((cliente) => <option key={asString(cliente.id, '')} value={asString(cliente.id, '')}>{asString(cliente.nome)}</option>)}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-ink">Apresentadora</span>
+              <select className="design-input mt-2 h-11 w-full px-4" value={form.apresentadora_id} onChange={(event) => setField('apresentadora_id', event.target.value)}>
+                <option value="">Opcional</option>
+                {(apresentadoras.data ?? []).map((item) => <option key={asString(item.id, '')} value={asString(item.id, '')}>{asString(item.nome)}</option>)}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-ink">Senha temporária</span>
+              <input className="design-input mt-2 h-11 w-full px-4" value={form.senha_temporaria} onChange={(event) => setField('senha_temporaria', event.target.value)} placeholder="Opcional" />
+            </label>
+            {inviteMutation.isError ? <p className="rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)] md:col-span-2 xl:col-span-4">{extractErrorMessage(inviteMutation.error)}</p> : null}
+            {inviteMutation.isSuccess ? <p className="rounded-2xl bg-[var(--success-soft)] px-4 py-3 text-sm font-medium text-[var(--success)] md:col-span-2 xl:col-span-4">Convite enviado.</p> : null}
+            <div className="md:col-span-2 xl:col-span-4">
+              <Button type="submit" icon={UserPlus} isLoading={inviteMutation.isPending}>Enviar convite</Button>
+            </div>
+          </form>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap gap-2">
+            <select className="design-input h-10 px-3 text-sm" value={papelFilter} onChange={(event) => setPapelFilter(event.target.value)}>
+              <option value="all">Todos os papéis</option>
+              {papeis.map((papel) => <option key={papel} value={papel}>{papel}</option>)}
+            </select>
+            <select className="design-input h-10 px-3 text-sm" value={ativoFilter} onChange={(event) => setAtivoFilter(event.target.value)}>
+              <option value="all">Todos os status</option>
+              <option value="true">Ativos</option>
+              <option value="false">Inativos</option>
+            </select>
+          </div>
+          <Button variant="secondary" icon={RefreshCcw} onClick={() => void usuarios.refetch()}>Atualizar</Button>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <p className="text-base font-bold text-ink">Usuários</p>
+        </CardHeader>
+        <CardBody>
+          <DataTable<JsonRecord>
+            data={rows}
+            columns={[
+              { key: 'nome', header: 'Nome', render: (item) => <span className="font-semibold">{asString(item.nome)}</span> },
+              { key: 'email', header: 'E-mail', render: (item) => asString(item.email) },
+              { key: 'papel', header: 'Papel', render: (item) => <Badge tone="brand">{asString(item.papel)}</Badge> },
+              { key: 'ativo', header: 'Status', render: (item) => <Badge tone={statusTone(ativoValue(item.ativo) ? 'ativo' : 'inativo')}>{ativoValue(item.ativo) ? 'ativo' : 'inativo'}</Badge> },
+              {
+                key: 'acoes',
+                header: 'Ações',
+                align: 'right',
+                render: (item) => {
+                  const id = asString(item.id, '')
+                  const ativo = ativoValue(item.ativo)
+                  return (
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button variant="ghost" icon={Shield} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate({ id, payload: { ativo: !ativo } })}>{ativo ? 'Inativar' : 'Ativar'}</Button>
+                      <Button variant="ghost" icon={KeyRound} disabled={resetMutation.isPending} onClick={() => resetMutation.mutate(id)}>Resetar</Button>
+                      <Button variant="ghost" icon={MailPlus} disabled={resendMutation.isPending} onClick={() => resendMutation.mutate(id)}>Convite</Button>
+                      <Button variant="ghost" icon={LogOut} disabled={logoutMutation.isPending} onClick={() => logoutMutation.mutate(id)}>Logout</Button>
+                    </div>
+                  )
+                },
+              },
+            ]}
+          />
+          {updateMutation.isError || resetMutation.isError || logoutMutation.isError || resendMutation.isError ? (
+            <p className="mt-4 rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">
+              {extractErrorMessage(updateMutation.error ?? resetMutation.error ?? logoutMutation.error ?? resendMutation.error)}
+            </p>
+          ) : null}
+          {resetMutation.data ? (
+            <p className="mt-4 rounded-2xl bg-[var(--warning-soft)] px-4 py-3 text-sm font-semibold text-[var(--warning)]">
+              Senha temporária: {asString((resetMutation.data as JsonRecord).senha_temporaria)}
+            </p>
+          ) : null}
+        </CardBody>
+      </Card>
+    </div>
+  )
+}

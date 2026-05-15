@@ -49,7 +49,7 @@ export function normalizeHome(raw: JsonRecord) {
       live: asNumber(ocupacao.ao_vivo ?? liveCabines.length),
       total: asNumber(ocupacao.operacionais ?? cabines.length),
     },
-    ranking: asArray<JsonRecord>(raw.ranking ?? raw.ranking_clientes ?? raw.top_clientes),
+    ranking: asArray<JsonRecord>(raw.ranking_dia ?? raw.ranking ?? raw.ranking_clientes ?? raw.top_clientes),
     upcoming: asArray<JsonRecord>(raw.proximas_lives_dia ?? raw.proximas_lives),
   }
 }

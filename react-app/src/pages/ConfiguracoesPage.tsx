@@ -1,4 +1,4 @@
-import { AtSign, KeyRound, Save, Target } from 'lucide-react'
+import { AtSign, KeyRound, Lock, Moon, Plug, Save, Sun, Target, Users } from 'lucide-react'
 import { FormEvent, useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -8,6 +8,8 @@ import { ErrorState, LoadingState } from '../components/ui/States'
 import { getClienteMeta, getClientePerfil, getConfiguracoes, trocarSenha, updateClienteMeta, updateClienteTiktok, updateConfiguracoes } from '../services/domain'
 import { extractErrorMessage } from '../services/api'
 import { asNumber, asString, currentPeriod, formatMoney, periodLabel } from '../utils/format'
+import { useThemeStore } from '../stores/theme-store'
+import { SettingsUsuariosPanel } from './SettingsUsuariosPanel'
 import type { JsonRecord } from '../types/models'
 
 export function ConfiguracoesPage({ clienteMode = false }: { clienteMode?: boolean }) {
@@ -20,6 +22,9 @@ export function ConfiguracoesPage({ clienteMode = false }: { clienteMode?: boole
   const [tiktok, setTiktok] = useState('')
   const [metaGmv, setMetaGmv] = useState('')
   const [senha, setSenha] = useState({ senha_atual: '', nova_senha: '' })
+  const [settingsTab, setSettingsTab] = useState<'unidade' | 'usuarios' | 'aparencia' | 'integracoes' | 'seguranca'>('unidade')
+  const theme = useThemeStore((state) => state.theme)
+  const setTheme = useThemeStore((state) => state.setTheme)
   const mutation = useMutation({
     mutationFn: updateConfiguracoes,
     onSuccess: () => client.invalidateQueries({ queryKey: ['configuracoes'] }),
@@ -186,7 +191,52 @@ export function ConfiguracoesPage({ clienteMode = false }: { clienteMode?: boole
     <div className="space-y-6">
       <PageHeader eyebrow="Administração" accent="Configurações" title="da unidade" subtitle="Campos principais da franquia e integrações expostos pelo backend." />
 
-      <Card>
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface p-1">
+        {[
+          ['unidade', Save, 'Unidade'],
+          ['usuarios', Users, 'Usuários'],
+          ['aparencia', Sun, 'Aparência'],
+          ['integracoes', Plug, 'Integrações'],
+          ['seguranca', Lock, 'Segurança'],
+        ].map(([key, Icon, label]) => (
+          <button
+            key={String(key)}
+            className={settingsTab === key ? 'inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-bold text-white' : 'inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-ink-muted hover:bg-surface-muted'}
+            onClick={() => setSettingsTab(key as typeof settingsTab)}
+            type="button"
+          >
+            <Icon className="h-4 w-4" />
+            {label as string}
+          </button>
+        ))}
+      </div>
+
+      {settingsTab === 'aparencia' ? (
+        <Card>
+        <CardHeader>
+          <p className="text-sm font-bold text-ink">Aparência</p>
+        </CardHeader>
+        <CardBody className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-ink">Tema da interface</p>
+            <p className="mt-1 text-xs text-ink-muted">A preferência fica salva neste navegador.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant={theme === 'light' ? 'primary' : 'secondary'} icon={Sun} onClick={() => setTheme('light')}>
+              Claro
+            </Button>
+            <Button type="button" variant={theme === 'dark' ? 'primary' : 'secondary'} icon={Moon} onClick={() => setTheme('dark')}>
+              Escuro
+            </Button>
+          </div>
+        </CardBody>
+        </Card>
+      ) : null}
+
+      {settingsTab === 'usuarios' ? <SettingsUsuariosPanel /> : null}
+
+      {settingsTab === 'unidade' ? (
+        <Card>
         <CardHeader>
           <p className="text-sm font-bold text-ink">Dados da unidade</p>
         </CardHeader>
@@ -211,7 +261,46 @@ export function ConfiguracoesPage({ clienteMode = false }: { clienteMode?: boole
             </div>
           </form>
         </CardBody>
-      </Card>
+        </Card>
+      ) : null}
+
+      {settingsTab === 'integracoes' ? (
+        <Card>
+          <CardHeader>
+            <p className="text-sm font-bold text-ink">Integrações</p>
+          </CardHeader>
+          <CardBody className="grid gap-3 md:grid-cols-2">
+            {['TikTok', 'Appmax', 'E-mail transacional', 'Webhooks'].map((item) => (
+              <div key={item} className="rounded-2xl border border-line bg-surface-muted p-4">
+                <p className="text-sm font-bold text-ink">{item}</p>
+                <p className="mt-1 text-xs text-ink-muted">Status gerenciado pelo backend da unidade.</p>
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {settingsTab === 'seguranca' ? (
+        <Card>
+          <CardHeader>
+            <p className="text-sm font-bold text-ink">Segurança</p>
+          </CardHeader>
+          <CardBody>
+            <form className="grid gap-4 md:grid-cols-2" onSubmit={(event) => {
+              event.preventDefault()
+              senhaMutation.mutate(senha)
+            }}>
+              <input className="design-input h-11 w-full px-4" type="password" autoComplete="current-password" placeholder="Senha atual" value={senha.senha_atual} onChange={(event) => setSenha((current) => ({ ...current, senha_atual: event.target.value }))} required />
+              <input className="design-input h-11 w-full px-4" type="password" autoComplete="new-password" placeholder="Nova senha" value={senha.nova_senha} onChange={(event) => setSenha((current) => ({ ...current, nova_senha: event.target.value }))} required />
+              {senhaMutation.isError ? <p className="rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)] md:col-span-2">{extractErrorMessage(senhaMutation.error)}</p> : null}
+              {senhaMutation.isSuccess ? <p className="rounded-2xl bg-[var(--success-soft)] px-4 py-3 text-sm font-medium text-[var(--success)] md:col-span-2">Senha alterada.</p> : null}
+              <div className="md:col-span-2">
+                <Button type="submit" icon={KeyRound} isLoading={senhaMutation.isPending}>Trocar senha</Button>
+              </div>
+            </form>
+          </CardBody>
+        </Card>
+      ) : null}
     </div>
   )
 }

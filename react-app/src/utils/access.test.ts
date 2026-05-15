@@ -24,7 +24,7 @@ describe('routeForRole', () => {
   })
 
   it('routes live presenters directly to cabines', () => {
-    expect(routeForRole('apresentadora')).toBe('/cabines')
+    expect(routeForRole('apresentadora')).toBe('/conteudo')
   })
 })
 
@@ -42,11 +42,28 @@ describe('menuForUser', () => {
     const clientMenu = menuForUser({ ...baseUser, papel: 'cliente_parceiro' }).map((item) => item.path)
 
     expect(masterMenu).toContain('/master')
+    expect(masterMenu).toContain('/comercial')
     expect(masterMenu).not.toContain('/cliente')
     expect(clientMenu).toContain('/cliente')
     expect(clientMenu).toContain('/cliente/agenda')
     expect(clientMenu).toContain('/cliente/configuracoes')
-    expect(clientMenu).toContain('/boletos')
+    expect(clientMenu).not.toContain('/boletos')
     expect(clientMenu).not.toContain('/cabines')
+  })
+
+  it('uses the consolidated Comercial, Conteudo and Financeiro surfaces', () => {
+    const franqueadoMenu = menuForUser({ ...baseUser, papel: 'franqueado' }).map((item) => item.path)
+    const presenterMenu = menuForUser({ ...baseUser, papel: 'apresentadora' }).map((item) => item.path)
+
+    expect(franqueadoMenu).toContain('/comercial')
+    expect(franqueadoMenu).toContain('/conteudo')
+    expect(franqueadoMenu).toContain('/financeiro')
+    expect(franqueadoMenu).not.toContain('/master/crm')
+    expect(franqueadoMenu).not.toContain('/cabines')
+    expect(franqueadoMenu).not.toContain('/analytics-dashboard')
+    expect(franqueadoMenu).not.toContain('/boletos')
+
+    expect(presenterMenu).toContain('/conteudo')
+    expect(presenterMenu).not.toContain('/cabines')
   })
 })

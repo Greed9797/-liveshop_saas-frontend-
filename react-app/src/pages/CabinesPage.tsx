@@ -1,7 +1,8 @@
 import { Activity, CalendarClock, Edit2, MonitorPlay, Plus, Power, Presentation, RefreshCcw, Search, StopCircle, Wrench, type LucideIcon } from 'lucide-react'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../components/ui/PageHeader'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
 import { Badge, statusTone } from '../components/ui/Badge'
@@ -15,10 +16,12 @@ import type { Cabine, JsonRecord } from '../types/models'
 
 const writeCabineRoles = new Set(['franqueador_master', 'franqueado', 'gerente', 'produtor_live'])
 const writeLiveRoles = new Set(['franqueador_master', 'franqueado', 'gerente', 'apresentador', 'apresentadora', 'produtor_live'])
-const emptyCabineForm = { nome: '', tamanho: 'M', descricao: '' }
+const availableCabineStatus = 'disponivel'
+const emptyCabineForm = { nome: '', descricao: '' }
 
 export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
   const user = useCurrentUser()
+  const [params, setParams] = useSearchParams()
   const canWriteCabine = writeCabineRoles.has(user?.papel ?? '')
   const canWriteLive = writeLiveRoles.has(user?.papel ?? '')
   const [filter, setFilter] = useState('all')
@@ -65,13 +68,10 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
     },
   })
 
-  if (query.isLoading) return <LoadingState />
-  if (query.isError) return <ErrorState message={extractErrorMessage(query.error)} onRetry={() => void query.refetch()} />
-
   const cabines = query.data ?? []
   const liveCount = cabines.filter((item) => item.status === 'ao_vivo').length
   const maintenanceCount = cabines.filter((item) => item.status === 'manutencao').length
-  const freeCount = cabines.filter((item) => item.status === 'livre').length
+  const freeCount = cabines.filter((item) => item.status === availableCabineStatus).length
   const counts = {
     all: cabines.length,
     live: liveCount,
@@ -84,9 +84,9 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
     const statusMatch =
       filter === 'all' ||
       (filter === 'live' && cabine.status === 'ao_vivo') ||
-      (filter === 'free' && cabine.status === 'livre') ||
+      (filter === 'free' && cabine.status === availableCabineStatus) ||
       (filter === 'maintenance' && cabine.status === 'manutencao') ||
-      (filter === 'busy' && !['ao_vivo', 'livre', 'manutencao'].includes(cabine.status ?? ''))
+      (filter === 'busy' && !['ao_vivo', availableCabineStatus, 'manutencao'].includes(cabine.status ?? ''))
     return statusMatch && normalized.includes(search.trim().toLowerCase())
   })
   const totalGmv = cabines.reduce((sum, cabine) => sum + asNumber(cabine.gmv_atual), 0)
@@ -97,8 +97,36 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
     { label: 'Livres', value: counts.free, color: 'bg-[var(--success)]', icon: CalendarClock },
     { label: 'Manutenção', value: counts.maintenance, color: 'bg-[var(--warning)]', icon: Wrench },
   ]
-  const selectedCabine = visible.find((cabine) => cabine.id === selectedId) ?? visible[0]
+  const explicitCabineId = params.get('cabine') ?? ''
+  const explicitLiveId = params.get('live') ?? ''
+  const explicitSelection = Boolean(selectedId || explicitCabineId || explicitLiveId)
+  const selectedCabine = visible.find((cabine) => cabine.id === selectedId) ?? (!explicitSelection ? visible[0] : undefined)
   const activeContracts = (contratosQuery.data ?? []).filter((contrato) => asString(contrato.status).toLowerCase() === 'ativo')
+
+  useEffect(() => {
+    if (!cabines.length) return
+    if (explicitLiveId) {
+      const byLive = cabines.find((cabine) => asString(cabine.live_atual_id, '') === explicitLiveId)
+      setSelectedId(byLive?.id ?? '')
+      return
+    }
+    if (explicitCabineId) {
+      setSelectedId(cabines.some((cabine) => cabine.id === explicitCabineId) ? explicitCabineId : '')
+    }
+  }, [cabines, explicitCabineId, explicitLiveId])
+
+  function selectCabine(cabine: Cabine) {
+    setSelectedId(cabine.id)
+    const nextParams = new URLSearchParams(params)
+    nextParams.set('cabine', cabine.id)
+    const liveId = asString((cabine as Cabine & JsonRecord).live_atual_id, '')
+    if (liveId) nextParams.set('live', liveId)
+    else nextParams.delete('live')
+    setParams(nextParams, { replace: true })
+  }
+
+  if (query.isLoading) return <LoadingState />
+  if (query.isError) return <ErrorState message={extractErrorMessage(query.error)} onRetry={() => void query.refetch()} />
 
   function setCabineField(key: keyof typeof emptyCabineForm, value: string) {
     setCabineForm((current) => ({ ...current, [key]: value }))
@@ -115,7 +143,6 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
     setEditingId(cabine.id)
     setCabineForm({
       nome: asString(record.nome ?? `Cabine ${cabine.numero ?? ''}`, ''),
-      tamanho: asString(record.tamanho, 'M'),
       descricao: asString(record.descricao, ''),
     })
     setShowForm(true)
@@ -168,23 +195,17 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
       {showForm && canWriteCabine ? (
         <Card>
           <CardBody>
-            <form className="grid gap-4 md:grid-cols-3" onSubmit={onCabineSubmit}>
+            <form className="grid gap-4 md:grid-cols-2" onSubmit={onCabineSubmit}>
               <label className="block">
                 <span className="text-sm font-semibold text-ink">Nome</span>
                 <input className="design-input mt-2 h-11 w-full px-4" value={cabineForm.nome} onChange={(event) => setCabineField('nome', event.target.value)} required />
               </label>
               <label className="block">
-                <span className="text-sm font-semibold text-ink">Tamanho</span>
-                <select className="design-input mt-2 h-11 w-full px-4" value={cabineForm.tamanho} onChange={(event) => setCabineField('tamanho', event.target.value)}>
-                  {['P', 'M', 'G', 'GG'].map((size) => <option key={size} value={size}>{size}</option>)}
-                </select>
-              </label>
-              <label className="block">
                 <span className="text-sm font-semibold text-ink">Descrição</span>
                 <input className="design-input mt-2 h-11 w-full px-4" value={cabineForm.descricao} onChange={(event) => setCabineField('descricao', event.target.value)} />
               </label>
-              {saveCabineMutation.isError ? <p className="md:col-span-3 rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">{extractErrorMessage(saveCabineMutation.error)}</p> : null}
-              <div className="flex flex-wrap gap-2 md:col-span-3">
+              {saveCabineMutation.isError ? <p className="md:col-span-2 rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">{extractErrorMessage(saveCabineMutation.error)}</p> : null}
+              <div className="flex flex-wrap gap-2 md:col-span-2">
                 <Button type="submit" icon={Plus} isLoading={saveCabineMutation.isPending}>{editingId ? 'Salvar cabine' : 'Criar cabine'}</Button>
                 <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Cancelar</Button>
               </div>
@@ -268,7 +289,7 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="secondary" icon={MonitorPlay} onClick={() => setSelectedId(cabine.id)}>
+                  <Button variant="secondary" icon={MonitorPlay} onClick={() => selectCabine(cabine)}>
                     Detalhes
                   </Button>
                   {canWriteCabine ? (

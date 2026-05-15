@@ -1,8 +1,9 @@
-import { Bell, LogOut, Menu, Moon, Search, Sun, X } from 'lucide-react'
+import { Bell, LogOut, Menu, Search, X } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import { useAuthStore } from '../../stores/auth-store'
+import { useThemeStore } from '../../stores/theme-store'
 import { menuForUser, roleLabel } from '../../utils/access'
 import { Button } from '../ui/Button'
 
@@ -18,8 +19,14 @@ function initials(name?: string) {
 
 function Sidebar({ onNavigate, expanded = false }: { onNavigate?: () => void; expanded?: boolean }) {
   const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
   const location = useLocation()
   const items = menuForUser(user)
+
+  async function handleLogout() {
+    await logout()
+    onNavigate?.()
+  }
 
   return (
     <aside
@@ -85,6 +92,15 @@ function Sidebar({ onNavigate, expanded = false }: { onNavigate?: () => void; ex
             </span>
           )}
         </div>
+        {expanded ? (
+          <Button className="mt-3 w-full justify-start rounded-2xl" variant="secondary" icon={LogOut} onClick={() => void handleLogout()}>
+            Sair
+          </Button>
+        ) : (
+          <Button className="mt-3 h-11 w-full rounded-2xl px-0" variant="secondary" icon={LogOut} aria-label="Sair" onClick={() => void handleLogout()}>
+            <span className="sr-only">Sair</span>
+          </Button>
+        )}
       </div>
     </aside>
   )
@@ -92,9 +108,8 @@ function Sidebar({ onNavigate, expanded = false }: { onNavigate?: () => void; ex
 
 export function Shell() {
   const [open, setOpen] = useState(false)
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const theme = useThemeStore((state) => state.theme)
   const user = useAuthStore((state) => state.user)
-  const logout = useAuthStore((state) => state.logout)
 
   return (
     <div className="livelab-shell min-h-screen" data-theme={theme}>
@@ -156,16 +171,6 @@ export function Shell() {
                 <Bell className="h-5 w-5" />
                 <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full border-2 border-surface bg-brand" />
               </button>
-              <button
-                className="grid h-12 w-12 place-items-center rounded-2xl border border-line bg-surface text-ink-muted transition hover:bg-surface-muted"
-                aria-label={theme === 'light' ? 'Ativar tema escuro' : 'Ativar tema claro'}
-                onClick={() => setTheme((value) => (value === 'light' ? 'dark' : 'light'))}
-              >
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-              </button>
-              <Button className="h-12" variant="secondary" icon={LogOut} onClick={() => void logout()}>
-                Sair
-              </Button>
             </div>
           </div>
           <Outlet />

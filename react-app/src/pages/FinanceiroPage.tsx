@@ -1,6 +1,6 @@
 import { Building2, CircleDollarSign, Receipt, TrendingDown, TrendingUp, Users, WalletCards, Zap } from 'lucide-react'
 import { FormEvent, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { PageHeader } from '../components/ui/PageHeader'
 import { MetricCard } from '../components/ui/MetricCard'
@@ -11,14 +11,20 @@ import { Button } from '../components/ui/Button'
 import { ErrorState, LoadingState } from '../components/ui/States'
 import { createFinanceiroCusto, deleteFinanceiroCusto, getBoletos, getFinanceiroCustos, getFinanceiroFaturamento, getFinanceiroFluxo, getFinanceiroResumo } from '../services/domain'
 import { extractErrorMessage } from '../services/api'
+import { useCurrentUser } from '../stores/auth-store'
 import { asArray, asNumber, asString, currentPeriod, formatDate, formatMoney, periodToParam } from '../utils/format'
 import { historyPoints, metric, moneyMetric } from './page-helpers'
+import { BoletosPanel } from './BoletosPage'
 import type { JsonRecord } from '../types/models'
 
 const icons = [CircleDollarSign, TrendingUp, TrendingDown, Receipt]
 
 export function FinanceiroPage() {
-  const [tab, setTab] = useState<'operacional' | 'cliente' | 'recebiveis' | 'boletos'>('operacional')
+  const user = useCurrentUser()
+  const isCliente = user?.papel === 'cliente_parceiro'
+  const [params, setParams] = useSearchParams()
+  const initialTab = isCliente || params.get('tab') === 'boletos' ? 'boletos' : 'operacional'
+  const [tab, setTab] = useState<'operacional' | 'cliente' | 'recebiveis' | 'boletos'>(initialTab)
   const [custo, setCusto] = useState({
     descricao: '',
     valor: '',
@@ -26,10 +32,10 @@ export function FinanceiroPage() {
     competencia: periodToParam(currentPeriod()),
   })
   const client = useQueryClient()
-  const resumo = useQuery({ queryKey: ['financeiro-resumo'], queryFn: () => getFinanceiroResumo() })
-  const fluxo = useQuery({ queryKey: ['financeiro-fluxo'], queryFn: () => getFinanceiroFluxo() })
-  const faturamento = useQuery({ queryKey: ['financeiro-faturamento'], queryFn: () => getFinanceiroFaturamento() })
-  const custos = useQuery({ queryKey: ['financeiro-custos', custo.competencia], queryFn: () => getFinanceiroCustos({ mes: custo.competencia }) })
+  const resumo = useQuery({ queryKey: ['financeiro-resumo'], queryFn: () => getFinanceiroResumo(), enabled: !isCliente })
+  const fluxo = useQuery({ queryKey: ['financeiro-fluxo'], queryFn: () => getFinanceiroFluxo(), enabled: !isCliente })
+  const faturamento = useQuery({ queryKey: ['financeiro-faturamento'], queryFn: () => getFinanceiroFaturamento(), enabled: !isCliente })
+  const custos = useQuery({ queryKey: ['financeiro-custos', custo.competencia], queryFn: () => getFinanceiroCustos({ mes: custo.competencia }), enabled: !isCliente })
   const boletos = useQuery({ queryKey: ['boletos'], queryFn: getBoletos })
   const createCusto = useMutation({
     mutationFn: createFinanceiroCusto,
@@ -48,6 +54,8 @@ export function FinanceiroPage() {
       void client.invalidateQueries({ queryKey: ['financeiro-fluxo'] })
     },
   })
+
+  if (isCliente) return <BoletosPanel />
 
   if (resumo.isLoading || fluxo.isLoading || faturamento.isLoading || custos.isLoading || boletos.isLoading) return <LoadingState />
   if (resumo.isError) return <ErrorState message={extractErrorMessage(resumo.error)} onRetry={() => void resumo.refetch()} />
@@ -78,6 +86,14 @@ export function FinanceiroPage() {
     })
   }
 
+  function switchTab(next: typeof tab) {
+    setTab(next)
+    const nextParams = new URLSearchParams(params)
+    if (next === 'boletos') nextParams.set('tab', 'boletos')
+    else nextParams.delete('tab')
+    setParams(nextParams, { replace: true })
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader eyebrow="Financeiro" accent="Resumo" title="da unidade" subtitle="Receita, fluxo de caixa, faturamento e pendências." />
@@ -92,7 +108,7 @@ export function FinanceiroPage() {
           <button
             key={String(key)}
             className={tab === key ? 'inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-bold text-white' : 'inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-ink-muted hover:bg-surface-muted'}
-            onClick={() => setTab(key as typeof tab)}
+            onClick={() => switchTab(key as typeof tab)}
           >
             <Icon className="h-4 w-4" />
             {label as string}
@@ -203,33 +219,9 @@ export function FinanceiroPage() {
       ) : null}
 
       {tab === 'boletos' ? (
-        <section className="grid gap-4 xl:grid-cols-3">
+        <section className="grid gap-4">
           <MetricCard metric={metrics[3]} icon={Receipt} />
-          <Card className="xl:col-span-2">
-            <CardBody className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-base font-bold text-ink">Boletos e cobranças</p>
-                <p className="mt-1 text-sm text-ink-muted">{boletosRows.length} cobrança(s) retornada(s) por `/boletos`.</p>
-              </div>
-              <Link className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-ink transition hover:bg-surface-muted" to="/boletos">
-                <Receipt className="h-4 w-4" />
-                Abrir boletos
-              </Link>
-            </CardBody>
-          </Card>
-          <Card className="xl:col-span-3">
-            <CardBody>
-              <DataTable<JsonRecord>
-                data={boletosRows.slice(0, 8)}
-                columns={[
-                  { key: 'tipo', header: 'Tipo', render: (item) => asString(item.tipo) },
-                  { key: 'vencimento', header: 'Vencimento', render: (item) => formatDate(asString(item.vencimento, '')) },
-                  { key: 'status', header: 'Status', render: (item) => asString(item.status) },
-                  { key: 'valor', header: 'Valor', align: 'right', render: (item) => formatMoney(item.valor) },
-                ]}
-              />
-            </CardBody>
-          </Card>
+          <BoletosPanel embedded />
         </section>
       ) : null}
     </div>
