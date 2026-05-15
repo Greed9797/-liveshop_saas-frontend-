@@ -1,4 +1,4 @@
-import { Activity, CalendarClock, Edit2, MonitorPlay, Plus, Power, Presentation, RefreshCcw, Search, StopCircle, Wrench, type LucideIcon } from 'lucide-react'
+import { Activity, CalendarClock, Edit2, MonitorPlay, PlayCircle, Plus, Power, Presentation, RefreshCcw, Search, StopCircle, Wrench, type LucideIcon } from 'lucide-react'
 import { FormEvent, useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -8,7 +8,7 @@ import { Card, CardBody, CardHeader } from '../components/ui/Card'
 import { Badge, statusTone } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { ErrorState, LoadingState } from '../components/ui/States'
-import { atualizarStatusCabine, createCabine, encerrarLive, getCabineHistorico, getCabineLiveAtual, getCabines, getContratos, liberarCabine, reservarCabine, updateCabine } from '../services/domain'
+import { atualizarStatusCabine, createCabine, encerrarLive, getCabineHistorico, getCabineLiveAtual, getCabines, getClientes, getContratos, iniciarLive, liberarCabine, reservarCabine, updateCabine } from '../services/domain'
 import { extractErrorMessage } from '../services/api'
 import { asArray, asNumber, asString, formatDate, formatMoney } from '../utils/format'
 import { useCurrentUser } from '../stores/auth-store'
@@ -16,8 +16,21 @@ import type { Cabine, JsonRecord } from '../types/models'
 
 const writeCabineRoles = new Set(['franqueador_master', 'franqueado', 'gerente', 'produtor_live'])
 const writeLiveRoles = new Set(['franqueador_master', 'franqueado', 'gerente', 'apresentador', 'apresentadora', 'produtor_live'])
+const readClientesForLiveRoles = new Set(['franqueador_master', 'franqueado', 'gerente', 'produtor_live'])
 const availableCabineStatus = 'disponivel'
 const emptyCabineForm = { nome: '', descricao: '' }
+const emptyStartForm = { cliente_id: '', tiktok_username: '' }
+
+function suggestedClienteId(cabine?: Cabine | null): string {
+  if (!cabine) return ''
+  const record = cabine as Cabine & JsonRecord
+  const agenda = asArray<JsonRecord>(record.agenda)
+  return asString(record.cliente_id ?? agenda[0]?.cliente_id, '')
+}
+
+function suggestedTiktokUsername(cabine?: Cabine | null): string {
+  return asString((cabine as (Cabine & JsonRecord) | undefined)?.tiktok_username, '')
+}
 
 export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
   const user = useCurrentUser()
@@ -30,10 +43,12 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState('')
   const [cabineForm, setCabineForm] = useState(emptyCabineForm)
+  const [startForm, setStartForm] = useState(emptyStartForm)
   const [contratoId, setContratoId] = useState('')
   const client = useQueryClient()
   const query = useQuery({ queryKey: ['cabines'], queryFn: getCabines, refetchInterval: 20_000 })
   const contratosQuery = useQuery({ queryKey: ['contratos'], queryFn: () => getContratos(), enabled: canWriteCabine })
+  const clientesQuery = useQuery({ queryKey: ['clientes', 'live-start'], queryFn: getClientes, enabled: canWriteLive && readClientesForLiveRoles.has(user?.papel ?? '') })
   const historicoQuery = useQuery({ queryKey: ['cabine-historico', selectedId], queryFn: () => getCabineHistorico(selectedId), enabled: Boolean(selectedId) })
   const liveAtualQuery = useQuery({ queryKey: ['cabine-live-atual', selectedId], queryFn: () => getCabineLiveAtual(selectedId), enabled: Boolean(selectedId) })
   const saveCabineMutation = useMutation({
@@ -64,6 +79,20 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
     mutationFn: ({ id, payload }: { id: string; payload: JsonRecord }) => encerrarLive(id, payload),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ['cabines'] })
+      void client.invalidateQueries({ queryKey: ['cabine-live-atual'] })
+    },
+  })
+  const iniciarMutation = useMutation({
+    mutationFn: iniciarLive,
+    onSuccess: (live) => {
+      const liveId = asString(live.id, '')
+      const cabineId = asString(live.cabine_id ?? selectedId, selectedId)
+      const nextParams = new URLSearchParams(params)
+      if (cabineId) nextParams.set('cabine', cabineId)
+      if (liveId) nextParams.set('live', liveId)
+      setParams(nextParams, { replace: true })
+      void client.invalidateQueries({ queryKey: ['cabines'] })
+      void client.invalidateQueries({ queryKey: ['lives'] })
       void client.invalidateQueries({ queryKey: ['cabine-live-atual'] })
     },
   })
@@ -117,12 +146,20 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
 
   function selectCabine(cabine: Cabine) {
     setSelectedId(cabine.id)
+    setStartForm({
+      cliente_id: suggestedClienteId(cabine),
+      tiktok_username: suggestedTiktokUsername(cabine),
+    })
     const nextParams = new URLSearchParams(params)
     nextParams.set('cabine', cabine.id)
     const liveId = asString((cabine as Cabine & JsonRecord).live_atual_id, '')
     if (liveId) nextParams.set('live', liveId)
     else nextParams.delete('live')
     setParams(nextParams, { replace: true })
+  }
+
+  function setStartField(key: keyof typeof emptyStartForm, value: string) {
+    setStartForm((current) => ({ ...current, [key]: value }))
   }
 
   if (query.isLoading) return <LoadingState />
@@ -156,6 +193,16 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
   function onReservar(cabineId: string) {
     if (!contratoId) return
     reservarMutation.mutate({ id: cabineId, contrato: contratoId })
+  }
+
+  function onStartLive(cabine: Cabine) {
+    const clienteId = startForm.cliente_id || suggestedClienteId(cabine)
+    const tiktokUsername = startForm.tiktok_username.trim() || suggestedTiktokUsername(cabine)
+    iniciarMutation.mutate({
+      cabine_id: cabine.id,
+      ...(clienteId ? { cliente_id: clienteId } : {}),
+      tiktok_username: tiktokUsername || null,
+    })
   }
 
   function onEncerrarLive(live: JsonRecord) {
@@ -292,6 +339,25 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
                   <Button variant="secondary" icon={MonitorPlay} onClick={() => selectCabine(cabine)}>
                     Detalhes
                   </Button>
+                  {canWriteLive && !live ? (
+                    <Button
+                      icon={PlayCircle}
+                      isLoading={iniciarMutation.isPending}
+                      onClick={() => {
+                        selectCabine(cabine)
+                        const clienteId = suggestedClienteId(cabine)
+                        if (clienteId) {
+                          iniciarMutation.mutate({
+                            cabine_id: cabine.id,
+                            cliente_id: clienteId,
+                            tiktok_username: suggestedTiktokUsername(cabine) || null,
+                          })
+                        }
+                      }}
+                    >
+                      Iniciar live
+                    </Button>
+                  ) : null}
                   {canWriteCabine ? (
                     <Button variant="secondary" icon={Edit2} onClick={() => openEditForm(cabine)}>
                       Editar
@@ -364,6 +430,56 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
             </CardHeader>
             <CardBody className="space-y-4">
               {!selectedCabine ? <p className="text-sm text-ink-muted">Abra os detalhes de uma cabine para ver live atual e histórico.</p> : null}
+              {selectedCabine && canWriteLive && selectedCabine.status !== 'ao_vivo' ? (
+                <div className="space-y-3 rounded-2xl border border-brand/20 bg-brand-soft/60 p-3">
+                  <div>
+                    <p className="text-sm font-bold text-ink">Iniciar live agora</p>
+                    <p className="mt-1 text-xs text-ink-muted">Usa o fluxo operacional antigo e coloca a cabine em ao vivo.</p>
+                  </div>
+                  <label className="block">
+                    <span className="text-xs font-semibold text-ink-muted">Cliente ou marca</span>
+                    <select
+                      className="design-input mt-2 h-10 w-full px-3 text-sm"
+                      value={startForm.cliente_id || suggestedClienteId(selectedCabine)}
+                      onChange={(event) => setStartField('cliente_id', event.target.value)}
+                      disabled={clientesQuery.isLoading || !readClientesForLiveRoles.has(user?.papel ?? '')}
+                    >
+                      <option value="">Selecione um cliente</option>
+                      {suggestedClienteId(selectedCabine) && !clientesQuery.data?.some((cliente) => asString(cliente.id) === suggestedClienteId(selectedCabine)) ? (
+                        <option value={suggestedClienteId(selectedCabine)}>{asString(selectedCabine.cliente_nome, 'Cliente vinculado')}</option>
+                      ) : null}
+                      {(clientesQuery.data ?? []).map((cliente) => (
+                        <option key={asString(cliente.id)} value={asString(cliente.id)}>
+                          {asString(cliente.nome ?? cliente.razao_social ?? cliente.email, 'Cliente')}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-semibold text-ink-muted">TikTok da live</span>
+                    <input
+                      className="design-input mt-2 h-10 w-full px-3 text-sm"
+                      placeholder="@usuario_tiktok"
+                      value={startForm.tiktok_username}
+                      onChange={(event) => setStartField('tiktok_username', event.target.value)}
+                    />
+                  </label>
+                  <Button
+                    className="w-full"
+                    icon={PlayCircle}
+                    isLoading={iniciarMutation.isPending}
+                    disabled={!selectedCabine.id || !(startForm.cliente_id || suggestedClienteId(selectedCabine))}
+                    onClick={() => onStartLive(selectedCabine)}
+                  >
+                    Iniciar live
+                  </Button>
+                  {clientesQuery.isError ? <p className="text-xs font-medium text-[var(--danger)]">{extractErrorMessage(clientesQuery.error)}</p> : null}
+                  {!(startForm.cliente_id || suggestedClienteId(selectedCabine)) ? (
+                    <p className="text-xs text-ink-muted">Selecione um cliente para iniciar live sem contrato reservado.</p>
+                  ) : null}
+                </div>
+              ) : null}
+
               {selectedCabine && canWriteCabine ? (
                 <div className="space-y-3 rounded-2xl border border-line bg-surface-muted p-3">
                   <p className="text-sm font-bold text-ink">Reservar por contrato ativo</p>
@@ -431,9 +547,9 @@ export function CabinesPage({ title = 'Cabines' }: { title?: string }) {
                 </div>
               ) : null}
 
-              {reservarMutation.isError || statusMutation.isError || liberarMutation.isError || encerrarMutation.isError || liveAtualQuery.isError || historicoQuery.isError ? (
+              {reservarMutation.isError || statusMutation.isError || liberarMutation.isError || iniciarMutation.isError || encerrarMutation.isError || liveAtualQuery.isError || historicoQuery.isError ? (
                 <p className="rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">
-                  {extractErrorMessage(reservarMutation.error ?? statusMutation.error ?? liberarMutation.error ?? encerrarMutation.error ?? liveAtualQuery.error ?? historicoQuery.error)}
+                  {extractErrorMessage(reservarMutation.error ?? statusMutation.error ?? liberarMutation.error ?? iniciarMutation.error ?? encerrarMutation.error ?? liveAtualQuery.error ?? historicoQuery.error)}
                 </p>
               ) : null}
             </CardBody>

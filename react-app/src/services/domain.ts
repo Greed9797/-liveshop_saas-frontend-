@@ -226,6 +226,10 @@ export function getLives() {
   return apiGet<JsonRecord[]>('/lives')
 }
 
+export function iniciarLive(payload: JsonRecord) {
+  return apiPost<JsonRecord>('/lives', payload)
+}
+
 export function encerrarLive(id: string, payload: JsonRecord) {
   return apiPatch(`/lives/${id}/encerrar`, payload)
 }

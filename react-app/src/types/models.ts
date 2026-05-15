@@ -84,12 +84,15 @@ export interface Cabine {
   id: string
   numero?: number
   status?: string
+  cliente_id?: string
   cliente_nome?: string
   apresentador_nome?: string
   live_atual_id?: string
+  tiktok_username?: string
   viewer_count?: number
   gmv_atual?: number | string
   total_orders?: number
+  agenda?: JsonRecord[]
 }
 
 export interface Solicitacao {
