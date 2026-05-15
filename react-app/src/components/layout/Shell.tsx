@@ -1,4 +1,4 @@
-import { Bell, LogOut, Menu, Search, X } from 'lucide-react'
+import { Bell, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, X } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
@@ -17,7 +17,15 @@ function initials(name?: string) {
     .toUpperCase()
 }
 
-function Sidebar({ onNavigate, expanded = false }: { onNavigate?: () => void; expanded?: boolean }) {
+function Sidebar({
+  onNavigate,
+  expanded = false,
+  onToggle,
+}: {
+  onNavigate?: () => void
+  expanded?: boolean
+  onToggle?: () => void
+}) {
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
   const location = useLocation()
@@ -35,17 +43,41 @@ function Sidebar({ onNavigate, expanded = false }: { onNavigate?: () => void; ex
         expanded ? 'w-72 px-3 py-4' : 'w-20 items-center px-0 py-5',
       )}
     >
-      <div className={clsx('mb-5 flex items-center', expanded ? 'w-full gap-3 px-2' : 'justify-center')}>
+      <div className={clsx('mb-5 flex items-center', expanded ? 'w-full gap-3 px-2' : 'w-full flex-col gap-3')}>
         <img
           src="/images/favicon.png"
           alt=""
           className="h-12 w-12 rounded-xl object-cover shadow-[0_6px_16px_-4px_rgba(255,90,31,0.5)]"
         />
         {expanded ? (
-          <div className="min-w-0">
-            <p className="truncate text-base font-extrabold tracking-[-0.04em] text-ink">Livelab</p>
-            <p className="truncate text-xs text-ink-muted">{user?.tenant_nome ?? 'LiveShop SaaS'}</p>
-          </div>
+          <>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-extrabold text-ink">Livelab</p>
+              <p className="truncate text-xs text-ink-muted">{user?.tenant_nome ?? 'LiveShop SaaS'}</p>
+            </div>
+            {onToggle ? (
+              <button
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line bg-surface text-ink-muted transition hover:bg-surface-muted hover:text-ink"
+                type="button"
+                aria-label="Recolher menu"
+                title="Recolher menu"
+                onClick={onToggle}
+              >
+                <PanelLeftClose className="h-5 w-5" />
+              </button>
+            ) : null}
+          </>
+        ) : null}
+        {!expanded && onToggle ? (
+          <button
+            className="grid h-10 w-10 place-items-center rounded-xl border border-line bg-surface text-ink-muted transition hover:bg-surface-muted hover:text-ink"
+            type="button"
+            aria-label="Expandir menu"
+            title="Expandir menu"
+            onClick={onToggle}
+          >
+            <PanelLeftOpen className="h-5 w-5" />
+          </button>
         ) : null}
       </div>
 
@@ -108,13 +140,14 @@ function Sidebar({ onNavigate, expanded = false }: { onNavigate?: () => void; ex
 
 export function Shell() {
   const [open, setOpen] = useState(false)
+  const [desktopExpanded, setDesktopExpanded] = useState(false)
   const theme = useThemeStore((state) => state.theme)
   const user = useAuthStore((state) => state.user)
 
   return (
     <div className="livelab-shell min-h-screen" data-theme={theme}>
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:block">
-        <Sidebar />
+        <Sidebar expanded={desktopExpanded} onToggle={() => setDesktopExpanded((value) => !value)} />
       </div>
 
       {open ? (
@@ -126,7 +159,7 @@ export function Shell() {
         </div>
       ) : null}
 
-      <div className="lg:pl-20">
+      <div className={clsx(desktopExpanded ? 'lg:pl-72' : 'lg:pl-20')}>
         <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 px-4 py-3 backdrop-blur md:px-7 lg:hidden">
           <div className="flex items-center justify-between">
             <button
